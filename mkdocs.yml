@@ -1,0 +1,8 @@
+site_name: PaaS
+pages:
+- home: 'index.md'
+- tsuru:
+  - home: 'tsuru/index.md'
+  - tolopogia: 'tsuru/topologia.md'
+  - instalação: 'tsuru/instalacao.md'
+  - serviços: 'tsuru/servicos.md'

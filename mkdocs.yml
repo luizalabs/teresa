@@ -6,3 +6,6 @@ pages:
   - tolopogia: 'tsuru/topologia.md'
   - instalação: 'tsuru/instalacao.md'
   - serviços: 'tsuru/servicos.md'
+- kubernetes:
+  - home: 'kubernetes/index.md'
+  - comandos: 'kubernetes/comandos.md'

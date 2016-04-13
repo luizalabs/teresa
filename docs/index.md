@@ -2,5 +2,5 @@
 
 ## Projetos
 
-- [Tsuru](tsuru/index.md)
-- [Kubernetes](kubernetes/index.md)
+- [Tsuru](tsuru)
+- [Kubernetes](kubernetes)

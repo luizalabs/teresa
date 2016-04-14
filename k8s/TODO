@@ -1,0 +1,2 @@
+- incluir plan do terraform com os serviços: RDS, memcache e redis
+- provisionamento do serviço (no kubernetes) na hora da criação do app/pod

@@ -18,15 +18,21 @@ $ kubectl create -f resources/kube-system-kube-registry-pv.yml
     
 2º - resources/kube-system-kube-registry-pvc.yml - persistent volume claim
 
-    ```$ kubectl create -f resources/kube-system-kube-registry-pvc.yml```
+```bash
+$ kubectl create -f resources/kube-system-kube-registry-pvc.yml
+```
     
 3º - resources/kube-system-kube-registry-rc.yml - docker registry replication controller
 
-    ```$ kubectl create -f resources/kube-system-kube-registry-rc.yml`
+```bash
+$ kubectl create -f resources/kube-system-kube-registry-rc.yml
+```
     
 4º - resources/kube-system-kube-registry-svc.yml - service
 
-    `$ kubectl create -f resources/kube-system-kube-registry-svc.yml`
+```bash
+$ kubectl create -f resources/kube-system-kube-registry-svc.yml
+```
     
 
 ####Nodes (Minions)

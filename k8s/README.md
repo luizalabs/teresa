@@ -12,19 +12,21 @@ Para cada um dos arquivos a chamada para o create será a mesma, exemplo:
 
 1º - resources/kube-system-kube-registry-pv.yml - persistent volume pra ser usado no docker registry
 
-    `kubectl create -f resources/kube-system-kube-registry-pv.yml`
+```bash
+$ kubectl create -f resources/kube-system-kube-registry-pv.yml
+```
     
 2º - resources/kube-system-kube-registry-pvc.yml - persistent volume claim
 
-    `kubectl create -f resources/kube-system-kube-registry-pvc.yml`
+    ```$ kubectl create -f resources/kube-system-kube-registry-pvc.yml```
     
 3º - resources/kube-system-kube-registry-rc.yml - docker registry replication controller
 
-    `kubectl create -f resources/kube-system-kube-registry-rc.yml`
+    ```$ kubectl create -f resources/kube-system-kube-registry-rc.yml`
     
 4º - resources/kube-system-kube-registry-svc.yml - service
 
-    `kubectl create -f resources/kube-system-kube-registry-svc.yml`
+    `$ kubectl create -f resources/kube-system-kube-registry-svc.yml`
     
 
 ####Nodes (Minions)

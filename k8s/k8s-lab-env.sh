@@ -1,4 +1,5 @@
 export KUBERNETES_PROVIDER=aws
+export KUBE_ENABLE_NODE_AUTOSCALER=true
 
 export KUBE_AWS_ZONE=us-west-1a
 export NUM_NODES=2

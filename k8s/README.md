@@ -56,9 +56,9 @@ Installation successful!
 
 ## Configuração do Cluster do Kubernetes
 
-ao POD é necessário rodar um kubectl create nos seguintes arquivos:
+Após a etapa de instalação é necessário seguir alguns passos para criação do kube-registry:
 
-###Persistent Volume###
+#### 1º Passo - Criar uma o persitent Volume, que será usado para armazenar as nossas images Docker.
 
 ####É possível criar via console ou através d cli `aws ec2`, conforme exemplo abaixo:
 

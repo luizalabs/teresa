@@ -75,7 +75,7 @@ ao POD é necessário rodar um kubectl create nos seguintes arquivos:
     "Attachments": [],
     "Tags": [],
     "VolumeType": "gp2",
-    "VolumeId": "	",
+    "VolumeId": "vol-c2515863",
     "State": "creating",
     "SnapshotId": null,
     "CreateTime": "YYYY-MM-DDTHH:MM:SS.000Z",

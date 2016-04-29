@@ -69,7 +69,8 @@ ao POD é necessário rodar um kubectl create nos seguintes arquivos:
 
 #####Output:
 
-```{
+```
+{
     "AvailabilityZone": "us-east-1a",
     "Attachments": [],
     "Tags": [],
@@ -79,9 +80,10 @@ ao POD é necessário rodar um kubectl create nos seguintes arquivos:
     "SnapshotId": null,
     "CreateTime": "YYYY-MM-DDTHH:MM:SS.000Z",
     "Size": 100
-}```
-
-```aws ec2 create-tags --resources vol-c2515863 --tags Key=Name,Value=kube-system-kube-registry-pv Key=Project,Value=PaaS Key=Env,Value=Prod Key=Area,Value=Arquitetura Key=Role,Value=Prod Key=Env,Value=PersistentVolume Key=Team,Value=Arquitetura
+}
+```
+```
+aws ec2 create-tags --resources vol-c2515863 --tags Key=Name,Value=kube-system-kube-registry-pv Key=Project,Value=PaaS Key=Env,Value=Prod Key=Area,Value=Arquitetura Key=Role,Value=Prod Key=Env,Value=PersistentVolume Key=Team,Value=Arquitetura
 
 ```
 

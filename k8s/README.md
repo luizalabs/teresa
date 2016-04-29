@@ -198,3 +198,30 @@ $ kubectl create -f resources/kube-system-kube-registry-rc.yml
 $ kubectl create -f resources/kube-system-kube-registry-svc.yml
 ```
 
+Próximo passo é logar no master com o chave gerada para executar os comandos abaixo:
+
+```bash
+ mkdir -p /etc/kubernetes/addons/registry
+ cat > /etc/kubernetes/addons/registry/kube-system-kube-registry-svc.yaml << EOF_KUBE_REGISTRY
+> apiVersion: v1
+> kind: Service
+> metadata:
+>   name: kube-registry
+>   namespace: kube-system
+>   labels:
+>     k8s-app: kube-registry
+>     kubernetes.io/cluster-service: "true"
+>     kubernetes.io/name: "KubeRegistry"
+> spec:
+>   selector:
+>     k8s-app: kube-registry
+>   ports:
+>   - name: registry
+>     port: 5000
+>     protocol: TCP
+> EOF_KUBE_REGISTRY
+```
+**Este processo irá garantir que o serviço kube-registry estará sempre rodando.**
+
+
+

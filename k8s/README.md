@@ -225,6 +225,7 @@ EOF_KUBE_REGISTRY
 
 ## Ambiente 
 
+paas/k8s/topology/topology.jpg
 
 
 

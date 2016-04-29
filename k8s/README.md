@@ -10,7 +10,7 @@ export NODE_SIZE=m3.large
 export KUBE_ENABLE_NODE_PUBLIC_IP=true
 export KUBE_ENABLE_CLUSTER_REGISTRY=true
 export KUBERNETES_PROVIDER=aws
-export KUBE_ENABLE_NODE_AUTOSCALER=true
+export KUBE_ENABLE_NODE_AUTOSCALER=true```
 
     
 No script `k8s-lab-env.sh` a flag `KUBE_ENABLE_CLUSTER_REGISTRY=true` habilita o docker registry no cluster, mas para subir o POD do mesmo, é necessário criar um persistent volume e o persistent volume claim. 

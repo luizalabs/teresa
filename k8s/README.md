@@ -22,7 +22,7 @@ Na AWS usamos um *volume EBS*, falaremos mais no capítulo sobre configurações
 
 **k8s-lab-install.sh** - Este script carrega as variaveis de ambiente do script k8s-lab-env.sh (`source k8s-lab-env.sh`) e dispara o instalador do kubernetes.
 
-Este processo irá criar passar por 11 etapas, descritas abaixo:
+Este processo irá executar algumas etapas, descritas abaixo:
 
 1. Upload installation files to S3
 1. Create IAM roles

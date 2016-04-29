@@ -1,6 +1,6 @@
 ## Instalação do cluster do Kubernetes produção.##
 
-**k8s-lab-env.sh** - Variáveis de ambiente para configuram o cluster kubernetes na AWS na Região SA-EAST-1a com 5 nodes. É possível alterar este o número de nodes, editando o ASG(AutoScaling Group) criado automaticamente com o nome de **kubernetes-minion-group-sa-east-1a**.
+**k8s-lab-env.sh** - Variáveis de ambiente para configuram o cluster kubernetes na AWS na Região SA-EAST-1a com 5 nodes. É possível alterar o número de nodes, para isso, edite o ASG(AutoScaling Group) criado automaticamente com o nome de **kubernetes-minion-group-sa-east-1a**.
 
 ```
 export KUBE_AWS_ZONE=sa-east-1a

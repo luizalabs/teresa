@@ -223,5 +223,9 @@ EOF_KUBE_REGISTRY
 ```
 **Este processo irá garantir que o serviço kube-registry estará sempre rodando.**
 
+## Ambiente 
+
+
+
 
 

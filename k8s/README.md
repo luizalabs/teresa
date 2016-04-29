@@ -40,18 +40,18 @@ Este processo irá criar passar por 11 etapas, descritas abaixo:
 
 Ao final da execução, será exibido o endereço do Master e seus serviços. 
 
-    ```
-    Kubernetes master is running at https://52.67.9.216
-    Elasticsearch is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/elasticsearch-logging
-    Heapster is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/heapster
-    Kibana is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/kibana-logging
-    KubeDNS is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/kube-dns
-    kubernetes-dashboard is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/kubernetes-dashboard
-    Grafana is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/monitoring-grafana
-    InfluxDB is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/monitoring-influxdb
+```
+Kubernetes master is running at https://52.67.9.216
+Elasticsearch is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/elasticsearch-logging
+Heapster is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/heapster
+Kibana is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/kibana-logging
+KubeDNS is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/kube-dns
+kubernetes-dashboard is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/kubernetes-dashboard
+Grafana is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/monitoring-grafana
+InfluxDB is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/monitoring-influxdb
 
-    Installation successful!
-    ```
+Installation successful!
+```
 ----------
 
 

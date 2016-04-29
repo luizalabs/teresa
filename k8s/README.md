@@ -60,7 +60,7 @@ Após a etapa de instalação é necessário seguir alguns passos para criação
 
 #### 1º Passo - Criar uma o persitent Volume, que será usado para armazenar as nossas images Docker.
 
-####É possível criar via console ou através d cli `aws ec2`, conforme exemplo abaixo:
+É possível criar via console AWS ou através da cli `aws ec2`, conforme exemplo abaixo:
 
 #####Command:
 
@@ -85,30 +85,57 @@ Após a etapa de instalação é necessário seguir alguns passos para criação
 aws ec2 create-tags --resources vol-c2515863 --tags Key=Name,Value=kube-system-kube-registry-pv Key=Project,Value=PaaS Key=Env,Value=Prod Key=Area,Value=Arquitetura Key=Role,Value=Prod Key=Env,Value=PersistentVolume Key=Team,Value=Arquitetura
 
 ```
+Depois de criar o volume, é necessário adicionar o volumeID e o tamanho do disco no `storage:` no arquivo resources/kube-system-kube-registry-pv.yaml
 
-###Master
-Para cada um dos arquivos a chamada para o create será a mesma, exemplo:
+```
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: kube-system-kube-registry-pv
+  labels:
+    kubernetes.io/cluster-service: "true"
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteOnce
+  awsElasticBlockStore:
+    fsType: "ext4"
+    volumeID: vol-c2515863
+```
+Altere também o tamanho do disco no arquivo resources/kube-system-kube-registry-pvc.yaml.
+
+```
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: kube-registry-pvc
+  namespace: kube-system
+  labels:
+    kubernetes.io/cluster-service: "true"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+```
+
+Feito as alterações, prossiga na execução dos arquivos yaml abaixo:
 
 1º - resources/kube-system-kube-registry-pv.yml - persistent volume pra ser usado no docker registry
-
 ```bash
 $ kubectl create -f resources/kube-system-kube-registry-pv.yml
 ```
-    
 2º - resources/kube-system-kube-registry-pvc.yml - persistent volume claim
-
 ```bash
 $ kubectl create -f resources/kube-system-kube-registry-pvc.yml
 ```
-    
 3º - resources/kube-system-kube-registry-rc.yml - docker registry replication controller
-
 ```bash
 $ kubectl create -f resources/kube-system-kube-registry-rc.yml
 ```
-    
 4º - resources/kube-system-kube-registry-svc.yml - service
-
 ```bash
 $ kubectl create -f resources/kube-system-kube-registry-svc.yml
 ```

@@ -1,6 +1,6 @@
 ## Instalação do cluster do Kubernetes produção.##
 
-**k8s-lab-env.sh** - Variáveis de ambiente para configurar o cluster kubernetes na AWS na Região SA-EAST-1a com 5 nodes. É possível alterar o número de nodes depois do cluster criado, para isso, edite o ASG(AutoScaling Group) criado automaticamente com o nome de **kubernetes-minion-group-sa-east-1a**.
+**k8s-lab-env.sh** - Variáveis de ambiente para configurar o cluster kubernetes na AWS na Região SA-EAST-1a com 5 nodes. É possível alterar o número de nodes depois do cluster criado, para isso, edite o ASG(AutoScaling Group) gerado automaticamente com o nome de **kubernetes-minion-group-sa-east-1a**.
 
 ```
 export KUBE_AWS_ZONE=sa-east-1a
@@ -55,6 +55,35 @@ Installation successful!
 
 Foi criado uma chave ssh para conectar no master e nos nodes. Ela fica armazenada no diretório .ssh do HOME  do user que executou o `k8s-lab-install.sh`.
 O nome gerado é `~/.ssh/kube_aws_rsa `
+```
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpQIBAAKCAQEAyOevNNVGBC3RnMVhke3381p+WoFjJC1BNmvyTlHW0ozBwFnv
+lzTl6UhET9Tgy/ve3sbrbKUWH3YiPQLHUd31VGsdeEcjEytJowzKyTZJtl7nWRaZ
+fk9ShOuO/L8PD+l5DdlACawl5E8UdGsJDuR8xBNWgKw19UbAtZqY0+WSiyc1uaMw
+r01kI/8abpkRGpM27JRXo20/USaXCxMOpv8tOCct0S6BAyIgv4iMmZ+Ocjt065eG
+wISgtpLIx6w7bSk0IYmT6+hlnPmt8U60BZOwx0hZW/fKuSeY9VUKKMeOCEi1KwmE
+euxaSROSMOujUQJwdEvcOvmk/o40LLilTW/RkQIDAQABAoIBAHyhvb84z0aoZfCr
+QewVhEwjR18+BRLcQChSru6HNo1HZKq/IDLdTgN6IWak2Q+yIIBzRnkPsLmzv2m5
+34yZ9Sd5i76h4tBxeiz8MpDAbNoF5d8Odgo1iyuKNhn1LJLic4Zzz5YwhREtPbM6
+81OZywyYMoGAU7jlO4dtcIGDWXWYs4yq0unpK3cT6pxqj5kiL60BexJ9/fi1E32c
+X+5Dh/i+UT6AsRiuFq6dB6WmPvmTDoTON8bAz/Mye+zNRZKzHdu93T9pWTjeQUn5
+vCUfvWkLMrZl/kQA3oef8+SsOcSbrrB9yZSZylCIEmZVH1LMyKhOKMcWKds+UjEU
++DZPYAECgYEA8Jt53xaW7i3CselIj8mUB1/Eo5WBxsktsmt0RVdvbNwVrIc2A/Q2
+IQCq7Y9yNlgmm1fc1503O4oXeDkxNOctJxUv5VKoYsT4emuPTo8Fz1cQCCjTEGnK
+TnZGidm9D7qUJXJhjR3Iik7vFdJj+Z6SWoIjx5cIY7bhK6bQpF5f0yECgYEA1cH8
+ynbJELV1hYi1E5QvL9t88EbJAx4q/Raaq9NRWWs93zSzYMo3kFbe5DyQc2fYjULz
+OaJ+HWqG5/wjDsjtVpnthenoTmP/ORzMwdsgWhQu36WjijC+F/fc3FzxhItt6p6v
+dXwmIu2igLYiEtPpHMPFCe2YfYStc9K7UFpPoHECgYEA7VFc/qaoTdrC23pugKxh
+nnheWr8/VtPdh8smzrI0DBp0IkznATViImEnNtOy4llGExixkdXWwZouFf3LRBP0
+3ESwji9eOLVxJEZs/h5hq6WDAZlKvTirO4K7hoJGUXpFXz4Xa/oBcDH07gArbe1z
+C2SrZ9TXiIq8Q7Lwvf774yECgYEAhb8hGtWELQ49AFZvZla7x6f/3p+LuoWvxDfW
+g1hveBGf3v8slY0xgwC36frzLyJ03r5bTV6cpm83BgQ/M0sJJbyeX8HhdtseoG+i
+tlETRwmF4q3TS+3/oyOVb9Q/0f0jwz+S7WHGwugJW5uaaklpfHQJ35JobXEMzoG2
+bipz1CECgYEAigQqDceOycWnVQ6Mp1o8DJT3ghdVNPATn6Zt8W0ovC1Or2O7Os7S
+wovDdCFjWxpb9p0WwJp91BziXq+BlM1bTFxKVncS+tBgY6LBoIf+g2IFAVz26Fy8
+OBT0uOwl4UlKzzIXCGMNcuC2wsPb+I0gwkMHFfTR1+0QRYCwQBzAqHw=
+-----END RSA PRIVATE KEY-----
+```
 
 No processo de criação também é gerado um arquivo de configuração ( `~/.kube/config` ) contendo informações dos certificado, users e password do cluster.
 

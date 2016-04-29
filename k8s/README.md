@@ -35,6 +35,7 @@ Este processo irá executar algumas etapas, descritas abaixo:
 1. Create and attach persistent volume to master
 1. Create master instance
 1. Create node instances
+
 * Mandatoriamente o Kubernetes usa um VPC com bloco 172.20.0.0/16 e um SUBNET 172.20.0.0/24, caso você já tenha criado estes recursos, você precisará exportar as variáveis VPC_ID e SUBNET_ID com os ids dos mesmos.
 
 Ao final da execução, será exibido o endereço do Master e seus serviços. 

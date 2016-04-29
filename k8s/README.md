@@ -87,7 +87,6 @@ OBT0uOwl4UlKzzIXCGMNcuC2wsPb+I0gwkMHFfTR1+0QRYCwQBzAqHw=
 
 No processo de criação também é gerado um arquivo de configuração ( `~/.kube/config` ) contendo informações dos certificado, users e password do cluster.
 
-
 ----------
 
 ## Configuração do Cluster do Kubernetes
@@ -113,7 +112,6 @@ kubernetes-dashboard is running at https://k8s.a.luizalabs.com/api/v1/proxy/name
 Grafana is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/monitoring-grafana
 InfluxDB is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/monitoring-influxdb
 ```
-
 
 
 Após a etapa de instalação e configuração, é necessário seguir alguns passos para criação do kube-registry:
@@ -147,7 +145,7 @@ aws ec2 create-tags --resources vol-c2515863 --tags Key=Name,Value=kube-system-k
 ```
 Depois de criar o volume, é necessário adicionar o volumeID e o tamanho do disco no `storage:` no arquivo resources/kube-system-kube-registry-pv.yaml
 
-```
+```yaml
 kind: PersistentVolume
 apiVersion: v1
 metadata:
@@ -165,7 +163,7 @@ spec:
 ```
 Altere também o tamanho do disco no arquivo resources/kube-system-kube-registry-pvc.yaml.
 
-```
+```yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -199,7 +197,4 @@ $ kubectl create -f resources/kube-system-kube-registry-rc.yml
 ```bash
 $ kubectl create -f resources/kube-system-kube-registry-svc.yml
 ```
-    
 
-####Nodes (Minions)
-resources/kube-registry-proxy.yaml - Este arquivo precisa estar no diretório /etc/kubernetes/manifests para criação automática do pod que irá expor a porta :5000 do registry.

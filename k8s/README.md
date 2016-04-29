@@ -52,11 +52,42 @@ InfluxDB is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/s
 
 Installation successful!
 ```
+
+Foi criado uma chave ssh para conectar no master e nos nodes. Ela fica armazenada no diretório .ssh do HOME  do user que executou o `k8s-lab-install.sh`.
+O nome gerado é `~/.ssh/kube_aws_rsa `
+
+No processo de criação também é gerado um arquivo de configuração ( `~/.kube/config` ) contendo informações dos certificado, users e password do cluster.
+
+
 ----------
 
 ## Configuração do Cluster do Kubernetes
 
-Após a etapa de instalação é necessário seguir alguns passos para criação do kube-registry:
+Para acessar o kubernetes é necessário configurar as credenciais de acesso. Conforme comandos abaixo:
+
+```
+kubectl config set-cluster luizalabs-aws-cluster --server=https://k8s.a.luizalabs.com --insecure-skip-tls-verify=true
+kubectl config set-credentials luizalabs-aws-cluster-admin --username=admin --password=AUHK0P1NMAtMKEK6
+kubectl config set-context luizalabs-aws-cluster-context --cluster=luizalabs-aws-cluster --user=luizalabs-aws-cluster-admin
+kubectl config use-context luizalabs-aws-cluster-context
+```
+
+Feito isso execute `kubectl cluster-info`, será mostrado o status de execução dos serviços do cluster kubernetes.
+```
+Kubernetes master is running at https://k8s.a.luizalabs.com
+Elasticsearch is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/elasticsearch-logging
+Heapster is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/heapster
+Kibana is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/kibana-logging
+KubeDNS is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/kube-dns
+KubeRegistry is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/kube-registry
+kubernetes-dashboard is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/kubernetes-dashboard
+Grafana is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/monitoring-grafana
+InfluxDB is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/monitoring-influxdb
+```
+
+
+
+Após a etapa de instalação e configuração, é necessário seguir alguns passos para criação do kube-registry:
 
 #### 1º Passo - Criar uma o persitent Volume, que será usado para armazenar as nossas images Docker.
 

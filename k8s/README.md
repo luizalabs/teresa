@@ -2,8 +2,7 @@
 
 **k8s-lab-env.sh** - Variáveis de ambiente para configuram o cluster kubernetes na AWS na Região SA-EAST-1a com 5 nodes. É possível alterar este o número de nodes, editando o ASG(AutoScaling Group) criado automaticamente com o nome de **kubernetes-minion-group-sa-east-1a**.
 
-```
-export KUBE_AWS_ZONE=sa-east-1a
+```export KUBE_AWS_ZONE=sa-east-1a
 export AWS_S3_REGION=sa-east-1
 export NUM_NODES=5
 export MASTER_SIZE=m3.medium
@@ -12,7 +11,6 @@ export KUBE_ENABLE_NODE_PUBLIC_IP=true
 export KUBE_ENABLE_CLUSTER_REGISTRY=true
 export KUBERNETES_PROVIDER=aws
 export KUBE_ENABLE_NODE_AUTOSCALER=true
-```
 
     
 No script `k8s-lab-env.sh` a flag `KUBE_ENABLE_CLUSTER_REGISTRY=true` habilita o docker registry no cluster, mas para subir o POD do mesmo, é necessário criar um persistent volume e o persistent volume claim. 

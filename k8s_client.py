@@ -89,7 +89,7 @@ class K8sClient(object):
         print '--> do http request'
 
         headers = self.headers.copy()
-        headers['content-type'] = content_type.value
+        headers['content-type'] = content_type
 
         url = self.base_url + url
 
@@ -109,8 +109,6 @@ class K8sClient(object):
         return self.request('POST', **re)
 
 
-
-
 # kubernetes config
 k8s = K8sClient(base_url='https://52.9.192.117', user='admin', password='3J4oFyDXfI3VQhJ5', ssl_verify=False)
 
@@ -126,147 +124,8 @@ deployment = k8s.create(Deployment,
     #     {'name':'meu nome 2', 'image':'minhaimagem 2', 'ports':{'tcp': [80, 8080], 'udp':8081}}
     # ]
     containers=[
-        {'name':'meu container nginx', 'image':'nginx;latest', 'ports':[8080]}
+        {'name':'meu container nginx', 'image':'nginx:latest', 'ports':[8080]}
     ]
 )
 
 print deployment
-
-
-
-
-
-
-
-
-# def http_request(url, verb='GET', payload=None, contentType=None):
-#     print '--> do http request'
-
-#     if contentType != None:
-#         headers['content-type'] = contentType
-
-#     response = requests.request(verb, url, data=payload, headers=headers, verify=False)
-#     print '--> http status code: %s' % response.status_code
-#     return response
-
-# def create_deployment(namespace, name, replicas, labels_app, container_name, container_image, container_port):
-#     """
-#     Cria um novo deployment
-
-#     http://kubernetes.io/docs/user-guide/deployments/
-#     """
-#     url = base_url + '/apis/extensions/v1beta1/namespaces/%s/deployments' % namespace
-
-#     template = Template(open('templates/deployment.yaml').read())
-
-#     payload = template.render(name=name, 
-#         replicas=replicas, labels_app=labels_app, container_name=container_name,
-#         container_image=container_image, container_port=container_port)
-
-#     response = http_request(url, 'POST', payload)
-
-#     # TODO: Verificar status code e emitir erro
-#     # response.status_code = 409 -> Quando já existe o deployment
-#     # print response.status_code
-
-#     return json.loads(response.text)
-
-# def get_deployments(namespace):
-#     """
-#     Retorna uma lista de deployments do namespace
-#     """
-#     url = base_url + '/apis/extensions/v1beta1/namespaces/%s/deployments' % namespace
-
-#     response = http_request(url)
-
-#     # TODO: check http status
-#     # response.status_code
-#     return json.loads(response.text)
-
-
-# def get_deployment(namespace, name):
-#     """
-#     Retorna o deployment pelo nome
-#     """
-#     url = base_url + '/apis/extensions/v1beta1/namespaces/%s/deployments/%s' % (namespace, name)
-
-#     response = http_request(url)
-
-#     # TODO: check http status
-#     # response.status_code
-#     return json.loads(response.text)
-
-# def get_deployment_scale(namespace, name):
-#     """
-#     Retorna o scale do deployment (informações referente a replicas)
-#     """
-#     url = base_url + '/apis/extensions/v1beta1/namespaces/%s/deployments/%s/scale' % (namespace, name)
-
-#     response = http_request(url)
-
-#     return json.loads(response.text)
-
-# def update_deployment_replicas(namespace, name, replicas):
-#     """
-#     Atualiza a quantidade de replicas de um deploy
-#     """
-#     url = base_url + u'/apis/extensions/v1beta1/namespaces/{}/deployments/{}'.format(namespace, name)
-
-#     payload = {
-#         "spec": {
-#             "replicas": replicas
-#         }
-#     }
-
-#     response = http_request(url, 'PATCH', json.dumps(payload), 'application/merge-patch+json')
-
-#     return json.loads(response.text)
-
-
-# def create_service(namespace, name, selector_app_name, port, target_port):
-#     """
-#     Cria um novo serviço.
-#     O parâmetro selector_app_name é referente ao label que será utilizado para buscar o deployment ou pod que será exposto
-#     """
-
-#     url = base_url + u'/api/v1/namespaces/{}/services'.format(namespace)
-
-#     template = Template(open('templates/service.yaml').read())
-
-#     # TODO: http://kubernetes.io/docs/user-guide/services/#multi-port-services
-
-#     payload = template.render(
-#         name=name, selector_app_name=selector_app_name,
-#         port=port, target_port=target_port
-#     )
-
-#     response = http_request(url, 'POST', payload)
-
-#     return json.loads(response.text)
-
-
-# ------------------------------
-
-# Cria deployment
-# d = create_deployment(
-#         namespace='default',
-#         name='nginx-teste',
-#         replicas=1,
-#         labels_app='nginx-label',
-#         container_name='nginx',
-#         container_image='nginx:1.7.9',
-#         container_port=80)
-# print d
-
-# Get dos deployments
-# print get_deployments('default')
-
-# print get_deployment('default', 'nginx-teste')
-
-# print get_deployment_scale('default', 'nginx-teste')
-
-# print update_deployment_replicas('default', 'nginx-teste', 1)
-
-# print create_service('default', 'nginx-service-teste', 'nginx-label', 8081, 80)
-
-

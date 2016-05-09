@@ -225,6 +225,7 @@ EOF_KUBE_REGISTRY
 
 ## Ambiente 
 
+![Kubernetes-Topology](https://github.com/luizalabs/paas/blob/master/k8s/topology/topology.jpg)
 
 
 

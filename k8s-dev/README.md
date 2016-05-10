@@ -1,17 +1,18 @@
-## Instalação do cluster do Kubernetes produção.##
+## Instalação do cluster do Kubernetes Desenvolvimento.##
 
-**k8s-lab-env.sh** - Variáveis de ambiente para configurar o cluster kubernetes na AWS na Região SA-EAST-1a com 5 nodes. É possível alterar o número de nodes depois do cluster criado, para isso, edite o ASG(AutoScaling Group) gerado automaticamente com o nome de **kubernetes-minion-group-sa-east-1a**.
+**k8s-lab-env.sh** - Variáveis de ambiente para configurar o cluster kubernetes na AWS na Região US-EAST-1a com 2 nodes. É possível alterar o número de nodes depois do cluster criado, para isso, edite o ASG(AutoScaling Group) gerado automaticamente com o nome de **kubernetes-minion-group-us-east-1a**.
 
 ```
-export KUBE_AWS_ZONE=sa-east-1a
-export AWS_S3_REGION=sa-east-1
-export NUM_NODES=5
+export KUBE_AWS_ZONE=us-east-1a
+export AWS_S3_REGION=us-east-1
+export NUM_NODES=2
 export MASTER_SIZE=m3.medium
 export NODE_SIZE=m3.large
 export KUBE_ENABLE_NODE_PUBLIC_IP=true
 export KUBE_ENABLE_CLUSTER_REGISTRY=true
 export KUBERNETES_PROVIDER=aws
 export KUBE_ENABLE_NODE_AUTOSCALER=true
+
 ```
 
     
@@ -41,14 +42,15 @@ Mandatoriamente o Kubernetes usa um VPC com bloco 172.20.0.0/16 e um SUBNET 172.
 Ao final da execução, será exibido o endereço do Master e seus serviços. 
 
 ```
-Kubernetes master is running at https://52.67.9.216
-Elasticsearch is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/elasticsearch-logging
-Heapster is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/heapster
-Kibana is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/kibana-logging
-KubeDNS is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/kube-dns
-kubernetes-dashboard is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/kubernetes-dashboard
-Grafana is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/monitoring-grafana
-InfluxDB is running at https://52.67.9.216/api/v1/proxy/namespaces/kube-system/services/monitoring-influxdb
+Kubernetes master is running at https://52.202.226.173
+Elasticsearch is running at https://52.202.226.173/api/v1/proxy/namespaces/kube-system/services/elasticsearch-logging
+Heapster is running at https://52.202.226.173/api/v1/proxy/namespaces/kube-system/services/heapster
+Kibana is running at https://52.202.226.173/api/v1/proxy/namespaces/kube-system/services/kibana-logging
+KubeDNS is running at https://52.202.226.173/api/v1/proxy/namespaces/kube-system/services/kube-dns
+KubeRegistry is running at https://52.202.226.173/api/v1/proxy/namespaces/kube-system/services/kube-registry
+kubernetes-dashboard is running at https://52.202.226.173/api/v1/proxy/namespaces/kube-system/services/kubernetes-dashboard
+Grafana is running at https://52.202.226.173/api/v1/proxy/namespaces/kube-system/services/monitoring-grafana
+InfluxDB is running at https://52.202.226.173/api/v1/proxy/namespaces/kube-system/services/monitoring-influxdb
 
 Installation successful!
 ```
@@ -57,32 +59,33 @@ Foi criado uma chave ssh para conectar no master e nos nodes. Ela fica armazenad
 O nome gerado é `~/.ssh/kube_aws_rsa `
 ```
 -----BEGIN RSA PRIVATE KEY-----
-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
+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
 -----END RSA PRIVATE KEY-----
+
 ```
 
 No processo de criação também é gerado um arquivo de configuração ( `~/.kube/config` ) contendo informações dos certificado, users e password do cluster.
@@ -94,23 +97,24 @@ No processo de criação também é gerado um arquivo de configuração ( `~/.ku
 Para acessar o kubernetes é necessário configurar as credenciais de acesso. Conforme comandos abaixo:
 
 ```
-kubectl config set-cluster luizalabs-aws-cluster --server=https://k8s.a.luizalabs.com --insecure-skip-tls-verify=true
-kubectl config set-credentials luizalabs-aws-cluster-admin --username=admin --password=AUHK0P1NMAtMKEK6
-kubectl config set-context luizalabs-aws-cluster-context --cluster=luizalabs-aws-cluster --user=luizalabs-aws-cluster-admin
-kubectl config use-context luizalabs-aws-cluster-context
+kubectl config set-cluster dev-aws-cluster --server=https://k8s-dev.a.luizalabs.com --insecure-skip-tls-verify=true
+kubectl config set-credentials dev-aws-cluster-admin --username=admin --password=VOpgP0Ggnty5mLcq
+kubectl config set-context dev --cluster=dev-aws-cluster --user=dev-aws-cluster-admin
+kubectl config use-context dev
 ```
 
 Feito isso execute `kubectl cluster-info`, será mostrado o status de execução dos serviços do cluster kubernetes.
 ```
-Kubernetes master is running at https://k8s.a.luizalabs.com
-Elasticsearch is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/elasticsearch-logging
-Heapster is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/heapster
-Kibana is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/kibana-logging
-KubeDNS is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/kube-dns
-KubeRegistry is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/kube-registry
-kubernetes-dashboard is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/kubernetes-dashboard
-Grafana is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/monitoring-grafana
-InfluxDB is running at https://k8s.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/monitoring-influxdb
+Kubernetes master is running at https://k8s-dev.a.luizalabs.com
+Elasticsearch is running at https://k8s-dev.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/elasticsearch-logging
+Heapster is running at https://k8s-dev.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/heapster
+Kibana is running at https://k8s-dev.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/kibana-logging
+KubeDNS is running at https://k8s-dev.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/kube-dns
+KubeRegistry is running at https://k8s-dev.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/kube-registry
+kubernetes-dashboard is running at https://k8s-dev.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/kubernetes-dashboard
+Grafana is running at https://k8s-dev.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/monitoring-grafana
+InfluxDB is running at https://k8s-dev.a.luizalabs.com/api/v1/proxy/namespaces/kube-system/services/monitoring-influxdb
+
 ```
 
 
@@ -122,7 +126,7 @@ Após a etapa de instalação e configuração, é necessário seguir alguns pas
 
 #####Command:
 
-```aws ec2 create-volume --size 100 --region sa-east-1 --availability-zone sa-east-1a --volume-type gp2```
+```aws ec2 create-volume --size 100 --region us-east-1 --availability-zone us-east-1a --volume-type gp2```
 
 #####Output:
 
@@ -132,7 +136,7 @@ Após a etapa de instalação e configuração, é necessário seguir alguns pas
     "Attachments": [],
     "Tags": [],
     "VolumeType": "gp2",
-    "VolumeId": "vol-c2515863",
+    "VolumeId": "vol-890ddf22",
     "State": "creating",
     "SnapshotId": null,
     "CreateTime": "YYYY-MM-DDTHH:MM:SS.000Z",
@@ -140,7 +144,7 @@ Após a etapa de instalação e configuração, é necessário seguir alguns pas
 }
 ```
 ```
-aws ec2 create-tags --resources vol-c2515863 --tags Key=Name,Value=kube-system-kube-registry-pv Key=Project,Value=PaaS Key=Env,Value=Prod Key=Area,Value=Arquitetura Key=Role,Value=Prod Key=Env,Value=PersistentVolume Key=Team,Value=Arquitetura
+aws ec2 create-tags --resources vol-890ddf22 --tags Key=Name,Value=kube-system-kube-registry-pv Key=Project,Value=PaaS Key=Env,Value=Dev Key=Area,Value=Arquitetura Key=Role,Value=PersistentVolume Key=Team,Value=Arquitetura
 
 ```
 Depois de criar o volume, é necessário adicionar o volumeID e o tamanho do disco no `storage:` no arquivo resources/kube-system-kube-registry-pv.yaml
@@ -159,7 +163,7 @@ spec:
     - ReadWriteOnce
   awsElasticBlockStore:
     fsType: "ext4"
-    volumeID: vol-c2515863
+    volumeID: vol-890ddf22
 ```
 Altere também o tamanho do disco no arquivo resources/kube-system-kube-registry-pvc.yaml.
 
@@ -225,7 +229,7 @@ EOF_KUBE_REGISTRY
 
 ## Ambiente 
 
-![Kubernetes-Topology](https://github.com/luizalabs/paas/blob/master/k8s/topology/topology.jpg)
+![Kubernetes-Topology](https://github.com/luizalabs/paas/blob/master/k8s-dev/topology/kubernetes-aws-dev.jpg)
 
 
 

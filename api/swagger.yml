@@ -1,0 +1,655 @@
+---
+swagger: "2.0"
+info:
+  description: The Teresa PaaS API
+  title: Teresa API
+  version: 0.0.1
+consumes:
+- application/com.luizalabs.teresa.v1+json
+produces:
+- application/com.luizalabs.teresa.v1+json
+schemes:
+- http
+basePath: /v1
+paths:
+  /teams:
+    get:
+      summary: Get teams
+      description: Find and filter teams
+      tags:
+        - teams
+      operationId: getTeams
+      parameters:
+        - $ref: "#/parameters/since"
+        - $ref: "#/parameters/limit"
+      responses:
+        200:
+          description: Get teams
+          schema:
+            allOf:
+              - $ref: "#/definitions/Pagination"
+              - properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/definitions/Team"
+        400:
+          description: User sent a bad request
+          schema:
+            $ref: "#/definitions/BadRequest"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        404:
+          description: Resource not found
+          schema:
+            $ref: "#/definitions/NotFound"
+        default:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+    post:
+      summary: Create teams
+      description: Create a team.
+      tags:
+        - teams
+      operationId: createTeam
+      parameters:
+        - name: body
+          in: body
+          schema:
+            $ref: "#/definitions/Team"
+      responses:
+        201:
+          description: Newly created team
+          schema:
+            $ref: "#/definitions/Team"
+        400:
+          description: User sent a bad request
+          schema:
+            $ref: "#/definitions/BadRequest"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        default:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+  /teams/{team_id}:
+    get:
+      summary: Get team details
+      description: Get the details of a specific team
+      tags:
+        - teams
+      operationId: getTeamDetail
+      parameters:
+        - $ref: "#/parameters/teamId"
+      responses:
+        200:
+          description: Team details
+          schema:
+            $ref: "#/definitions/Team"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+  /teams/{team_id}/apps:
+    get:
+      summary: Get team apps
+      description: Get team apps
+      tags:
+        - apps
+      operationId: getApps
+      parameters:
+        - $ref: "#/parameters/teamId"
+        - $ref: "#/parameters/since"
+        - $ref: "#/parameters/limit"
+      responses:
+        200:
+          description: Apps
+          schema:
+            allOf:
+              - $ref: "#/definitions/Pagination"
+              - properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/definitions/App"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+    post:
+      summary: Create an app
+      description: Create an app
+      tags:
+        - apps
+      operationId: createApp
+      parameters:
+        - $ref: "#/parameters/teamId"
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/App"
+      responses:
+        201:
+          description: Newly created app
+          schema:
+            $ref: "#/definitions/App"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+  /teams/{team_id}/apps/{app_id}:
+    get:
+      summary: Get app details
+      description: Get app details
+      tags:
+        - apps
+      operationId: getAppDetails
+      parameters:
+        - $ref: "#/parameters/teamId"
+        - $ref: "#/parameters/appId"
+      responses:
+        200:
+          description: App details
+          schema:
+            $ref: "#/definitions/AppProperties"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+    put:
+      summary: Update app
+      description: Update app properties, such as number of replicas and other things.
+      tags:
+        - apps
+      operationId: updateApp
+      parameters:
+        - $ref: "#/parameters/appId"
+        - $ref: "#/parameters/teamId"
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/AppProperties"
+      responses:
+        200:
+          description: App properties
+          schema:
+            $ref: "#/definitions/AppProperties"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+  /teams/{team_id}/apps/{app_id}/deployments:
+    get:
+      summary: Get app deployments
+      description: Get deployments an app may have
+      tags:
+        - deployments
+      operationId: getDeployments
+      parameters:
+        - $ref: "#/parameters/teamId"
+        - $ref: "#/parameters/appId"
+        - $ref: "#/parameters/since"
+        - $ref: "#/parameters/limit"
+      responses:
+        200:
+          description: Get app deployments
+          schema:
+            allOf:
+              - $ref: "#/definitions/Pagination"
+              - properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/definitions/Deployment"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+    post:
+      summary: Create a new deploy
+      description: Create a deploy for an app
+      tags:
+        - deployments
+      operationId: createDeployment
+      parameters:
+        - $ref: "#/parameters/teamId"
+        - $ref: "#/parameters/appId"
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/Deployment"
+      consumes:
+        - multipart/form-data
+      responses:
+        200:
+          description: Deployment
+          schema:
+            $ref: "#/definitions/Deployment"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+  /users:
+    get:
+      summary: Get users
+      description: Find and filter users
+      tags:
+        - users
+      operationId: getUsers
+      parameters:
+        - $ref: "#/parameters/since"
+        - $ref: "#/parameters/limit"
+      responses:
+        200:
+          description: Get users
+          schema:
+            allOf:
+              - $ref: "#/definitions/Pagination"
+              - properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/definitions/User"
+        400:
+          description: User sent a bad request
+          schema:
+            $ref: "#/definitions/BadRequest"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        404:
+          description: Resource not found
+          schema:
+            $ref: "#/definitions/NotFound"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+    post:
+      summary: Create user
+      description: Create a user.
+      tags:
+        - users
+      operationId: createUser
+      parameters:
+        - name: body
+          in: body
+          schema:
+            $ref: "#/definitions/User"
+      responses:
+        201:
+          description: Newly created user
+          schema:
+            $ref: "#/definitions/User"
+        400:
+          description: User sent a bad request
+          schema:
+            $ref: "#/definitions/BadRequest"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+  /users/{user_id}:
+    get:
+      summary: Get user details
+      description: Get user details
+      tags:
+        - users
+      operationId: getUserDetails
+      parameters:
+        - $ref: "#/parameters/userId"
+        - $ref: "#/parameters/since"
+        - $ref: "#/parameters/limit"
+      responses:
+        200:
+          description: User details
+          schema:
+            $ref: "#/definitions/User"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        404:
+          description: Resource not found
+          schema:
+            $ref: "#/definitions/NotFound"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+  /users/me:
+    get:
+      summary: Get logged user info
+      description: Get info on user of current session, if any
+      tags:
+        - users
+      operationId: getCurrentUser
+      responses:
+        200:
+          description: User info
+          schema:
+            $ref: "#/definitions/User"
+        404:
+          description: Resource not found
+          schema:
+            $ref: "#/definitions/NotFound"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+  /login:
+    get:
+      summary: Log the user
+      description: User login
+      tags:
+        - auth
+      operationId: userLogin
+      responses:
+        200:
+          description: User info
+          schema:
+            $ref: "#/definitions/User"
+        403:
+          description: Forbidden
+          schema:
+            $ref: "#/definitions/Forbidden"
+        default:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+  /swagger:
+    x-swagger-pipe: swagger_raw
+parameters:
+  appId:
+    name: app_id
+    description: App ID
+    in: path
+    type: string
+    required: true
+  teamId:
+    name: team_id
+    description: Team ID
+    in: path
+    type: string
+    required: true
+  userId:
+    name: user_id
+    description: User ID
+    in: path
+    type: string
+    required: true
+  since:
+    name: since
+    description: Offset
+    in: query
+    type: integer
+    format: int64
+    default: 0
+  limit:
+    name: limit
+    description: Limit
+    in: query
+    type: integer
+    format: int64
+    default: 20
+definitions:
+  Pagination:
+    properties:
+      pagination:
+        properties:
+          self:
+            type: string
+          nextUrl:
+            type: string
+          previousUrl:
+            type: string
+          size:
+            type: integer
+          length:
+            type: integer
+  Team:
+    required:
+      - name
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      members:
+        type: array
+        items:
+          $ref: "#/definitions/User"
+  User:
+    required:
+      - name
+      - email
+    properties:
+      id:
+        type: integer
+        format: int32
+      name:
+        type: string
+      email:
+        type: string
+      #teams: # FIXME: https://github.com/go-swagger/go-swagger/issues/537
+      #  type: array
+      #  items:
+      #    $ref: "#/definitions/Team"
+  App:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+      name:
+        type: string
+      deployList:
+        type: array
+        items:
+          $ref: "#/definitions/Deployment"
+  AppProperties:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+      name:
+        type: string
+      replicas:
+        type: integer
+        format: int32
+        default: 2
+  Deployment:
+    required:
+      - description
+    properties:
+      description:
+        type: string
+      replicas:
+        type: integer
+        default: 2
+      when:
+        type: string
+        format: date-time
+      author:
+        $ref: "#/definitions/User"
+  item:
+    type: object
+    required:
+      - team
+      - name
+      - app_name
+    properties:
+      team:
+        type: string
+        minLength: 3
+      name:
+        type: string
+        minLength: 5
+      app_name:
+        type: string
+        minLength: 5
+      replicas:
+        type: number
+        default: 2
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int64
+      message:
+        type: string
+  InternalServerError:
+    type: object
+    required:
+      - message
+    properties:
+      code:
+        type: integer
+        format: int64
+        default: 500
+      message:
+        type: string
+        default: Internal Server Error
+  NotFound:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int64
+        default: 404
+      message:
+        type: string
+        default: Not Found
+  BadRequest:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int64
+        default: 400
+      message:
+        type: string
+        default: Bad Request
+  Unauthorized:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int64
+        default: 401
+      message:
+        type: string
+        default: Unauthorized
+  Forbidden:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int64
+        default: 403
+      message:
+        type: string
+        default: Forbidden

@@ -170,7 +170,7 @@ spec:
     - ReadWriteOnce
   awsElasticBlockStore:
     fsType: "ext4"
-    volumeID: vol-c2515863
+    volumeID: vol-9107e531
 ```
 Altere também o tamanho do disco no arquivo resources/kube-system-kube-registry-pvc.yaml.
 

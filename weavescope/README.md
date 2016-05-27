@@ -1,16 +1,16 @@
-Instalaç WeaveScope no Kubernetes
+Instalação WeaveScope no Kubernetes
 =
 ---
-**Antes de começ**
+**Antes de começar**
 
-        O cluster deve suportar DaemonSets. DaemonSets sãnecessáas para garantir que cada nóbernetes pode executar um **Scope probe**.
+        O cluster deve suportar DaemonSets. DaemonSets são necessários para garantir que cada nó do kubernetes possa executar um **Scope probe**.
 
-        Para habilitar DaemonSets em um cluster existente, adicione o `--runtime-config=extensions/v1beta1/daemonsets=true` argumento para a configuraç do apiserver. Isto éormalmente encontrado no /etc/kubernetes/manifest/kube-apiserver.manifestfile apósso, reinicie o serviç
-> **Note:** Se vocêstiver criando um novo cluster, defina KUBE_ENABLE_DAEMONSETS = true na configuraç do seu cluster.
+        Para habilitar DaemonSets em um cluster existente, adicione o `--runtime-config=extensions/v1beta1/daemonsets=true` argumento para a configuração do apiserver. Isto é normalmente encontrado no /etc/kubernetes/manifest/kube-apiserver.manifestfile após isso, reinicie o serviço
+> **Note:** Se você estiver criando um novo cluster, defina KUBE_ENABLE_DAEMONSETS = true nas variáveis de ambiente do seu cluster.
 
-**Instalaç**
+**Instalação**
 
-        Ãecomendado executar a instalaç do weavescope, atravé usando a cli kubectl, conforme mostrado abaixo.
+        Recomendado executar a instalação do weavescope, através usando a cli kubectl, conforme mostrado abaixo.
 
 ```
 kubectl create -f 'https://scope.weave.works/launch/k8s/weavescope.yaml' --validate=false --namespace=kube-infra
@@ -102,13 +102,16 @@ items:
 
 ```
  **kubectl get pods | grep weave**
-weavescope-app-s5iqf                   1/1       Running   0          1d
-weavescope-probe-ea7xa                 1/1       Running   0          1d
-weavescope-probe-hkks7                 1/1       Running   0          1d
-```
-> **Note:** Apólguns segundos o status deve estar em "**Running**".
+ kubectl get pods --namespace=kube-infra | grep weave
+weavescope-app-idui1           1/1       Running   0          1d
+weavescope-probe-04ky9         1/1       Running   0          1d
+weavescope-probe-ewjmv         1/1       Running   0          1d
+weavescope-probe-gjyql         1/1       Running   0          1d
 
-Para termos acesso externo com autenticaç e SSL, serásado um serviçcom NGINX fazendo Reverse Proxy para o WeaveScope.
+```
+> **Note:** Após alguns segundos o status deve estar em "**Running**".
+
+Para termos acesso externo com autenticação e SSL, usaremos um serviço com NGINX fazendo Reverse Proxy para o WeaveScope.
 
 
 ```

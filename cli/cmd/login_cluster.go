@@ -13,7 +13,6 @@ var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "login in the current cluster",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// TODO: descomentar este... ficou assim apenas para teste
 		if userNameFlag == "" {
 			return newInputError("User must be provided")
 		}
@@ -42,7 +41,7 @@ func login(user string, password string) error {
 		return errRead
 	}
 
-	clusterName, errClusterName := getCurrentClusterName()
+	clusterName, errClusterName := getCurrentCluster()
 	if errClusterName != nil {
 		return errClusterName
 	}
@@ -62,8 +61,8 @@ func login(user string, password string) error {
 	return nil
 }
 
-// TODO: refactory to resuse the request
-func getLoginToken(user string, password string) (string, error) {
+// TODO: refactory to reuse the request
+func getLoginToken(user string, password string) (token string, err error) {
 	if user == "" || password == "" {
 		return "", newSysError("Name and password must be provided")
 	}

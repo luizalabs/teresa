@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -32,11 +33,14 @@ type configFile struct {
 	CurrentCluster string                   `yaml:"current_cluster"`
 }
 
-func readConfigFile(fileName string) (*configFile, error) {
+func readConfigFile(fileName string) (config *configFile, err error) {
 	yamlFileContent, errRead := ioutil.ReadFile(cfgFile)
-
 	if errRead != nil {
-		lgr.WithError(errRead).Debug("Error loading the config file")
+		if os.IsNotExist(errRead) {
+			lgr.WithError(errRead).WithField("fileName", fileName).Debug("File not found when trying to read the config file")
+		} else {
+			lgr.WithError(errRead).Error("Error loading the config file")
+		}
 		return nil, errRead
 	}
 
@@ -49,7 +53,7 @@ func readConfigFile(fileName string) (*configFile, error) {
 	return &conf, nil
 }
 
-func readOrCreateConfigFile(fileName string) (*configFile, error) {
+func readOrCreateConfigFile(fileName string) (config *configFile, err error) {
 	conf, err := readConfigFile(cfgFile)
 	if err == nil {
 		return conf, nil
@@ -68,7 +72,7 @@ func readOrCreateConfigFile(fileName string) (*configFile, error) {
 	return conf, nil
 }
 
-func marshalConfigFile(config *configFile) (*[]byte, error) {
+func marshalConfigFile(config *configFile) (content *[]byte, err error) {
 	d, err := yaml.Marshal(&config)
 	if err != nil {
 		lgr.WithError(err).WithField("config", config).Error("Error marshaling the config file")
@@ -81,17 +85,18 @@ func marshalConfigFile(config *configFile) (*[]byte, error) {
 func writeConfigFile(fileName string, config *configFile) error {
 	// TODO: implement validate before writing
 	lgr.WithField("fileName", fileName).WithField("config", *config).Debug("Marshaling the config file to save")
-	d, err := marshalConfigFile(config)
-	if err != nil {
-		return err
+	d, errMarshal := marshalConfigFile(config)
+	if errMarshal != nil {
+		return errMarshal
 	}
 
 	// get config basepath
 	p := filepath.Dir(fileName)
-	if _, err := os.Stat(p); err != nil {
-		if !os.IsNotExist(err) {
-			lgr.WithError(err).WithField("directory", p).Error("Failed to check if the directory exists")
-			return err
+	dirStat, errStats := os.Stat(p)
+	if errStats != nil {
+		if !os.IsNotExist(errStats) {
+			lgr.WithError(errStats).WithField("directory", p).Error("Failed to check if the directory exists")
+			return errStats
 		}
 
 		lgr.WithField("directory", p).Debug("Config basepath not found... creating")
@@ -99,6 +104,9 @@ func writeConfigFile(fileName string, config *configFile) error {
 			lgr.WithError(errMkDir).WithField("directory", p).Error("Failed to create the directory")
 			return errMkDir
 		}
+	} else if !dirStat.IsDir() {
+		lgr.WithField("directory", p).Error("Path exists, but isn't a directory")
+		return errors.New("Path exists, but isn't a directory")
 	}
 
 	if errFile := ioutil.WriteFile(fileName, *d, 0600); errFile != nil {
@@ -108,16 +116,17 @@ func writeConfigFile(fileName string, config *configFile) error {
 	return nil
 }
 
-func getCurrentClusterName() (string, error) {
+func getCurrentCluster() (currentCluster string, err error) {
 	current := viper.GetString("current_cluster")
 	if current == "" {
 		return "", newSysError("Not found a cluster to use")
 	}
+
 	return current, nil
 }
 
-func getCurrentServerBasePath() (string, error) {
-	current, err := getCurrentClusterName()
+func getCurrentServerBasePath() (clusterBasePath string, err error) {
+	current, err := getCurrentCluster()
 	if err != nil {
 		return "", err
 	}

@@ -86,7 +86,7 @@ func initLog() {
 }
 
 // from https://github.com/spf13/viper
-func getUserHomeDir() string {
+func getUserHomeDir() (home string) {
 	if runtime.GOOS == "windows" {
 		home := os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
 		if home == "" {

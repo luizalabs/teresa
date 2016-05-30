@@ -21,7 +21,7 @@ var viewConfigCmd = &cobra.Command{
 	},
 }
 
-func viewConfigFileYaml(fileName string) (string, error) {
+func viewConfigFileYaml(fileName string) (config string, err error) {
 	conf, err := readOrCreateConfigFile(fileName)
 	if err != nil {
 		return "", err

@@ -41,14 +41,14 @@ func login(user string, password string) error {
 		return errRead
 	}
 
-	clusterName, errClusterName := getCurrentCluster()
+	clusterName, errClusterName := getCurrentClusterName()
 	if errClusterName != nil {
 		return errClusterName
 	}
 
 	// Update the token...
 	currentCluster := conf.Clusters[clusterName]
-	currentCluster.LoginToken = token
+	currentCluster.Token = token
 	conf.Clusters[clusterName] = currentCluster
 
 	err := writeConfigFile(cfgFile, conf)
@@ -76,12 +76,12 @@ func getLoginToken(user string, password string) (token string, err error) {
 	}
 
 	// Check if one of the registered servers are set to use
-	b, errB := getCurrentServerBasePath()
-	if errB != nil {
-		return "", errB
+	current, errCurrent := getCurrentCluster()
+	if errCurrent != nil {
+		return "", errCurrent
 	}
 
-	url := fmt.Sprintf("%s/login", b)
+	url := fmt.Sprintf("%s/login", current.Server)
 
 	resp, errPost := req.Post(url)
 	if errPost != nil {
@@ -91,7 +91,7 @@ func getLoginToken(user string, password string) (token string, err error) {
 	defer resp.Body.Close()
 
 	// TODO: check this with the real api codes
-	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+	if resp.StatusCode >= 400 && resp.StatusCode <= 500 {
 		lgr.WithField("statusCode", resp.StatusCode).Debug("Http status diff from 200 when requesting a login")
 		return "", newSysError("Invalid user or password")
 	}

@@ -23,8 +23,8 @@ func init() {
 }
 
 type clusterConfig struct {
-	Server     string `yaml:"server"`
-	LoginToken string `yaml:"token"`
+	Server string `yaml:"server"`
+	Token  string `yaml:"token"`
 }
 
 type configFile struct {
@@ -116,20 +116,29 @@ func writeConfigFile(fileName string, config *configFile) error {
 	return nil
 }
 
-func getCurrentCluster() (currentCluster string, err error) {
+// TODO: ???? getCurrentServer ???
+
+func getCurrentClusterName() (currentClusterName string, err error) {
 	current := viper.GetString("current_cluster")
 	if current == "" {
-		return "", newSysError("Not found a cluster to use")
+		lgr.Debug("Cluster not set yet")
+		return "", newSysError("Set a cluster to use before continue")
 	}
-
 	return current, nil
 }
 
-func getCurrentServerBasePath() (clusterBasePath string, err error) {
-	current, err := getCurrentCluster()
-	if err != nil {
-		return "", err
+func getCurrentCluster() (currentServer *clusterConfig, err error) {
+	currentClusterName, errGetCurrent := getCurrentClusterName()
+	if errGetCurrent != nil {
+		return nil, errGetCurrent
 	}
 
-	return viper.GetString(fmt.Sprintf("clusters.%s.server", current)), nil
+	var cluster clusterConfig
+
+	if errUnmarshal := viper.UnmarshalKey(fmt.Sprintf("clusters.%s", currentClusterName), &cluster); errUnmarshal != nil {
+		lgr.WithError(errUnmarshal).Error("Erro trying to unmarshal the current cluster")
+		return nil, errors.New("Erro trying to unmarshal the current cluster")
+	}
+
+	return &cluster, nil
 }

@@ -92,7 +92,7 @@ func setCurrentCluster(name string, fileName string) error {
 
 func init() {
 	setClusterCmd.Flags().StringVarP(&serverFlag, "server", "s", "", "URI of the server")
-	setClusterCmd.Flags().BoolVarP(&currentFlag, "default", "d", false, "Is the default server")
+	setClusterCmd.Flags().BoolVar(&currentFlag, "current", false, "Set this server to future use")
 
 	configCmd.AddCommand(setClusterCmd)
 	configCmd.AddCommand(useClusterCmd)

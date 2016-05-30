@@ -23,7 +23,8 @@ var (
 )
 
 const (
-	version = "0.1.0"
+	version           = "0.1.0"
+	archiveTempFolder = "/tmp"
 )
 
 // RootCmd represents the base command when called without any subcommands

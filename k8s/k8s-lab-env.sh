@@ -7,3 +7,4 @@ export KUBE_ENABLE_NODE_PUBLIC_IP=true
 export KUBE_ENABLE_CLUSTER_REGISTRY=true
 export KUBERNETES_PROVIDER=aws
 export KUBE_ENABLE_NODE_AUTOSCALER=true
+#export BE_ENABLE_DAEMONSETS=true #enable if will running Weave Scope

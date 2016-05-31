@@ -236,7 +236,7 @@ EOF_KUBE_REGISTRY
 
 ## Ambiente 
 
-![Kubernetes-Topology](https://github.com/luizalabs/paas/blob/master/k8s/topology/kubernetes-aws-prd.jpg)
+![Kubernetes-Topology](https://github.com/luizalabs/paas/blob/master/infra/k8s/production/topology/kubernetes-aws-prd.jpg)
 
 
 

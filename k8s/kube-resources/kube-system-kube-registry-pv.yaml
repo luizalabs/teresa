@@ -6,9 +6,9 @@ metadata:
     kubernetes.io/cluster-service: "true"
 spec:
   capacity:
-    storage: 10Gi
+    storage: 100Gi
   accessModes:
     - ReadWriteOnce
   awsElasticBlockStore:
     fsType: "ext4"
-    volumeID: vol-442f69f9
+    volumeID: vol-9107e531

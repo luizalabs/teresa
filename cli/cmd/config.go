@@ -33,112 +33,112 @@ type configFile struct {
 	CurrentCluster string                   `yaml:"current_cluster"`
 }
 
-func readConfigFile(fileName string) (config *configFile, err error) {
-	yamlFileContent, errRead := ioutil.ReadFile(cfgFile)
-	if errRead != nil {
-		if os.IsNotExist(errRead) {
-			lgr.WithError(errRead).WithField("fileName", fileName).Debug("File not found when trying to read the config file")
+// read the config file from disk
+func readConfigFile(f string) (c *configFile, err error) {
+	y, err := ioutil.ReadFile(f)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.WithError(err).WithField("fileName", f).Debug("File not found when trying to read the config file")
 		} else {
-			lgr.WithError(errRead).Error("Error loading the config file")
+			log.WithError(err).Error("Error loading the config file")
 		}
-		return nil, errRead
+		return
 	}
-
 	conf := configFile{}
-
-	if err := yaml.Unmarshal(yamlFileContent, &conf); err != nil {
-		lgr.WithError(err).WithField("cfgFile", cfgFile).Error("Error trying to unmarshal the config file")
+	if err = yaml.Unmarshal(y, &conf); err != nil {
+		log.WithError(err).WithField("cfgFile", f).Error("Error trying to unmarshal the config file")
 		return nil, err
 	}
 	return &conf, nil
 }
 
-func readOrCreateConfigFile(fileName string) (config *configFile, err error) {
-	conf, err := readConfigFile(cfgFile)
-	if err == nil {
-		return conf, nil
-	} else if !os.IsNotExist(err) {
-		return nil, err
+// return the config file loaded from disk or creates a new one (empty with the base needs)
+func readOrCreateConfigFile(f string) (c *configFile, err error) {
+	if c, err = readConfigFile(cfgFile); err == nil || !os.IsNotExist(err) {
+		return
 	}
-
-	lgr.Debug("Config file not found... creating the base one")
 
 	// set defaults
-	conf = &configFile{Version: version}
-	if conf.Clusters == nil {
-		conf.Clusters = make(map[string]clusterConfig)
-	}
-
-	return conf, nil
+	log.Debug("Config file not found... creating the base one")
+	conf := configFile{Version: version, Clusters: make(map[string]clusterConfig)}
+	return &conf, nil
 }
 
-func marshalConfigFile(config *configFile) (content *[]byte, err error) {
-	d, err := yaml.Marshal(&config)
+// parse the config object to yaml (byte array pointer)
+func marshalConfigFile(c *configFile) (b *[]byte, err error) {
+	z, err := yaml.Marshal(&c)
 	if err != nil {
-		lgr.WithError(err).WithField("config", config).Error("Error marshaling the config file")
+		log.WithError(err).WithField("config", c).Error("Error marshaling the config file")
 		return nil, err
 	}
-
-	return &d, nil
+	return &z, nil
 }
 
-func writeConfigFile(fileName string, config *configFile) error {
+// write the config file to disk in yaml format
+func writeConfigFile(f string, c *configFile) error {
 	// TODO: implement validate before writing
-	lgr.WithField("fileName", fileName).WithField("config", *config).Debug("Marshaling the config file to save")
-	d, errMarshal := marshalConfigFile(config)
-	if errMarshal != nil {
-		return errMarshal
+	log.WithField("fileName", f).WithField("config", *c).Debug("Marshaling the config file to save")
+	b, err := marshalConfigFile(c)
+	if err != nil {
+		return err
 	}
-
 	// get config basepath
-	p := filepath.Dir(fileName)
-	dirStat, errStats := os.Stat(p)
-	if errStats != nil {
-		if !os.IsNotExist(errStats) {
-			lgr.WithError(errStats).WithField("directory", p).Error("Failed to check if the directory exists")
-			return errStats
+	p := filepath.Dir(f)
+	d, err := os.Stat(p)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			log.WithError(err).WithField("directory", p).Error("Failed to check if the directory exists")
+			return err
 		}
-
-		lgr.WithField("directory", p).Debug("Config basepath not found... creating")
-		if errMkDir := os.MkdirAll(p, 0755); errMkDir != nil {
-			lgr.WithError(errMkDir).WithField("directory", p).Error("Failed to create the directory")
-			return errMkDir
+		log.WithField("directory", p).Debug("Config basepath not found... creating")
+		if err = os.MkdirAll(p, 0755); err != nil {
+			log.WithError(err).WithField("directory", p).Error("Failed to create the directory")
+			return err
 		}
-	} else if !dirStat.IsDir() {
-		lgr.WithField("directory", p).Error("Path exists, but isn't a directory")
+	} else if !d.IsDir() {
+		log.WithField("directory", p).Error("Path exists, but isn't a directory")
 		return errors.New("Path exists, but isn't a directory")
 	}
-
-	if errFile := ioutil.WriteFile(fileName, *d, 0600); errFile != nil {
-		lgr.WithError(errFile).Error("Error while writing the config file to disk")
+	if err = ioutil.WriteFile(f, *b, 0600); err != nil {
+		log.WithError(err).Error("Error while writing the config file to disk")
 	}
-
 	return nil
 }
 
-// TODO: ???? getCurrentServer ???
-
-func getCurrentClusterName() (currentClusterName string, err error) {
-	current := viper.GetString("current_cluster")
-	if current == "" {
-		lgr.Debug("Cluster not set yet")
-		return "", newSysError("Set a cluster to use before continue")
+// get the name of the current cluster in the config file
+func getCurrentClusterName() (n string, err error) {
+	n = viper.GetString("current_cluster")
+	if n == "" {
+		log.Debug("Cluster not set yet")
+		err = newSysError("Set a cluster to use before continue")
 	}
-	return current, nil
+	return
 }
 
-func getCurrentCluster() (currentServer *clusterConfig, err error) {
-	currentClusterName, errGetCurrent := getCurrentClusterName()
-	if errGetCurrent != nil {
-		return nil, errGetCurrent
+// return the current cluster
+func getCurrentCluster() (c *clusterConfig, err error) {
+	n, err := getCurrentClusterName()
+	if err != nil {
+		return
 	}
-
-	var cluster clusterConfig
-
-	if errUnmarshal := viper.UnmarshalKey(fmt.Sprintf("clusters.%s", currentClusterName), &cluster); errUnmarshal != nil {
-		lgr.WithError(errUnmarshal).Error("Erro trying to unmarshal the current cluster")
+	k := fmt.Sprintf("clusters.%s", n)
+	if err := viper.UnmarshalKey(k, &c); err != nil {
+		log.WithError(err).Fatal("Erro trying to unmarshal the current cluster")
 		return nil, errors.New("Erro trying to unmarshal the current cluster")
 	}
+	return
+}
 
-	return &cluster, nil
+// return the config file yaml
+func getConfigFileYaml(f string) (y string, err error) {
+	c, err := readOrCreateConfigFile(f)
+	if err != nil {
+		return
+	}
+	b, err := marshalConfigFile(c)
+	if err != nil {
+		return
+	}
+	y = string((*b)[:])
+	return
 }

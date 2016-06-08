@@ -12,9 +12,10 @@ import (
 	"github.com/x-cray/logrus-prefixed-formatter"
 )
 
-var lgr *logrus.Logger
+// log object to use over the cli
+var log *logrus.Logger
 
-// variables used to capture use flags
+// variables used to capture the cli flags
 var (
 	cfgFile      string
 	serverFlag   string
@@ -30,16 +31,17 @@ const (
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "cli",
-	Short: "A brief description of your application",
+	Short: "A brief description of the paas cli",
 	Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+¯\_(ツ)_/¯
+`,
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -48,7 +50,6 @@ func Execute() {
 	if cmd, err := RootCmd.ExecuteC(); err != nil {
 		if isCmdError(err) {
 			fmt.Printf("%s\n", err)
-
 			if !isSysError(err) {
 				fmt.Printf("\n%s", cmd.UsageString())
 			}
@@ -64,32 +65,27 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initLog, initConfig)
-
 	// using this so i will check manualy for strange behavior of the cli
 	RootCmd.SilenceErrors = true
 	RootCmd.SilenceUsage = true
-
 	// change the suggestion distance of the commands
 	RootCmd.SuggestionsMinimumDistance = 3
-
 	RootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file")
 }
 
 func initLog() {
 	// TODO: melhorar o log e enviar logs para o logentries
-	lgr = logrus.New()
-
+	log = logrus.New()
 	// lgr.Formatter = new(logrus.JSONFormatter)
-	lgr.Formatter = new(prefixed.TextFormatter)
-
-	lgr.Out = os.Stdout
-	lgr.Level = logrus.WarnLevel
+	log.Formatter = new(prefixed.TextFormatter)
+	log.Out = os.Stdout
+	log.Level = logrus.WarnLevel
 }
 
 // from https://github.com/spf13/viper
-func getUserHomeDir() (home string) {
+func getUserHomeDir() string {
 	if runtime.GOOS == "windows" {
-		home := os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
+		home := fmt.Sprintf("%s%s", os.Getenv("HOMEDRIVE"), os.Getenv("HOMEPATH"))
 		if home == "" {
 			home = os.Getenv("USERPROFILE")
 		}
@@ -108,24 +104,20 @@ func initConfig() {
 		cfgFile = filepath.Join(getUserHomeDir(), ".paas_labs", "config.yaml")
 	}
 	viper.SetConfigFile(cfgFile)
-
 	// defaults
 	viper.SetDefault("debug", false)
-
+	// get from ENV
 	viper.AutomaticEnv()
-
 	if err := viper.ReadInConfig(); err != nil && !os.IsNotExist(err) {
 		if cfgFileProvided {
 			fmt.Println("Config file provided not found or with error")
 		}
-		lgr.WithFields(logrus.Fields{"cfgFile": cfgFile, "cfgFileProvided": cfgFileProvided, "error": err}).Fatalf("Error with the config file.")
+		log.WithFields(logrus.Fields{"cfgFile": cfgFile, "cfgFileProvided": cfgFileProvided, "error": err}).Fatalf("Error with the config file.")
 	}
-
 	if viper.GetBool("debug") {
-		lgr.Level = logrus.DebugLevel
+		log.Level = logrus.DebugLevel
 	}
-
-	lgr.Debugf("Config settings %+v", viper.AllSettings())
+	log.Debugf("Config settings %+v", viper.AllSettings())
 }
 
 type cmdError struct {

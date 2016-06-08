@@ -12,16 +12,15 @@ var setClusterCmd = &cobra.Command{
 	Short: "sets a cluster entry in the config file",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			lgr.Debug("Cluster name not provided")
+			log.Debug("Cluster name not provided")
 			return newInputError("Cluster name must be provided")
 		}
-
+		name := args[0]
 		if serverFlag == "" {
-			lgr.Debug("Server not provided")
+			log.Debug("Server not provided")
 			return newInputError("Server not provided")
 		}
-
-		return setCluster(args[0], serverFlag, cfgFile)
+		return setCluster(name, serverFlag, currentFlag, cfgFile)
 	},
 }
 
@@ -30,70 +29,62 @@ var useClusterCmd = &cobra.Command{
 	Short: "sets a cluster as the current in the config file",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			lgr.Debug("Cluster name not provided")
+			log.Debug("Cluster name not provided")
 			return newInputError("Cluster name must be provided")
 		}
-
-		return setCurrentCluster(args[0], cfgFile)
+		name := args[0]
+		return setCurrentCluster(name, cfgFile)
 	},
 }
 
 // add a new server to the config file
-func setCluster(name string, server string, fileName string) error {
-	if name == "" || server == "" || fileName == "" {
+func setCluster(name string, server string, current bool, f string) error {
+	if name == "" || server == "" || f == "" {
 		return errors.New("Name, server and filename must be provided")
 	}
-
-	conf, err := readOrCreateConfigFile(fileName)
+	c, err := readOrCreateConfigFile(f)
 	if err != nil {
 		return err
 	}
 
-	conf.Clusters[name] = clusterConfig{Server: server}
-
-	if currentFlag {
-		conf.CurrentCluster = name
+	c.Clusters[name] = clusterConfig{Server: server}
+	// check and set this new cluster as the current one (default cluster)
+	if current {
+		c.CurrentCluster = name
 	}
-
-	if err := writeConfigFile(fileName, conf); err != nil {
+	if err := writeConfigFile(f, c); err != nil {
 		return err
 	}
-
 	return nil
 }
 
-func setCurrentCluster(name string, fileName string) error {
-	if name == "" || fileName == "" {
+func setCurrentCluster(name string, f string) error {
+	if name == "" || f == "" {
 		return errors.New("Name and filename must be provided")
 	}
-
-	conf, err := readOrCreateConfigFile(fileName)
+	c, err := readOrCreateConfigFile(f)
 	if err != nil {
 		return err
 	}
-
-	if len(conf.Clusters) == 0 {
-		return newSysError("The is no cluster configured yet.")
+	if len(c.Clusters) == 0 {
+		return newSysError("There is no cluster configured yet.")
 	}
-	if _, exists := conf.Clusters[name]; !exists {
+	if _, e := c.Clusters[name]; !e {
 		return newSysError(fmt.Sprintf(`Cluster "%s" not configured yet`, name))
 	}
-
-	conf.CurrentCluster = name
-
-	if err := writeConfigFile(fileName, conf); err != nil {
+	// set the cluster as the current one
+	c.CurrentCluster = name
+	// write the config file
+	if err := writeConfigFile(f, c); err != nil {
 		return err
 	}
-
-	lgr.WithField("clusterName", name).Debug("New cluster set as current")
-
+	log.WithField("clusterName", name).Debug("New cluster set as current")
 	return nil
 }
 
 func init() {
 	setClusterCmd.Flags().StringVarP(&serverFlag, "server", "s", "", "URI of the server")
 	setClusterCmd.Flags().BoolVar(&currentFlag, "current", false, "Set this server to future use")
-
 	configCmd.AddCommand(setClusterCmd)
 	configCmd.AddCommand(useClusterCmd)
 }

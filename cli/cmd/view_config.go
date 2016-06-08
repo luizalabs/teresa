@@ -6,36 +6,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// returns the config file
 var viewConfigCmd = &cobra.Command{
 	Use:   "view",
 	Short: "displays the client config file",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		configYaml, err := viewConfigFileYaml(cfgFile)
+		y, err := getConfigFileYaml(cfgFile)
 		if err != nil {
-			lgr.WithError(err).Error("Error reading the config file yaml")
+			log.WithError(err).Error("Error reading the config file yaml")
 			return newSysError("Error reading the config file")
 		}
-
-		fmt.Print(configYaml)
+		fmt.Print(y)
 		return nil
 	},
 }
 
-func viewConfigFileYaml(fileName string) (config string, err error) {
-	conf, err := readOrCreateConfigFile(fileName)
-	if err != nil {
-		return "", err
-	}
-
-	contentYaml, errMarshal := marshalConfigFile(conf)
-	if err != nil {
-		return "", errMarshal
-	}
-
-	return string((*contentYaml)[:]), nil
-}
-
 func init() {
 	configCmd.AddCommand(viewConfigCmd)
-
 }

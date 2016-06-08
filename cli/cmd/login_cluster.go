@@ -16,97 +16,83 @@ var loginCmd = &cobra.Command{
 		if userNameFlag == "" {
 			return newInputError("User must be provided")
 		}
-
 		fmt.Printf("Password: ")
-		pass, err := gopass.GetPasswdMasked()
+		p, err := gopass.GetPasswdMasked()
 		if err != nil {
 			if err != gopass.ErrInterrupted {
-				lgr.WithError(err).Error("Error trying to get the user password")
+				log.WithError(err).Error("Error trying to get the user password")
 			}
 			return nil
 		}
-
-		return login(userNameFlag, string(pass))
+		return login(userNameFlag, string(p))
 	},
 }
 
-func login(user string, password string) error {
-	token, errGetToken := getLoginToken(user, password)
-	if errGetToken != nil {
-		return errGetToken
-	}
-
-	conf, errRead := readConfigFile(cfgFile)
-	if errRead != nil {
-		return errRead
-	}
-
-	clusterName, errClusterName := getCurrentClusterName()
-	if errClusterName != nil {
-		return errClusterName
-	}
-
-	// Update the token...
-	currentCluster := conf.Clusters[clusterName]
-	currentCluster.Token = token
-	conf.Clusters[clusterName] = currentCluster
-
-	err := writeConfigFile(cfgFile, conf)
+// login action to the command
+func login(u string, p string) error {
+	t, err := getLoginToken(u, p)
 	if err != nil {
 		return err
 	}
-
-	lgr.WithField("currentCluster", currentCluster).Debug("Token added to the cluster")
-
+	c, err := readConfigFile(cfgFile)
+	if err != nil {
+		return err
+	}
+	n, err := getCurrentClusterName()
+	if err != nil {
+		return err
+	}
+	// update the token...
+	cluster := c.Clusters[n]
+	cluster.Token = t
+	c.Clusters[n] = cluster
+	// write the config file
+	err = writeConfigFile(cfgFile, c)
+	if err != nil {
+		return err
+	}
+	log.WithField("cluster", cluster).Debug("Token added to the cluster")
 	return nil
 }
 
 // TODO: refactory to reuse the request
-func getLoginToken(user string, password string) (token string, err error) {
-	if user == "" || password == "" {
+func getLoginToken(u string, p string) (t string, err error) {
+	if u == "" || p == "" {
 		return "", newSysError("Name and password must be provided")
 	}
-
-	c := &http.Client{}
-
-	req := request.NewRequest(c)
+	h := &http.Client{}
+	req := request.NewRequest(h)
 	req.Data = map[string]string{
-		"email":    user,
-		"password": password,
+		"email":    u,
+		"password": p,
 	}
-
-	// Check if one of the registered servers are set to use
-	current, errCurrent := getCurrentCluster()
-	if errCurrent != nil {
-		return "", errCurrent
+	// check if one of the registered servers are set to use
+	c, err := getCurrentCluster()
+	if err != nil {
+		return "", err
 	}
-
-	url := fmt.Sprintf("%s/login", current.Server)
-
-	resp, errPost := req.Post(url)
-	if errPost != nil {
-		lgr.WithError(errPost).WithField("clusterUrl", url).WithField("user", user).Error("Error when trying to do a login request")
-		return "", errPost
+	url := fmt.Sprintf("%s/login", c.Server)
+	resp, err := req.Post(url)
+	if err != nil {
+		log.WithError(err).WithField("clusterUrl", url).WithField("user", u).Error("Error when trying to do a login request")
+		return "", err
 	}
 	defer resp.Body.Close()
-
 	// TODO: check this with the real api codes
 	if resp.StatusCode >= 400 && resp.StatusCode <= 500 {
-		lgr.WithField("statusCode", resp.StatusCode).Debug("Http status diff from 200 when requesting a login")
+		log.WithField("statusCode", resp.StatusCode).Debug("Http status diff from 200 when requesting a login")
 		return "", newSysError("Invalid user or password")
 	}
-
-	j, errToJSON := resp.Json()
-	if errToJSON != nil {
-		lgr.WithError(errToJSON).Error("Error trying to parte the content to json")
-		return "", errToJSON
+	j, err := resp.Json()
+	if err != nil {
+		log.WithError(err).Error("Error trying to parte the content to json")
+		return
 	}
-
-	return j.Get("token").MustString(), nil
+	t = j.Get("token").MustString()
+	return
 }
 
 func init() {
 	loginCmd.Flags().StringVar(&userNameFlag, "user", "", "username to login with")
-
 	configCmd.AddCommand(loginCmd)
 }

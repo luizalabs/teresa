@@ -10,16 +10,16 @@ import (
 )
 
 // UserLoginHandlerFunc turns a function with the right signature into a user login handler
-type UserLoginHandlerFunc func() middleware.Responder
+type UserLoginHandlerFunc func(UserLoginParams) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn UserLoginHandlerFunc) Handle() middleware.Responder {
-	return fn()
+func (fn UserLoginHandlerFunc) Handle(params UserLoginParams) middleware.Responder {
+	return fn(params)
 }
 
 // UserLoginHandler interface for that can handle valid user login params
 type UserLoginHandler interface {
-	Handle() middleware.Responder
+	Handle(UserLoginParams) middleware.Responder
 }
 
 // NewUserLogin creates a new http.Handler for the user login operation
@@ -27,7 +27,7 @@ func NewUserLogin(ctx *middleware.Context, handler UserLoginHandler) *UserLogin 
 	return &UserLogin{Context: ctx, Handler: handler}
 }
 
-/*UserLogin swagger:route GET /login auth userLogin
+/*UserLogin swagger:route POST /login auth userLogin
 
 Log the user
 
@@ -41,13 +41,14 @@ type UserLogin struct {
 
 func (o *UserLogin) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, _ := o.Context.RouteInfo(r)
+	var Params = NewUserLoginParams()
 
-	if err := o.Context.BindValidRequest(r, route, nil); err != nil { // bind params
+	if err := o.Context.BindValidRequest(r, route, &Params); err != nil { // bind params
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 
-	res := o.Handler.Handle() // actually handle the request
+	res := o.Handler.Handle(Params) // actually handle the request
 
 	o.Context.Respond(rw, r, route.Produces, route, res)
 

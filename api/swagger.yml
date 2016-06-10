@@ -439,25 +439,34 @@ paths:
           schema:
             $ref: "#/definitions/Error"
   /login:
-    get:
+    post:
       summary: Log the user
       description: User login
       tags:
         - auth
       operationId: userLogin
+      parameters:
+        - name: body
+          in: body
+          schema:
+            $ref: "#/definitions/Login"
       responses:
         200:
           description: User info
           schema:
             $ref: "#/definitions/User"
+        401:
+          description: Unauthorized
+          schema:
+            $ref: "#/definitions/Forbidden"
         403:
           description: Forbidden
           schema:
             $ref: "#/definitions/Forbidden"
         default:
-          description: User not authorized
+          description: Error
           schema:
-            $ref: "#/definitions/Unauthorized"
+            $ref: "#/definitions/Error"
   /swagger:
     x-swagger-pipe: swagger_raw
 parameters:
@@ -494,6 +503,17 @@ parameters:
     format: int64
     default: 20
 definitions:
+  Login:
+    required:
+      - email
+      - password
+    properties:
+      email:
+        type: string
+        format: email
+      password:
+        type: string
+        format: password
   Pagination:
     properties:
       pagination:

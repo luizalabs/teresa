@@ -10,9 +10,9 @@ The Teresa PaaS API
     Version: 0.0.1
 
     Consumes:
-    - application/com.luizalabs.teresa.v1+json
-
     - multipart/form-data
+
+    - application/com.luizalabs.teresa.v1+json
 
 
     Produces:

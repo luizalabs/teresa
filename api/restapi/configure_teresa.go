@@ -26,9 +26,9 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	// configure the api here
 	api.ServeError = errors.ServeError
 
-	api.JSONConsumer = runtime.JSONConsumer()
-
 	api.MultipartformConsumer = runtime.DiscardConsumer
+
+	api.JSONConsumer = runtime.JSONConsumer()
 
 	api.JSONProducer = runtime.JSONProducer()
 
@@ -71,7 +71,7 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.AppsUpdateAppHandler = apps.UpdateAppHandlerFunc(func(params apps.UpdateAppParams) middleware.Responder {
 		return middleware.NotImplemented("operation apps.UpdateApp has not yet been implemented")
 	})
-	api.AuthUserLoginHandler = auth.UserLoginHandlerFunc(func() middleware.Responder {
+	api.AuthUserLoginHandler = auth.UserLoginHandlerFunc(func(params auth.UserLoginParams) middleware.Responder {
 		return middleware.NotImplemented("operation auth.UserLogin has not yet been implemented")
 	})
 

@@ -48,6 +48,43 @@ func (o *UserLoginOK) WriteResponse(rw http.ResponseWriter, producer runtime.Pro
 	}
 }
 
+/*UserLoginUnauthorized Unauthorized
+
+swagger:response userLoginUnauthorized
+*/
+type UserLoginUnauthorized struct {
+
+	// In: body
+	Payload *models.Forbidden `json:"body,omitempty"`
+}
+
+// NewUserLoginUnauthorized creates UserLoginUnauthorized with default headers values
+func NewUserLoginUnauthorized() *UserLoginUnauthorized {
+	return &UserLoginUnauthorized{}
+}
+
+// WithPayload adds the payload to the user login unauthorized response
+func (o *UserLoginUnauthorized) WithPayload(payload *models.Forbidden) *UserLoginUnauthorized {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the user login unauthorized response
+func (o *UserLoginUnauthorized) SetPayload(payload *models.Forbidden) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *UserLoginUnauthorized) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(401)
+	if o.Payload != nil {
+		if err := producer.Produce(rw, o.Payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
+}
+
 /*UserLoginForbidden Forbidden
 
 swagger:response userLoginForbidden
@@ -85,7 +122,7 @@ func (o *UserLoginForbidden) WriteResponse(rw http.ResponseWriter, producer runt
 	}
 }
 
-/*UserLoginDefault User not authorized
+/*UserLoginDefault Error
 
 swagger:response userLoginDefault
 */
@@ -93,7 +130,7 @@ type UserLoginDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.Unauthorized `json:"body,omitempty"`
+	Payload *models.Error `json:"body,omitempty"`
 }
 
 // NewUserLoginDefault creates UserLoginDefault with default headers values
@@ -119,13 +156,13 @@ func (o *UserLoginDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the user login default response
-func (o *UserLoginDefault) WithPayload(payload *models.Unauthorized) *UserLoginDefault {
+func (o *UserLoginDefault) WithPayload(payload *models.Error) *UserLoginDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the user login default response
-func (o *UserLoginDefault) SetPayload(payload *models.Unauthorized) {
+func (o *UserLoginDefault) SetPayload(payload *models.Error) {
 	o.Payload = payload
 }
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 source settings.sh
-source global-function.sh
+source kubernetes-helpers.sh
 export AWS_DEFAULT_OUTPUT=text
 if [ $# != 1 ]; then
     echo "You need to specify kubernetes cluster_ID. EX:kubernetes"

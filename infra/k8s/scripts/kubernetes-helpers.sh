@@ -1,6 +1,6 @@
 #!/bin/bash
-# Name: aws-fuctions.sh
-# Description: Global function AWS
+# Name: kubernetes-helpers.sh
+# Description: Global function for kubernetes
 # Autor: Eraldo S.Bernardino
 # Date: 01/06/2016
 

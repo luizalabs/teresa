@@ -3,11 +3,11 @@
 # Description: Recovery Kubernetes Master
 # Autor: Eraldo S.Bernardino
 # Date: 01/06/2016
-export AWS_DEFAULT_OUTPUT=text
+AWS_DEFAULT_OUTPUT="${AWS_DEFAULT_OUTPUT:-text}"
 
 #Getting Global Variables
 source settings.sh
-source global-function.sh
+source kubernetes-helpers.sh
 #Log
 LOG="recovery-kube-master.log"
 banner() {

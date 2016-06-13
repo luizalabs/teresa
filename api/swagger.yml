@@ -465,6 +465,39 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/Error"
+    put:
+      summary: Update user
+      description: Update user details
+      tags:
+        - users
+      operationId: updateUser
+      security:
+        - api_key: []
+        - token_header: []
+      parameters: 
+        - $ref: "#/parameters/userId"
+      responses:
+        200:
+          description: User details
+          schema:
+            $ref: "#/definitions/User"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        404:
+          description: Resource not found
+          schema:
+            $ref: "#/definitions/NotFound"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
   /users/me:
     get:
       summary: Get logged user info
@@ -525,19 +558,22 @@ parameters:
     name: app_id
     description: App ID
     in: path
-    type: string
+    type: integer
+    format: int64
     required: true
   teamId:
     name: team_id
     description: Team ID
     in: path
-    type: string
+    type: integer
+    format: int64
     required: true
   userId:
     name: user_id
     description: User ID
     in: path
-    type: string
+    type: integer
+    format: int64
     required: true
   since:
     name: since
@@ -595,14 +631,20 @@ definitions:
     required:
       - name
       - email
+      - password
     properties:
       id:
         type: integer
-        format: int32
+        format: int64
       name:
         type: string
+        minLength: 5
       email:
         type: string
+        minLength: 8
+      password:
+        type: string
+        minLength: 8
       #teams: # FIXME: https://github.com/go-swagger/go-swagger/issues/537
       #  type: array
       #  items:
@@ -612,7 +654,7 @@ definitions:
     properties:
       id:
         type: integer
-        format: int32
+        format: int64
       name:
         type: string
       deployList:
@@ -624,12 +666,12 @@ definitions:
     properties:
       id:
         type: integer
-        format: int32
+        format: int64
       name:
         type: string
       replicas:
         type: integer
-        format: int32
+        format: int64
         default: 2
   Deployment:
     required:
@@ -664,26 +706,6 @@ definitions:
       replicas:
         type: number
         default: 2
-  Error:
-    type: object
-    properties:
-      code:
-        type: integer
-        format: int64
-      message:
-        type: string
-  InternalServerError:
-    type: object
-    required:
-      - message
-    properties:
-      code:
-        type: integer
-        format: int64
-        default: 500
-      message:
-        type: string
-        default: Internal Server Error
   NotFound:
     type: object
     properties:
@@ -724,3 +746,33 @@ definitions:
       message:
         type: string
         default: Forbidden
+  AlreadyExists:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int64
+        default: 422
+      message:
+        type: string
+        default: Entity Already Exists
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int64
+      message:
+        type: string
+  InternalServerError:
+    type: object
+    required:
+      - message
+    properties:
+      code:
+        type: integer
+        format: int64
+        default: 500
+      message:
+        type: string
+        default: Internal Server Error

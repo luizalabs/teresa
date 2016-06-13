@@ -41,7 +41,7 @@ type GetDeploymentsParams struct {
 	  Required: true
 	  In: path
 	*/
-	AppID string
+	AppID int64
 	/*Limit
 	  In: query
 	  Default: 20
@@ -56,7 +56,7 @@ type GetDeploymentsParams struct {
 	  Required: true
 	  In: path
 	*/
-	TeamID string
+	TeamID int64
 }
 
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
@@ -99,7 +99,11 @@ func (o *GetDeploymentsParams) bindAppID(rawData []string, hasKey bool, formats 
 		raw = rawData[len(rawData)-1]
 	}
 
-	o.AppID = raw
+	value, err := swag.ConvertInt64(raw)
+	if err != nil {
+		return errors.InvalidType("app_id", "path", "int64", raw)
+	}
+	o.AppID = value
 
 	return nil
 }
@@ -150,7 +154,11 @@ func (o *GetDeploymentsParams) bindTeamID(rawData []string, hasKey bool, formats
 		raw = rawData[len(rawData)-1]
 	}
 
-	o.TeamID = raw
+	value, err := swag.ConvertInt64(raw)
+	if err != nil {
+		return errors.InvalidType("team_id", "path", "int64", raw)
+	}
+	o.TeamID = value
 
 	return nil
 }

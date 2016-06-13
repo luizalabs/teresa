@@ -51,7 +51,7 @@ type GetAppsParams struct {
 	  Required: true
 	  In: path
 	*/
-	TeamID string
+	TeamID int64
 }
 
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
@@ -129,7 +129,11 @@ func (o *GetAppsParams) bindTeamID(rawData []string, hasKey bool, formats strfmt
 		raw = rawData[len(rawData)-1]
 	}
 
-	o.TeamID = raw
+	value, err := swag.ConvertInt64(raw)
+	if err != nil {
+		return errors.InvalidType("team_id", "path", "int64", raw)
+	}
+	o.TeamID = value
 
 	return nil
 }

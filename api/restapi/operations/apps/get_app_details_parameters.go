@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/go-openapi/swag"
 
 	strfmt "github.com/go-openapi/strfmt"
 )
@@ -32,12 +33,12 @@ type GetAppDetailsParams struct {
 	  Required: true
 	  In: path
 	*/
-	AppID string
+	AppID int64
 	/*Team ID
 	  Required: true
 	  In: path
 	*/
-	TeamID string
+	TeamID int64
 }
 
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
@@ -68,7 +69,11 @@ func (o *GetAppDetailsParams) bindAppID(rawData []string, hasKey bool, formats s
 		raw = rawData[len(rawData)-1]
 	}
 
-	o.AppID = raw
+	value, err := swag.ConvertInt64(raw)
+	if err != nil {
+		return errors.InvalidType("app_id", "path", "int64", raw)
+	}
+	o.AppID = value
 
 	return nil
 }
@@ -79,7 +84,11 @@ func (o *GetAppDetailsParams) bindTeamID(rawData []string, hasKey bool, formats 
 		raw = rawData[len(rawData)-1]
 	}
 
-	o.TeamID = raw
+	value, err := swag.ConvertInt64(raw)
+	if err != nil {
+		return errors.InvalidType("team_id", "path", "int64", raw)
+	}
+	o.TeamID = value
 
 	return nil
 }

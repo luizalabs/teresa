@@ -9,27 +9,23 @@ import (
 	"github.com/go-openapi/errors"
 )
 
-/*AppProperties app properties
+/*AlreadyExists already exists
 
-swagger:model AppProperties
+swagger:model AlreadyExists
 */
-type AppProperties struct {
+type AlreadyExists struct {
 
-	/* id
+	/* code
 	 */
-	ID int64 `json:"id,omitempty"`
+	Code *int64 `json:"code,omitempty"`
 
-	/* name
+	/* message
 	 */
-	Name string `json:"name,omitempty"`
-
-	/* replicas
-	 */
-	Replicas *int64 `json:"replicas,omitempty"`
+	Message *string `json:"message,omitempty"`
 }
 
-// Validate validates this app properties
-func (m *AppProperties) Validate(formats strfmt.Registry) error {
+// Validate validates this already exists
+func (m *AlreadyExists) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if len(res) > 0 {

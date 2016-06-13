@@ -14,16 +14,16 @@ import (
 )
 
 // GetDeploymentsHandlerFunc turns a function with the right signature into a get deployments handler
-type GetDeploymentsHandlerFunc func(GetDeploymentsParams) middleware.Responder
+type GetDeploymentsHandlerFunc func(GetDeploymentsParams, interface{}) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn GetDeploymentsHandlerFunc) Handle(params GetDeploymentsParams) middleware.Responder {
-	return fn(params)
+func (fn GetDeploymentsHandlerFunc) Handle(params GetDeploymentsParams, principal interface{}) middleware.Responder {
+	return fn(params, principal)
 }
 
 // GetDeploymentsHandler interface for that can handle valid get deployments params
 type GetDeploymentsHandler interface {
-	Handle(GetDeploymentsParams) middleware.Responder
+	Handle(GetDeploymentsParams, interface{}) middleware.Responder
 }
 
 // NewGetDeployments creates a new http.Handler for the get deployments operation
@@ -47,12 +47,22 @@ func (o *GetDeployments) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, _ := o.Context.RouteInfo(r)
 	var Params = NewGetDeploymentsParams()
 
+	uprinc, err := o.Context.Authorize(r, route)
+	if err != nil {
+		o.Context.Respond(rw, r, route.Produces, route, err)
+		return
+	}
+	var principal interface{}
+	if uprinc != nil {
+		principal = uprinc
+	}
+
 	if err := o.Context.BindValidRequest(r, route, &Params); err != nil { // bind params
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 
-	res := o.Handler.Handle(Params) // actually handle the request
+	res := o.Handler.Handle(Params, principal) // actually handle the request
 
 	o.Context.Respond(rw, r, route.Produces, route, res)
 

@@ -12,11 +12,11 @@ The Teresa PaaS API
     Consumes:
     - multipart/form-data
 
-    - application/com.luizalabs.teresa.v1+json
+    - application/json
 
 
     Produces:
-    - application/com.luizalabs.teresa.v1+json
+    - application/json
 
 
 swagger:meta

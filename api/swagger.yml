@@ -5,12 +5,21 @@ info:
   title: Teresa API
   version: 0.0.1
 consumes:
-- application/com.luizalabs.teresa.v1+json
+- application/json
 produces:
-- application/com.luizalabs.teresa.v1+json
+- application/json
 schemes:
 - http
 basePath: /v1
+securityDefinitions:
+  api_key:
+    type: apiKey
+    name: token
+    in: query
+  token_header:
+    type: apiKey
+    name: Authorization
+    in: header
 paths:
   /teams:
     get:
@@ -19,6 +28,9 @@ paths:
       tags:
         - teams
       operationId: getTeams
+      security:
+        - api_key: []
+        - token_header: []
       parameters:
         - $ref: "#/parameters/since"
         - $ref: "#/parameters/limit"
@@ -60,9 +72,13 @@ paths:
       tags:
         - teams
       operationId: createTeam
+      security:
+        - api_key: []
+        - token_header: []
       parameters:
         - name: body
           in: body
+          required: true
           schema:
             $ref: "#/definitions/Team"
       responses:
@@ -94,6 +110,9 @@ paths:
       tags:
         - teams
       operationId: getTeamDetail
+      security:
+        - api_key: []
+        - token_header: []
       parameters:
         - $ref: "#/parameters/teamId"
       responses:
@@ -121,6 +140,9 @@ paths:
       tags:
         - apps
       operationId: getApps
+      security:
+        - api_key: []
+        - token_header: []
       parameters:
         - $ref: "#/parameters/teamId"
         - $ref: "#/parameters/since"
@@ -155,6 +177,9 @@ paths:
       tags:
         - apps
       operationId: createApp
+      security:
+        - api_key: []
+        - token_header: []
       parameters:
         - $ref: "#/parameters/teamId"
         - name: body
@@ -187,6 +212,9 @@ paths:
       tags:
         - apps
       operationId: getAppDetails
+      security:
+        - api_key: []
+        - token_header: []
       parameters:
         - $ref: "#/parameters/teamId"
         - $ref: "#/parameters/appId"
@@ -214,6 +242,9 @@ paths:
       tags:
         - apps
       operationId: updateApp
+      security:
+        - api_key: []
+        - token_header: []
       parameters:
         - $ref: "#/parameters/appId"
         - $ref: "#/parameters/teamId"
@@ -247,6 +278,9 @@ paths:
       tags:
         - deployments
       operationId: getDeployments
+      security:
+        - api_key: []
+        - token_header: []
       parameters:
         - $ref: "#/parameters/teamId"
         - $ref: "#/parameters/appId"
@@ -282,6 +316,9 @@ paths:
       tags:
         - deployments
       operationId: createDeployment
+      security:
+        - api_key: []
+        - token_header: []
       parameters:
         - $ref: "#/parameters/teamId"
         - $ref: "#/parameters/appId"
@@ -317,6 +354,9 @@ paths:
       tags:
         - users
       operationId: getUsers
+      security:
+        - api_key: []
+        - token_header: []
       parameters:
         - $ref: "#/parameters/since"
         - $ref: "#/parameters/limit"
@@ -358,9 +398,13 @@ paths:
       tags:
         - users
       operationId: createUser
+      security:
+        - api_key: []
+        - token_header: []
       parameters:
         - name: body
           in: body
+          required: true
           schema:
             $ref: "#/definitions/User"
       responses:
@@ -392,6 +436,9 @@ paths:
       tags:
         - users
       operationId: getUserDetails
+      security:
+        - api_key: []
+        - token_header: []
       parameters:
         - $ref: "#/parameters/userId"
         - $ref: "#/parameters/since"
@@ -425,6 +472,9 @@ paths:
       tags:
         - users
       operationId: getCurrentUser
+      security:
+        - api_key: []
+        - token_header: []
       responses:
         200:
           description: User info

@@ -37,9 +37,9 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	// configure the api here
 	api.ServeError = errors.ServeError
 
-	api.MultipartformConsumer = runtime.DiscardConsumer
-
 	api.JSONConsumer = runtime.JSONConsumer()
+
+	api.MultipartformConsumer = runtime.DiscardConsumer
 
 	api.JSONProducer = runtime.JSONProducer()
 

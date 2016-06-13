@@ -4,6 +4,7 @@ package users
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/go-openapi/errors"
@@ -30,6 +31,7 @@ type CreateUserParams struct {
 	HTTPRequest *http.Request
 
 	/*
+	  Required: true
 	  In: body
 	*/
 	Body *models.User
@@ -45,7 +47,12 @@ func (o *CreateUserParams) BindRequest(r *http.Request, route *middleware.Matche
 		defer r.Body.Close()
 		var body models.User
 		if err := route.Consumer.Consume(r.Body, &body); err != nil {
-			res = append(res, errors.NewParseError("body", "body", "", err))
+			if err == io.EOF {
+				res = append(res, errors.Required("body", "body"))
+			} else {
+				res = append(res, errors.NewParseError("body", "body", "", err))
+			}
+
 		} else {
 			if err := body.Validate(route.Formats); err != nil {
 				res = append(res, err)
@@ -56,6 +63,8 @@ func (o *CreateUserParams) BindRequest(r *http.Request, route *middleware.Matche
 			}
 		}
 
+	} else {
+		res = append(res, errors.Required("body", "body"))
 	}
 
 	if len(res) > 0 {

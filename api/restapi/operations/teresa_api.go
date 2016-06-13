@@ -47,10 +47,10 @@ type TeresaAPI struct {
 	defaultProduces string
 	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
 	MultipartformConsumer runtime.Consumer
-	// JSONConsumer registers a consumer for a "application/com.luizalabs.teresa.v1+json" mime type
+	// JSONConsumer registers a consumer for a "application/json" mime type
 	JSONConsumer runtime.Consumer
 
-	// JSONProducer registers a producer for a "application/com.luizalabs.teresa.v1+json" mime type
+	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
 
 	// TokenHeaderAuth registers a function that takes a token and returns a principal
@@ -255,8 +255,8 @@ func (o *TeresaAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consume
 		case "multipart/form-data":
 			result["multipart/form-data"] = o.MultipartformConsumer
 
-		case "application/com.luizalabs.teresa.v1+json":
-			result["application/com.luizalabs.teresa.v1+json"] = o.JSONConsumer
+		case "application/json":
+			result["application/json"] = o.JSONConsumer
 
 		}
 	}
@@ -271,8 +271,8 @@ func (o *TeresaAPI) ProducersFor(mediaTypes []string) map[string]runtime.Produce
 	for _, mt := range mediaTypes {
 		switch mt {
 
-		case "application/com.luizalabs.teresa.v1+json":
-			result["application/com.luizalabs.teresa.v1+json"] = o.JSONProducer
+		case "application/json":
+			result["application/json"] = o.JSONProducer
 
 		}
 	}

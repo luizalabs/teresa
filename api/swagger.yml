@@ -5,9 +5,9 @@ info:
   title: Teresa API
   version: 0.0.1
 consumes:
-- application/com.luizalabs.teresa.v1+json
+- application/json
 produces:
-- application/com.luizalabs.teresa.v1+json
+- application/json
 schemes:
 - http
 basePath: /v1
@@ -78,6 +78,7 @@ paths:
       parameters:
         - name: body
           in: body
+          required: true
           schema:
             $ref: "#/definitions/Team"
       responses:
@@ -403,6 +404,7 @@ paths:
       parameters:
         - name: body
           in: body
+          required: true
           schema:
             $ref: "#/definitions/User"
       responses:

@@ -10,16 +10,16 @@ import (
 )
 
 // CreateAppHandlerFunc turns a function with the right signature into a create app handler
-type CreateAppHandlerFunc func(CreateAppParams) middleware.Responder
+type CreateAppHandlerFunc func(CreateAppParams, interface{}) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn CreateAppHandlerFunc) Handle(params CreateAppParams) middleware.Responder {
-	return fn(params)
+func (fn CreateAppHandlerFunc) Handle(params CreateAppParams, principal interface{}) middleware.Responder {
+	return fn(params, principal)
 }
 
 // CreateAppHandler interface for that can handle valid create app params
 type CreateAppHandler interface {
-	Handle(CreateAppParams) middleware.Responder
+	Handle(CreateAppParams, interface{}) middleware.Responder
 }
 
 // NewCreateApp creates a new http.Handler for the create app operation
@@ -43,12 +43,22 @@ func (o *CreateApp) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, _ := o.Context.RouteInfo(r)
 	var Params = NewCreateAppParams()
 
+	uprinc, err := o.Context.Authorize(r, route)
+	if err != nil {
+		o.Context.Respond(rw, r, route.Produces, route, err)
+		return
+	}
+	var principal interface{}
+	if uprinc != nil {
+		principal = uprinc
+	}
+
 	if err := o.Context.BindValidRequest(r, route, &Params); err != nil { // bind params
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 
-	res := o.Handler.Handle(Params) // actually handle the request
+	res := o.Handler.Handle(Params, principal) // actually handle the request
 
 	o.Context.Respond(rw, r, route.Produces, route, res)
 

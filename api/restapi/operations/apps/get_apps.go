@@ -14,16 +14,16 @@ import (
 )
 
 // GetAppsHandlerFunc turns a function with the right signature into a get apps handler
-type GetAppsHandlerFunc func(GetAppsParams) middleware.Responder
+type GetAppsHandlerFunc func(GetAppsParams, interface{}) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn GetAppsHandlerFunc) Handle(params GetAppsParams) middleware.Responder {
-	return fn(params)
+func (fn GetAppsHandlerFunc) Handle(params GetAppsParams, principal interface{}) middleware.Responder {
+	return fn(params, principal)
 }
 
 // GetAppsHandler interface for that can handle valid get apps params
 type GetAppsHandler interface {
-	Handle(GetAppsParams) middleware.Responder
+	Handle(GetAppsParams, interface{}) middleware.Responder
 }
 
 // NewGetApps creates a new http.Handler for the get apps operation
@@ -47,12 +47,22 @@ func (o *GetApps) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, _ := o.Context.RouteInfo(r)
 	var Params = NewGetAppsParams()
 
+	uprinc, err := o.Context.Authorize(r, route)
+	if err != nil {
+		o.Context.Respond(rw, r, route.Produces, route, err)
+		return
+	}
+	var principal interface{}
+	if uprinc != nil {
+		principal = uprinc
+	}
+
 	if err := o.Context.BindValidRequest(r, route, &Params); err != nil { // bind params
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 
-	res := o.Handler.Handle(Params) // actually handle the request
+	res := o.Handler.Handle(Params, principal) // actually handle the request
 
 	o.Context.Respond(rw, r, route.Produces, route, res)
 

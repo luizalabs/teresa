@@ -24,6 +24,15 @@ func configureFlags(api *operations.TeresaAPI) {
 	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }
 }
 
+// FIXME: hardcoded for test purposes
+func hardcodedValidateToken(token string) (v bool) {
+	if token == "teresa" {
+		return true
+	} else {
+		return false
+	}
+}
+
 func configureAPI(api *operations.TeresaAPI) http.Handler {
 	// configure the api here
 	api.ServeError = errors.ServeError
@@ -34,43 +43,57 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 
 	api.JSONProducer = runtime.JSONProducer()
 
-	api.AppsCreateAppHandler = apps.CreateAppHandlerFunc(func(params apps.CreateAppParams) middleware.Responder {
+	api.TokenHeaderAuth = func(token string) (interface{}, error) {
+		if hardcodedValidateToken(token) {
+			return token, nil
+		}
+		return nil, errors.NotImplemented("api key auth (token_header) Authorization from header has not yet been implemented")
+	}
+
+	api.APIKeyAuth = func(token string) (interface{}, error) {
+		if hardcodedValidateToken(token) {
+			return token, nil
+		}
+		return nil, errors.NotImplemented("api key auth (api_key) token from query has not yet been implemented")
+	}
+
+	api.AppsCreateAppHandler = apps.CreateAppHandlerFunc(func(params apps.CreateAppParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation apps.CreateApp has not yet been implemented")
 	})
-	api.DeploymentsCreateDeploymentHandler = deployments.CreateDeploymentHandlerFunc(func(params deployments.CreateDeploymentParams) middleware.Responder {
+	api.DeploymentsCreateDeploymentHandler = deployments.CreateDeploymentHandlerFunc(func(params deployments.CreateDeploymentParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation deployments.CreateDeployment has not yet been implemented")
 	})
-	api.TeamsCreateTeamHandler = teams.CreateTeamHandlerFunc(func(params teams.CreateTeamParams) middleware.Responder {
+	api.TeamsCreateTeamHandler = teams.CreateTeamHandlerFunc(func(params teams.CreateTeamParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation teams.CreateTeam has not yet been implemented")
 	})
-	api.UsersCreateUserHandler = users.CreateUserHandlerFunc(func(params users.CreateUserParams) middleware.Responder {
+	api.UsersCreateUserHandler = users.CreateUserHandlerFunc(func(params users.CreateUserParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation users.CreateUser has not yet been implemented")
 	})
-	api.AppsGetAppDetailsHandler = apps.GetAppDetailsHandlerFunc(func(params apps.GetAppDetailsParams) middleware.Responder {
+	api.AppsGetAppDetailsHandler = apps.GetAppDetailsHandlerFunc(func(params apps.GetAppDetailsParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation apps.GetAppDetails has not yet been implemented")
 	})
-	api.AppsGetAppsHandler = apps.GetAppsHandlerFunc(func(params apps.GetAppsParams) middleware.Responder {
+	api.AppsGetAppsHandler = apps.GetAppsHandlerFunc(func(params apps.GetAppsParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation apps.GetApps has not yet been implemented")
 	})
-	api.UsersGetCurrentUserHandler = users.GetCurrentUserHandlerFunc(func() middleware.Responder {
+	api.UsersGetCurrentUserHandler = users.GetCurrentUserHandlerFunc(func(principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation users.GetCurrentUser has not yet been implemented")
 	})
-	api.DeploymentsGetDeploymentsHandler = deployments.GetDeploymentsHandlerFunc(func(params deployments.GetDeploymentsParams) middleware.Responder {
+	api.DeploymentsGetDeploymentsHandler = deployments.GetDeploymentsHandlerFunc(func(params deployments.GetDeploymentsParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation deployments.GetDeployments has not yet been implemented")
 	})
-	api.TeamsGetTeamDetailHandler = teams.GetTeamDetailHandlerFunc(func(params teams.GetTeamDetailParams) middleware.Responder {
+	api.TeamsGetTeamDetailHandler = teams.GetTeamDetailHandlerFunc(func(params teams.GetTeamDetailParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation teams.GetTeamDetail has not yet been implemented")
 	})
-	api.TeamsGetTeamsHandler = teams.GetTeamsHandlerFunc(func(params teams.GetTeamsParams) middleware.Responder {
+	api.TeamsGetTeamsHandler = teams.GetTeamsHandlerFunc(func(params teams.GetTeamsParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation teams.GetTeams has not yet been implemented")
 	})
-	api.UsersGetUserDetailsHandler = users.GetUserDetailsHandlerFunc(func(params users.GetUserDetailsParams) middleware.Responder {
+	api.UsersGetUserDetailsHandler = users.GetUserDetailsHandlerFunc(func(params users.GetUserDetailsParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation users.GetUserDetails has not yet been implemented")
 	})
-	api.UsersGetUsersHandler = users.GetUsersHandlerFunc(func(params users.GetUsersParams) middleware.Responder {
+	api.UsersGetUsersHandler = users.GetUsersHandlerFunc(func(params users.GetUsersParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation users.GetUsers has not yet been implemented")
 	})
-	api.AppsUpdateAppHandler = apps.UpdateAppHandlerFunc(func(params apps.UpdateAppParams) middleware.Responder {
+	api.AppsUpdateAppHandler = apps.UpdateAppHandlerFunc(func(params apps.UpdateAppParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation apps.UpdateApp has not yet been implemented")
 	})
 	api.AuthUserLoginHandler = auth.UserLoginHandlerFunc(func(params auth.UserLoginParams) middleware.Responder {

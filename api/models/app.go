@@ -22,7 +22,7 @@ type App struct {
 
 	/* id
 	 */
-	ID int32 `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 
 	/* name
 	 */

@@ -19,18 +19,27 @@ type User struct {
 	/* email
 
 	Required: true
+	Min Length: 8
 	*/
 	Email *string `json:"email"`
 
 	/* id
 	 */
-	ID int32 `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 
 	/* name
 
 	Required: true
+	Min Length: 5
 	*/
 	Name *string `json:"name"`
+
+	/* password
+
+	Required: true
+	Min Length: 8
+	*/
+	Password *string `json:"password"`
 }
 
 // Validate validates this user
@@ -47,6 +56,11 @@ func (m *User) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validatePassword(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
@@ -59,12 +73,33 @@ func (m *User) validateEmail(formats strfmt.Registry) error {
 		return err
 	}
 
+	if err := validate.MinLength("email", "body", string(*m.Email), 8); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (m *User) validateName(formats strfmt.Registry) error {
 
 	if err := validate.Required("name", "body", m.Name); err != nil {
+		return err
+	}
+
+	if err := validate.MinLength("name", "body", string(*m.Name), 5); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *User) validatePassword(formats strfmt.Registry) error {
+
+	if err := validate.Required("password", "body", m.Password); err != nil {
+		return err
+	}
+
+	if err := validate.MinLength("password", "body", string(*m.Password), 8); err != nil {
 		return err
 	}
 

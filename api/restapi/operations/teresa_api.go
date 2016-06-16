@@ -45,10 +45,10 @@ type TeresaAPI struct {
 	formats         strfmt.Registry
 	defaultConsumes string
 	defaultProduces string
-	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
-	MultipartformConsumer runtime.Consumer
 	// JSONConsumer registers a consumer for a "application/json" mime type
 	JSONConsumer runtime.Consumer
+	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
+	MultipartformConsumer runtime.Consumer
 
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
@@ -87,6 +87,8 @@ type TeresaAPI struct {
 	UsersGetUsersHandler users.GetUsersHandler
 	// AppsUpdateAppHandler sets the operation handler for the update app operation
 	AppsUpdateAppHandler apps.UpdateAppHandler
+	// UsersUpdateUserHandler sets the operation handler for the update user operation
+	UsersUpdateUserHandler users.UpdateUserHandler
 	// AuthUserLoginHandler sets the operation handler for the user login operation
 	AuthUserLoginHandler auth.UserLoginHandler
 
@@ -136,12 +138,12 @@ func (o *TeresaAPI) RegisterFormat(name string, format strfmt.Format, validator 
 func (o *TeresaAPI) Validate() error {
 	var unregistered []string
 
-	if o.MultipartformConsumer == nil {
-		unregistered = append(unregistered, "MultipartformConsumer")
-	}
-
 	if o.JSONConsumer == nil {
 		unregistered = append(unregistered, "JSONConsumer")
+	}
+
+	if o.MultipartformConsumer == nil {
+		unregistered = append(unregistered, "MultipartformConsumer")
 	}
 
 	if o.JSONProducer == nil {
@@ -208,6 +210,10 @@ func (o *TeresaAPI) Validate() error {
 		unregistered = append(unregistered, "apps.UpdateAppHandler")
 	}
 
+	if o.UsersUpdateUserHandler == nil {
+		unregistered = append(unregistered, "users.UpdateUserHandler")
+	}
+
 	if o.AuthUserLoginHandler == nil {
 		unregistered = append(unregistered, "auth.UserLoginHandler")
 	}
@@ -252,11 +258,11 @@ func (o *TeresaAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consume
 	for _, mt := range mediaTypes {
 		switch mt {
 
-		case "multipart/form-data":
-			result["multipart/form-data"] = o.MultipartformConsumer
-
 		case "application/json":
 			result["application/json"] = o.JSONConsumer
+
+		case "multipart/form-data":
+			result["multipart/form-data"] = o.MultipartformConsumer
 
 		}
 	}
@@ -366,6 +372,11 @@ func (o *TeresaAPI) initHandlerCache() {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)
 	}
 	o.handlers["PUT"]["/teams/{team_id}/apps/{app_id}"] = apps.NewUpdateApp(o.context, o.AppsUpdateAppHandler)
+
+	if o.handlers["PUT"] == nil {
+		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)
+	}
+	o.handlers["PUT"]["/users/{user_id}"] = users.NewUpdateUser(o.context, o.UsersUpdateUserHandler)
 
 	if o.handlers["POST"] == nil {
 		o.handlers[strings.ToUpper("POST")] = make(map[string]http.Handler)

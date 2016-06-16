@@ -15,8 +15,6 @@ import (
 	"github.com/luizalabs/paas/api/restapi/operations/deployments"
 	"github.com/luizalabs/paas/api/restapi/operations/teams"
 	"github.com/luizalabs/paas/api/restapi/operations/users"
-
-	"github.com/luizalabs/paas/api/models"
 )
 
 // This file is safe to edit. Once it exists it will not be overwritten
@@ -107,13 +105,9 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 		return middleware.NotImplemented("operation users.UpdateUser has not yet been implemented")
 	})
 
+	// login handler
 	api.AuthUserLoginHandler = auth.UserLoginHandlerFunc(func(params auth.UserLoginParams) middleware.Responder {
-		n := "arnaldo"
-		e := "arnaldo@luizalabs.com"
-		u := models.User{Name: &n, Email: &e}
-		uo := auth.NewUserLoginOK()
-		uo.SetPayload(&u)
-		return uo
+		return handlers.LoginHandler(params)
 	})
 
 	api.ServerShutdown = func() {}

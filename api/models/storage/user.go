@@ -14,7 +14,7 @@ type User struct {
 	Updated  time.Time `orm:"auto_now;type(datetime)"`
 	Name     string    `orm:"size(128)"`
 	Email    string    `orm:"index;unique;size(64)"`
-	Password string    `orm:"size(60)"`
+	Password string    `orm:"index;size(60)"`
 	Team     *Team     `orm:"rel(fk);null"`
 }
 

@@ -11,14 +11,14 @@ import (
 	"github.com/luizalabs/paas/api/models"
 )
 
-/*UserLoginOK User info
+/*UserLoginOK Login token
 
 swagger:response userLoginOK
 */
 type UserLoginOK struct {
 
 	// In: body
-	Payload *models.User `json:"body,omitempty"`
+	Payload *models.LoginToken `json:"body,omitempty"`
 }
 
 // NewUserLoginOK creates UserLoginOK with default headers values
@@ -27,13 +27,13 @@ func NewUserLoginOK() *UserLoginOK {
 }
 
 // WithPayload adds the payload to the user login o k response
-func (o *UserLoginOK) WithPayload(payload *models.User) *UserLoginOK {
+func (o *UserLoginOK) WithPayload(payload *models.LoginToken) *UserLoginOK {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the user login o k response
-func (o *UserLoginOK) SetPayload(payload *models.User) {
+func (o *UserLoginOK) SetPayload(payload *models.LoginToken) {
 	o.Payload = payload
 }
 

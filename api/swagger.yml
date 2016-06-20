@@ -536,9 +536,9 @@ paths:
             $ref: "#/definitions/Login"
       responses:
         200:
-          description: User info
+          description: Login token
           schema:
-            $ref: "#/definitions/User"
+            $ref: "#/definitions/LoginToken"
         401:
           description: Unauthorized
           schema:
@@ -687,6 +687,11 @@ definitions:
         format: date-time
       author:
         $ref: "#/definitions/User"
+  LoginToken:
+    type: object
+    properties:
+      token:
+        type: string
   item:
     type: object
     required:

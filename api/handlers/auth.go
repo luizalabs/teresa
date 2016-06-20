@@ -1,16 +1,50 @@
 package handlers
 
 import (
-	"fmt"
-
-	"golang.org/x/crypto/bcrypt"
+	"crypto/rsa"
+	"io/ioutil"
+	"log"
+	"time"
 
 	"github.com/astaxie/beego/orm"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/luizalabs/paas/api/models"
 	storage "github.com/luizalabs/paas/api/models/storage"
 	"github.com/luizalabs/paas/api/restapi/operations/auth"
 )
+
+// location of the files used for signing and verification
+const (
+	privKeyPath = "keys/teresa.rsa"     // openssl genrsa -out teresa.rsa keysize
+	pubKeyPath  = "keys/teresa.rsa.pub" // openssl rsa -in teresa.rsa -pubout > teresa.rsa.pub
+)
+
+var (
+	verifyKey *rsa.PublicKey
+	signKey   *rsa.PrivateKey
+)
+
+// read the key files before starting http handlers
+func init() {
+	signBytes, err := ioutil.ReadFile(privKeyPath)
+	fatal(err)
+
+	signKey, err = jwt.ParseRSAPrivateKeyFromPEM(signBytes)
+	fatal(err)
+
+	verifyBytes, err := ioutil.ReadFile(pubKeyPath)
+	fatal(err)
+
+	verifyKey, err = jwt.ParseRSAPublicKeyFromPEM(verifyBytes)
+	fatal(err)
+}
+
+func fatal(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	o := orm.NewOrm()
@@ -18,22 +52,27 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	su := storage.User{Email: params.Body.Email.String()}
 	err := o.Read(&su, "Email")
 	if err == orm.ErrNoRows {
-		fmt.Printf("Login unauthorized for user: [%s]\n", params.Body.Email)
+		log.Printf("Login unauthorized for user: [%s]\n", params.Body.Email)
 		return auth.NewUserLoginUnauthorized()
 	} else {
-		err = bcrypt.CompareHashAndPassword([]byte(su.Password), []byte(*params.Body.Password))
+		p := params.Body.Password.String()
+		err = su.Authenticate(&p)
 		if err != nil {
-			fmt.Printf("Login unauthorized for user: [%s]\n", params.Body.Email)
 			return auth.NewUserLoginUnauthorized()
 		}
-		fmt.Printf("Login OK for user: %s\n", params.Body.Email)
-		r := auth.NewUserLoginOK()
-		u := models.User{
-			ID:    su.Id,
-			Name:  &su.Name,
-			Email: &su.Email,
+
+		token := jwt.New(jwt.SigningMethodRS256)
+		token.Claims["email"] = su.Email
+		token.Claims["exp"] = time.Now().Add(time.Hour * 24 * 14).Unix()
+		tokenString, err := token.SignedString(signKey)
+		if err != nil {
+			log.Printf("Failed to sign jwt token, err: %s\n", err)
+			return auth.NewUserLoginDefault(500)
 		}
-		r.SetPayload(&u)
+
+		r := auth.NewUserLoginOK()
+		t := models.LoginToken{Token: tokenString}
+		r.SetPayload(&t)
 		return r
 	}
 }

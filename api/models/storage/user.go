@@ -2,7 +2,10 @@ package database
 
 import (
 	"fmt"
+	"log"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/astaxie/beego/orm"
 	_ "github.com/mattn/go-sqlite3"
@@ -18,6 +21,18 @@ type User struct {
 	Team     *Team     `orm:"rel(fk);null"`
 }
 
+// try and authenticate the user, err is nil if auth succeeds
+func (u *User) Authenticate(p *string) (err error) {
+	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(*p))
+	if err == nil {
+		log.Printf("Authentication succeeded for user [%s]\n", u.Email)
+	} else {
+		log.Printf("Authentication failed for user [%s]\n", u.Email)
+	}
+	return err
+}
+
+// FIXME: move this to models/team.go
 type Team struct {
 	Id      int64     `orm:"pk;auto"`
 	Created time.Time `orm:"auto_now_add;type(datetime)"`

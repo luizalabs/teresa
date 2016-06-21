@@ -8,6 +8,7 @@ import (
 
 	"github.com/astaxie/beego/orm"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/luizalabs/paas/api/models"
 	storage "github.com/luizalabs/paas/api/models/storage"
@@ -75,4 +76,38 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 		r.SetPayload(&t)
 		return r
 	}
+}
+
+// try and validate the jwt token
+func TokenAuthHandler(t string) (interface{}, error) {
+	token, err := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
+		return verifyKey, nil
+	})
+	// branch out into the possible error from signing
+	switch err.(type) {
+	case nil: // no error
+		if !token.Valid { // but may still be invalid
+			log.Println("JWT token validation - invalid token received: %+v", token)
+			return nil, errors.Unauthenticated("Invalid credentials")
+		}
+		// see stdout and watch for the CustomUserInfo, nicely unmarshalled
+		log.Printf("JWT token validation - granting access with token: %+v", token)
+		return t, nil
+	case *jwt.ValidationError: // something was wrong during the validation
+
+		vErr := err.(*jwt.ValidationError)
+
+		switch vErr.Errors {
+		case jwt.ValidationErrorExpired:
+			log.Println("JWT token validation - token expired: %+v", token)
+			return nil, errors.Unauthenticated("Invalid credentials")
+		default:
+			log.Printf("JWT token validation - ValidationError error on token: %+v\n", token)
+			return nil, errors.Unauthenticated("Invalid credentials")
+		}
+	default: // something else went wrong
+		log.Printf("JWT token validation - parse error: %v\n", err)
+		return nil, errors.Unauthenticated("Invalid credentials")
+	}
+	return nil, nil
 }

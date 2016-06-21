@@ -23,15 +23,6 @@ func configureFlags(api *operations.TeresaAPI) {
 	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }
 }
 
-// FIXME: hardcoded for test purposes
-func hardcodedValidateToken(token string) (v bool) {
-	if token == "teresa" {
-		return true
-	} else {
-		return false
-	}
-}
-
 func configureAPI(api *operations.TeresaAPI) http.Handler {
 	// configure the api here
 	api.ServeError = errors.ServeError
@@ -42,19 +33,9 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 
 	api.JSONProducer = runtime.JSONProducer()
 
-	api.APIKeyAuth = func(token string) (interface{}, error) {
-		if hardcodedValidateToken(token) {
-			return token, nil
-		}
-		return nil, errors.NotImplemented("api key auth (api_key) token from query has not yet been implemented")
-	}
-
-	api.TokenHeaderAuth = func(token string) (interface{}, error) {
-		if hardcodedValidateToken(token) {
-			return token, nil
-		}
-		return nil, errors.NotImplemented("api key auth (token_header) Authorization from header has not yet been implemented")
-	}
+	// authentication
+	api.APIKeyAuth = handlers.TokenAuthHandler
+	api.TokenHeaderAuth = handlers.TokenAuthHandler
 
 	api.AppsCreateAppHandler = apps.CreateAppHandlerFunc(func(params apps.CreateAppParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation apps.CreateApp has not yet been implemented")

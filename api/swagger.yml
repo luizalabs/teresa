@@ -133,6 +133,49 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/Error"
+    put:
+      summary: Update team
+      description: Update team details
+      tags:
+        - teams
+      operationId: updateTeam
+      security:
+        - api_key: []
+        - token_header: []
+      parameters:
+        - $ref: "#/parameters/teamId"
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/Team"
+      responses:
+        200:
+          description: Team details
+          schema:
+            $ref: "#/definitions/Team"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+    delete:
+      summary: Delete team
+      description: Delete team
+      tags:
+        - teams
+      operationId: deleteTeam
+      security:
+        - api_key: []
+        - token_header: []
+      parameters:
+        - $ref: "#/parameters/teamId"
+      responses:
+        204:
+          description: No content
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
   /teams/{team_id}/apps:
     get:
       summary: Get team apps
@@ -622,6 +665,11 @@ definitions:
       id:
         type: integer
       name:
+        type: string
+      email:
+        type: string
+        format: email
+      url:
         type: string
       members:
         type: array

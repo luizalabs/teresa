@@ -6,7 +6,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/luizalabs/paas/api/models"
-	storage "github.com/luizalabs/paas/api/models/storage"
+	"github.com/luizalabs/paas/api/models/storage"
 	"github.com/luizalabs/paas/api/restapi/operations/users"
 	"golang.org/x/crypto/bcrypt"
 )

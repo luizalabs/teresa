@@ -17,6 +17,10 @@ swagger:model Team
 */
 type Team struct {
 
+	/* email
+	 */
+	Email strfmt.Email `json:"email,omitempty"`
+
 	/* id
 	 */
 	ID int64 `json:"id,omitempty"`
@@ -30,6 +34,10 @@ type Team struct {
 	Required: true
 	*/
 	Name *string `json:"name"`
+
+	/* url
+	 */
+	URL string `json:"url,omitempty"`
 }
 
 // Validate validates this team

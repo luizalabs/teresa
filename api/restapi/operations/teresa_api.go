@@ -69,6 +69,8 @@ type TeresaAPI struct {
 	TeamsCreateTeamHandler teams.CreateTeamHandler
 	// UsersCreateUserHandler sets the operation handler for the create user operation
 	UsersCreateUserHandler users.CreateUserHandler
+	// TeamsDeleteTeamHandler sets the operation handler for the delete team operation
+	TeamsDeleteTeamHandler teams.DeleteTeamHandler
 	// AppsGetAppDetailsHandler sets the operation handler for the get app details operation
 	AppsGetAppDetailsHandler apps.GetAppDetailsHandler
 	// AppsGetAppsHandler sets the operation handler for the get apps operation
@@ -87,6 +89,8 @@ type TeresaAPI struct {
 	UsersGetUsersHandler users.GetUsersHandler
 	// AppsUpdateAppHandler sets the operation handler for the update app operation
 	AppsUpdateAppHandler apps.UpdateAppHandler
+	// TeamsUpdateTeamHandler sets the operation handler for the update team operation
+	TeamsUpdateTeamHandler teams.UpdateTeamHandler
 	// UsersUpdateUserHandler sets the operation handler for the update user operation
 	UsersUpdateUserHandler users.UpdateUserHandler
 	// AuthUserLoginHandler sets the operation handler for the user login operation
@@ -174,6 +178,10 @@ func (o *TeresaAPI) Validate() error {
 		unregistered = append(unregistered, "users.CreateUserHandler")
 	}
 
+	if o.TeamsDeleteTeamHandler == nil {
+		unregistered = append(unregistered, "teams.DeleteTeamHandler")
+	}
+
 	if o.AppsGetAppDetailsHandler == nil {
 		unregistered = append(unregistered, "apps.GetAppDetailsHandler")
 	}
@@ -208,6 +216,10 @@ func (o *TeresaAPI) Validate() error {
 
 	if o.AppsUpdateAppHandler == nil {
 		unregistered = append(unregistered, "apps.UpdateAppHandler")
+	}
+
+	if o.TeamsUpdateTeamHandler == nil {
+		unregistered = append(unregistered, "teams.UpdateTeamHandler")
 	}
 
 	if o.UsersUpdateUserHandler == nil {
@@ -328,6 +340,11 @@ func (o *TeresaAPI) initHandlerCache() {
 	}
 	o.handlers["POST"]["/users"] = users.NewCreateUser(o.context, o.UsersCreateUserHandler)
 
+	if o.handlers["DELETE"] == nil {
+		o.handlers[strings.ToUpper("DELETE")] = make(map[string]http.Handler)
+	}
+	o.handlers["DELETE"]["/teams/{team_id}"] = teams.NewDeleteTeam(o.context, o.TeamsDeleteTeamHandler)
+
 	if o.handlers["GET"] == nil {
 		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
 	}
@@ -372,6 +389,11 @@ func (o *TeresaAPI) initHandlerCache() {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)
 	}
 	o.handlers["PUT"]["/teams/{team_id}/apps/{app_id}"] = apps.NewUpdateApp(o.context, o.AppsUpdateAppHandler)
+
+	if o.handlers["PUT"] == nil {
+		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)
+	}
+	o.handlers["PUT"]["/teams/{team_id}"] = teams.NewUpdateTeam(o.context, o.TeamsUpdateTeamHandler)
 
 	if o.handlers["PUT"] == nil {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)

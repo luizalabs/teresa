@@ -43,13 +43,20 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.DeploymentsCreateDeploymentHandler = deployments.CreateDeploymentHandlerFunc(func(params deployments.CreateDeploymentParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation deployments.CreateDeployment has not yet been implemented")
 	})
+
+	// create a team
 	api.TeamsCreateTeamHandler = teams.CreateTeamHandlerFunc(func(params teams.CreateTeamParams, principal interface{}) middleware.Responder {
-		return middleware.NotImplemented("operation teams.CreateTeam has not yet been implemented")
+		return handlers.CreateTeamHandler(params, principal)
 	})
 
 	// create a user
 	api.UsersCreateUserHandler = users.CreateUserHandlerFunc(func(params users.CreateUserParams, principal interface{}) middleware.Responder {
 		return handlers.CreateUserHandler(params, principal)
+	})
+
+	// delete team
+	api.TeamsDeleteTeamHandler = teams.DeleteTeamHandlerFunc(func(params teams.DeleteTeamParams, principal interface{}) middleware.Responder {
+		return handlers.DeleteTeamHandler(params, principal)
 	})
 
 	api.AppsGetAppDetailsHandler = apps.GetAppDetailsHandlerFunc(func(params apps.GetAppDetailsParams, principal interface{}) middleware.Responder {
@@ -64,11 +71,14 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.DeploymentsGetDeploymentsHandler = deployments.GetDeploymentsHandlerFunc(func(params deployments.GetDeploymentsParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation deployments.GetDeployments has not yet been implemented")
 	})
+
+	// get team details
 	api.TeamsGetTeamDetailHandler = teams.GetTeamDetailHandlerFunc(func(params teams.GetTeamDetailParams, principal interface{}) middleware.Responder {
-		return middleware.NotImplemented("operation teams.GetTeamDetail has not yet been implemented")
+		return handlers.GetTeamDetailsHandler(params, principal)
 	})
+
 	api.TeamsGetTeamsHandler = teams.GetTeamsHandlerFunc(func(params teams.GetTeamsParams, principal interface{}) middleware.Responder {
-		return middleware.NotImplemented("operation teams.GetTeams has not yet been implemented")
+		return handlers.GetTeamsHandler(params, principal)
 	})
 
 	// get a single user from db
@@ -82,6 +92,12 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.AppsUpdateAppHandler = apps.UpdateAppHandlerFunc(func(params apps.UpdateAppParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation apps.UpdateApp has not yet been implemented")
 	})
+
+	// update a team
+	api.TeamsUpdateTeamHandler = teams.UpdateTeamHandlerFunc(func(params teams.UpdateTeamParams, principal interface{}) middleware.Responder {
+		return handlers.UpdateTeamHandler(params, principal)
+	})
+
 	api.UsersUpdateUserHandler = users.UpdateUserHandlerFunc(func(params users.UpdateUserParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation users.UpdateUser has not yet been implemented")
 	})

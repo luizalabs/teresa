@@ -2,10 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"net/http"
 
+	"github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 	"github.com/howeyc/gopass"
-	"github.com/mozillazg/request"
+	apiclient "github.com/luizalabs/paas/api/client"
+	"github.com/luizalabs/paas/api/client/auth"
+	"github.com/luizalabs/paas/api/models"
 	"github.com/spf13/cobra"
 )
 
@@ -24,17 +27,33 @@ var loginCmd = &cobra.Command{
 			}
 			return nil
 		}
-		return login(userNameFlag, string(p))
+		if err := login(userNameFlag, string(p)); err != nil {
+			log.Fatalf("Failed to login: %s\n", err)
+		}
+		return nil
 	},
 }
 
 // login action to the command
 func login(u string, p string) error {
-	t, err := getLoginToken(u, p)
+	s := apiclient.Default
+	c := client.New("localhost:8080", "/v1", []string{"http"}) // FIXME
+	s.SetTransport(c)
+	params := auth.NewUserLoginParams()
+	l := models.Login{}
+	email := strfmt.Email("arnaldo@luizalabs.com")
+	password := strfmt.Password("foobarfoobar")
+	l.Email = &email
+	l.Password = &password
+	params.WithBody(&l)
+
+	r, err := s.Auth.UserLogin(params)
 	if err != nil {
 		return err
 	}
-	c, err := readConfigFile(cfgFile)
+	log.Printf("login token: %s\n", r.Payload.Token)
+
+	cfg, err := readConfigFile(cfgFile)
 	if err != nil {
 		return err
 	}
@@ -43,11 +62,11 @@ func login(u string, p string) error {
 		return err
 	}
 	// update the token...
-	cluster := c.Clusters[n]
-	cluster.Token = t
-	c.Clusters[n] = cluster
+	cluster := cfg.Clusters[n]
+	cluster.Token = r.Payload.Token
+	cfg.Clusters[n] = cluster
 	// write the config file
-	err = writeConfigFile(cfgFile, c)
+	err = writeConfigFile(cfgFile, cfg)
 	if err != nil {
 		return err
 	}
@@ -56,41 +75,6 @@ func login(u string, p string) error {
 }
 
 // TODO: refactory to reuse the request
-func getLoginToken(u string, p string) (t string, err error) {
-	if u == "" || p == "" {
-		return "", newSysError("Name and password must be provided")
-	}
-	h := &http.Client{}
-	req := request.NewRequest(h)
-	req.Data = map[string]string{
-		"email":    u,
-		"password": p,
-	}
-	// check if one of the registered servers are set to use
-	c, err := getCurrentCluster()
-	if err != nil {
-		return "", err
-	}
-	url := fmt.Sprintf("%s/login", c.Server)
-	resp, err := req.Post(url)
-	if err != nil {
-		log.WithError(err).WithField("clusterUrl", url).WithField("user", u).Error("Error when trying to do a login request")
-		return "", err
-	}
-	defer resp.Body.Close()
-	// TODO: check this with the real api codes
-	if resp.StatusCode >= 400 && resp.StatusCode <= 500 {
-		log.WithField("statusCode", resp.StatusCode).Debug("Http status diff from 200 when requesting a login")
-		return "", newSysError("Invalid user or password")
-	}
-	j, err := resp.Json()
-	if err != nil {
-		log.WithError(err).Error("Error trying to parte the content to json")
-		return
-	}
-	t = j.Get("token").MustString()
-	return
-}
 
 func init() {
 	loginCmd.Flags().StringVar(&userNameFlag, "user", "", "username to login with")

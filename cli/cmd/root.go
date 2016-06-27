@@ -17,10 +17,13 @@ var log *logrus.Logger
 
 // variables used to capture the cli flags
 var (
-	cfgFile      string
-	serverFlag   string
-	currentFlag  bool
-	userNameFlag string
+	cfgFile       string
+	serverFlag    string
+	currentFlag   bool
+	userNameFlag  string
+	teamNameFlag  string
+	teamEmailFlag string
+	teamURLFlag   string
 )
 
 const (

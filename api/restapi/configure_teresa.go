@@ -40,8 +40,10 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.AppsCreateAppHandler = apps.CreateAppHandlerFunc(func(params apps.CreateAppParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation apps.CreateApp has not yet been implemented")
 	})
+
+	// create deployment
 	api.DeploymentsCreateDeploymentHandler = deployments.CreateDeploymentHandlerFunc(func(params deployments.CreateDeploymentParams, principal interface{}) middleware.Responder {
-		return middleware.NotImplemented("operation deployments.CreateDeployment has not yet been implemented")
+		return handlers.CreateDeploymentHandler(params, principal)
 	})
 
 	// create a team

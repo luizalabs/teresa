@@ -13,7 +13,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/go-openapi/strfmt"
 	"github.com/luizalabs/paas/api/k8s"
+	"github.com/luizalabs/paas/api/models"
 	"github.com/luizalabs/paas/api/restapi/operations/deployments"
 	"github.com/pborman/uuid"
 	"k8s.io/kubernetes/pkg/client/unversioned"
@@ -155,6 +157,13 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 
 	log.Println("everything is ok")
 
-	// params.File.Data.
-	return middleware.NotImplemented("it worked a bit")
+	replicas := int64(2)
+	resp := deployments.NewCreateDeploymentOK()
+	pa := models.Deployment{
+		Description: &params.Description,
+		Replicas:    &replicas,
+		When:        strfmt.NewDateTime(),
+	}
+	resp.SetPayload(&pa)
+	return resp
 }

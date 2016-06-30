@@ -10,10 +10,13 @@ help:
 
 all: help
 
-api-server:
+gen-api-server:
 	swagger generate server -A $(TERESA_API_NAME) -f $(SWAGGER_SPEC)
 
-api-client:
+run-api-server:
+	PORT=8080 go run ./cmd/teresa-server/main.go
+
+gen-api-client:
 	swagger generate client -A $(TERESA_API_NAME) -f $(SWAGGER_SPEC)
 
 validate:

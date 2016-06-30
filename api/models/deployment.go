@@ -27,9 +27,19 @@ type Deployment struct {
 	*/
 	Description *string `json:"description"`
 
-	/* replicas
+	/* description of the error, if this occurred
 	 */
-	Replicas *int64 `json:"replicas,omitempty"`
+	Error string `json:"error,omitempty"`
+
+	/* trigger who was the responsible for the deploy
+	 */
+	Origin string `json:"origin,omitempty"`
+
+	/* uuid
+
+	Required: true
+	*/
+	UUID *string `json:"uuid"`
 
 	/* when
 	 */
@@ -46,6 +56,11 @@ func (m *Deployment) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateDescription(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateUUID(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -75,6 +90,15 @@ func (m *Deployment) validateAuthor(formats strfmt.Registry) error {
 func (m *Deployment) validateDescription(formats strfmt.Registry) error {
 
 	if err := validate.Required("description", "body", m.Description); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Deployment) validateUUID(formats strfmt.Registry) error {
+
+	if err := validate.Required("uuid", "body", m.UUID); err != nil {
 		return err
 	}
 

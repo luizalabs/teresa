@@ -11,14 +11,14 @@ import (
 	"github.com/luizalabs/paas/api/models"
 )
 
-/*UpdateAppOK App properties
+/*UpdateAppOK App
 
 swagger:response updateAppOK
 */
 type UpdateAppOK struct {
 
 	// In: body
-	Payload *models.AppProperties `json:"body,omitempty"`
+	Payload *models.App `json:"body,omitempty"`
 }
 
 // NewUpdateAppOK creates UpdateAppOK with default headers values
@@ -27,13 +27,13 @@ func NewUpdateAppOK() *UpdateAppOK {
 }
 
 // WithPayload adds the payload to the update app o k response
-func (o *UpdateAppOK) WithPayload(payload *models.AppProperties) *UpdateAppOK {
+func (o *UpdateAppOK) WithPayload(payload *models.App) *UpdateAppOK {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the update app o k response
-func (o *UpdateAppOK) SetPayload(payload *models.AppProperties) {
+func (o *UpdateAppOK) SetPayload(payload *models.App) {
 	o.Payload = payload
 }
 

@@ -42,7 +42,7 @@ type UpdateAppParams struct {
 	  Required: true
 	  In: body
 	*/
-	Body *models.AppProperties
+	Body *models.App
 	/*Team ID
 	  Required: true
 	  In: path
@@ -63,7 +63,7 @@ func (o *UpdateAppParams) BindRequest(r *http.Request, route *middleware.Matched
 
 	if runtime.HasBody(r) {
 		defer r.Body.Close()
-		var body models.AppProperties
+		var body models.App
 		if err := route.Consumer.Consume(r.Body, &body); err != nil {
 			if err == io.EOF {
 				res = append(res, errors.Required("body", "body"))

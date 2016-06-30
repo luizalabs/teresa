@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// CreateUserHandler ...
 func CreateUserHandler(params users.CreateUserParams, principal interface{}) middleware.Responder {
 	o := orm.NewOrm()
 	o.Using("default")
@@ -41,6 +42,7 @@ func CreateUserHandler(params users.CreateUserParams, principal interface{}) mid
 	return r
 }
 
+// GetUserDetailsHandler ...
 func GetUserDetailsHandler(params users.GetUserDetailsParams, principal interface{}) middleware.Responder {
 	o := orm.NewOrm()
 	o.Using("default")
@@ -50,7 +52,7 @@ func GetUserDetailsHandler(params users.GetUserDetailsParams, principal interfac
 		fmt.Println("No result found")
 		return users.NewGetUserDetailsNotFound()
 	} else if err == orm.ErrMissPK {
-		fmt.Printf("No user with ID [%s] found\n", params.UserID)
+		fmt.Printf("No user with ID [%d] found\n", params.UserID)
 		return users.NewGetUserDetailsNotFound()
 	} else {
 		fmt.Printf("Found user with ID [%d] name [%s] email [%s]\n", su.Id, su.Name, su.Email)

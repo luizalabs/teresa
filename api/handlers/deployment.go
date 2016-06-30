@@ -157,11 +157,9 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 
 	log.Println("everything is ok")
 
-	replicas := int64(2)
 	resp := deployments.NewCreateDeploymentOK()
 	pa := models.Deployment{
 		Description: &params.Description,
-		Replicas:    &replicas,
 		When:        strfmt.NewDateTime(),
 	}
 	resp.SetPayload(&pa)

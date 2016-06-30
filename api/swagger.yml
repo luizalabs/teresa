@@ -266,7 +266,7 @@ paths:
         200:
           description: App details
           schema:
-            $ref: "#/definitions/AppProperties"
+            $ref: "#/definitions/App"
         401:
           description: User not authorized
           schema:
@@ -296,12 +296,12 @@ paths:
           in: body
           required: true
           schema:
-            $ref: "#/definitions/AppProperties"
+            $ref: "#/definitions/App"
       responses:
         200:
-          description: App properties
+          description: App
           schema:
-            $ref: "#/definitions/AppProperties"
+            $ref: "#/definitions/App"
         401:
           description: User not authorized
           schema:
@@ -685,6 +685,7 @@ definitions:
         items:
           $ref: "#/definitions/User"
   User:
+    type: object
     required:
       - name
       - email
@@ -708,66 +709,92 @@ definitions:
       #    $ref: "#/definitions/Team"
   App:
     type: object
+    required:
+      - name
     properties:
       id:
         type: integer
         format: int64
       name:
         type: string
-      deployList:
+      creator:
+        $ref: "#/definitions/User"
+      scale:
+        type: integer
+        description: number of "machines" running the app
+        default: 1
+      # # TODO: in a future not to far far away, we will have a git deployment
+      # repository:
+      #   type: string
+      #   description: internal git repository
+      addressList:
+        type: array
+        description: list of the external addresses of the app
+        items:
+          type: string
+      deploymentList:
         type: array
         items:
           $ref: "#/definitions/Deployment"
-  AppProperties:
+      envVars:
+        type: array
+        items:
+          $ref: "#/definitions/EnvVar"
+  EnvVar:
     type: object
+    description: app environment var
+    required:
+      - key
+      - value
     properties:
-      id:
-        type: integer
-        format: int64
-      name:
+      key:
         type: string
-      replicas:
-        type: integer
-        format: int64
-        default: 2
+      value:
+        type: string
   Deployment:
     required:
+      - uuid
       - description
     properties:
+      uuid:
+        type: string
       description:
         type: string
-      replicas:
-        type: integer
-        default: 2
+      origin:
+        type: string
+        description: trigger who was the responsible for the deploy
+      author:
+        $ref: "#/definitions/User"
       when:
         type: string
         format: date-time
-      author:
-        $ref: "#/definitions/User"
+      error:
+        type: string
+        description: description of the error, if this occurred
   LoginToken:
     type: object
     properties:
       token:
         type: string
-  item:
-    type: object
-    required:
-      - team
-      - name
-      - app_name
-    properties:
-      team:
-        type: string
-        minLength: 3
-      name:
-        type: string
-        minLength: 5
-      app_name:
-        type: string
-        minLength: 5
-      replicas:
-        type: number
-        default: 2
+  # item:
+  #   type: object
+  #   required:
+  #     - team
+  #     - name
+  #     - app_name
+  #   properties:
+  #     team:
+  #       type: string
+  #       minLength: 3
+  #     name:
+  #       type: string
+  #       minLength: 5
+  #     app_name:
+  #       type: string
+  #       minLength: 5
+  #     replicas:
+  #       type: number
+  #       default: 2
   NotFound:
     type: object
     properties:
@@ -808,16 +835,16 @@ definitions:
       message:
         type: string
         default: Forbidden
-  AlreadyExists:
-    type: object
-    properties:
-      code:
-        type: integer
-        format: int64
-        default: 422
-      message:
-        type: string
-        default: Entity Already Exists
+  # AlreadyExists:
+  #   type: object
+  #   properties:
+  #     code:
+  #       type: integer
+  #       format: int64
+  #       default: 422
+  #     message:
+  #       type: string
+  #       default: Entity Already Exists
   Error:
     type: object
     properties:
@@ -826,15 +853,15 @@ definitions:
         format: int64
       message:
         type: string
-  InternalServerError:
-    type: object
-    required:
-      - message
-    properties:
-      code:
-        type: integer
-        format: int64
-        default: 500
-      message:
-        type: string
-        default: Internal Server Error
+  # InternalServerError:
+  #   type: object
+  #   required:
+  #     - message
+  #   properties:
+  #     code:
+  #       type: integer
+  #       format: int64
+  #       default: 500
+  #     message:
+  #       type: string
+  #       default: Internal Server Error

@@ -363,16 +363,24 @@ paths:
       security:
         - api_key: []
         - token_header: []
+      consumes:
+        - multipart/form-data
       parameters:
         - $ref: "#/parameters/teamId"
         - $ref: "#/parameters/appId"
-        - name: body
-          in: body
+        - name: description
+          in: formData
           required: true
-          schema:
-            $ref: "#/definitions/Deployment"
-      consumes:
-        - multipart/form-data
+          type: string
+        - name: file
+          in: formData
+          required: true
+          type: file
+        - name: replicas
+          in: formData
+          required: false
+          type: integer
+          default: 2
       responses:
         200:
           description: Deployment
@@ -518,7 +526,7 @@ paths:
       security:
         - api_key: []
         - token_header: []
-      parameters: 
+      parameters:
         - $ref: "#/parameters/userId"
       responses:
         200:

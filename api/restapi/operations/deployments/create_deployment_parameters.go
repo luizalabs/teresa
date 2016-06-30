@@ -4,24 +4,26 @@ package deployments
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"io"
 	"net/http"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/luizalabs/paas/api/models"
 )
 
 // NewCreateDeploymentParams creates a new CreateDeploymentParams object
 // with the default values initialized.
 func NewCreateDeploymentParams() CreateDeploymentParams {
-	var ()
-	return CreateDeploymentParams{}
+	var (
+		replicasDefault int64 = int64(2)
+	)
+	return CreateDeploymentParams{
+		Replicas: &replicasDefault,
+	}
 }
 
 // CreateDeploymentParams contains all the bound params for the create deployment operation
@@ -40,9 +42,19 @@ type CreateDeploymentParams struct {
 	AppID int64
 	/*
 	  Required: true
-	  In: body
+	  In: formData
 	*/
-	Body *models.Deployment
+	Description string
+	/*
+	  Required: true
+	  In: formData
+	*/
+	File runtime.File
+	/*
+	  In: formData
+	  Default: 2
+	*/
+	Replicas *int64
 	/*Team ID
 	  Required: true
 	  In: path
@@ -56,33 +68,35 @@ func (o *CreateDeploymentParams) BindRequest(r *http.Request, route *middleware.
 	var res []error
 	o.HTTPRequest = r
 
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		if err != http.ErrNotMultipart {
+			return err
+		} else if err := r.ParseForm(); err != nil {
+			return err
+		}
+	}
+	fds := runtime.Values(r.Form)
+
 	rAppID, rhkAppID, _ := route.Params.GetOK("app_id")
 	if err := o.bindAppID(rAppID, rhkAppID, route.Formats); err != nil {
 		res = append(res, err)
 	}
 
-	if runtime.HasBody(r) {
-		defer r.Body.Close()
-		var body models.Deployment
-		if err := route.Consumer.Consume(r.Body, &body); err != nil {
-			if err == io.EOF {
-				res = append(res, errors.Required("body", "body"))
-			} else {
-				res = append(res, errors.NewParseError("body", "body", "", err))
-			}
+	fdDescription, fdhkDescription, _ := fds.GetOK("description")
+	if err := o.bindDescription(fdDescription, fdhkDescription, route.Formats); err != nil {
+		res = append(res, err)
+	}
 
-		} else {
-			if err := body.Validate(route.Formats); err != nil {
-				res = append(res, err)
-			}
-
-			if len(res) == 0 {
-				o.Body = &body
-			}
-		}
-
+	file, fileHeader, err := r.FormFile("file")
+	if err != nil {
+		res = append(res, errors.New(400, "reading file %q failed: %v", "file", err))
 	} else {
-		res = append(res, errors.Required("body", "body"))
+		o.File = runtime.File{Data: file, Header: fileHeader}
+	}
+
+	fdReplicas, fdhkReplicas, _ := fds.GetOK("replicas")
+	if err := o.bindReplicas(fdReplicas, fdhkReplicas, route.Formats); err != nil {
+		res = append(res, err)
 	}
 
 	rTeamID, rhkTeamID, _ := route.Params.GetOK("team_id")
@@ -107,6 +121,43 @@ func (o *CreateDeploymentParams) bindAppID(rawData []string, hasKey bool, format
 		return errors.InvalidType("app_id", "path", "int64", raw)
 	}
 	o.AppID = value
+
+	return nil
+}
+
+func (o *CreateDeploymentParams) bindDescription(rawData []string, hasKey bool, formats strfmt.Registry) error {
+	if !hasKey {
+		return errors.Required("description", "formData")
+	}
+	var raw string
+	if len(rawData) > 0 {
+		raw = rawData[len(rawData)-1]
+	}
+	if err := validate.RequiredString("description", "formData", raw); err != nil {
+		return err
+	}
+
+	o.Description = raw
+
+	return nil
+}
+
+func (o *CreateDeploymentParams) bindReplicas(rawData []string, hasKey bool, formats strfmt.Registry) error {
+	var raw string
+	if len(rawData) > 0 {
+		raw = rawData[len(rawData)-1]
+	}
+	if raw == "" { // empty values pass all other validations
+		var replicasDefault int64 = int64(2)
+		o.Replicas = &replicasDefault
+		return nil
+	}
+
+	value, err := swag.ConvertInt64(raw)
+	if err != nil {
+		return errors.InvalidType("replicas", "formData", "int64", raw)
+	}
+	o.Replicas = &value
 
 	return nil
 }

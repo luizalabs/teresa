@@ -50,5 +50,20 @@ func (m *App) validateDeployList(formats strfmt.Registry) error {
 		return nil
 	}
 
+	for i := 0; i < len(m.DeployList); i++ {
+
+		if swag.IsZero(m.DeployList[i]) { // not required
+			continue
+		}
+
+		if m.DeployList[i] != nil {
+
+			if err := m.DeployList[i].Validate(formats); err != nil {
+				return err
+			}
+		}
+
+	}
+
 	return nil
 }

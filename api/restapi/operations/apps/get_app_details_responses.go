@@ -18,7 +18,7 @@ swagger:response getAppDetailsOK
 type GetAppDetailsOK struct {
 
 	// In: body
-	Payload *models.AppProperties `json:"body,omitempty"`
+	Payload *models.App `json:"body,omitempty"`
 }
 
 // NewGetAppDetailsOK creates GetAppDetailsOK with default headers values
@@ -27,13 +27,13 @@ func NewGetAppDetailsOK() *GetAppDetailsOK {
 }
 
 // WithPayload adds the payload to the get app details o k response
-func (o *GetAppDetailsOK) WithPayload(payload *models.AppProperties) *GetAppDetailsOK {
+func (o *GetAppDetailsOK) WithPayload(payload *models.App) *GetAppDetailsOK {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get app details o k response
-func (o *GetAppDetailsOK) SetPayload(payload *models.AppProperties) {
+func (o *GetAppDetailsOK) SetPayload(payload *models.App) {
 	o.Payload = payload
 }
 

@@ -5,7 +5,7 @@ The Teresa PaaS API
 
     Schemes:
       http
-    Host: localhost
+    Host: localhost:8080
     BasePath: /v1
     Version: 0.0.1
 

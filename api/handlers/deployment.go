@@ -81,7 +81,7 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 	log.Printf("starting deploy '%s'. initializing upload to storage.", f)
 	po := &s3.PutObjectInput{
 		Bucket: aws.String(storageBucket),
-		Body:   params.File.Data,
+		Body:   params.AppTarball.Data,
 		Key:    &f,
 	}
 	r, err := s3svc.PutObject(po)

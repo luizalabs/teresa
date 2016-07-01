@@ -4,6 +4,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
+
 	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
@@ -27,13 +29,13 @@ type Deployment struct {
 	*/
 	Description *string `json:"description"`
 
-	/* description of the error, if this occurred
+	/* description of the error, if any
 	 */
 	Error string `json:"error,omitempty"`
 
-	/* trigger who was the responsible for the deploy
+	/* where the deploy process was started
 	 */
-	Origin string `json:"origin,omitempty"`
+	Origin *string `json:"origin,omitempty"`
 
 	/* uuid
 
@@ -56,6 +58,11 @@ func (m *Deployment) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateDescription(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateOrigin(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -90,6 +97,39 @@ func (m *Deployment) validateAuthor(formats strfmt.Registry) error {
 func (m *Deployment) validateDescription(formats strfmt.Registry) error {
 
 	if err := validate.Required("description", "body", m.Description); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var deploymentTypeOriginPropEnum []interface{}
+
+// prop value enum
+func (m *Deployment) validateOriginEnum(path, location string, value string) error {
+	if deploymentTypeOriginPropEnum == nil {
+		var res []string
+		if err := json.Unmarshal([]byte(`["cli_app_deploy","git","ci"]`), &res); err != nil {
+			return err
+		}
+		for _, v := range res {
+			deploymentTypeOriginPropEnum = append(deploymentTypeOriginPropEnum, v)
+		}
+	}
+	if err := validate.Enum(path, location, value, deploymentTypeOriginPropEnum); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Deployment) validateOrigin(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Origin) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateOriginEnum("origin", "body", *m.Origin); err != nil {
 		return err
 	}
 

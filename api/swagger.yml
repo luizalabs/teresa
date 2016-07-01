@@ -372,15 +372,10 @@ paths:
           in: formData
           required: true
           type: string
-        - name: file
+        - name: appTarball
           in: formData
           required: true
           type: file
-        - name: replicas
-          in: formData
-          required: false
-          type: integer
-          default: 2
       responses:
         200:
           description: Deployment
@@ -721,7 +716,7 @@ definitions:
         $ref: "#/definitions/User"
       scale:
         type: integer
-        description: number of "machines" running the app
+        description: number of PODs running the app
         default: 1
       # # TODO: in a future not to far far away, we will have a git deployment
       # repository:
@@ -762,7 +757,12 @@ definitions:
         type: string
       origin:
         type: string
-        description: trigger who was the responsible for the deploy
+        description: where the deploy process was started
+        default: cli_app_deploy
+        enum:
+          - cli_app_deploy
+          - git
+          - ci
       author:
         $ref: "#/definitions/User"
       when:
@@ -770,31 +770,12 @@ definitions:
         format: date-time
       error:
         type: string
-        description: description of the error, if this occurred
+        description: description of the error, if any
   LoginToken:
     type: object
     properties:
       token:
         type: string
-  # item:
-  #   type: object
-  #   required:
-  #     - team
-  #     - name
-  #     - app_name
-  #   properties:
-  #     team:
-  #       type: string
-  #       minLength: 3
-  #     name:
-  #       type: string
-  #       minLength: 5
-  #     app_name:
-  #       type: string
-  #       minLength: 5
-  #     replicas:
-  #       type: number
-  #       default: 2
   NotFound:
     type: object
     properties:
@@ -835,16 +816,6 @@ definitions:
       message:
         type: string
         default: Forbidden
-  # AlreadyExists:
-  #   type: object
-  #   properties:
-  #     code:
-  #       type: integer
-  #       format: int64
-  #       default: 422
-  #     message:
-  #       type: string
-  #       default: Entity Already Exists
   Error:
     type: object
     properties:
@@ -853,15 +824,3 @@ definitions:
         format: int64
       message:
         type: string
-  # InternalServerError:
-  #   type: object
-  #   required:
-  #     - message
-  #   properties:
-  #     code:
-  #       type: integer
-  #       format: int64
-  #       default: 500
-  #     message:
-  #       type: string
-  #       default: Internal Server Error

@@ -53,13 +53,13 @@ type TeresaAPI struct {
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
 
-	// APIKeyAuth registers a function that takes a token and returns a principal
-	// it performs authentication based on an api key token provided in the query
-	APIKeyAuth func(string) (interface{}, error)
-
 	// TokenHeaderAuth registers a function that takes a token and returns a principal
 	// it performs authentication based on an api key Authorization provided in the header
 	TokenHeaderAuth func(string) (interface{}, error)
+
+	// APIKeyAuth registers a function that takes a token and returns a principal
+	// it performs authentication based on an api key token provided in the query
+	APIKeyAuth func(string) (interface{}, error)
 
 	// AppsCreateAppHandler sets the operation handler for the create app operation
 	AppsCreateAppHandler apps.CreateAppHandler
@@ -157,12 +157,12 @@ func (o *TeresaAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
-	if o.APIKeyAuth == nil {
-		unregistered = append(unregistered, "TokenAuth")
-	}
-
 	if o.TokenHeaderAuth == nil {
 		unregistered = append(unregistered, "AuthorizationAuth")
+	}
+
+	if o.APIKeyAuth == nil {
+		unregistered = append(unregistered, "TokenAuth")
 	}
 
 	if o.AppsCreateAppHandler == nil {
@@ -252,13 +252,13 @@ func (o *TeresaAPI) AuthenticatorsFor(schemes map[string]spec.SecurityScheme) ma
 	for name, scheme := range schemes {
 		switch name {
 
-		case "api_key":
-
-			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.APIKeyAuth)
-
 		case "token_header":
 
 			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.TokenHeaderAuth)
+
+		case "api_key":
+
+			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.APIKeyAuth)
 
 		}
 	}

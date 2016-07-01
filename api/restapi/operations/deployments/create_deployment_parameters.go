@@ -18,12 +18,8 @@ import (
 // NewCreateDeploymentParams creates a new CreateDeploymentParams object
 // with the default values initialized.
 func NewCreateDeploymentParams() CreateDeploymentParams {
-	var (
-		replicasDefault int64 = int64(2)
-	)
-	return CreateDeploymentParams{
-		Replicas: &replicasDefault,
-	}
+	var ()
+	return CreateDeploymentParams{}
 }
 
 // CreateDeploymentParams contains all the bound params for the create deployment operation
@@ -35,6 +31,11 @@ type CreateDeploymentParams struct {
 	// HTTP Request Object
 	HTTPRequest *http.Request
 
+	/*
+	  Required: true
+	  In: formData
+	*/
+	AppTarball runtime.File
 	/*App ID
 	  Required: true
 	  In: path
@@ -45,16 +46,6 @@ type CreateDeploymentParams struct {
 	  In: formData
 	*/
 	Description string
-	/*
-	  Required: true
-	  In: formData
-	*/
-	File runtime.File
-	/*
-	  In: formData
-	  Default: 2
-	*/
-	Replicas *int64
 	/*Team ID
 	  Required: true
 	  In: path
@@ -77,6 +68,13 @@ func (o *CreateDeploymentParams) BindRequest(r *http.Request, route *middleware.
 	}
 	fds := runtime.Values(r.Form)
 
+	appTarball, appTarballHeader, err := r.FormFile("appTarball")
+	if err != nil {
+		res = append(res, errors.New(400, "reading file %q failed: %v", "appTarball", err))
+	} else {
+		o.AppTarball = runtime.File{Data: appTarball, Header: appTarballHeader}
+	}
+
 	rAppID, rhkAppID, _ := route.Params.GetOK("app_id")
 	if err := o.bindAppID(rAppID, rhkAppID, route.Formats); err != nil {
 		res = append(res, err)
@@ -84,18 +82,6 @@ func (o *CreateDeploymentParams) BindRequest(r *http.Request, route *middleware.
 
 	fdDescription, fdhkDescription, _ := fds.GetOK("description")
 	if err := o.bindDescription(fdDescription, fdhkDescription, route.Formats); err != nil {
-		res = append(res, err)
-	}
-
-	file, fileHeader, err := r.FormFile("file")
-	if err != nil {
-		res = append(res, errors.New(400, "reading file %q failed: %v", "file", err))
-	} else {
-		o.File = runtime.File{Data: file, Header: fileHeader}
-	}
-
-	fdReplicas, fdhkReplicas, _ := fds.GetOK("replicas")
-	if err := o.bindReplicas(fdReplicas, fdhkReplicas, route.Formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -138,26 +124,6 @@ func (o *CreateDeploymentParams) bindDescription(rawData []string, hasKey bool, 
 	}
 
 	o.Description = raw
-
-	return nil
-}
-
-func (o *CreateDeploymentParams) bindReplicas(rawData []string, hasKey bool, formats strfmt.Registry) error {
-	var raw string
-	if len(rawData) > 0 {
-		raw = rawData[len(rawData)-1]
-	}
-	if raw == "" { // empty values pass all other validations
-		var replicasDefault int64 = int64(2)
-		o.Replicas = &replicasDefault
-		return nil
-	}
-
-	value, err := swag.ConvertInt64(raw)
-	if err != nil {
-		return errors.InvalidType("replicas", "formData", "int64", raw)
-	}
-	o.Replicas = &value
 
 	return nil
 }

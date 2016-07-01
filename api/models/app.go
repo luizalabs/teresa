@@ -43,7 +43,7 @@ type App struct {
 	*/
 	Name *string `json:"name"`
 
-	/* number of "machines" running the app
+	/* number of PODs running the app
 	 */
 	Scale *int64 `json:"scale,omitempty"`
 }

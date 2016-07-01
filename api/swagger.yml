@@ -675,10 +675,15 @@ definitions:
         format: email
       url:
         type: string
-      members:
+      apps:
         type: array
         items:
-          $ref: "#/definitions/User"
+          $ref: "#/definitions/App"
+      # # FIXME: https://github.com/go-swagger/go-swagger/issues/537
+      # members:
+      #   type: array
+      #   items:
+      #     $ref: "#/definitions/User"
   User:
     type: object
     required:
@@ -698,10 +703,10 @@ definitions:
       password:
         type: string
         minLength: 8
-      #teams: # FIXME: https://github.com/go-swagger/go-swagger/issues/537
-      #  type: array
-      #  items:
-      #    $ref: "#/definitions/Team"
+      teams:
+        type: array
+        items:
+          $ref: "#/definitions/Team"
   App:
     type: object
     required:
@@ -712,8 +717,8 @@ definitions:
         format: int64
       name:
         type: string
-      creator:
-        $ref: "#/definitions/User"
+      # creator:
+      #   $ref: "#/definitions/User"
       scale:
         type: integer
         description: number of PODs running the app
@@ -763,8 +768,9 @@ definitions:
           - cli_app_deploy
           - git
           - ci
-      author:
-        $ref: "#/definitions/User"
+      # # FIXME: https://github.com/go-swagger/go-swagger/issues/537
+      # author:
+      #   $ref: "#/definitions/User"
       when:
         type: string
         format: date-time

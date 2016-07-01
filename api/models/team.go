@@ -17,6 +17,10 @@ swagger:model Team
 */
 type Team struct {
 
+	/* apps
+	 */
+	Apps []*App `json:"apps,omitempty"`
+
 	/* email
 	 */
 	Email strfmt.Email `json:"email,omitempty"`
@@ -24,10 +28,6 @@ type Team struct {
 	/* id
 	 */
 	ID int64 `json:"id,omitempty"`
-
-	/* members
-	 */
-	Members []*User `json:"members,omitempty"`
 
 	/* name
 
@@ -44,7 +44,7 @@ type Team struct {
 func (m *Team) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateMembers(formats); err != nil {
+	if err := m.validateApps(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -60,21 +60,21 @@ func (m *Team) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Team) validateMembers(formats strfmt.Registry) error {
+func (m *Team) validateApps(formats strfmt.Registry) error {
 
-	if swag.IsZero(m.Members) { // not required
+	if swag.IsZero(m.Apps) { // not required
 		return nil
 	}
 
-	for i := 0; i < len(m.Members); i++ {
+	for i := 0; i < len(m.Apps); i++ {
 
-		if swag.IsZero(m.Members[i]) { // not required
+		if swag.IsZero(m.Apps[i]) { // not required
 			continue
 		}
 
-		if m.Members[i] != nil {
+		if m.Apps[i] != nil {
 
-			if err := m.Members[i].Validate(formats); err != nil {
+			if err := m.Apps[i].Validate(formats); err != nil {
 				return err
 			}
 		}

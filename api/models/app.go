@@ -21,10 +21,6 @@ type App struct {
 	 */
 	AddressList []string `json:"addressList,omitempty"`
 
-	/* creator
-	 */
-	Creator *User `json:"creator,omitempty"`
-
 	/* deployment list
 	 */
 	DeploymentList []*Deployment `json:"deploymentList,omitempty"`
@@ -57,11 +53,6 @@ func (m *App) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateCreator(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
 	if err := m.validateDeploymentList(formats); err != nil {
 		// prop
 		res = append(res, err)
@@ -87,22 +78,6 @@ func (m *App) validateAddressList(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.AddressList) { // not required
 		return nil
-	}
-
-	return nil
-}
-
-func (m *App) validateCreator(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Creator) { // not required
-		return nil
-	}
-
-	if m.Creator != nil {
-
-		if err := m.Creator.Validate(formats); err != nil {
-			return err
-		}
 	}
 
 	return nil

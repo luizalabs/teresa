@@ -5,6 +5,7 @@ package models
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/swag"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/validate"
@@ -40,6 +41,10 @@ type User struct {
 	Min Length: 8
 	*/
 	Password *string `json:"password"`
+
+	/* teams
+	 */
+	Teams []*Team `json:"teams,omitempty"`
 }
 
 // Validate validates this user
@@ -57,6 +62,11 @@ func (m *User) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validatePassword(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateTeams(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -101,6 +111,30 @@ func (m *User) validatePassword(formats strfmt.Registry) error {
 
 	if err := validate.MinLength("password", "body", string(*m.Password), 8); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *User) validateTeams(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Teams) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Teams); i++ {
+
+		if swag.IsZero(m.Teams[i]) { // not required
+			continue
+		}
+
+		if m.Teams[i] != nil {
+
+			if err := m.Teams[i].Validate(formats); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	return nil

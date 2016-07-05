@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/astaxie/beego/orm"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
 	"github.com/luizalabs/paas/api/models"
@@ -14,8 +13,6 @@ import (
 
 // CreateTeamHandler ...
 func CreateTeamHandler(params teams.CreateTeamParams, principal interface{}) middleware.Responder {
-	o := orm.NewOrm()
-	o.Using("default")
 	t := models.Team{
 		Name:  params.Body.Name,
 		Email: params.Body.Email,
@@ -24,14 +21,14 @@ func CreateTeamHandler(params teams.CreateTeamParams, principal interface{}) mid
 	st := storage.Team{
 		Name:  *params.Body.Name,
 		Email: params.Body.Email.String(),
-		Url:   params.Body.URL,
+		URL:   params.Body.URL,
 	}
-	id, err := o.Insert(&st)
-	if err != nil {
+
+	if err := storage.DB.Create(&st).Error; err != nil {
 		log.Printf("CreateTeamHandler failed: %s\n", err)
 		return teams.NewCreateTeamDefault(422)
 	}
-	t.ID = id
+	t.ID = int64(st.ID)
 	r := teams.NewCreateTeamCreated()
 	r.SetPayload(&t)
 	return r
@@ -39,19 +36,18 @@ func CreateTeamHandler(params teams.CreateTeamParams, principal interface{}) mid
 
 // GetTeamDetailsHandler ...
 func GetTeamDetailsHandler(params teams.GetTeamDetailParams, principal interface{}) middleware.Responder {
-	o := orm.NewOrm()
-	o.Using("default")
-	team := storage.Team{Id: params.TeamID}
-	err := o.Read(&team)
-	if err == orm.ErrNoRows {
+	st := storage.Team{}
+	st.ID = uint(params.TeamID)
+
+	if storage.DB.First(&st).RecordNotFound() {
 		return teams.NewGetTeamsNotFound()
 	}
-	fmt.Printf("Found team with ID [%d] name [%s] email [%s]\n", team.Id, team.Name, team.Email)
+	fmt.Printf("Found team with ID [%d] name [%s] email [%s]\n", st.ID, st.Name, st.Email)
 	r := teams.NewGetTeamDetailOK()
 	t := models.Team{
-		ID:    team.Id,
-		Name:  &team.Name,
-		Email: strfmt.Email(team.Email),
+		ID:    int64(st.ID),
+		Name:  &st.Name,
+		Email: strfmt.Email(st.Email),
 	}
 	r.SetPayload(&t)
 	return r
@@ -59,25 +55,23 @@ func GetTeamDetailsHandler(params teams.GetTeamDetailParams, principal interface
 
 // GetTeamsHandler ...
 func GetTeamsHandler(params teams.GetTeamsParams, principal interface{}) middleware.Responder {
-	o := orm.NewOrm()
-	o.Using("default")
-
 	var sts []*storage.Team
-	num, err := o.QueryTable("team").All(&sts)
-	if err != nil {
+
+	d := storage.DB.Find(&sts)
+
+	if err := d.Error; err != nil {
 		log.Printf("ERROR querying teams: %s", err)
 		return teams.NewGetTeamsDefault(500)
 	}
-	if num == 0 {
+	if d.RecordNotFound() {
 		return teams.NewGetTeamsOK()
 	}
-
 	rts := make([]*models.Team, len(sts))
 	for i := range sts {
 		t := models.Team{
 			Name:  &sts[i].Name,
 			Email: strfmt.Email(sts[i].Email),
-			URL:   sts[i].Url,
+			URL:   sts[i].URL,
 		}
 		rts[i] = &t
 	}
@@ -90,30 +84,29 @@ func GetTeamsHandler(params teams.GetTeamsParams, principal interface{}) middlew
 
 // UpdateTeamHandler ...
 func UpdateTeamHandler(params teams.UpdateTeamParams, principal interface{}) middleware.Responder {
-	o := orm.NewOrm()
-	o.Using("default")
+	st := storage.Team{}
+	st.ID = uint(params.TeamID)
 
-	team := storage.Team{Id: params.TeamID}
-	err := o.Read(&team)
-	if err != nil {
+	if d := storage.DB.First(&st); d.Error != nil || d.RecordNotFound() {
 		return teams.NewGetTeamsDefault(500)
 	}
 	if params.Body.Name != nil {
-		team.Name = *params.Body.Name
+		st.Name = *params.Body.Name
 	}
 	if params.Body.URL != "" {
-		team.Url = params.Body.URL
+		st.URL = params.Body.URL
 	}
-	if _, err := o.Update(&team); err != nil {
+
+	if err := storage.DB.Save(&st).Error; err != nil {
 		log.Printf("ERROR updating team, err: %s", err)
 		return teams.NewGetTeamsDefault(500)
 	}
 	r := teams.NewGetTeamDetailOK()
 	t := models.Team{
-		ID:    team.Id,
-		Name:  &team.Name,
-		Email: strfmt.Email(team.Email),
-		URL:   team.Url,
+		ID:    int64(st.ID),
+		Name:  &st.Name,
+		Email: strfmt.Email(st.Email),
+		URL:   st.URL,
 	}
 	r.SetPayload(&t)
 	return r
@@ -121,10 +114,12 @@ func UpdateTeamHandler(params teams.UpdateTeamParams, principal interface{}) mid
 
 // DeleteTeamHandler ...
 func DeleteTeamHandler(params teams.DeleteTeamParams, principal interface{}) middleware.Responder {
-	o := orm.NewOrm()
-	o.Using("default")
-	if _, err := o.Delete(&storage.Team{Id: params.TeamID}); err != nil {
+	st := storage.Team{}
+	st.ID = uint(params.TeamID)
+
+	if storage.DB.Delete(&st).Error != nil {
 		return teams.NewGetTeamsDefault(500)
 	}
+
 	return teams.NewDeleteTeamNoContent()
 }

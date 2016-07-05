@@ -2,7 +2,8 @@
 
 - `cmd`: main
 - `models`: API models
-- `restapi`: API handlers
+- `restapi`: API generated handlers
+- `client`: API generated client package
 
 This API follows the swagger first approach:
 

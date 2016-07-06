@@ -8,7 +8,6 @@ import (
 	"github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	apiclient "github.com/luizalabs/paas/api/client"
-	"github.com/luizalabs/paas/api/client/auth"
 	"github.com/luizalabs/paas/api/client/teams"
 	"github.com/luizalabs/paas/api/models"
 )
@@ -30,23 +29,25 @@ func main() {
 	var authinfo ClientAuthInfoWriter
 
 	//p.WithBody(
-	p := auth.NewUserLoginParams()
-	l := models.Login{}
-	email := strfmt.Email("arnaldo@luizalabs.com")
-	password := strfmt.Password("foobarfoobar")
-	l.Email = &email
-	l.Password = &password
-	p.WithBody(&l)
+	/*
+		p := auth.NewUserLoginParams()
+		l := models.Login{}
+		email := strfmt.Email("arnaldo@luizalabs.com")
+		password := strfmt.Password("foobarfoobar")
+		l.Email = &email
+		l.Password = &password
+		p.WithBody(&l)
 
-	r, err := s.Auth.UserLogin(p)
-	if err != nil {
-		log.Printf("login token: %s\n", r.Payload.Token)
-	}
-	log.Printf("err: %#v\n", err)
+		r, err := s.Auth.UserLogin(p)
+		if err != nil {
+			log.Printf("login token: %s\n", r.Payload.Token)
+		}
+		log.Printf("err: %#v\n", err)
+	*/
 
 	tp := teams.NewCreateTeamParams()
 	payload := models.Team{}
-	name := "mobile"
+	name := "mobileeeeeeeeeee"
 	eemail := "mobile@luizalabs.com"
 	url := "mobile.luizalabs.com"
 	payload.Email = strfmt.Email(eemail)

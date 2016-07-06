@@ -1,27 +1,84 @@
 package storage
 
 import (
-	"fmt"
 	"log"
 	"time"
 
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/sqlite" // blank import sqlite
 	"golang.org/x/crypto/bcrypt"
-
-	"github.com/astaxie/beego/orm"
-	_ "github.com/mattn/go-sqlite3"
 )
 
-type User struct {
-	Id       int64     `orm:"pk;auto"`
-	Created  time.Time `orm:"auto_now_add;type(datetime)"`
-	Updated  time.Time `orm:"auto_now;type(datetime)"`
-	Name     string    `orm:"size(128)"`
-	Email    string    `orm:"index;unique;size(64)"`
-	Password string    `orm:"index;size(60)"`
-	Team     *Team     `orm:"rel(fk);null"`
+// DB object to access connection poll
+var DB *gorm.DB
+
+type BaseModel struct {
+	ID        uint      `gorm:"primary_key;"`
+	CreatedAt time.Time `gorm:"not null;"`
+	UpdatedAt time.Time `gorm:"not null;"`
 }
 
-// try and authenticate the user, err is nil if auth succeeds
+type Team struct {
+	BaseModel
+	Name  string `gorm:"size:128;not null;unique_index;"`
+	Email string `gorm:"size:64;"`
+	URL   string `gorm:"size:1024;"`
+	Users []User `gorm:"many2many:teams_users;"`
+
+	// TODO: Apps
+}
+
+type User struct {
+	BaseModel
+	Name     string `gorm:"size:128;not null;unique_index;"`
+	Email    string `gorm:"size:64;not null;unique_index;"`
+	Password string `gorm:"size:60;not null;"`
+	Teams    []Team `gorm:"many2many:teams_users;"`
+}
+
+// Application ...
+type Application struct {
+	BaseModel
+	Name        string `gorm:"index;size(128);not null"`
+	Scale       int16  `gorm:"not null"`
+	Addresses   []AppAddress
+	Deployments []Deployment
+	EnvVars     []EnvVar `gorm:"ForeignKey:AppID"`
+}
+
+// EnvVar ...
+type EnvVar struct {
+	BaseModel
+	Key   string `gorm:"size(64);unique_index:idx_envvar_unique_key"`
+	Value string `gorm:"size(1024)"`
+	AppID uint   `gorm:"unique_index:idx_envvar_unique_key;"`
+}
+
+// AppAddress ...
+type AppAddress struct {
+	BaseModel
+	Address string `orm:"unique;size(1024)"`
+}
+
+type deploymentOrigin string
+
+// DeploymentOrigin const
+const (
+	CliAppDeploy deploymentOrigin = "cli_app_deploy"
+	GIT          deploymentOrigin = "git"
+	CI           deploymentOrigin = "ci"
+)
+
+// Deployment ...
+type Deployment struct {
+	BaseModel
+	UUID        string           `gorm:"size(36)"`
+	Description string           `gorm:"size(1024)"`
+	Origin      deploymentOrigin `gorm:"size(14);index"`
+	Error       string           `gorm:"size(2048)"`
+}
+
+// Authenticate ...
 func (u *User) Authenticate(p *string) (err error) {
 	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(*p))
 	if err == nil {
@@ -32,36 +89,18 @@ func (u *User) Authenticate(p *string) (err error) {
 	return err
 }
 
-// FIXME: move this to models/team.go
-type Team struct {
-	Id      int64     `orm:"pk;auto"`
-	Created time.Time `orm:"auto_now_add;type(datetime)"`
-	Updated time.Time `orm:"auto_now;type(datetime)"`
-	Name    string    `orm:"size(128)"`
-	Email   string    `orm:"index;size(64)"`
-	Url     string    `orm:"size(1024)"`
-}
-
 func init() {
-	orm.RegisterDriver("sqlite", orm.DRSqlite)
-	orm.RegisterDataBase("default", "sqlite3", "teresa.sqlite") // FIXME: make it configurable and per-env
-	orm.RegisterModel(new(User), new(Team))
-
-	// create the database -- FIXME
-	if true {
-		// Database alias.
-		name := "default"
-
-		// Drop table and re-create.
-		force := false
-
-		// Print log.
-		verbose := true
-
-		// Error.
-		err := orm.RunSyncdb(name, force, verbose)
-		if err != nil {
-			fmt.Println(err)
-		}
+	var err error
+	DB, err = gorm.Open("sqlite3", "teresa.sqlite") // FIXME: make it configurable and per-env
+	if err != nil {
+		panic("failed to connect database")
 	}
+	// DB.DB().SetMaxIdleConns(10)
+	// DB.DB().SetMaxOpenConns(50)
+	// Print log.
+	DB.LogMode(true)
+
+	// only create, never change
+	DB.AutoMigrate(&Team{}, &User{}, &Application{}, &EnvVar{}, &AppAddress{}, &Deployment{})
+
 }

@@ -19,10 +19,6 @@ swagger:model Deployment
 */
 type Deployment struct {
 
-	/* author
-	 */
-	Author *User `json:"author,omitempty"`
-
 	/* description
 
 	Required: true
@@ -52,11 +48,6 @@ type Deployment struct {
 func (m *Deployment) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateAuthor(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
 	if err := m.validateDescription(formats); err != nil {
 		// prop
 		res = append(res, err)
@@ -75,22 +66,6 @@ func (m *Deployment) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-func (m *Deployment) validateAuthor(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Author) { // not required
-		return nil
-	}
-
-	if m.Author != nil {
-
-		if err := m.Author.Validate(formats); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 

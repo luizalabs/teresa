@@ -6,12 +6,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/astaxie/beego/orm"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/luizalabs/paas/api/models"
-	storage "github.com/luizalabs/paas/api/models/storage"
+	"github.com/luizalabs/paas/api/models/storage"
 	"github.com/luizalabs/paas/api/restapi/operations/auth"
 )
 
@@ -49,20 +48,16 @@ func fatal(err error) {
 
 // LoginHandler validates a user
 func LoginHandler(params auth.UserLoginParams) middleware.Responder {
-	o := orm.NewOrm()
-	o.Using("default")
-	su := storage.User{Email: params.Body.Email.String()}
-	err := o.Read(&su, "Email")
-	if err == orm.ErrNoRows {
+	su := storage.User{}
+	if storage.DB.Where(&storage.User{Email: params.Body.Email.String()}).First(&su).RecordNotFound() {
 		log.Printf("Login unauthorized for user: [%s]\n", params.Body.Email)
 		return auth.NewUserLoginUnauthorized()
 	}
 	p := params.Body.Password.String()
-	err = su.Authenticate(&p)
+	err := su.Authenticate(&p)
 	if err != nil {
 		return auth.NewUserLoginUnauthorized()
 	}
-
 	token := jwt.New(jwt.SigningMethodRS256)
 	token.Claims["email"] = su.Email
 	token.Claims["exp"] = time.Now().Add(time.Hour * 24 * 14).Unix()
@@ -71,7 +66,6 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 		log.Printf("Failed to sign jwt token, err: %s\n", err)
 		return auth.NewUserLoginDefault(500)
 	}
-
 	r := auth.NewUserLoginOK()
 	t := models.LoginToken{Token: tokenString}
 	r.SetPayload(&t)

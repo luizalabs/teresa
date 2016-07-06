@@ -15,8 +15,8 @@
 package cmd
 
 import (
-	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/client"
+	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	apiclient "github.com/luizalabs/paas/api/client"
 	"github.com/luizalabs/paas/api/client/teams"
@@ -24,23 +24,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// AuthenticateRequest authenticates the request -- FIXME: actually authenticate the request
-func AuthenticateRequest(req runtime.ClientRequest, reg strfmt.Registry) error {
-	log.Debugf("AuthenticateRequest()-------------------\n")
-	return nil
-}
-
-// ClientAuthInfoWriter authenticates the client
-type ClientAuthInfoWriter interface {
-	AuthenticateRequest(runtime.ClientRequest, strfmt.Registry) error
-}
-
 func createTeam(name, email, URL string) error {
 	s := apiclient.Default
 	c := client.New("localhost:8080", "/v1", []string{"http"}) // FIXME
+	apiKeyHeaderAuth := httptransport.APIKeyAuth("Authorization", "header", "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFybmFsZG9AbHVpemFsYWJzLmNvbSIsImV4cCI6MTQ2ODk0MzcwN30.N-KOBlwGFpGxah9Y82SgBNyH6noAXDpJP4rRB7HWBtpPFOnQrccGNf64Euk3c4bzvOjjvr5jPnoYcJIqLyoFCduXZXRayxo65z49zlQiNMX7mRNtR7eqRwr0Bv_4SVLh0t3VMPMcX9fUzgGyRJkQdUqVLlU8AYntKr2STxypkbxHfeb1IkvdDuxfoiMl4WntgbxxTckFEpA9TDAzHyvK8N4BaRKe-BArCh5Qe0a3XpZFOJb_RPKEn-_XmbXsVWPmfnWQ2RjKla04VsPoHL-cuDmz-rgmZPKlRoAS3EoAw_33uY3GDRLNyLy8AadDMPwp1HNsyeGE9EUHcX7jY1KsteWIcXEIwMBtaCnQeyhxPO-U_qPydprdFwaBLAMOp0SQ1cNcsLunMnv3L4RzX6On7ngWyvsRTz2dLswZjUma-0hRqjvx8xDZG_wul1ISCXNzZ1j-mcmQZrw1KWK5n_5tUCH8owVzo1aV3eATX2Mn6NNvNk6qvXmtjNfvLDr7xma_pcSbQXCnDY-cyaOUbbbOSCH-hQYh5bPpPOm1EVZHlKV8zuV17lfcdsA7UXNJ4g2Xhes62HB3ZZNy-yZM9T2K2IFv2IGf-2CWuWMt2uk9ATsQz2aCStaFigAD0twsw8qrI8jhxfs9gY2B96OhqoYCd80SPekCdLSIA4n9g_BNsB0")
 	s.SetTransport(c)
-
-	var authinfo ClientAuthInfoWriter
 
 	tp := teams.NewCreateTeamParams()
 	payload := models.Team{}
@@ -49,11 +37,13 @@ func createTeam(name, email, URL string) error {
 	payload.URL = URL
 	tp.WithBody(&payload)
 
-	tr, err := s.Teams.CreateTeam(tp, authinfo)
+	tr, err := s.Teams.CreateTeam(tp, apiKeyHeaderAuth)
 	if err != nil {
-		log.Debugf("team created. response: %#v\n", tr)
+		log.Errorf("team not created. response: %#v\n", tr)
 		return err
 	}
+	team := tr.Payload
+	log.Infof("Team created. Name: %s Email: %s URL: %s\n", (*team.Name), team.Email, team.URL)
 	return nil
 }
 

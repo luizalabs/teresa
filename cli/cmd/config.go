@@ -33,6 +33,21 @@ type configFile struct {
 	CurrentCluster string                   `yaml:"current_cluster"`
 }
 
+// GetAuthToken is a convenience function to return the jwt token for
+// the currently selected cluster.
+func GetAuthToken() string {
+	cfg, err := readConfigFile(cfgFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	n, err := getCurrentClusterName()
+	if err != nil {
+		log.Fatal(err)
+	}
+	cluster := cfg.Clusters[n]
+	return cluster.Token
+}
+
 // read the config file from disk
 func readConfigFile(f string) (c *configFile, err error) {
 	y, err := ioutil.ReadFile(f)

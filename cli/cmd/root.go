@@ -17,13 +17,17 @@ var log *logrus.Logger
 
 // variables used to capture the cli flags
 var (
-	cfgFile       string
-	serverFlag    string
-	currentFlag   bool
-	userNameFlag  string
-	teamNameFlag  string
-	teamEmailFlag string
-	teamURLFlag   string
+	cfgFile          string
+	serverFlag       string
+	currentFlag      bool
+	userNameFlag     string
+	teamNameFlag     string
+	teamEmailFlag    string
+	teamURLFlag      string
+	userEmailFlag    string
+	userPasswordFlag string
+	appNameFlag      string
+	appScaleFlag     int
 )
 
 const (
@@ -82,7 +86,7 @@ func initLog() {
 	// lgr.Formatter = new(logrus.JSONFormatter)
 	log.Formatter = new(prefixed.TextFormatter)
 	log.Out = os.Stdout
-	log.Level = logrus.WarnLevel
+	log.Level = logrus.InfoLevel
 }
 
 // from https://github.com/spf13/viper

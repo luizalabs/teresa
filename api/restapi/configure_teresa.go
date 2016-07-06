@@ -43,9 +43,11 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.APIKeyAuth = handlers.TokenAuthHandler
 	api.TokenHeaderAuth = handlers.TokenAuthHandler
 
+	// create an app
 	api.AppsCreateAppHandler = apps.CreateAppHandlerFunc(func(params apps.CreateAppParams, principal interface{}) middleware.Responder {
-		return middleware.NotImplemented("operation apps.CreateApp has not yet been implemented")
+		return handlers.CreateAppHandler(params, principal)
 	})
+
 	// create deployment
 	api.DeploymentsCreateDeploymentHandler = deployments.CreateDeploymentHandlerFunc(func(params deployments.CreateDeploymentParams, principal interface{}) middleware.Responder {
 		return handlers.CreateDeploymentHandler(params, principal)

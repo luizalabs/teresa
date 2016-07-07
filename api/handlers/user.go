@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/go-openapi/strfmt"
 	"github.com/luizalabs/paas/api/models"
 	"github.com/luizalabs/paas/api/models/storage"
 	"github.com/luizalabs/paas/api/restapi/operations/users"
@@ -56,6 +57,48 @@ func GetUserDetailsHandler(params users.GetUserDetailsParams, principal interfac
 		Name:  &su.Name,
 		Email: &su.Email,
 	}
+	r.SetPayload(&u)
+	return r
+}
+
+func GetCurrentUserHandler(principal interface{}) middleware.Responder {
+	tc := principal.(*Token)
+	su := storage.User{}
+	su.ID = tc.UserID
+
+	if storage.DB.Preload("Teams").Preload("Teams.Apps").First(&su).RecordNotFound() {
+		fmt.Printf("No user with ID [%d] found\n", tc.UserID)
+		return users.NewGetCurrentUserNotFound()
+	}
+
+	u := models.User{
+		ID:    int64(su.ID),
+		Email: &su.Email,
+		Name:  &su.Name,
+	}
+	// team
+	u.Teams = make([]*models.Team, len(su.Teams))
+	for i, st := range su.Teams {
+		t := models.Team{
+			ID:    int64(st.ID),
+			Name:  &st.Name,
+			Email: strfmt.Email(st.Email),
+			URL:   st.URL,
+		}
+		// apps
+		apps := make([]*models.App, len(st.Apps))
+		for i, sa := range st.Apps {
+			scale := int64(sa.Scale)
+			a := models.App{
+				ID:    int64(sa.ID),
+				Name:  &sa.Name,
+				Scale: &scale,
+			}
+			apps[i] = &a
+		}
+		u.Teams[i] = &t
+	}
+	r := users.NewGetCurrentUserOK()
 	r.SetPayload(&u)
 	return r
 }

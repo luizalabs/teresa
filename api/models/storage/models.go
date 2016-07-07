@@ -20,12 +20,11 @@ type BaseModel struct {
 
 type Team struct {
 	BaseModel
-	Name  string `gorm:"size:128;not null;unique_index;"`
-	Email string `gorm:"size:64;"`
-	URL   string `gorm:"size:1024;"`
-	Users []User `gorm:"many2many:teams_users;"`
-
-	// TODO: Apps
+	Name  string        `gorm:"size:128;not null;unique_index;"`
+	Email string        `gorm:"size:64;"`
+	URL   string        `gorm:"size:1024;"`
+	Users []User        `gorm:"many2many:teams_users;"`
+	Apps  []Application `gorm:"ForeignKey:TeamID"`
 }
 
 type User struct {
@@ -39,11 +38,12 @@ type User struct {
 // Application ...
 type Application struct {
 	BaseModel
-	Name        string `gorm:"index;size(128);not null"`
+	Name        string `gorm:"size(128);not null;unique_index:idx_application_team_unique_key;"`
 	Scale       int16  `gorm:"not null"`
 	Addresses   []AppAddress
 	Deployments []Deployment
 	EnvVars     []EnvVar `gorm:"ForeignKey:AppID"`
+	TeamID      uint     `gorm:"unique_index:idx_application_team_unique_key;"`
 }
 
 // EnvVar ...

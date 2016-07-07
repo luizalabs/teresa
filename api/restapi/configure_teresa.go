@@ -69,7 +69,7 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 		return middleware.NotImplemented("operation apps.GetApps has not yet been implemented")
 	})
 	api.UsersGetCurrentUserHandler = users.GetCurrentUserHandlerFunc(func(principal interface{}) middleware.Responder {
-		return middleware.NotImplemented("operation users.GetCurrentUser has not yet been implemented")
+		return handlers.GetCurrentUserHandler(principal)
 	})
 	api.DeploymentsGetDeploymentsHandler = deployments.GetDeploymentsHandlerFunc(func(params deployments.GetDeploymentsParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation deployments.GetDeployments has not yet been implemented")

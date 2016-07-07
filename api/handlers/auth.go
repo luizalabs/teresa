@@ -58,9 +58,12 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	if err != nil {
 		return auth.NewUserLoginUnauthorized()
 	}
-	token := jwt.New(jwt.SigningMethodRS256)
-	token.Claims["email"] = su.Email
-	token.Claims["exp"] = time.Now().Add(time.Hour * 24 * 14).Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"userId": su.ID,
+		"email":  su.Email,
+		"exp":    time.Now().Add(time.Hour * 24 * 14).Unix(),
+	})
+	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString(signKey)
 	if err != nil {
 		log.Printf("Failed to sign jwt token, err: %s\n", err)
@@ -72,11 +75,18 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	return r
 }
 
+type Token struct {
+	UserID uint   `json:"userId"`
+	Email  string `json:"email"`
+	jwt.StandardClaims
+}
+
 // TokenAuthHandler try and validate the jwt token
 func TokenAuthHandler(t string) (interface{}, error) {
-	token, err := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(t, &Token{}, func(token *jwt.Token) (interface{}, error) {
 		return verifyKey, nil
 	})
+
 	// branch out into the possible error from signing
 	switch err.(type) {
 	case nil: // no error
@@ -86,7 +96,8 @@ func TokenAuthHandler(t string) (interface{}, error) {
 		}
 		// see stdout and watch for the CustomUserInfo, nicely unmarshalled
 		log.Printf("JWT token validation - granting access with token: %+v", token)
-		return t, nil
+		tc, _ := token.Claims.(*Token)
+		return tc, nil
 	case *jwt.ValidationError: // something was wrong during the validation
 		vErr := err.(*jwt.ValidationError)
 

@@ -41,9 +41,10 @@ type Application struct {
 	Name        string `gorm:"size(128);not null;unique_index:idx_application_team_unique_key;"`
 	Scale       int16  `gorm:"not null"`
 	Addresses   []AppAddress
-	Deployments []Deployment
-	EnvVars     []EnvVar `gorm:"ForeignKey:AppID"`
-	TeamID      uint     `gorm:"unique_index:idx_application_team_unique_key;"`
+	Deployments []Deployment `gorm:"ForeignKey:AppID"`
+	EnvVars     []EnvVar     `gorm:"ForeignKey:AppID"`
+	Team        Team
+	TeamID      uint `gorm:"unique_index:idx_application_team_unique_key;"`
 }
 
 // EnvVar ...
@@ -76,6 +77,7 @@ type Deployment struct {
 	Description string           `gorm:"size(1024)"`
 	Origin      deploymentOrigin `gorm:"size(14);index"`
 	Error       string           `gorm:"size(2048)"`
+	AppID       uint
 }
 
 // Authenticate ...

@@ -3,10 +3,9 @@ package handlers
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
-
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/client/restclient"
+	"unicode"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -16,8 +15,11 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/luizalabs/paas/api/k8s"
 	"github.com/luizalabs/paas/api/models"
+	"github.com/luizalabs/paas/api/models/storage"
 	"github.com/luizalabs/paas/api/restapi/operations/deployments"
 	"github.com/pborman/uuid"
+	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/client/restclient"
 	"k8s.io/kubernetes/pkg/client/unversioned"
 )
 
@@ -32,7 +34,7 @@ const (
 	k8sInsecure            = true
 	sessionIdleInterval    = time.Duration(1) * time.Second
 	builderPodTickDuration = time.Duration(1) * time.Second
-	builderPodWaitDuration = time.Duration(1) * time.Minute
+	builderPodWaitDuration = time.Duration(3) * time.Minute
 )
 
 var (
@@ -61,107 +63,119 @@ func init() {
 	// if err != nil {
 	// 	log.Panicf("Erro trying to create a kubernetes client. Error: %s", err.Error())
 	// }
+}
 
+// from the package github.com/mrvdot/golang-utils/
+func GenerateSlug(str string) (slug string) {
+	return strings.Map(func(r rune) rune {
+		switch {
+		case r == ' ', r == '-':
+			return '-'
+		case r == '_', unicode.IsLetter(r), unicode.IsDigit(r):
+			return r
+		default:
+			return -1
+		}
+	}, strings.ToLower(strings.TrimSpace(str)))
 }
 
 // CreateDeploymentHandler creates deploy
 func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principal interface{}) middleware.Responder {
-	// TODO: get app info from DB to this vars
-	appName := "wally"
-	appDeployVersion := 1
-	appDeployID := uuid.New()[:8]
-	appNamespace := "default"
-	appReplicas := 2
-	deployName := fmt.Sprintf("%s-%d-%s", appName, appDeployVersion, appDeployID)
+	// get app info from DB
+	sa := storage.Application{}
+	sa.ID = uint(params.AppID)
+	// if storage.DB.Where(&storage.Application{TeamID: uint(params.TeamID)}).Preload("Team").Preload("Deployments").Preload("EnvVars").First(&sa).RecordNotFound() {
+	if storage.DB.Where(&storage.Application{TeamID: uint(params.TeamID)}).Preload("Team").Preload("EnvVars").Preload("Deployments").First(&sa).RecordNotFound() {
+		// TODO: log error here
+		// FIXME: check if this is the correct error
+		return deployments.NewCreateDeploymentUnauthorized()
+	}
 
-	// TODO: log here about the app pre uploaded
-	f := fmt.Sprintf("apps/in/%s/app.tgz", deployName)
-	fo := fmt.Sprintf("apps/out/%s", deployName)
+	appSlugName := GenerateSlug(sa.Name)
+	teamSlugName := GenerateSlug(sa.Team.Name)
+	appSlugNamespace := fmt.Sprintf("%s--%s", teamSlugName, appSlugName)
+	deployUUID := uuid.New()[:8]
+	// deployName := fmt.Sprintf("%s-%s-%s", teamSlugName, appSlugName, deployUUID)
 
-	log.Printf("starting deploy '%s'. initializing upload to storage.", f)
+	storageIn := fmt.Sprintf("deploys/%s/%s/%s/in/app.tgz", teamSlugName, appSlugName, deployUUID)
+	storageOut := fmt.Sprintf("apps/out/%s/%s/%s/out", teamSlugName, appSlugName, deployUUID)
+
+	log.Printf("starting deploy [%s/%s/%s]\n", teamSlugName, appSlugName, deployUUID)
+
+	// uploading app tarball to storage
+	log.Printf("starting upload to storage [%s]\n", storageIn)
 	po := &s3.PutObjectInput{
 		Bucket: aws.String(storageBucket),
 		Body:   params.AppTarball.Data,
-		Key:    &f,
+		Key:    &storageIn,
 	}
-	r, err := s3svc.PutObject(po)
-	if err != nil {
-		log.Printf("error when uploading the app tarball to storage, Err %s\n", err.Error())
-		// TODO: response with the real error here
+	if _, err := s3svc.PutObject(po); err != nil {
+		log.Printf("error uploading the app tarball to storage, Err: %s\n", err.Error())
+		return deployments.NewCreateDeploymentDefault(500)
 	}
-	log.Printf("upload done, etag %s", *r.ETag)
 
-	// creating build POD
-	var bp *api.Pod
-	bp = k8s.BuildSlugbuilderPod(
-		true,
-		deployName,
-		appNamespace,
-		f,
-		fo, // put path to slug
-		"", // buildpacks
-	)
-
-	pi := k8sClient.Pods(appNamespace)
-	buildPod, err := pi.Create(bp)
+	// builder proccess...
+	buildName := fmt.Sprintf("build--%s--%s", appSlugName, deployUUID)
+	// FIXME: maybe we should accept extra buildpacks in the future?!?
+	log.Printf("building the app; builder POD name [%s/%s]", appSlugNamespace, buildName)
+	bp := k8s.BuildSlugbuilderPod(false, buildName, appSlugNamespace, storageIn, storageOut, "")
+	podI := k8sClient.Pods(appSlugNamespace)
+	builder, err := podI.Create(bp)
 	if err != nil {
-		log.Fatalf("Error trying to create the building pod (%s)\n", err)
+		log.Printf("error creating the builder pod for the app. Err: %s\n", err.Error())
+		return deployments.NewCreateDeploymentDefault(500)
 	}
-	log.Printf("building the app. podname: %s\n", buildPod.GetName())
-	// waiting pod to start
-	if err := k8s.WaitForPod(k8sClient, buildPod.Namespace, buildPod.Name, sessionIdleInterval, builderPodTickDuration, builderPodWaitDuration); err != nil {
-		log.Printf("watching events for builder pod startup (%s)\n", err)
+	// wainting buider start
+	if err = k8s.WaitForPod(k8sClient, builder.Namespace, builder.Name, sessionIdleInterval, builderPodTickDuration, builderPodWaitDuration); err != nil {
+		log.Printf("error when waiting the start of the builder POD. Err: %s\n", err.Error())
+		return deployments.NewCreateDeploymentDefault(500)
 	}
-	// waiting for to end
-	if err := k8s.WaitForPodEnd(k8sClient, buildPod.Namespace, buildPod.Name, builderPodTickDuration, builderPodWaitDuration); err != nil {
-		log.Printf("error getting builder pod status (%s)\n", err)
+	// waiting builder end
+	if err = k8s.WaitForPodEnd(k8sClient, builder.Namespace, builder.Name, builderPodTickDuration, builderPodWaitDuration); err != nil {
+		log.Printf("error when waiting the end of the builder POD. Err: %s\n", err.Error())
+		return deployments.NewCreateDeploymentDefault(500)
 	}
-	log.Println("checking the pod exit code")
-
-	p, err := k8sClient.Pods(buildPod.Namespace).Get(buildPod.Name)
-	if err != nil {
-		log.Printf("error getting builder pod status (%s)", err)
+	// check the builder exit code
+	var p *api.Pod
+	if p, err = k8sClient.Pods(builder.Namespace).Get(builder.Name); err != nil {
+		log.Printf("error trying to discover the builder exit code. Err: %s\n", err.Error())
+		return deployments.NewCreateDeploymentDefault(500)
 	}
 	for _, containerStatus := range p.Status.ContainerStatuses {
 		state := containerStatus.State.Terminated
 		if state.ExitCode != 0 {
-			log.Fatalf("build pod exited with code %d, stopping build.", state.ExitCode)
+			log.Printf("build pod exited with code %d, stopping deploy.\n", state.ExitCode)
+			return deployments.NewCreateDeploymentDefault(500)
 		}
 	}
-	log.Println("build ok, let's continue the deploy...")
+	// TODO: check if is necessary to delete the builder pod
+	// TODO: save to DB info about the deploy always
 
-	slug := fmt.Sprintf("%s/slug.tgz", fo)
-	log.Printf("slug: %s", slug)
-
-	// creating deployment
-	d := k8s.BuildSlugRunnerDeployment(
-		appName, appNamespace,
-		1, 1, appReplicas, appName,
-		slug,
-		map[string]string{
-			"AWS_ACCESS_KEY": "AKIAJVYPW4MGR2DW6QDA",
-			"AWS_SECRET_KEY": "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",
-		})
-	di := k8sClient.Deployments(appNamespace)
-	_, err = di.Create(d)
-	if err != nil {
-		log.Fatalf("error trying to create a deployment. Error: %s", err)
+	// creating k8s deployment...
+	appEnv := make(map[string]string)
+	for _, e := range sa.EnvVars {
+		appEnv[e.Key] = e.Value
+	}
+	// FIXME: maybe it's not necessary to have a name and a selector name
+	srd := k8s.BuildSlugRunnerDeployment(appSlugName, appSlugNamespace, 1, 1, int(sa.Scale), appSlugName, fmt.Sprintf("%s/slug.tgz", storageOut), appEnv)
+	di := k8sClient.Deployments(appSlugNamespace)
+	if _, err = di.Create(srd); err != nil {
+		log.Printf("error creating the deployment. Err: %s\n", err.Error())
+		return deployments.NewCreateDeploymentDefault(500)
 	}
 
-	// creating service
-	s := k8s.BuildSlugRunnerLBService(appName, appNamespace, appName)
-	_, err = k8sClient.Services(appNamespace).Create(s)
-	if err != nil {
-		log.Fatalf("error trying to create a service. Error: %s", err)
+	// creating k8s service with LoadBalance...
+	s := k8s.BuildSlugRunnerLBService(appSlugName, appSlugNamespace, appSlugName)
+	if _, err = k8sClient.Services(appSlugNamespace).Create(s); err != nil {
+		log.Printf("error creating the LB for the deployment. Err: %s\n", err.Error())
+		return deployments.NewCreateDeploymentDefault(500)
 	}
 
-	log.Println("everything is ok")
-
-	resp := deployments.NewCreateDeploymentOK()
-	pa := models.Deployment{
-		Description: &params.Description,
+	r := deployments.NewCreateDeploymentOK()
+	deployment := models.Deployment{
+		Description: &appSlugName,
 		When:        strfmt.NewDateTime(),
 	}
-	resp.SetPayload(&pa)
-	return resp
+	r.SetPayload(&deployment)
+	return r
 }

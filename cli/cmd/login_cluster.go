@@ -31,6 +31,26 @@ var loginCmd = &cobra.Command{
 		}
 		log.Infof("Login OK")
 		log.Debugf("Auth token: %s\n", token)
+
+		cfg, err := readConfigFile(cfgFile)
+		if err != nil {
+			return err
+		}
+		n, err := getCurrentClusterName()
+		if err != nil {
+			return err
+		}
+		// update the token...
+		cluster := cfg.Clusters[n]
+		cluster.Token = token
+		cfg.Clusters[n] = cluster
+		// write the config file
+		err = writeConfigFile(cfgFile, cfg)
+		if err != nil {
+			return err
+		}
+		log.Debugf("Token saved to config")
+
 		return nil
 	},
 }

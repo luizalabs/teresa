@@ -84,21 +84,17 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 	// get app info from DB
 	sa := storage.Application{}
 	sa.ID = uint(params.AppID)
-	// if storage.DB.Where(&storage.Application{TeamID: uint(params.TeamID)}).Preload("Team").Preload("Deployments").Preload("EnvVars").First(&sa).RecordNotFound() {
 	if storage.DB.Where(&storage.Application{TeamID: uint(params.TeamID)}).Preload("Team").Preload("EnvVars").Preload("Deployments").First(&sa).RecordNotFound() {
-		// TODO: log error here
-		// FIXME: check if this is the correct error
-		return deployments.NewCreateDeploymentUnauthorized()
+		log.Println("app info not found")
+		return deployments.NewCreateDeploymentUnauthorized() // FIXME: check if is this the correct error
 	}
 
 	appSlugName := GenerateSlug(sa.Name)
 	teamSlugName := GenerateSlug(sa.Team.Name)
 	appSlugNamespace := fmt.Sprintf("%s--%s", teamSlugName, appSlugName)
 	deployUUID := uuid.New()[:8]
-	// deployName := fmt.Sprintf("%s-%s-%s", teamSlugName, appSlugName, deployUUID)
-
 	storageIn := fmt.Sprintf("deploys/%s/%s/%s/in/app.tgz", teamSlugName, appSlugName, deployUUID)
-	storageOut := fmt.Sprintf("apps/out/%s/%s/%s/out", teamSlugName, appSlugName, deployUUID)
+	storageOut := fmt.Sprintf("deploys/%s/%s/%s/out", teamSlugName, appSlugName, deployUUID)
 
 	log.Printf("starting deploy [%s/%s/%s]\n", teamSlugName, appSlugName, deployUUID)
 
@@ -170,6 +166,16 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 		log.Printf("error creating the LB for the deployment. Err: %s\n", err.Error())
 		return deployments.NewCreateDeploymentDefault(500)
 	}
+
+	log.Println("deploy finished with success")
+
+	// saving deployment to db...
+	d := storage.Deployment{
+		UUID:        deployUUID,
+		Description: params.Description,
+		AppID:       sa.ID,
+	}
+	storage.DB.Save(&d)
 
 	r := deployments.NewCreateDeploymentOK()
 	deployment := models.Deployment{

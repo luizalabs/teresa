@@ -64,20 +64,20 @@ type AppAddress struct {
 type deploymentOrigin string
 
 // DeploymentOrigin const
-const (
-	CliAppDeploy deploymentOrigin = "cli_app_deploy"
-	GIT          deploymentOrigin = "git"
-	CI           deploymentOrigin = "ci"
-)
+// const (
+// 	CliAppDeploy deploymentOrigin = "cli_app_deploy"
+// 	GIT          deploymentOrigin = "git"
+// 	CI           deploymentOrigin = "ci"
+// )
 
 // Deployment ...
 type Deployment struct {
 	BaseModel
-	UUID        string           `gorm:"size(36)"`
-	Description string           `gorm:"size(1024)"`
-	Origin      deploymentOrigin `gorm:"size(14);index"`
-	Error       string           `gorm:"size(2048)"`
-	AppID       uint
+	UUID        string `gorm:"size(36)"`
+	Description string `gorm:"size(1024)"`
+	// Origin      deploymentOrigin `gorm:"size(14);index"`
+	Error string `gorm:"size(2048)"`
+	AppID uint
 }
 
 // Authenticate ...

@@ -21,19 +21,30 @@ type TeresaClient struct {
 }
 
 // NewTeresa foo bar
-func NewTeresa(s, p, suffix, authToken string) TeresaClient {
+func NewTeresa() TeresaClient {
+	cfg, err := readConfigFile(cfgFile)
+	if err != nil {
+		log.Fatalf("Failed to read config file, err: %+v\n", err)
+	}
+	n, err := getCurrentClusterName()
+	if err != nil {
+		log.Fatalf("Failed to get current cluster name, err: %+v\n", err)
+	}
+	cluster := cfg.Clusters[n]
+	suffix := "/v1"
+
 	tc := TeresaClient{teresa: apiclient.Default}
-	log.Infof(`Setting new teresa client. "TERESA_SERVER":"%s", "TERESA_SERVER_PORT":"%s", "TERESA_API_SUFFIX":"%s"`, s, p, suffix)
-	c := client.New(fmt.Sprintf("%s:%s", s, p), suffix, []string{"http"})
+	log.Infof(`Setting new teresa client. server: %s, api suffix: %s`, cluster.Server, suffix)
+	c := client.New(fmt.Sprintf("%s", cluster.Server), suffix, []string{"http"})
 	tc.teresa.SetTransport(c)
 
-	if authToken != "" {
-		tc.apiKeyAuthFunc = httptransport.APIKeyAuth("Authorization", "header", authToken)
+	if cluster.Token != "" {
+		tc.apiKeyAuthFunc = httptransport.APIKeyAuth("Authorization", "header", cluster.Token)
 	}
 	return tc
 }
 
-// Login foo bar
+// Login login the user
 func (tc TeresaClient) Login(email strfmt.Email, password strfmt.Password) (token string, err error) {
 	params := auth.NewUserLoginParams()
 	params.WithBody(&models.Login{Email: &email, Password: &password})

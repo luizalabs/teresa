@@ -26,10 +26,10 @@ var appCmd = &cobra.Command{
 			return newInputError("app name is required")
 		}
 		if appScaleFlag == 0 {
-			return newInputError("app replicas is required")
+			return newInputError("at least one replica is required")
 		}
 
-		tc := NewTeresa("127.0.0.1", "8080", "/v1", GetAuthToken())
+		tc := NewTeresa()
 		app, err := tc.CreateApp(appNameFlag, int64(appScaleFlag))
 		if err != nil {
 			log.Fatal(err)

@@ -63,7 +63,7 @@ func NewGetAppDetailsOK() *GetAppDetailsOK {
 App details
 */
 type GetAppDetailsOK struct {
-	Payload *models.AppProperties
+	Payload *models.App
 }
 
 func (o *GetAppDetailsOK) Error() string {
@@ -72,7 +72,7 @@ func (o *GetAppDetailsOK) Error() string {
 
 func (o *GetAppDetailsOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.AppProperties)
+	o.Payload = new(models.App)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

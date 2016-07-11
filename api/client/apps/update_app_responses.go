@@ -60,10 +60,10 @@ func NewUpdateAppOK() *UpdateAppOK {
 
 /*UpdateAppOK handles this case with default header values.
 
-App properties
+App
 */
 type UpdateAppOK struct {
-	Payload *models.AppProperties
+	Payload *models.App
 }
 
 func (o *UpdateAppOK) Error() string {
@@ -72,7 +72,7 @@ func (o *UpdateAppOK) Error() string {
 
 func (o *UpdateAppOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.AppProperties)
+	o.Payload = new(models.App)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

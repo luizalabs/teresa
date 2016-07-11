@@ -24,7 +24,7 @@ func NewHTTPClient(formats strfmt.Registry) *Teresa {
 	if formats == nil {
 		formats = strfmt.Default
 	}
-	transport := httptransport.New("localhost", "/v1", []string{"http"})
+	transport := httptransport.New("localhost:8080", "/v1", []string{"http"})
 	return New(transport, formats)
 }
 

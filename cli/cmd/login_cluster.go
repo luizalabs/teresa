@@ -31,6 +31,9 @@ var loginCmd = &cobra.Command{
 		}
 		log.Infof("Login OK")
 		log.Debugf("Auth token: %s\n", token)
+		if err := SetAuthToken(token); err != nil {
+			log.Fatalf("Failed to update the auth token: %s\n", err)
+		}
 		return nil
 	},
 }

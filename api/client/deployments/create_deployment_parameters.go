@@ -4,20 +4,35 @@ package deployments
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"os"
+	"time"
+
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
+	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/swag"
 
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/luizalabs/paas/api/models"
 )
 
 // NewCreateDeploymentParams creates a new CreateDeploymentParams object
 // with the default values initialized.
 func NewCreateDeploymentParams() *CreateDeploymentParams {
 	var ()
-	return &CreateDeploymentParams{}
+	return &CreateDeploymentParams{
+
+		timeout: cr.DefaultTimeout,
+	}
+}
+
+// NewCreateDeploymentParamsWithTimeout creates a new CreateDeploymentParams object
+// with the default values initialized, and the ability to set a timeout on a request
+func NewCreateDeploymentParamsWithTimeout(timeout time.Duration) *CreateDeploymentParams {
+	var ()
+	return &CreateDeploymentParams{
+
+		timeout: timeout,
+	}
 }
 
 /*CreateDeploymentParams contains all the parameters to send to the API endpoint
@@ -25,18 +40,28 @@ for the create deployment operation typically these are written to a http.Reques
 */
 type CreateDeploymentParams struct {
 
+	/*AppTarball*/
+	AppTarball os.File
 	/*AppID
 	  App ID
 
 	*/
 	AppID int64
-	/*Body*/
-	Body *models.Deployment
+	/*Description*/
+	Description string
 	/*TeamID
 	  Team ID
 
 	*/
 	TeamID int64
+
+	timeout time.Duration
+}
+
+// WithAppTarball adds the appTarball to the create deployment params
+func (o *CreateDeploymentParams) WithAppTarball(AppTarball os.File) *CreateDeploymentParams {
+	o.AppTarball = AppTarball
+	return o
 }
 
 // WithAppID adds the appId to the create deployment params
@@ -45,9 +70,9 @@ func (o *CreateDeploymentParams) WithAppID(AppID int64) *CreateDeploymentParams 
 	return o
 }
 
-// WithBody adds the body to the create deployment params
-func (o *CreateDeploymentParams) WithBody(Body *models.Deployment) *CreateDeploymentParams {
-	o.Body = Body
+// WithDescription adds the description to the create deployment params
+func (o *CreateDeploymentParams) WithDescription(Description string) *CreateDeploymentParams {
+	o.Description = Description
 	return o
 }
 
@@ -60,19 +85,26 @@ func (o *CreateDeploymentParams) WithTeamID(TeamID int64) *CreateDeploymentParam
 // WriteToRequest writes these params to a swagger request
 func (o *CreateDeploymentParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
+	r.SetTimeout(o.timeout)
 	var res []error
+
+	// form file param appTarball
+	if err := r.SetFileParam("appTarball", &o.AppTarball); err != nil {
+		return err
+	}
 
 	// path param app_id
 	if err := r.SetPathParam("app_id", swag.FormatInt64(o.AppID)); err != nil {
 		return err
 	}
 
-	if o.Body == nil {
-		o.Body = new(models.Deployment)
-	}
-
-	if err := r.SetBodyParam(o.Body); err != nil {
-		return err
+	// form param description
+	frDescription := o.Description
+	fDescription := frDescription
+	if fDescription != "" {
+		if err := r.SetFormParam("description", fDescription); err != nil {
+			return err
+		}
 	}
 
 	// path param team_id

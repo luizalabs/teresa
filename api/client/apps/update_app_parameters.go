@@ -4,8 +4,11 @@ package apps
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"time"
+
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
+	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/swag"
 
 	strfmt "github.com/go-openapi/strfmt"
@@ -17,7 +20,20 @@ import (
 // with the default values initialized.
 func NewUpdateAppParams() *UpdateAppParams {
 	var ()
-	return &UpdateAppParams{}
+	return &UpdateAppParams{
+
+		timeout: cr.DefaultTimeout,
+	}
+}
+
+// NewUpdateAppParamsWithTimeout creates a new UpdateAppParams object
+// with the default values initialized, and the ability to set a timeout on a request
+func NewUpdateAppParamsWithTimeout(timeout time.Duration) *UpdateAppParams {
+	var ()
+	return &UpdateAppParams{
+
+		timeout: timeout,
+	}
 }
 
 /*UpdateAppParams contains all the parameters to send to the API endpoint
@@ -31,12 +47,14 @@ type UpdateAppParams struct {
 	*/
 	AppID int64
 	/*Body*/
-	Body *models.AppProperties
+	Body *models.App
 	/*TeamID
 	  Team ID
 
 	*/
 	TeamID int64
+
+	timeout time.Duration
 }
 
 // WithAppID adds the appId to the update app params
@@ -46,7 +64,7 @@ func (o *UpdateAppParams) WithAppID(AppID int64) *UpdateAppParams {
 }
 
 // WithBody adds the body to the update app params
-func (o *UpdateAppParams) WithBody(Body *models.AppProperties) *UpdateAppParams {
+func (o *UpdateAppParams) WithBody(Body *models.App) *UpdateAppParams {
 	o.Body = Body
 	return o
 }
@@ -60,6 +78,7 @@ func (o *UpdateAppParams) WithTeamID(TeamID int64) *UpdateAppParams {
 // WriteToRequest writes these params to a swagger request
 func (o *UpdateAppParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
+	r.SetTimeout(o.timeout)
 	var res []error
 
 	// path param app_id
@@ -68,7 +87,7 @@ func (o *UpdateAppParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Reg
 	}
 
 	if o.Body == nil {
-		o.Body = new(models.AppProperties)
+		o.Body = new(models.App)
 	}
 
 	if err := r.SetBodyParam(o.Body); err != nil {

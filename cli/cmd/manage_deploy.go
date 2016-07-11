@@ -42,6 +42,7 @@ func createDeploy(appName, appFolder string) error {
 	var teamID, appID int64
 	tc := NewTeresa()
 	me, _ := tc.Me()
+	// FIXME: check if user is in more than 1 team
 	// if len(me.Teams) == 1 {
 	// }
 	teamID = me.Teams[0].ID
@@ -61,8 +62,6 @@ func createDeploy(appName, appFolder string) error {
 		return err
 	}
 
-	fmt.Printf("->>%s\n", tar)
-
 	h := &http.Client{}
 	req := request.NewRequest(h)
 	file, _ := os.Open(tar)
@@ -81,7 +80,7 @@ func createDeploy(appName, appFolder string) error {
 		"Authorization": cluster.Token,
 	}
 
-	// FIXME: accept this from the cli
+	// FIXME: we need to receive this from the cli
 	req.Params = map[string]string{
 		"description": "put something here",
 	}
@@ -106,6 +105,7 @@ func createDeploy(appName, appFolder string) error {
 		log.WithFields(fields).Error("Http status diff from 200 when requesting a login")
 		return newSysError("Error when trying to do this action")
 	}
+	fmt.Println("Deploy created with success")
 	return nil
 }
 

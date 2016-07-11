@@ -38,9 +38,9 @@ type User struct {
 // Application ...
 type Application struct {
 	BaseModel
-	Name        string `gorm:"size(128);not null;unique_index:idx_application_team_unique_key;"`
-	Scale       int16  `gorm:"not null"`
-	Addresses   []AppAddress
+	Name        string       `gorm:"size(128);not null;unique_index:idx_application_team_unique_key;"`
+	Scale       int16        `gorm:"not null"`
+	Addresses   []AppAddress `gorm:"ForeignKey:AppID"`
 	Deployments []Deployment `gorm:"ForeignKey:AppID"`
 	EnvVars     []EnvVar     `gorm:"ForeignKey:AppID"`
 	Team        Team
@@ -59,6 +59,7 @@ type EnvVar struct {
 type AppAddress struct {
 	BaseModel
 	Address string `orm:"unique;size(1024)"`
+	AppID   uint
 }
 
 type deploymentOrigin string

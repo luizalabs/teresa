@@ -14,7 +14,11 @@
 
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+)
 
 // appCmd represents the app command
 var appCmd = &cobra.Command{
@@ -48,17 +52,32 @@ var getAppCmd = &cobra.Command{
 		if appNameFlag == "" {
 			return newInputError("app name is required")
 		}
-		if appScaleFlag == 0 {
-			return newInputError("at least one replica is required")
-		}
-
 		tc := NewTeresa()
-		app, err := tc.CreateApp(appNameFlag, int64(appScaleFlag))
+		me, _ := tc.Me()
+		// FIXME: check if user is in more than 1 team
+		// FIXME: put this call in only one place (see manage_deploy.go)
+		// if len(me.Teams) == 1 {
+		// }
+		var teamID, appID int64
+		teamID = me.Teams[0].ID
+		for _, a := range me.Teams[0].Apps {
+			if *a.Name == appNameFlag {
+				appID = a.ID
+				break
+			}
+		}
+		app, err := tc.GetAppDetail(teamID, appID)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Infof("App created. Name: %s Replicas: %s", *app.Name, *app.Scale)
 
+		o := fmt.Sprintf("App: %s\n", *app.Name)
+		o = o + fmt.Sprintf("Scale: %d\n", *app.Scale)
+		o = o + "Address:\n"
+		for _, x := range app.AddressList {
+			o = o + fmt.Sprintf("  %s\n", x)
+		}
+		fmt.Printf(o)
 		return nil
 	},
 }
@@ -69,5 +88,7 @@ func init() {
 	appCmd.Flags().StringVar(&appNameFlag, "name", "", "app name [required]")
 	appCmd.Flags().IntVar(&appScaleFlag, "scale", 1, "replicas [required]")
 
-	getAppCmd.Flags().StringVar(&appNameFlag, "name", "", "app name [required]")
+	getCmd.AddCommand(getAppCmd)
+	getAppCmd.Flags().StringVarP(&appNameFlag, "app", "a", "", "app name [required]")
+
 }

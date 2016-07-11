@@ -75,18 +75,13 @@ func (tc TeresaClient) CreateApp(name string, scale int64) (app *models.App, err
 }
 
 // GetApp get an app
-func (tc TeresaClient) GetApp(teamId, appId int64) (app *models.App, err error) {
-
-	// TODO: implement this
-	// params := apps.NewGetAppDetailsParams().WithTeamID(teamId).WithAppID(appId)
-	// r, err := tc.teresa.Apps.GetAppDetails(params, tc.apiKeyAuthFunc)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// r.
-	//
-	// return r.Payload, nil
-	return nil, nil
+func (tc TeresaClient) GetAppDetail(teamID, appID int64) (app *models.App, err error) {
+	params := apps.NewGetAppDetailsParams().WithTeamID(teamID).WithAppID(appID)
+	r, err := tc.teresa.Apps.GetAppDetails(params, tc.apiKeyAuthFunc)
+	if err != nil {
+		return nil, err
+	}
+	return r.Payload, nil
 }
 
 // CreateUser ...

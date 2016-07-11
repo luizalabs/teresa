@@ -85,7 +85,7 @@ func createDeploy(appName, appFolder string) error {
 		"description": "put something here",
 	}
 
-	resp, err := req.Post(fmt.Sprintf("http://%s/v1/teams/%d/apps/%d/deployments", cluster.Server, teamID, appID))
+	resp, err := req.Post(fmt.Sprintf("%s/v1/teams/%d/apps/%d/deployments", cluster.Server, teamID, appID))
 	if err != nil {
 		log.WithError(err).Error("Error when uploading an app archive to start a deploy")
 		return newSysError("Error when trying to do this action")

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/client"
@@ -34,8 +34,15 @@ func NewTeresa() TeresaClient {
 	suffix := "/v1"
 
 	tc := TeresaClient{teresa: apiclient.Default}
-	log.Infof(`Setting new teresa client. server: %s, api suffix: %s`, cluster.Server, suffix)
-	c := client.New(fmt.Sprintf("%s", cluster.Server), suffix, []string{"http"})
+	log.Debugf(`Setting new teresa client. server: %s, api suffix: %s`, cluster.Server, suffix)
+
+	// the split is ugly.
+	// using unecessary vars for clarity
+	ss := strings.Split(cluster.Server, "://")
+	scheme := ss[0]
+	host := ss[1]
+
+	c := client.New(host, suffix, []string{scheme})
 	tc.teresa.SetTransport(c)
 
 	if cluster.Token != "" {

@@ -87,6 +87,15 @@ func (tc TeresaClient) CreateUser(email, name, password string) (user *models.Us
 	return r.Payload, nil
 }
 
+// Me get's the user infos + teams + apps
+func (tc TeresaClient) Me() (user *models.User, err error) {
+	r, err := tc.teresa.Users.GetCurrentUser(nil, tc.apiKeyAuthFunc)
+	if err != nil {
+		return nil, err
+	}
+	return r.Payload, nil
+}
+
 /*
 func main() {
 	teresa := NewTeresa(os.Getenv("TERESA_SERVER"), os.Getenv("TERESA_SERVER_PORT"), os.Getenv("TERESA_API_SUFFIX"))

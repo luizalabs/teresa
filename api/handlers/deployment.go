@@ -93,7 +93,7 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 	teamSlugName := GenerateSlug(sa.Team.Name)
 	appSlugNamespace := fmt.Sprintf("%s--%s", teamSlugName, appSlugName)
 	deployUUID := uuid.New()[:8]
-	storageIn := fmt.Sprintf("deploys/%s/%s/%s/in/app.tgz", teamSlugName, appSlugName, deployUUID)
+	storageIn := fmt.Sprintf("deploys/%s/%s/%s/in/app.tar.gz", teamSlugName, appSlugName, deployUUID)
 	storageOut := fmt.Sprintf("deploys/%s/%s/%s/out", teamSlugName, appSlugName, deployUUID)
 
 	log.Printf("starting deploy [%s/%s/%s]\n", teamSlugName, appSlugName, deployUUID)

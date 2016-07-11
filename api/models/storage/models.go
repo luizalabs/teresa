@@ -38,12 +38,13 @@ type User struct {
 // Application ...
 type Application struct {
 	BaseModel
-	Name        string `gorm:"size(128);not null;unique_index:idx_application_team_unique_key;"`
-	Scale       int16  `gorm:"not null"`
-	Addresses   []AppAddress
-	Deployments []Deployment
-	EnvVars     []EnvVar `gorm:"ForeignKey:AppID"`
-	TeamID      uint     `gorm:"unique_index:idx_application_team_unique_key;"`
+	Name        string       `gorm:"size(128);not null;unique_index:idx_application_team_unique_key;"`
+	Scale       int16        `gorm:"not null"`
+	Addresses   []AppAddress `gorm:"ForeignKey:AppID"`
+	Deployments []Deployment `gorm:"ForeignKey:AppID"`
+	EnvVars     []EnvVar     `gorm:"ForeignKey:AppID"`
+	Team        Team
+	TeamID      uint `gorm:"unique_index:idx_application_team_unique_key;"`
 }
 
 // EnvVar ...
@@ -58,24 +59,26 @@ type EnvVar struct {
 type AppAddress struct {
 	BaseModel
 	Address string `orm:"unique;size(1024)"`
+	AppID   uint
 }
 
 type deploymentOrigin string
 
 // DeploymentOrigin const
-const (
-	CliAppDeploy deploymentOrigin = "cli_app_deploy"
-	GIT          deploymentOrigin = "git"
-	CI           deploymentOrigin = "ci"
-)
+// const (
+// 	CliAppDeploy deploymentOrigin = "cli_app_deploy"
+// 	GIT          deploymentOrigin = "git"
+// 	CI           deploymentOrigin = "ci"
+// )
 
 // Deployment ...
 type Deployment struct {
 	BaseModel
-	UUID        string           `gorm:"size(36)"`
-	Description string           `gorm:"size(1024)"`
-	Origin      deploymentOrigin `gorm:"size(14);index"`
-	Error       string           `gorm:"size(2048)"`
+	UUID        string `gorm:"size(36)"`
+	Description string `gorm:"size(1024)"`
+	// Origin      deploymentOrigin `gorm:"size(14);index"`
+	Error string `gorm:"size(2048)"`
+	AppID uint
 }
 
 // Authenticate ...

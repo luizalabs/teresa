@@ -65,7 +65,7 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 		return handlers.DeleteTeamHandler(params, principal)
 	})
 	api.AppsGetAppDetailsHandler = apps.GetAppDetailsHandlerFunc(func(params apps.GetAppDetailsParams, principal interface{}) middleware.Responder {
-		return middleware.NotImplemented("operation apps.GetAppDetails has not yet been implemented")
+		return handlers.GetAppDetailsHandler(params, principal)
 	})
 	api.AppsGetAppsHandler = apps.GetAppsHandlerFunc(func(params apps.GetAppsParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation apps.GetApps has not yet been implemented")

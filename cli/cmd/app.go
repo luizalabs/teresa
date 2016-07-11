@@ -73,9 +73,11 @@ var getAppCmd = &cobra.Command{
 
 		o := fmt.Sprintf("App: %s\n", *app.Name)
 		o = o + fmt.Sprintf("Scale: %d\n", *app.Scale)
-		o = o + "Address:\n"
-		for _, x := range app.AddressList {
-			o = o + fmt.Sprintf("  %s\n", x)
+		if len(app.AddressList) > 0 {
+			o = o + "Address:\n"
+			for _, x := range app.AddressList {
+				o = o + fmt.Sprintf("  %s\n", x)
+			}
 		}
 		fmt.Printf(o)
 		return nil

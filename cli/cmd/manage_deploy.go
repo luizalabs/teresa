@@ -20,28 +20,57 @@ var createDeployCmd = &cobra.Command{
 	Use:   "create APP_FOLDER",
 	Short: "deploy an app",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			log.Debug("App folder not provided")
-			return newInputError("App Folder not provided")
+		p := ""
+		if len(args) > 0 {
+			p = args[0]
 		}
-		return createDeploy(filepath.Clean(args[0]))
+		return createDeploy(appNameFlag, p)
 	},
 }
 
-func createDeploy(p string) error {
-	if p == "" {
+func createDeploy(appName, appFolder string) error {
+	if appName == "" {
+		log.Debug("App name not provided")
+		return newInputError("App name not provided")
+	}
+	if appFolder == "" {
 		log.Error("App folder not provided")
 		return newSysError("App folder not provided")
 	}
-	tar, err := createTempArchiveToUpload(p)
+
+	// requesting `me` to get team and app id to proceed
+	var teamID, appID int64
+	tc := NewTeresa()
+	me, _ := tc.Me()
+	// if len(me.Teams) == 1 {
+	// }
+	teamID = me.Teams[0].ID
+	for _, a := range me.Teams[0].Apps {
+		if *a.Name == appName {
+			appID = a.ID
+			break
+		}
+	}
+	if teamID == 0 || appID == 0 {
+		log.Debug("teamID or appID not found")
+		return newInputError("Invalid team or app.")
+	}
+
+	tar, err := createTempArchiveToUpload(appFolder)
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("->>%s\n", tar)
+
 	h := &http.Client{}
 	req := request.NewRequest(h)
 	file, _ := os.Open(tar)
 	req.Files = []request.FileField{
-		request.FileField{FieldName: "apparchive", FileName: filepath.Base(tar), File: file},
+		request.FileField{
+			FieldName: "appTarball",
+			FileName:  filepath.Base(tar),
+			File:      file},
 	}
 	cluster, err := getCurrentCluster()
 	if err != nil {
@@ -49,9 +78,15 @@ func createDeploy(p string) error {
 	}
 	req.Headers = map[string]string{
 		"Accept":        "application/json",
-		"Authorization": fmt.Sprintf("Bearer %s", cluster.Token),
+		"Authorization": cluster.Token,
 	}
-	resp, err := req.Post(fmt.Sprintf("%s/deploy", cluster.Server))
+
+	// FIXME: accept this from the cli
+	req.Params = map[string]string{
+		"description": "put something here",
+	}
+
+	resp, err := req.Post(fmt.Sprintf("http://%s/v1/teams/%d/apps/%d/deployments", cluster.Server, teamID, appID))
 	if err != nil {
 		log.WithError(err).Error("Error when uploading an app archive to start a deploy")
 		return newSysError("Error when trying to do this action")
@@ -99,13 +134,12 @@ func createArchive(source string, target string) error {
 	}
 	tar := new(archivex.TarFile)
 	tar.Create(target)
-	tar.AddAll(source, true)
+	tar.AddAll(source, false)
 	tar.Close()
 	return nil
 }
 
 func init() {
-	// setClusterCmd.Flags().StringVarP(&serverFlag, "server", "s", "", "URI of the server")
-	// setClusterCmd.Flags().BoolVarP(&currentFlag, "default", "d", false, "Is the default server")
+	createDeployCmd.Flags().StringVarP(&appNameFlag, "app", "a", "", "app name [required]")
 	deployCmd.AddCommand(createDeployCmd)
 }

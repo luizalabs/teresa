@@ -162,7 +162,8 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 
 	// creating k8s service with LoadBalance...
 	s := k8s.BuildSlugRunnerLBService(appSlugName, appSlugNamespace, appSlugName)
-	if _, err = k8sClient.Services(appSlugNamespace).Create(s); err != nil {
+	_, err = k8sClient.Services(appSlugNamespace).Create(s)
+	if err != nil {
 		log.Printf("error creating the LB for the deployment. Err: %s\n", err.Error())
 		return deployments.NewCreateDeploymentDefault(500)
 	}
@@ -176,6 +177,18 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 		AppID:       sa.ID,
 	}
 	storage.DB.Save(&d)
+
+	// save address to db...
+	// FIXME: change this sleep to k8s.wait or something like
+	time.Sleep(5 * time.Second)
+	// FIXME: check this one before save;
+	// FIXME: we should have a correct router (wildcart) poiting to this balance
+	service, err := k8sClient.Services(appSlugNamespace).Get(appSlugName)
+	saa := storage.AppAddress{
+		Address: service.Status.LoadBalancer.Ingress[0].Hostname,
+		AppID:   sa.ID,
+	}
+	storage.DB.Create(&saa)
 
 	r := deployments.NewCreateDeploymentOK()
 	deployment := models.Deployment{

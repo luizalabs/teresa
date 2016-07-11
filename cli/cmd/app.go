@@ -40,9 +40,34 @@ var appCmd = &cobra.Command{
 	},
 }
 
+var getAppCmd = &cobra.Command{
+	Use:   "app",
+	Short: "Get an app",
+	Long:  `Get an app`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if appNameFlag == "" {
+			return newInputError("app name is required")
+		}
+		if appScaleFlag == 0 {
+			return newInputError("at least one replica is required")
+		}
+
+		tc := NewTeresa()
+		app, err := tc.CreateApp(appNameFlag, int64(appScaleFlag))
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Infof("App created. Name: %s Replicas: %s", *app.Name, *app.Scale)
+
+		return nil
+	},
+}
+
 func init() {
 	createCmd.AddCommand(appCmd)
 
 	appCmd.Flags().StringVar(&appNameFlag, "name", "", "app name [required]")
 	appCmd.Flags().IntVar(&appScaleFlag, "scale", 1, "replicas [required]")
+
+	getAppCmd.Flags().StringVar(&appNameFlag, "name", "", "app name [required]")
 }

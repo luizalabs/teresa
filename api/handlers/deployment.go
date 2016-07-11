@@ -179,8 +179,8 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 	storage.DB.Save(&d)
 
 	// save address to db...
-	// FIXME: change this sleep to k8s.wait or something like
-	time.Sleep(5 * time.Second)
+	// FIXME: change this sleep to k8s.wait or something like; very danger trying to get ingress bellow
+	time.Sleep(10 * time.Second)
 	// FIXME: check this one before save;
 	// FIXME: we should have a correct router (wildcart) poiting to this balance
 	service, err := k8sClient.Services(appSlugNamespace).Get(appSlugName)

@@ -53,7 +53,11 @@ var getAppCmd = &cobra.Command{
 			return newInputError("app name is required")
 		}
 		tc := NewTeresa()
-		me, _ := tc.Me()
+		me, err := tc.Me()
+		if err != nil {
+			log.Fatalf("unable to get user information: %s", err)
+		}
+
 		// FIXME: check if user is in more than 1 team
 		// FIXME: put this call in only one place (see manage_deploy.go)
 		// if len(me.Teams) == 1 {

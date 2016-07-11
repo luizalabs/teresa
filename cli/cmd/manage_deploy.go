@@ -41,7 +41,10 @@ func createDeploy(appName, appFolder string) error {
 	// requesting `me` to get team and app id to proceed
 	var teamID, appID int64
 	tc := NewTeresa()
-	me, _ := tc.Me()
+	me, err := tc.Me()
+	if err != nil {
+		log.Fatalf("unable to get user information: %s", err)
+	}
 	// FIXME: check if user is in more than 1 team
 	// if len(me.Teams) == 1 {
 	// }

@@ -49,32 +49,15 @@ var getAppCmd = &cobra.Command{
 	Short: "Get an app",
 	Long:  `Get an app`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if appNameFlag == "" {
-			return newInputError("app name is required")
-		}
 		tc := NewTeresa()
-		me, err := tc.Me()
+		a, err := tc.GetAppInfo(teamNameFlag, appNameFlag)
 		if err != nil {
-			log.Fatalf("unable to get user information: %s", err)
+			return err
 		}
-
-		// FIXME: check if user is in more than 1 team
-		// FIXME: put this call in only one place (see manage_deploy.go)
-		// if len(me.Teams) == 1 {
-		// }
-		var teamID, appID int64
-		teamID = me.Teams[0].ID
-		for _, a := range me.Teams[0].Apps {
-			if *a.Name == appNameFlag {
-				appID = a.ID
-				break
-			}
-		}
-		app, err := tc.GetAppDetail(teamID, appID)
+		app, err := tc.GetAppDetail(a.TeamID, a.AppID)
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		o := fmt.Sprintf("App: %s\n", *app.Name)
 		o = o + fmt.Sprintf("Scale: %d\n", *app.Scale)
 		if len(app.AddressList) > 0 {
@@ -96,5 +79,6 @@ func init() {
 
 	getCmd.AddCommand(getAppCmd)
 	getAppCmd.Flags().StringVarP(&appNameFlag, "app", "a", "", "app name [required]")
+	getAppCmd.Flags().StringVarP(&teamNameFlag, "team", "t", "", "team name")
 
 }

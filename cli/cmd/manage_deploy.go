@@ -35,31 +35,11 @@ func createDeploy(appName, teamName, description, appFolder string) error {
 		return newSysError("App folder not provided")
 	}
 
-	// requesting `me` to get team and app id to proceed
-	var teamID, appID int64
 	tc := NewTeresa()
-	me, err := tc.Me()
+
+	a, err := tc.GetAppInfo(teamName, appName)
 	if err != nil {
-		log.Fatalf("unable to get user information: %s", err)
-	}
-	// FIXME: check if this user have access to the specific team (we should centralize this check)
-	if len(me.Teams) > 1 && teamName == "" {
-		log.Debug("user in more than one team and dont provided a team to do the action")
-		return newSysError("Team not provided")
-	}
-	for _, t := range me.Teams {
-		if teamName == "" || *t.Name == teamName {
-			teamID = t.ID
-			for _, a := range t.Apps {
-				appID = a.ID
-				break
-			}
-			break
-		}
-	}
-	if teamID == 0 || appID == 0 {
-		log.Debug("teamID or appID not found")
-		return newInputError("Invalid team or app to continue")
+		return err
 	}
 	// create and get the archive
 	tar, err := createTempArchiveToUpload(appFolder)
@@ -70,12 +50,10 @@ func createDeploy(appName, teamName, description, appFolder string) error {
 	if err != nil {
 		log.Fatalf("error getting the archive to upload. %s", err)
 	}
-
-	_, err = tc.CreateDeploy(teamID, appID, description, file)
+	_, err = tc.CreateDeploy(a.TeamID, a.AppID, description, file)
 	if err != nil {
 		log.Fatalf("error creating the deploy. %s", err)
 	}
-
 	log.Infoln("Deploy created with success")
 	return nil
 }

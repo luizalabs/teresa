@@ -24,6 +24,11 @@ type TeresaClient struct {
 	apiKeyAuthFunc runtime.ClientAuthInfoWriter
 }
 
+type AppInfo struct {
+	AppID  int64
+	TeamID int64
+}
+
 // NewTeresa foo bar
 func NewTeresa() TeresaClient {
 	cfg, err := readConfigFile(cfgFile)
@@ -122,6 +127,38 @@ func (tc TeresaClient) Me() (user *models.User, err error) {
 		return nil, err
 	}
 	return r.Payload, nil
+}
+
+// GetAppInfo return teamID and appID
+func (tc TeresaClient) GetAppInfo(teamName, appName string) (appInfo *AppInfo, err error) {
+	if appName == "" {
+		log.Debug("App name not provided")
+		return nil, newInputError("App not provided")
+	}
+	me, err := tc.Me()
+	if err != nil {
+		log.Fatalf("unable to get user information: %s", err)
+	}
+	if len(me.Teams) > 1 && teamName == "" {
+		log.Debug("user in more than one team and dont provided a team to do the action")
+		return nil, newSysError("Team not provided")
+	}
+	appInfo = &AppInfo{}
+	for _, t := range me.Teams {
+		if teamName == "" || *t.Name == teamName {
+			appInfo.TeamID = t.ID
+			for _, a := range t.Apps {
+				appInfo.AppID = a.ID
+				break
+			}
+			break
+		}
+	}
+	if appInfo.TeamID == 0 || appInfo.AppID == 0 {
+		log.Debug("teamID or appID not found")
+		return nil, newInputError("Invalid team or app to continue")
+	}
+	return
 }
 
 func (tc TeresaClient) CreateDeploy(teamID, appID int64, description string, tarBall *os.File) (deploy *models.Deployment, err error) {

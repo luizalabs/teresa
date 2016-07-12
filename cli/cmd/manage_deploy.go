@@ -21,17 +21,17 @@ var createDeployCmd = &cobra.Command{
 		if len(args) > 0 {
 			p = args[0]
 		}
-		return createDeploy(appNameFlag, p)
+		return createDeploy(appNameFlag, teamNameFlag, p)
 	},
 }
 
-func createDeploy(appName, appFolder string) error {
+func createDeploy(appName, teamName, appFolder string) error {
 	if appName == "" {
 		log.Debug("App name not provided")
-		return newInputError("App name not provided")
+		return newInputError("App not provided")
 	}
 	if appFolder == "" {
-		log.Error("App folder not provided")
+		log.Debug("App folder not provided")
 		return newSysError("App folder not provided")
 	}
 
@@ -42,19 +42,24 @@ func createDeploy(appName, appFolder string) error {
 	if err != nil {
 		log.Fatalf("unable to get user information: %s", err)
 	}
-	// FIXME: check if user is in more than 1 team
-	// if len(me.Teams) == 1 {
-	// }
-	teamID = me.Teams[0].ID
-	for _, a := range me.Teams[0].Apps {
-		if *a.Name == appName {
-			appID = a.ID
+	// FIXME: check if this user have access to the specific team (we should centralize this check)
+	if len(me.Teams) > 1 && teamName == "" {
+		log.Debug("user in more than one team and dont provided a team to do the action")
+		return newSysError("Team not provided")
+	}
+	for _, t := range me.Teams {
+		if teamName == "" || *t.Name == teamName {
+			teamID = t.ID
+			for _, a := range t.Apps {
+				appID = a.ID
+				break
+			}
 			break
 		}
 	}
 	if teamID == 0 || appID == 0 {
 		log.Debug("teamID or appID not found")
-		return newInputError("Invalid team or app.")
+		return newInputError("Invalid team or app to continue")
 	}
 	// create and get the archive
 	tar, err := createTempArchiveToUpload(appFolder)
@@ -109,5 +114,6 @@ func createArchive(source string, target string) error {
 
 func init() {
 	createDeployCmd.Flags().StringVarP(&appNameFlag, "app", "a", "", "app name [required]")
+	createDeployCmd.Flags().StringVarP(&teamNameFlag, "team", "t", "", "team name")
 	deployCmd.AddCommand(createDeployCmd)
 }

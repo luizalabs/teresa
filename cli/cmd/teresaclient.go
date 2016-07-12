@@ -156,7 +156,7 @@ func (tc TeresaClient) GetAppInfo(teamName, appName string) (appInfo *AppInfo, e
 	}
 	if appInfo.TeamID == 0 || appInfo.AppID == 0 {
 		log.Debug("teamID or appID not found")
-		return nil, newInputError("Invalid team or app to continue")
+		return nil, newInputError("Invalid Team or App")
 	}
 	return
 }

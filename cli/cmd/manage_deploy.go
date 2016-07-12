@@ -21,11 +21,11 @@ var createDeployCmd = &cobra.Command{
 		if len(args) > 0 {
 			p = args[0]
 		}
-		return createDeploy(appNameFlag, teamNameFlag, p)
+		return createDeploy(appNameFlag, teamNameFlag, descriptionFlag, p)
 	},
 }
 
-func createDeploy(appName, teamName, appFolder string) error {
+func createDeploy(appName, teamName, description, appFolder string) error {
 	if appName == "" {
 		log.Debug("App name not provided")
 		return newInputError("App not provided")
@@ -71,8 +71,7 @@ func createDeploy(appName, teamName, appFolder string) error {
 		log.Fatalf("error getting the archive to upload. %s", err)
 	}
 
-	// FIXME: change this null text for the cli real description
-	_, err = tc.CreateDeploy(teamID, appID, "null", file)
+	_, err = tc.CreateDeploy(teamID, appID, description, file)
 	if err != nil {
 		log.Fatalf("error creating the deploy. %s", err)
 	}
@@ -115,5 +114,6 @@ func createArchive(source string, target string) error {
 func init() {
 	createDeployCmd.Flags().StringVarP(&appNameFlag, "app", "a", "", "app name [required]")
 	createDeployCmd.Flags().StringVarP(&teamNameFlag, "team", "t", "", "team name")
+	createDeployCmd.Flags().StringVarP(&descriptionFlag, "description", "d", "", "deploy description")
 	deployCmd.AddCommand(createDeployCmd)
 }

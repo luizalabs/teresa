@@ -10,6 +10,7 @@ import (
 	apiclient "github.com/luizalabs/paas/api/client"
 	"github.com/luizalabs/paas/api/client/apps"
 	"github.com/luizalabs/paas/api/client/auth"
+	"github.com/luizalabs/paas/api/client/teams"
 	"github.com/luizalabs/paas/api/client/users"
 	"github.com/luizalabs/paas/api/models"
 )
@@ -63,6 +64,18 @@ func (tc TeresaClient) Login(email strfmt.Email, password strfmt.Password) (toke
 	return r.Payload.Token, nil
 }
 
+// CreateTeam Creates a team
+func (tc TeresaClient) CreateTeam(name, email, URL string) (*models.Team, error) {
+	params := teams.NewCreateTeamParams()
+	e := strfmt.Email(email)
+	params.WithBody(&models.Team{Name: &name, Email: e, URL: URL})
+	r, err := tc.teresa.Teams.CreateTeam(params, tc.apiKeyAuthFunc)
+	if err != nil {
+		return nil, err
+	}
+	return r.Payload, nil
+}
+
 // CreateApp creates an user
 func (tc TeresaClient) CreateApp(name string, scale int64) (app *models.App, err error) {
 	params := apps.NewCreateAppParams()
@@ -74,7 +87,7 @@ func (tc TeresaClient) CreateApp(name string, scale int64) (app *models.App, err
 	return r.Payload, nil
 }
 
-// GetApp get an app
+// GetAppDetail Create app attributes
 func (tc TeresaClient) GetAppDetail(teamID, appID int64) (app *models.App, err error) {
 	params := apps.NewGetAppDetailsParams().WithTeamID(teamID).WithAppID(appID)
 	r, err := tc.teresa.Apps.GetAppDetails(params, tc.apiKeyAuthFunc)
@@ -84,13 +97,12 @@ func (tc TeresaClient) GetAppDetail(teamID, appID int64) (app *models.App, err e
 	return r.Payload, nil
 }
 
-// CreateUser ...
-func (tc TeresaClient) CreateUser(email, name, password string) (user *models.User, err error) {
+// CreateUser Create an user
+func (tc TeresaClient) CreateUser(name, email, password string) (user *models.User, err error) {
 	params := users.NewCreateUserParams()
 	params.WithBody(&models.User{Email: &email, Name: &name, Password: &password})
 
 	r, err := tc.teresa.Users.CreateUser(params, tc.apiKeyAuthFunc)
-	log.Infof("r: %+v\n", r)
 	if err != nil {
 		return nil, err
 	}

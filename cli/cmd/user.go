@@ -14,19 +14,30 @@
 
 package cmd
 
-import (
-	"fmt"
-
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 // userCmd represents the user command
 var userCmd = &cobra.Command{
 	Use:   "user",
 	Short: "Create a user",
 	Long:  `Create a user`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("user called")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if userNameFlag == "" {
+			return newInputError("user name is required")
+		}
+		if userEmailFlag == "" {
+			return newInputError("user email is required")
+		}
+		if userPasswordFlag == "" {
+			return newInputError("user password is required")
+		}
+		tc := NewTeresa()
+		user, err := tc.CreateUser(userNameFlag, userEmailFlag, userPasswordFlag)
+		if err != nil {
+			log.Fatalf("Failed to create user: %s", err)
+		}
+		log.Infof("User created. Name: %s Email: %s\n", *user.Name, *user.Email)
+		return err
 	},
 }
 

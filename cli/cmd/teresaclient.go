@@ -162,7 +162,7 @@ func (tc TeresaClient) CreateDeploy(teamID, appID int64, description string, tar
 	p := deployments.NewCreateDeploymentParams()
 	p.TeamID = teamID
 	p.AppID = appID
-	p.Description = description
+	p.Description = &description
 	p.AppTarball = *tarBall
 	r, err := tc.teresa.Deployments.CreateDeployment(p, tc.apiKeyAuthFunc)
 	if err != nil {

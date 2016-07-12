@@ -65,7 +65,7 @@ func init() {
 	// }
 }
 
-// from the package github.com/mrvdot/golang-utils/
+// GenerateSlug from the package github.com/mrvdot/golang-utils/
 func GenerateSlug(str string) (slug string) {
 	return strings.Map(func(r rune) rune {
 		switch {
@@ -173,9 +173,11 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 
 	// saving deployment to db...
 	d := storage.Deployment{
-		UUID:        deployUUID,
-		Description: params.Description,
-		AppID:       sa.ID,
+		UUID:  deployUUID,
+		AppID: sa.ID,
+	}
+	if params.Description != nil {
+		d.Description = *params.Description
 	}
 	storage.DB.Save(&d)
 

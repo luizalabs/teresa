@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"os"
 	"strings"
+	"time"
 
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/client"
@@ -10,6 +12,7 @@ import (
 	apiclient "github.com/luizalabs/paas/api/client"
 	"github.com/luizalabs/paas/api/client/apps"
 	"github.com/luizalabs/paas/api/client/auth"
+	"github.com/luizalabs/paas/api/client/deployments"
 	"github.com/luizalabs/paas/api/client/teams"
 	"github.com/luizalabs/paas/api/client/users"
 	"github.com/luizalabs/paas/api/models"
@@ -43,7 +46,10 @@ func NewTeresa() TeresaClient {
 	scheme := ss[0]
 	host := ss[1]
 
+	// FIXME: this should came from config
+	client.DefaultTimeout = 60 * time.Second
 	c := client.New(host, suffix, []string{scheme})
+
 	tc.teresa.SetTransport(c)
 
 	if cluster.Token != "" {
@@ -112,6 +118,19 @@ func (tc TeresaClient) CreateUser(name, email, password string) (user *models.Us
 // Me get's the user infos + teams + apps
 func (tc TeresaClient) Me() (user *models.User, err error) {
 	r, err := tc.teresa.Users.GetCurrentUser(nil, tc.apiKeyAuthFunc)
+	if err != nil {
+		return nil, err
+	}
+	return r.Payload, nil
+}
+
+func (tc TeresaClient) CreateDeploy(teamID, appID int64, description string, tarBall *os.File) (deploy *models.Deployment, err error) {
+	p := deployments.NewCreateDeploymentParams()
+	p.TeamID = teamID
+	p.AppID = appID
+	p.Description = description
+	p.AppTarball = *tarBall
+	r, err := tc.teresa.Deployments.CreateDeployment(p, tc.apiKeyAuthFunc)
 	if err != nil {
 		return nil, err
 	}

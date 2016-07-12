@@ -28,6 +28,7 @@ var (
 	userPasswordFlag string
 	appNameFlag      string
 	appScaleFlag     int
+	descriptionFlag  string
 )
 
 const (

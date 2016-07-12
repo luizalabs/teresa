@@ -10,7 +10,6 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 
 	strfmt "github.com/go-openapi/strfmt"
 )
@@ -42,10 +41,9 @@ type CreateDeploymentParams struct {
 	*/
 	AppID int64
 	/*
-	  Required: true
 	  In: formData
 	*/
-	Description string
+	Description *string
 	/*Team ID
 	  Required: true
 	  In: path
@@ -112,18 +110,15 @@ func (o *CreateDeploymentParams) bindAppID(rawData []string, hasKey bool, format
 }
 
 func (o *CreateDeploymentParams) bindDescription(rawData []string, hasKey bool, formats strfmt.Registry) error {
-	if !hasKey {
-		return errors.Required("description", "formData")
-	}
 	var raw string
 	if len(rawData) > 0 {
 		raw = rawData[len(rawData)-1]
 	}
-	if err := validate.RequiredString("description", "formData", raw); err != nil {
-		return err
+	if raw == "" { // empty values pass all other validations
+		return nil
 	}
 
-	o.Description = raw
+	o.Description = &raw
 
 	return nil
 }

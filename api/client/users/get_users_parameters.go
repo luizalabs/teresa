@@ -4,11 +4,8 @@ package users
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"time"
-
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
-	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/swag"
 
 	strfmt "github.com/go-openapi/strfmt"
@@ -24,23 +21,6 @@ func NewGetUsersParams() *GetUsersParams {
 	return &GetUsersParams{
 		Limit: &limitDefault,
 		Since: &sinceDefault,
-
-		timeout: cr.DefaultTimeout,
-	}
-}
-
-// NewGetUsersParamsWithTimeout creates a new GetUsersParams object
-// with the default values initialized, and the ability to set a timeout on a request
-func NewGetUsersParamsWithTimeout(timeout time.Duration) *GetUsersParams {
-	var (
-		limitDefault int64 = int64(20)
-		sinceDefault int64 = int64(0)
-	)
-	return &GetUsersParams{
-		Limit: &limitDefault,
-		Since: &sinceDefault,
-
-		timeout: timeout,
 	}
 }
 
@@ -59,8 +39,6 @@ type GetUsersParams struct {
 
 	*/
 	Since *int64
-
-	timeout time.Duration
 }
 
 // WithLimit adds the limit to the get users params
@@ -78,7 +56,6 @@ func (o *GetUsersParams) WithSince(Since *int64) *GetUsersParams {
 // WriteToRequest writes these params to a swagger request
 func (o *GetUsersParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
-	r.SetTimeout(o.timeout)
 	var res []error
 
 	if o.Limit != nil {

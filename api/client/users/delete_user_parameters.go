@@ -11,17 +11,17 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 )
 
-// NewUpdateUserParams creates a new UpdateUserParams object
+// NewDeleteUserParams creates a new DeleteUserParams object
 // with the default values initialized.
-func NewUpdateUserParams() *UpdateUserParams {
+func NewDeleteUserParams() *DeleteUserParams {
 	var ()
-	return &UpdateUserParams{}
+	return &DeleteUserParams{}
 }
 
-/*UpdateUserParams contains all the parameters to send to the API endpoint
-for the update user operation typically these are written to a http.Request
+/*DeleteUserParams contains all the parameters to send to the API endpoint
+for the delete user operation typically these are written to a http.Request
 */
-type UpdateUserParams struct {
+type DeleteUserParams struct {
 
 	/*UserID
 	  User ID
@@ -30,14 +30,14 @@ type UpdateUserParams struct {
 	UserID int64
 }
 
-// WithUserID adds the userId to the update user params
-func (o *UpdateUserParams) WithUserID(UserID int64) *UpdateUserParams {
+// WithUserID adds the userId to the delete user params
+func (o *DeleteUserParams) WithUserID(UserID int64) *DeleteUserParams {
 	o.UserID = UserID
 	return o
 }
 
 // WriteToRequest writes these params to a swagger request
-func (o *UpdateUserParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
+func (o *DeleteUserParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
 	var res []error
 

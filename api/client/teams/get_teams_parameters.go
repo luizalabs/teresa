@@ -4,11 +4,8 @@ package teams
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"time"
-
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
-	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/swag"
 
 	strfmt "github.com/go-openapi/strfmt"
@@ -24,23 +21,6 @@ func NewGetTeamsParams() *GetTeamsParams {
 	return &GetTeamsParams{
 		Limit: &limitDefault,
 		Since: &sinceDefault,
-
-		timeout: cr.DefaultTimeout,
-	}
-}
-
-// NewGetTeamsParamsWithTimeout creates a new GetTeamsParams object
-// with the default values initialized, and the ability to set a timeout on a request
-func NewGetTeamsParamsWithTimeout(timeout time.Duration) *GetTeamsParams {
-	var (
-		limitDefault int64 = int64(20)
-		sinceDefault int64 = int64(0)
-	)
-	return &GetTeamsParams{
-		Limit: &limitDefault,
-		Since: &sinceDefault,
-
-		timeout: timeout,
 	}
 }
 
@@ -59,8 +39,6 @@ type GetTeamsParams struct {
 
 	*/
 	Since *int64
-
-	timeout time.Duration
 }
 
 // WithLimit adds the limit to the get teams params
@@ -78,7 +56,6 @@ func (o *GetTeamsParams) WithSince(Since *int64) *GetTeamsParams {
 // WriteToRequest writes these params to a swagger request
 func (o *GetTeamsParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
-	r.SetTimeout(o.timeout)
 	var res []error
 
 	if o.Limit != nil {

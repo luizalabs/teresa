@@ -60,6 +60,10 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.UsersCreateUserHandler = users.CreateUserHandlerFunc(func(params users.CreateUserParams, principal interface{}) middleware.Responder {
 		return handlers.CreateUserHandler(params, principal)
 	})
+	// delete user
+	api.UsersDeleteUserHandler = users.DeleteUserHandlerFunc(func(params users.DeleteUserParams, principal interface{}) middleware.Responder {
+		return handlers.DeleteUserHandler(params, principal)
+	})
 	// delete team
 	api.TeamsDeleteTeamHandler = teams.DeleteTeamHandlerFunc(func(params teams.DeleteTeamParams, principal interface{}) middleware.Responder {
 		return handlers.DeleteTeamHandler(params, principal)

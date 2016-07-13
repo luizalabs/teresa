@@ -2,7 +2,6 @@ package restapi
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -47,15 +46,6 @@ type Server struct {
 	hasListeners bool
 }
 
-// Logf logs message either via defined user logger or via system one if no user logger is defined.
-func (s *Server) Logf(f string, args ...interface{}) {
-	if s.api != nil && s.api.Logger != nil {
-		s.api.Logger(f, args...)
-	} else {
-		log.Printf(f, args...)
-	}
-}
-
 // SetAPI configures the server with the specified API. Needs to be called before Serve
 func (s *Server) SetAPI(api *operations.TeresaAPI) {
 	if api == nil {
@@ -65,7 +55,6 @@ func (s *Server) SetAPI(api *operations.TeresaAPI) {
 	}
 
 	s.api = api
-	s.api.Logger = log.Printf
 	s.handler = configureAPI(api)
 }
 
@@ -80,7 +69,7 @@ func (s *Server) Serve() (err error) {
 	httpServer := &graceful.Server{Server: new(http.Server)}
 	httpServer.Handler = s.handler
 
-	s.Logf("Serving teresa at http://%s", s.httpServerL.Addr())
+	fmt.Printf("serving teresa at http://%s\n", s.httpServerL.Addr())
 	l := s.httpServerL
 	if err := httpServer.Serve(tcpKeepAliveListener{l.(*net.TCPListener)}); err != nil {
 		return err

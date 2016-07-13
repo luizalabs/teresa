@@ -21,6 +21,7 @@ var (
 	serverFlag       string
 	currentFlag      bool
 	userNameFlag     string
+	teamIDFlag       int64
 	teamNameFlag     string
 	teamEmailFlag    string
 	teamURLFlag      string
@@ -126,6 +127,13 @@ func initConfig() {
 		log.Level = logrus.DebugLevel
 	}
 	log.Debugf("Config settings %+v", viper.AllSettings())
+}
+
+// Fatalf Prints formatted output, prepends the cli usage and exits
+func Fatalf(cmd *cobra.Command, format string, a ...interface{}) {
+	s := fmt.Sprintf(format, a...)
+	s = fmt.Sprintf("%s\n\n%s", s, cmd.UsageString())
+	log.Fatalf(s)
 }
 
 type cmdError struct {

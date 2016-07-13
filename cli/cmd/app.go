@@ -49,11 +49,13 @@ var getAppCmd = &cobra.Command{
 	Short: "Get an app",
 	Long:  `Get an app`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tc := NewTeresa()
-		a, err := tc.GetAppInfo(teamNameFlag, appNameFlag)
-		if err != nil {
-			return err
+		if appNameFlag == "" {
+			log.Debug("App name not provided")
+			return newInputError("App not provided")
 		}
+		tc := NewTeresa()
+		a := tc.GetAppInfo(teamNameFlag, appNameFlag)
+
 		app, err := tc.GetAppDetail(a.TeamID, a.AppID)
 		if err != nil {
 			log.Fatal(err)

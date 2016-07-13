@@ -38,7 +38,7 @@ func createDeploy(appName, teamName, description, appFolder string) error {
 	a := tc.GetAppInfo(teamName, appName)
 	tc.GetAppInfo(teamName, appName)
 	// create and get the archive
-	tar, err := createTempArchiveToUpload(appFolder)
+	tar, err := createTempArchiveToUpload(appName, teamName, appFolder)
 	if err != nil {
 		log.Fatalf("error creating the archive. %s", err)
 	}
@@ -56,10 +56,13 @@ func createDeploy(appName, teamName, description, appFolder string) error {
 }
 
 // create a temporary archive file of the app to deploy and return the path of this file
-func createTempArchiveToUpload(source string) (path string, err error) {
+func createTempArchiveToUpload(app, team, source string) (path string, err error) {
 	id := uuid.NewV1()
-	base := filepath.Base(source)
-	path = filepath.Join(archiveTempFolder, fmt.Sprintf("%s_%s.tar.gz", base, id))
+	source, err = filepath.Abs(source)
+	if err != nil {
+		return "", err
+	}
+	path = filepath.Join(archiveTempFolder, fmt.Sprintf("%s_%s_%s.tar.gz", team, app, id))
 	if err = createArchive(source, path); err != nil {
 		return "", err
 	}
@@ -70,13 +73,12 @@ func createTempArchiveToUpload(source string) (path string, err error) {
 func createArchive(source string, target string) error {
 	// TODO: add only necessary files to deploy, removing .git and .gitignore files if they exist.
 	log.WithField("dir", source).Debug("Creating archive")
-	base := filepath.Dir(source)
-	dir, err := os.Stat(base)
+	dir, err := os.Stat(source)
 	if err != nil {
-		log.WithError(err).WithField("baseDir", base).Error("Dir not found to create an archive")
+		log.WithError(err).WithField("dir", source).Error("Dir not found to create an archive")
 		return err
 	} else if !dir.IsDir() {
-		log.WithField("baseDir", base).Error("Path to create the app archive isn't a directory")
+		log.WithField("dir", source).Error("Path to create the app archive isn't a directory")
 		return errors.New("Path to create the app archive isn't a directory")
 	}
 	tar := new(archivex.TarFile)
@@ -92,5 +94,4 @@ func init() {
 	createDeployCmd.Flags().StringVarP(&descriptionFlag, "description", "d", "", "deploy description")
 
 	createCmd.AddCommand(createDeployCmd)
-	// deployCmd.AddCommand(createDeployCmd)
 }

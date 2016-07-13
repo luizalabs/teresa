@@ -48,7 +48,7 @@ type CreateDeploymentParams struct {
 	*/
 	AppID int64
 	/*Description*/
-	Description string
+	Description *string
 	/*TeamID
 	  Team ID
 
@@ -71,7 +71,7 @@ func (o *CreateDeploymentParams) WithAppID(AppID int64) *CreateDeploymentParams 
 }
 
 // WithDescription adds the description to the create deployment params
-func (o *CreateDeploymentParams) WithDescription(Description string) *CreateDeploymentParams {
+func (o *CreateDeploymentParams) WithDescription(Description *string) *CreateDeploymentParams {
 	o.Description = Description
 	return o
 }
@@ -98,13 +98,20 @@ func (o *CreateDeploymentParams) WriteToRequest(r runtime.ClientRequest, reg str
 		return err
 	}
 
-	// form param description
-	frDescription := o.Description
-	fDescription := frDescription
-	if fDescription != "" {
-		if err := r.SetFormParam("description", fDescription); err != nil {
-			return err
+	if o.Description != nil {
+
+		// form param description
+		var frDescription string
+		if o.Description != nil {
+			frDescription = *o.Description
 		}
+		fDescription := frDescription
+		if fDescription != "" {
+			if err := r.SetFormParam("description", fDescription); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	// path param team_id

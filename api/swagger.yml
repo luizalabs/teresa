@@ -370,7 +370,7 @@ paths:
         - $ref: "#/parameters/appId"
         - name: description
           in: formData
-          required: true
+          required: false
           type: string
         - name: appTarball
           in: formData

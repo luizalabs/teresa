@@ -88,6 +88,14 @@ func (tc TeresaClient) CreateTeam(name, email, URL string) (*models.Team, error)
 	return r.Payload, nil
 }
 
+// DeleteTeam Deletes a team
+func (tc TeresaClient) DeleteTeam(ID int64) error {
+	params := teams.NewDeleteTeamParams()
+	params.TeamID = ID
+	_, err := tc.teresa.Teams.DeleteTeam(params, tc.apiKeyAuthFunc)
+	return err
+}
+
 // CreateApp creates an user
 func (tc TeresaClient) CreateApp(name string, scale int64) (app *models.App, err error) {
 	params := apps.NewCreateAppParams()

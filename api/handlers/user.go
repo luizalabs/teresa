@@ -61,6 +61,7 @@ func GetUserDetailsHandler(params users.GetUserDetailsParams, principal interfac
 	return r
 }
 
+// GetCurrentUserHandler ...
 func GetCurrentUserHandler(principal interface{}) middleware.Responder {
 	tc := principal.(*Token)
 	su := storage.User{}
@@ -101,4 +102,14 @@ func GetCurrentUserHandler(principal interface{}) middleware.Responder {
 	r := users.NewGetCurrentUserOK()
 	r.SetPayload(&u)
 	return r
+}
+
+// DeleteUserHandler ...
+func DeleteUserHandler(params users.DeleteUserParams, principal interface{}) middleware.Responder {
+	su := storage.User{}
+	su.ID = uint(params.UserID)
+	if storage.DB.Delete(&su).Error != nil {
+		return users.NewGetUsersDefault(500)
+	}
+	return users.NewDeleteUserNoContent()
 }

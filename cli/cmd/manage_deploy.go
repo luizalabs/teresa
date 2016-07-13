@@ -32,15 +32,11 @@ func createDeploy(appName, teamName, description, appFolder string) error {
 	}
 	if appFolder == "" {
 		log.Debug("App folder not provided")
-		return newSysError("App folder not provided")
+		return newInputError("App folder not provided")
 	}
-
 	tc := NewTeresa()
-
-	a, err := tc.GetAppInfo(teamName, appName)
-	if err != nil {
-		return err
-	}
+	a := tc.GetAppInfo(teamName, appName)
+	tc.GetAppInfo(teamName, appName)
 	// create and get the archive
 	tar, err := createTempArchiveToUpload(appFolder)
 	if err != nil {
@@ -50,6 +46,7 @@ func createDeploy(appName, teamName, description, appFolder string) error {
 	if err != nil {
 		log.Fatalf("error getting the archive to upload. %s", err)
 	}
+	defer file.Close()
 	_, err = tc.CreateDeploy(a.TeamID, a.AppID, description, file)
 	if err != nil {
 		log.Fatalf("error creating the deploy. %s", err)
@@ -71,7 +68,7 @@ func createTempArchiveToUpload(source string) (path string, err error) {
 
 // create an archive of the source folder
 func createArchive(source string, target string) error {
-	// FIXME: add only necessary files to deploy, removing .git and .gitignore files if they exist.
+	// TODO: add only necessary files to deploy, removing .git and .gitignore files if they exist.
 	log.WithField("dir", source).Debug("Creating archive")
 	base := filepath.Dir(source)
 	dir, err := os.Stat(base)

@@ -105,6 +105,7 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 		Body:   params.AppTarball.Data,
 		Key:    &storageIn,
 	}
+	defer params.AppTarball.Data.Close()
 	if _, err := s3svc.PutObject(po); err != nil {
 		log.Printf("error uploading the app tarball to storage, Err: %s\n", err.Error())
 		return deployments.NewCreateDeploymentDefault(500)

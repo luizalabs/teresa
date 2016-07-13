@@ -20,11 +20,12 @@ var (
 	cfgFile          string
 	serverFlag       string
 	currentFlag      bool
-	userNameFlag     string
 	teamIDFlag       int64
 	teamNameFlag     string
 	teamEmailFlag    string
 	teamURLFlag      string
+	userIDFlag       int64
+	userNameFlag     string
 	userEmailFlag    string
 	userPasswordFlag string
 	appNameFlag      string

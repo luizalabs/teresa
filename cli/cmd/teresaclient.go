@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"os"
 	"strings"
+	"time"
 
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/client"
@@ -10,6 +12,7 @@ import (
 	apiclient "github.com/luizalabs/paas/api/client"
 	"github.com/luizalabs/paas/api/client/apps"
 	"github.com/luizalabs/paas/api/client/auth"
+	"github.com/luizalabs/paas/api/client/deployments"
 	"github.com/luizalabs/paas/api/client/teams"
 	"github.com/luizalabs/paas/api/client/users"
 	"github.com/luizalabs/paas/api/models"
@@ -19,6 +22,12 @@ import (
 type TeresaClient struct {
 	teresa         *apiclient.Teresa
 	apiKeyAuthFunc runtime.ClientAuthInfoWriter
+}
+
+// AppInfo foo bar
+type AppInfo struct {
+	AppID  int64
+	TeamID int64
 }
 
 // NewTeresa foo bar
@@ -43,7 +52,10 @@ func NewTeresa() TeresaClient {
 	scheme := ss[0]
 	host := ss[1]
 
+	// FIXME: this should come from config
+	client.DefaultTimeout = 60 * time.Second
 	c := client.New(host, suffix, []string{scheme})
+
 	tc.teresa.SetTransport(c)
 
 	if cluster.Token != "" {
@@ -112,6 +124,47 @@ func (tc TeresaClient) CreateUser(name, email, password string) (user *models.Us
 // Me get's the user infos + teams + apps
 func (tc TeresaClient) Me() (user *models.User, err error) {
 	r, err := tc.teresa.Users.GetCurrentUser(nil, tc.apiKeyAuthFunc)
+	if err != nil {
+		return nil, err
+	}
+	return r.Payload, nil
+}
+
+// GetAppInfo return teamID and appID
+func (tc TeresaClient) GetAppInfo(teamName, appName string) (appInfo AppInfo) {
+	me, err := tc.Me()
+	if err != nil {
+		log.Fatalf("unable to get user information: %s", err)
+	}
+	if len(me.Teams) > 1 && teamName == "" {
+		log.Fatalln("User is in more than one team and provided none")
+	}
+	for _, t := range me.Teams {
+		if teamName == "" || *t.Name == teamName {
+			appInfo.TeamID = t.ID
+			for _, a := range t.Apps {
+				if *a.Name == appName {
+					appInfo.AppID = a.ID
+					break
+				}
+			}
+			break
+		}
+	}
+	if appInfo.TeamID == 0 || appInfo.AppID == 0 {
+		log.Fatalf("Invalid Team [%s] or App [%s]\n", teamName, appName)
+	}
+	return
+}
+
+// CreateDeploy creates a new deploy
+func (tc TeresaClient) CreateDeploy(teamID, appID int64, description string, tarBall *os.File) (deploy *models.Deployment, err error) {
+	p := deployments.NewCreateDeploymentParams()
+	p.TeamID = teamID
+	p.AppID = appID
+	p.Description = description
+	p.AppTarball = *tarBall
+	r, err := tc.teresa.Deployments.CreateDeployment(p, tc.apiKeyAuthFunc)
 	if err != nil {
 		return nil, err
 	}

@@ -17,23 +17,19 @@ var createDeployCmd = &cobra.Command{
 	Use:   "deploy APP_FOLDER",
 	Short: "deploy an app",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		p := ""
-		if len(args) > 0 {
-			p = args[0]
+		if appNameFlag == "" {
+			log.Debug("App name not provided")
+			return newInputError("App not provided")
 		}
-		return createDeploy(appNameFlag, teamNameFlag, descriptionFlag, p)
+		if len(args) == 0 || (len(args) > 0 && args[0] == "") {
+			log.Debug("App folder not provided")
+			return newInputError("App folder not provided")
+		}
+		return createDeploy(appNameFlag, teamNameFlag, descriptionFlag, args[0])
 	},
 }
 
 func createDeploy(appName, teamName, description, appFolder string) error {
-	if appName == "" {
-		log.Debug("App name not provided")
-		return newInputError("App not provided")
-	}
-	if appFolder == "" {
-		log.Debug("App folder not provided")
-		return newInputError("App folder not provided")
-	}
 	tc := NewTeresa()
 	a := tc.GetAppInfo(teamName, appName)
 	tc.GetAppInfo(teamName, appName)
@@ -57,7 +53,7 @@ func createDeploy(appName, teamName, description, appFolder string) error {
 
 // create a temporary archive file of the app to deploy and return the path of this file
 func createTempArchiveToUpload(app, team, source string) (path string, err error) {
-	id := uuid.NewV1()
+	id := uuid.NewV4()
 	source, err = filepath.Abs(source)
 	if err != nil {
 		return "", err
@@ -71,7 +67,6 @@ func createTempArchiveToUpload(app, team, source string) (path string, err error
 
 // create an archive of the source folder
 func createArchive(source string, target string) error {
-	// TODO: add only necessary files to deploy, removing .git and .gitignore files if they exist.
 	log.WithField("dir", source).Debug("Creating archive")
 	dir, err := os.Stat(source)
 	if err != nil {

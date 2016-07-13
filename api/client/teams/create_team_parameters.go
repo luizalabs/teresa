@@ -4,11 +4,8 @@ package teams
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"time"
-
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
-	cr "github.com/go-openapi/runtime/client"
 
 	strfmt "github.com/go-openapi/strfmt"
 
@@ -19,20 +16,7 @@ import (
 // with the default values initialized.
 func NewCreateTeamParams() *CreateTeamParams {
 	var ()
-	return &CreateTeamParams{
-
-		timeout: cr.DefaultTimeout,
-	}
-}
-
-// NewCreateTeamParamsWithTimeout creates a new CreateTeamParams object
-// with the default values initialized, and the ability to set a timeout on a request
-func NewCreateTeamParamsWithTimeout(timeout time.Duration) *CreateTeamParams {
-	var ()
-	return &CreateTeamParams{
-
-		timeout: timeout,
-	}
+	return &CreateTeamParams{}
 }
 
 /*CreateTeamParams contains all the parameters to send to the API endpoint
@@ -42,8 +26,6 @@ type CreateTeamParams struct {
 
 	/*Body*/
 	Body *models.Team
-
-	timeout time.Duration
 }
 
 // WithBody adds the body to the create team params
@@ -55,7 +37,6 @@ func (o *CreateTeamParams) WithBody(Body *models.Team) *CreateTeamParams {
 // WriteToRequest writes these params to a swagger request
 func (o *CreateTeamParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
-	r.SetTimeout(o.timeout)
 	var res []error
 
 	if o.Body == nil {

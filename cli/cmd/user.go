@@ -41,9 +41,28 @@ var userCmd = &cobra.Command{
 	},
 }
 
+// delete user
+var deleteUserCmd = &cobra.Command{
+	Use:   "user",
+	Short: "Delete an user",
+	Long:  `Delete an user`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if userIDFlag == 0 {
+			Fatalf(cmd, "user name is required")
+		}
+		if err := NewTeresa().DeleteUser(userIDFlag); err != nil {
+			Fatalf(cmd, "Failed to delete user, err: %s\n", err)
+		}
+		log.Infof("User deleted.")
+	},
+}
+
 func init() {
 	createCmd.AddCommand(userCmd)
 	userCmd.Flags().StringVar(&userNameFlag, "name", "", "user name [required]")
 	userCmd.Flags().StringVar(&userEmailFlag, "email", "", "user email [required]")
 	userCmd.Flags().StringVar(&userPasswordFlag, "password", "", "user password [required]")
+
+	deleteCmd.AddCommand(deleteUserCmd)
+	deleteUserCmd.Flags().Int64Var(&userIDFlag, "id", 0, "user ID [required]")
 }

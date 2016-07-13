@@ -122,20 +122,5 @@ func (m *User) validateTeams(formats strfmt.Registry) error {
 		return nil
 	}
 
-	for i := 0; i < len(m.Teams); i++ {
-
-		if swag.IsZero(m.Teams[i]) { // not required
-			continue
-		}
-
-		if m.Teams[i] != nil {
-
-			if err := m.Teams[i].Validate(formats); err != nil {
-				return err
-			}
-		}
-
-	}
-
 	return nil
 }

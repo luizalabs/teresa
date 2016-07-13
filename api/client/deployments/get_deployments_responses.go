@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
-	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 
 	strfmt "github.com/go-openapi/strfmt"
@@ -216,21 +215,6 @@ func (o *GetDeploymentsOKBodyBody) validateItems(formats strfmt.Registry) error 
 
 	if err := validate.Required("getDeploymentsOK"+"."+"items", "body", o.Items); err != nil {
 		return err
-	}
-
-	for i := 0; i < len(o.Items); i++ {
-
-		if swag.IsZero(o.Items[i]) { // not required
-			continue
-		}
-
-		if o.Items[i] != nil {
-
-			if err := o.Items[i].Validate(formats); err != nil {
-				return err
-			}
-		}
-
 	}
 
 	return nil

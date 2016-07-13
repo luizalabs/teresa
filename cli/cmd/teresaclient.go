@@ -129,6 +129,14 @@ func (tc TeresaClient) CreateUser(name, email, password string) (user *models.Us
 	return r.Payload, nil
 }
 
+// DeleteUser Delete an user
+func (tc TeresaClient) DeleteUser(ID int64) error {
+	params := users.NewDeleteUserParams()
+	params.UserID = ID
+	_, err := tc.teresa.Users.DeleteUser(params, tc.apiKeyAuthFunc)
+	return err
+}
+
 // Me get's the user infos + teams + apps
 func (tc TeresaClient) Me() (user *models.User, err error) {
 	r, err := tc.teresa.Users.GetCurrentUser(nil, tc.apiKeyAuthFunc)

@@ -45,10 +45,10 @@ type TeresaAPI struct {
 	formats         strfmt.Registry
 	defaultConsumes string
 	defaultProduces string
-	// JSONConsumer registers a consumer for a "application/json" mime type
-	JSONConsumer runtime.Consumer
 	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
 	MultipartformConsumer runtime.Consumer
+	// JSONConsumer registers a consumer for a "application/json" mime type
+	JSONConsumer runtime.Consumer
 
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
@@ -71,6 +71,8 @@ type TeresaAPI struct {
 	UsersCreateUserHandler users.CreateUserHandler
 	// TeamsDeleteTeamHandler sets the operation handler for the delete team operation
 	TeamsDeleteTeamHandler teams.DeleteTeamHandler
+	// UsersDeleteUserHandler sets the operation handler for the delete user operation
+	UsersDeleteUserHandler users.DeleteUserHandler
 	// AppsGetAppDetailsHandler sets the operation handler for the get app details operation
 	AppsGetAppDetailsHandler apps.GetAppDetailsHandler
 	// AppsGetAppsHandler sets the operation handler for the get apps operation
@@ -106,9 +108,6 @@ type TeresaAPI struct {
 
 	// Custom command line argument groups with their descriptions
 	CommandLineOptionsGroups []swag.CommandLineOptionsGroup
-
-	// User defined logger function.
-	Logger func(string, ...interface{})
 }
 
 // SetDefaultProduces sets the default produces media type
@@ -145,12 +144,12 @@ func (o *TeresaAPI) RegisterFormat(name string, format strfmt.Format, validator 
 func (o *TeresaAPI) Validate() error {
 	var unregistered []string
 
-	if o.JSONConsumer == nil {
-		unregistered = append(unregistered, "JSONConsumer")
-	}
-
 	if o.MultipartformConsumer == nil {
 		unregistered = append(unregistered, "MultipartformConsumer")
+	}
+
+	if o.JSONConsumer == nil {
+		unregistered = append(unregistered, "JSONConsumer")
 	}
 
 	if o.JSONProducer == nil {
@@ -183,6 +182,10 @@ func (o *TeresaAPI) Validate() error {
 
 	if o.TeamsDeleteTeamHandler == nil {
 		unregistered = append(unregistered, "teams.DeleteTeamHandler")
+	}
+
+	if o.UsersDeleteUserHandler == nil {
+		unregistered = append(unregistered, "users.DeleteUserHandler")
 	}
 
 	if o.AppsGetAppDetailsHandler == nil {
@@ -273,11 +276,11 @@ func (o *TeresaAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consume
 	for _, mt := range mediaTypes {
 		switch mt {
 
-		case "application/json":
-			result["application/json"] = o.JSONConsumer
-
 		case "multipart/form-data":
 			result["multipart/form-data"] = o.MultipartformConsumer
+
+		case "application/json":
+			result["application/json"] = o.JSONConsumer
 
 		}
 	}
@@ -347,6 +350,11 @@ func (o *TeresaAPI) initHandlerCache() {
 		o.handlers[strings.ToUpper("DELETE")] = make(map[string]http.Handler)
 	}
 	o.handlers["DELETE"]["/teams/{team_id}"] = teams.NewDeleteTeam(o.context, o.TeamsDeleteTeamHandler)
+
+	if o.handlers["DELETE"] == nil {
+		o.handlers[strings.ToUpper("DELETE")] = make(map[string]http.Handler)
+	}
+	o.handlers["DELETE"]["/users/{user_id}"] = users.NewDeleteUser(o.context, o.UsersDeleteUserHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)

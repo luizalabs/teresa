@@ -145,9 +145,12 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 			return deployments.NewCreateDeploymentDefault(500)
 		}
 	}
-	// FIXME: we need to remove the buider POD in this step
 
-	// TODO: save to DB info about the deploy always
+	// deleting slugbuilder pod from k8s
+	if err = k8sClient.Pods(builder.Namespace).Delete(builder.Name, nil); err != nil {
+		log.Printf("error trying to delete the builder pod. Err: %s\n", err.Error())
+		return deployments.NewCreateDeploymentDefault(500)
+	}
 
 	// creating k8s deployment...
 	appEnv := make(map[string]string)
@@ -186,9 +189,9 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 			return false, nil
 		}
 		lbHostName = &s.Status.LoadBalancer.Ingress[0].Hostname
-
 		return true, nil
 	})
+
 	if err != nil {
 		log.Printf("error getting the hostname of the LB service. Err: %s\n", err.Error())
 		return deployments.NewCreateDeploymentDefault(500)

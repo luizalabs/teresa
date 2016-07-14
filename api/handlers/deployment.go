@@ -21,6 +21,7 @@ import (
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/client/restclient"
 	"k8s.io/kubernetes/pkg/client/unversioned"
+	"k8s.io/kubernetes/pkg/util/wait"
 )
 
 // TODO: this should came from env or conf
@@ -116,8 +117,7 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 	// FIXME: maybe we should accept extra buildpacks in the future?!?
 	log.Printf("building the app; builder POD name [%s/%s]", appSlugNamespace, buildName)
 	bp := k8s.BuildSlugbuilderPod(false, buildName, appSlugNamespace, storageIn, storageOut, "")
-	podI := k8sClient.Pods(appSlugNamespace)
-	builder, err := podI.Create(bp)
+	builder, err := k8sClient.Pods(appSlugNamespace).Create(bp)
 	if err != nil {
 		log.Printf("error creating the builder pod for the app. Err: %s\n", err.Error())
 		return deployments.NewCreateDeploymentDefault(500)
@@ -145,7 +145,8 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 			return deployments.NewCreateDeploymentDefault(500)
 		}
 	}
-	// TODO: check if is necessary to delete the builder pod
+	// FIXME: we need to remove the buider POD in this step
+
 	// TODO: save to DB info about the deploy always
 
 	// creating k8s deployment...
@@ -153,7 +154,7 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 	for _, e := range sa.EnvVars {
 		appEnv[e.Key] = e.Value
 	}
-	// FIXME: maybe it's not necessary to have a name and a selector name
+	// TODO: maybe it's not necessary to have a name and a selector name
 	srd := k8s.BuildSlugRunnerDeployment(appSlugName, appSlugNamespace, 1, 1, int(sa.Scale), appSlugName, fmt.Sprintf("%s/slug.tgz", storageOut), appEnv)
 	di := k8sClient.Deployments(appSlugNamespace)
 	if _, err = di.Create(srd); err != nil {
@@ -169,6 +170,31 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 		return deployments.NewCreateDeploymentDefault(500)
 	}
 
+	// waiting lb get the loadbalancer host
+	log.Println("getting LB hostname")
+	var lbHostName *string
+	err = wait.PollImmediate(3*time.Second, 1*time.Minute, func() (bool, error) {
+		log.Println("waiting LB hostname...")
+		s, sErr := k8sClient.Services(appSlugNamespace).Get(appSlugName)
+		if sErr != nil {
+			return false, sErr
+		}
+		if len(s.Status.LoadBalancer.Ingress) == 0 {
+			return false, nil
+		}
+		if s.Status.LoadBalancer.Ingress[0].Hostname == "" {
+			return false, nil
+		}
+		lbHostName = &s.Status.LoadBalancer.Ingress[0].Hostname
+
+		return true, nil
+	})
+	if err != nil {
+		log.Printf("error getting the hostname of the LB service. Err: %s\n", err.Error())
+		return deployments.NewCreateDeploymentDefault(500)
+	}
+	log.Printf("LB hostname is %s", *lbHostName)
+
 	log.Println("deploy finished with success")
 
 	// saving deployment to db...
@@ -181,18 +207,14 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 	}
 	storage.DB.Save(&d)
 
-	// save address to db...
-	// FIXME: change this sleep to k8s.wait or something like; very danger trying to get ingress bellow
-	time.Sleep(20 * time.Second)
-	// FIXME: check this one before save;
-	// FIXME: we should have a correct router (wildcart) poiting to this balance
-	service, err := k8sClient.Services(appSlugNamespace).Get(appSlugName)
+	// save address fo the LB to db...
 	saa := storage.AppAddress{
-		Address: service.Status.LoadBalancer.Ingress[0].Hostname,
+		Address: *lbHostName,
 		AppID:   sa.ID,
 	}
 	storage.DB.Create(&saa)
 
+	// save deploy to db...
 	r := deployments.NewCreateDeploymentOK()
 	deployment := models.Deployment{
 		Description: &appSlugName,

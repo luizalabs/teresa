@@ -75,6 +75,7 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	return r
 }
 
+// Token foo bar
 type Token struct {
 	UserID uint   `json:"userId"`
 	Email  string `json:"email"`

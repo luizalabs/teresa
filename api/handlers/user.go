@@ -80,9 +80,10 @@ func GetCurrentUserHandler(principal interface{}) middleware.Responder {
 	// team
 	u.Teams = make([]*models.Team, len(su.Teams))
 	for i, st := range su.Teams {
+		name := st.Name
 		t := models.Team{
 			ID:    int64(st.ID),
-			Name:  &st.Name,
+			Name:  &name,
 			Email: strfmt.Email(st.Email),
 			URL:   st.URL,
 		}
@@ -90,9 +91,10 @@ func GetCurrentUserHandler(principal interface{}) middleware.Responder {
 		t.Apps = make([]*models.App, len(st.Apps))
 		for i, sa := range st.Apps {
 			scale := int64(sa.Scale)
+			name := sa.Name
 			a := models.App{
 				ID:    int64(sa.ID),
-				Name:  &sa.Name,
+				Name:  &name,
 				Scale: &scale,
 			}
 			t.Apps[i] = &a

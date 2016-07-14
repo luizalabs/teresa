@@ -30,6 +30,7 @@ func CreateAppHandler(params apps.CreateAppParams, principal interface{}) middle
 	return r
 }
 
+// GetAppDetailsHandler foo bar
 func GetAppDetailsHandler(params apps.GetAppDetailsParams, principal interface{}) middleware.Responder {
 	// FIXME: check if the token have permission on this team and app; maybe it's a good idea to centralize this check
 	sa := storage.Application{}
@@ -49,7 +50,7 @@ func GetAppDetailsHandler(params apps.GetAppDetailsParams, principal interface{}
 	for i, x := range sa.Addresses {
 		m.AddressList[i] = x.Address
 	}
-	// FIXME: add envvars ?!?
+	// TODO: add envvars ?!?
 	// m.EnvVars
 	m.DeploymentList = make([]*models.Deployment, len(sa.Deployments))
 	for i, x := range sa.Deployments {

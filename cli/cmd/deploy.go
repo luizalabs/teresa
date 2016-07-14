@@ -11,8 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// TODO: create a file like gitignore to upload a package without unecessary files, or get from app config?!?!?
-
 var createDeployCmd = &cobra.Command{
 	Use:   "deploy APP_FOLDER",
 	Short: "deploy an app",

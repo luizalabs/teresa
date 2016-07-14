@@ -38,7 +38,7 @@ var appCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Infof("App created. Name: %s Replicas: %s", *app.Name, *app.Scale)
+		log.Infof("App created. Name: %s Replicas: %d", *app.Name, *app.Scale)
 
 		return nil
 	},

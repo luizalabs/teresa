@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
 	"github.com/luizalabs/paas/api/k8s"
@@ -18,7 +19,8 @@ import (
 	"github.com/luizalabs/paas/api/models/storage"
 	"github.com/luizalabs/paas/api/restapi/operations/deployments"
 	"github.com/pborman/uuid"
-	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/errors"
+	"k8s.io/kubernetes/pkg/apis/extensions"
 	"k8s.io/kubernetes/pkg/client/restclient"
 	"k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/util/wait"
@@ -60,10 +62,11 @@ func init() {
 		Insecure: k8sInsecure,
 	}
 
-	k8sClient, _ = unversioned.New(config)
-	// if err != nil {
-	// 	log.Panicf("Erro trying to create a kubernetes client. Error: %s", err.Error())
-	// }
+	var err error
+	k8sClient, err = unversioned.New(config)
+	if err != nil {
+		log.Panicf("Erro trying to create a kubernetes client. Error: %s", err.Error())
+	}
 }
 
 // GenerateSlug from the package github.com/mrvdot/golang-utils/
@@ -80,6 +83,187 @@ func GenerateSlug(str string) (slug string) {
 	}, strings.ToLower(strings.TrimSpace(str)))
 }
 
+type deployParams struct {
+	id         string
+	app        string
+	team       string
+	namespace  string
+	storageIn  string
+	storageOut string
+	slugPath   string
+}
+
+func newDeployParams(app *storage.Application) *deployParams {
+	d := deployParams{
+		id:   uuid.New()[:8],
+		app:  GenerateSlug(app.Name),
+		team: GenerateSlug(app.Team.Name),
+	}
+	d.namespace = fmt.Sprintf("%s--%s", d.team, d.app)
+	d.storageIn = fmt.Sprintf("deploys/%s/%s/%s/in/app.tar.gz", d.team, d.app, d.id)
+	d.storageOut = fmt.Sprintf("deploys/%s/%s/%s/out", d.team, d.app, d.id)
+	d.slugPath = fmt.Sprintf("%s/slug.tgz", d.storageOut)
+	return &d
+}
+
+func uploadArchiveToStorage(path *string, file *runtime.File) error {
+	log.Printf("starting upload to storage [%s]\n", *path)
+	po := &s3.PutObjectInput{
+		Bucket: aws.String(storageBucket),
+		Body:   file.Data,
+		Key:    path,
+	}
+	defer file.Data.Close()
+	if _, err := s3svc.PutObject(po); err != nil {
+		log.Printf("error uploading the app tarball to storage, Err: %s\n", err.Error())
+		return err
+	}
+	return nil
+}
+
+func deleteArchiveOnStorage(path *string) error {
+	log.Printf("deleting archive from storage [%s]\n", *path)
+	d := &s3.DeleteObjectInput{
+		Bucket: aws.String(storageBucket),
+		Key:    path,
+	}
+	if _, err := s3svc.DeleteObject(d); err != nil {
+		log.Printf("error deleting the app tarball from storage, Err: %s\n", err.Error())
+		return err
+	}
+	return nil
+}
+
+func buildApp(p *deployParams) error {
+	buildName := fmt.Sprintf("build--%s--%s", p.app, p.id)
+	log.Printf("building the app... builder POD name [%s/%s]", p.namespace, buildName)
+
+	bp := k8s.BuildSlugbuilderPod(false, buildName, p.namespace, p.storageIn, p.storageOut, "")
+	builder, err := k8sClient.Pods(p.namespace).Create(bp)
+	if err != nil {
+		log.Printf("error creating the builder pod for the app. Err: %s\n", err.Error())
+		return err
+	}
+
+	// wainting buider start
+	if err = k8s.WaitForPod(k8sClient, builder.Namespace, builder.Name, sessionIdleInterval, builderPodTickDuration, builderPodWaitDuration); err != nil {
+		log.Printf("error when waiting the start of the builder POD. Err: %s\n", err.Error())
+		return err
+	}
+	// waiting builder end
+	if err = k8s.WaitForPodEnd(k8sClient, builder.Namespace, builder.Name, builderPodTickDuration, builderPodWaitDuration); err != nil {
+		log.Printf("error when waiting the end of the builder POD. Err: %s\n", err.Error())
+		return err
+	}
+	// check the builder exit code
+	builder, err = k8sClient.Pods(builder.Namespace).Get(builder.Name)
+	if err != nil {
+		log.Printf("error trying to discover the builder exit code. Err: %s\n", err.Error())
+		return err
+	}
+	for _, containerStatus := range builder.Status.ContainerStatuses {
+		state := containerStatus.State.Terminated
+		if state.ExitCode != 0 {
+			log.Printf("build pod exited with code %d, stopping deploy.\n", state.ExitCode)
+			return err
+		}
+	}
+	// deleting slugbuilder pod from k8s
+	if err := k8sClient.Pods(builder.Namespace).Delete(builder.Name, nil); err != nil {
+		log.Printf("error trying to delete the builder pod. Err: %s\n", err.Error())
+		return err
+	}
+	return nil
+}
+
+func createDeploy(p *deployParams, a *storage.Application) (deploy *extensions.Deployment, err error) {
+	log.Printf("creating k8s deploy [%s/%s]\n", p.namespace, p.app)
+	// check for env vars
+	env := make(map[string]string)
+	for _, e := range a.EnvVars {
+		env[e.Key] = e.Value
+	}
+	d := k8s.BuildSlugRunnerDeployment(p.app, p.namespace, 1, 1, int(a.Scale), p.app, p.slugPath, env)
+	deploy, err = k8sClient.Deployments(p.namespace).Create(d)
+	if err != nil {
+		log.Printf("error creating deployment. Err: %s\n", err.Error())
+	}
+	return
+}
+
+func deleteDeploy(p *deployParams) error {
+	log.Printf("deleting k8s deploy [%s/%s]\n", p.namespace, p.app)
+	if err := k8sClient.Deployments(p.namespace).Delete(p.app, nil); err != nil {
+		log.Printf("error deleting deployment. Err: %s\n", err.Error())
+		return err
+	}
+	return nil
+}
+
+func getDeploy(p *deployParams) (deploy *extensions.Deployment, err error) {
+	log.Printf("get k8s deploy [%s/%s]\n", p.namespace, p.app)
+	deploy, err = k8sClient.Deployments(p.namespace).Get(p.app)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, nil
+		}
+		log.Printf("error when checking if deploy exists. Err: %s", err)
+	}
+	return
+}
+
+func updateDeploySlug(d *extensions.Deployment, slug string) (deploy *extensions.Deployment, err error) {
+	log.Printf("updating k8s deploy [%s/%s]\n", d.GetNamespace(), d.GetName())
+	// updating slug
+	for i, e := range d.Spec.Template.Spec.Containers[0].Env {
+		if e.Name == "SLUG_URL" {
+			e.Value = slug
+			d.Spec.Template.Spec.Containers[0].Env[i] = e
+			break
+		}
+	}
+	fmt.Printf("--> %+v\n", d.Spec.Template.Spec.Containers[0].Env)
+
+	deploy, err = k8sClient.Deployments(d.GetNamespace()).Update(d)
+	if err != nil {
+		log.Printf("error updating deployment. Err: %s\n", err.Error())
+	}
+	return
+}
+
+func createServiceAndGetLBHostName(p *deployParams) (lb string, err error) {
+	log.Printf("creating service [%s/%s]\n", p.namespace, p.app)
+	// create service
+	s := k8s.BuildSlugRunnerLBService(p.app, p.namespace, p.app)
+	if _, err = k8sClient.Services(p.namespace).Create(s); err != nil {
+		log.Printf("error creating the LB for the deployment. Err: %s\n", err.Error())
+		return
+	}
+	// wait for lb to return
+	log.Println("waiting for LB hostname")
+	err = wait.PollImmediate(3*time.Second, 1*time.Minute, func() (bool, error) {
+		log.Println("still waiting LB hostname...")
+		var cErr error
+		if s, cErr = k8sClient.Services(p.namespace).Get(p.app); cErr != nil {
+			return false, cErr
+		}
+		if len(s.Status.LoadBalancer.Ingress) == 0 {
+			return false, nil
+		}
+		if s.Status.LoadBalancer.Ingress[0].Hostname == "" {
+			lb = s.Status.LoadBalancer.Ingress[0].Hostname
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		log.Printf("error getting the hostname of the LB service. Err: %s\n", err.Error())
+		return
+	}
+	log.Printf("service created and LB hostname found [%s]\n", lb)
+	return
+}
+
 // CreateDeploymentHandler creates deploy
 func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principal interface{}) middleware.Responder {
 	// get app info from DB
@@ -87,142 +271,70 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 	sa.ID = uint(params.AppID)
 	if storage.DB.Where(&storage.Application{TeamID: uint(params.TeamID)}).Preload("Team").Preload("EnvVars").Preload("Deployments").First(&sa).RecordNotFound() {
 		log.Println("app info not found")
-		return deployments.NewCreateDeploymentUnauthorized() // FIXME: check if is this the correct error
+		return deployments.NewCreateDeploymentUnauthorized()
 	}
-
-	appSlugName := GenerateSlug(sa.Name)
-	teamSlugName := GenerateSlug(sa.Team.Name)
-	appSlugNamespace := fmt.Sprintf("%s--%s", teamSlugName, appSlugName)
-	deployUUID := uuid.New()[:8]
-	storageIn := fmt.Sprintf("deploys/%s/%s/%s/in/app.tar.gz", teamSlugName, appSlugName, deployUUID)
-	storageOut := fmt.Sprintf("deploys/%s/%s/%s/out", teamSlugName, appSlugName, deployUUID)
-
-	log.Printf("starting deploy [%s/%s/%s]\n", teamSlugName, appSlugName, deployUUID)
-
-	// uploading app tarball to storage
-	log.Printf("starting upload to storage [%s]\n", storageIn)
-	po := &s3.PutObjectInput{
-		Bucket: aws.String(storageBucket),
-		Body:   params.AppTarball.Data,
-		Key:    &storageIn,
+	// creating deploy params obj
+	x := newDeployParams(&sa)
+	log.Printf("starting deploy proccess [%s/%s/%s]\n", x.team, x.app, x.id)
+	// upload file
+	if err := uploadArchiveToStorage(&x.storageIn, &params.AppTarball); err != nil {
+		return deployments.NewCreateDeploymentDefault(500)
 	}
-	defer params.AppTarball.Data.Close()
-	if _, err := s3svc.PutObject(po); err != nil {
-		log.Printf("error uploading the app tarball to storage, Err: %s\n", err.Error())
+	// build app
+	if err := buildApp(x); err != nil {
+		deleteArchiveOnStorage(&x.storageIn)
 		return deployments.NewCreateDeploymentDefault(500)
 	}
 
-	// builder proccess...
-	buildName := fmt.Sprintf("build--%s--%s", appSlugName, deployUUID)
-	// FIXME: maybe we should accept extra buildpacks in the future?!?
-	log.Printf("building the app; builder POD name [%s/%s]", appSlugNamespace, buildName)
-	bp := k8s.BuildSlugbuilderPod(false, buildName, appSlugNamespace, storageIn, storageOut, "")
-	builder, err := k8sClient.Pods(appSlugNamespace).Create(bp)
+	deploy, err := getDeploy(x)
 	if err != nil {
-		log.Printf("error creating the builder pod for the app. Err: %s\n", err.Error())
+		deleteArchiveOnStorage(&x.storageIn)
 		return deployments.NewCreateDeploymentDefault(500)
 	}
-	// wainting buider start
-	if err = k8s.WaitForPod(k8sClient, builder.Namespace, builder.Name, sessionIdleInterval, builderPodTickDuration, builderPodWaitDuration); err != nil {
-		log.Printf("error when waiting the start of the builder POD. Err: %s\n", err.Error())
-		return deployments.NewCreateDeploymentDefault(500)
-	}
-	// waiting builder end
-	if err = k8s.WaitForPodEnd(k8sClient, builder.Namespace, builder.Name, builderPodTickDuration, builderPodWaitDuration); err != nil {
-		log.Printf("error when waiting the end of the builder POD. Err: %s\n", err.Error())
-		return deployments.NewCreateDeploymentDefault(500)
-	}
-	// check the builder exit code
-	var p *api.Pod
-	if p, err = k8sClient.Pods(builder.Namespace).Get(builder.Name); err != nil {
-		log.Printf("error trying to discover the builder exit code. Err: %s\n", err.Error())
-		return deployments.NewCreateDeploymentDefault(500)
-	}
-	for _, containerStatus := range p.Status.ContainerStatuses {
-		state := containerStatus.State.Terminated
-		if state.ExitCode != 0 {
-			log.Printf("build pod exited with code %d, stopping deploy.\n", state.ExitCode)
+	if deploy == nil { // k8s deploy doesn't exists...
+		// creating k8s deployment...
+		if _, err = createDeploy(x, &sa); err != nil {
+			deleteArchiveOnStorage(&x.storageIn)
+			return deployments.NewCreateDeploymentDefault(500)
+		}
+		// creating k8s service with LoadBalance...
+		lbHostName, err := createServiceAndGetLBHostName(x)
+		if err != nil {
+			deleteDeploy(x)
+			deleteArchiveOnStorage(&x.storageIn)
+			return deployments.NewCreateDeploymentDefault(500)
+		}
+		// save address fo the LB to db...
+		saa := storage.AppAddress{
+			Address: lbHostName,
+			AppID:   sa.ID,
+		}
+		storage.DB.Create(&saa)
+	} else {
+		if _, err := updateDeploySlug(deploy, x.slugPath); err != nil {
+			deleteArchiveOnStorage(&x.storageIn)
 			return deployments.NewCreateDeploymentDefault(500)
 		}
 	}
 
-	// deleting slugbuilder pod from k8s
-	if err = k8sClient.Pods(builder.Namespace).Delete(builder.Name, nil); err != nil {
-		log.Printf("error trying to delete the builder pod. Err: %s\n", err.Error())
-		return deployments.NewCreateDeploymentDefault(500)
-	}
-
-	// creating k8s deployment...
-	appEnv := make(map[string]string)
-	for _, e := range sa.EnvVars {
-		appEnv[e.Key] = e.Value
-	}
-	// TODO: maybe it's not necessary to have a name and a selector name
-	srd := k8s.BuildSlugRunnerDeployment(appSlugName, appSlugNamespace, 1, 1, int(sa.Scale), appSlugName, fmt.Sprintf("%s/slug.tgz", storageOut), appEnv)
-	di := k8sClient.Deployments(appSlugNamespace)
-	if _, err = di.Create(srd); err != nil {
-		log.Printf("error creating the deployment. Err: %s\n", err.Error())
-		return deployments.NewCreateDeploymentDefault(500)
-	}
-
-	// creating k8s service with LoadBalance...
-	s := k8s.BuildSlugRunnerLBService(appSlugName, appSlugNamespace, appSlugName)
-	_, err = k8sClient.Services(appSlugNamespace).Create(s)
-	if err != nil {
-		log.Printf("error creating the LB for the deployment. Err: %s\n", err.Error())
-		return deployments.NewCreateDeploymentDefault(500)
-	}
-
-	// waiting lb get the loadbalancer host
-	log.Println("getting LB hostname")
-	var lbHostName *string
-	err = wait.PollImmediate(3*time.Second, 1*time.Minute, func() (bool, error) {
-		log.Println("waiting LB hostname...")
-		s, sErr := k8sClient.Services(appSlugNamespace).Get(appSlugName)
-		if sErr != nil {
-			return false, sErr
-		}
-		if len(s.Status.LoadBalancer.Ingress) == 0 {
-			return false, nil
-		}
-		if s.Status.LoadBalancer.Ingress[0].Hostname == "" {
-			return false, nil
-		}
-		lbHostName = &s.Status.LoadBalancer.Ingress[0].Hostname
-		return true, nil
-	})
-
-	if err != nil {
-		log.Printf("error getting the hostname of the LB service. Err: %s\n", err.Error())
-		return deployments.NewCreateDeploymentDefault(500)
-	}
-	log.Printf("LB hostname is %s", *lbHostName)
-
-	log.Println("deploy finished with success")
-
 	// saving deployment to db...
-	d := storage.Deployment{
-		UUID:  deployUUID,
+	sd := storage.Deployment{
+		UUID:  x.id,
 		AppID: sa.ID,
 	}
 	if params.Description != nil {
-		d.Description = *params.Description
+		sd.Description = *params.Description
 	}
-	storage.DB.Save(&d)
-
-	// save address fo the LB to db...
-	saa := storage.AppAddress{
-		Address: *lbHostName,
-		AppID:   sa.ID,
-	}
-	storage.DB.Create(&saa)
+	storage.DB.Save(&sd)
 
 	// save deploy to db...
 	r := deployments.NewCreateDeploymentOK()
-	deployment := models.Deployment{
-		Description: &appSlugName,
-		When:        strfmt.NewDateTime(),
+	payload := models.Deployment{
+		When: strfmt.NewDateTime(),
 	}
-	r.SetPayload(&deployment)
+	r.SetPayload(&payload)
+
+	log.Println("deploy finished with success")
+
 	return r
 }

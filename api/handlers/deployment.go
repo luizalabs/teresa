@@ -184,6 +184,10 @@ func createDeploy(p *deployParams, a *storage.Application) (deploy *extensions.D
 		env[e.Key] = e.Value
 	}
 	d := k8s.BuildSlugRunnerDeployment(p.app, p.namespace, 1, 1, int(a.Scale), p.app, p.slugPath, env)
+	// deployment change-cause
+	d.Annotations = map[string]string{
+		"kubernetes.io/change-cause": fmt.Sprintf("deployUUID:%s", p.id),
+	}
 	deploy, err = k8sClient.Deployments(p.namespace).Create(d)
 	if err != nil {
 		log.Printf("error creating deployment. Err: %s\n", err.Error())
@@ -212,18 +216,20 @@ func getDeploy(p *deployParams) (deploy *extensions.Deployment, err error) {
 	return
 }
 
-func updateDeploySlug(d *extensions.Deployment, slug string) (deploy *extensions.Deployment, err error) {
+func updateDeploySlug(p *deployParams, d *extensions.Deployment) (deploy *extensions.Deployment, err error) {
 	log.Printf("updating k8s deploy [%s/%s]\n", d.GetNamespace(), d.GetName())
+	// deployment change-cause
+	d.Annotations = map[string]string{
+		"kubernetes.io/change-cause": fmt.Sprintf("deployUUID:%s", p.id),
+	}
 	// updating slug
 	for i, e := range d.Spec.Template.Spec.Containers[0].Env {
 		if e.Name == "SLUG_URL" {
-			e.Value = slug
+			e.Value = p.slugPath
 			d.Spec.Template.Spec.Containers[0].Env[i] = e
 			break
 		}
 	}
-	fmt.Printf("--> %+v\n", d.Spec.Template.Spec.Containers[0].Env)
-
 	deploy, err = k8sClient.Deployments(d.GetNamespace()).Update(d)
 	if err != nil {
 		log.Printf("error updating deployment. Err: %s\n", err.Error())
@@ -311,7 +317,7 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 		}
 		storage.DB.Create(&saa)
 	} else {
-		if _, err := updateDeploySlug(deploy, x.slugPath); err != nil {
+		if _, err := updateDeploySlug(x, deploy); err != nil {
 			deleteArchiveOnStorage(&x.storageIn)
 			return deployments.NewCreateDeploymentDefault(500)
 		}

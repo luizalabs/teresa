@@ -1,0 +1,23 @@
+{
+  "client": {
+    "name": "Kube-master-staging",
+    "address": "k8s-staging.a.luizalabs.com",
+    "Environment": "Staging",
+    "subscriptions": [
+      "kube-master-stg"
+    ],
+    "socket": {
+      "bind": "127.0.0.1",
+      "port": 3030
+    },
+    "keepalive": {
+        "thresholds": {
+            "warning": 30,
+            "critical": 40
+        },
+        "handlers": ["slack"],
+        "refresh": 300
+    }
+  }
+}
+

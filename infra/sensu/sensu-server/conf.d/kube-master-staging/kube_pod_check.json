@@ -1,0 +1,11 @@
+{
+  "checks": {
+    "kube_pod_stg": {
+      "command": "/etc/sensu/plugins/check-kube-pods-runtime.rb --token iWdPYMW4CHtXIOxfITGJBvmZpGxotiZ1 --api-server https://k8s-staging.a.luizalabs.com", 
+      "interval": 30,
+      "handler": "slack",
+      "refresh": 300,
+      "subscribers": [ "kube-master-stg" ]
+    }
+  }
+}

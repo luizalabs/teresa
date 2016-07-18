@@ -45,7 +45,7 @@
 ```
 
 
-`/etc/sensu/conf.d/sensu-server/rabbitmp.json`
+`/etc/sensu/conf.d/sensu-server/rabbitmq.json`
 ```
 {
   "rabbitmq": {
@@ -79,9 +79,7 @@
 ## 4 - Instalação do Sensu - Dashboard ( Uchiwa )
 
 ```
-cd ~ 
-wget http://dl.bintray.com/palourde/uchiwa/uchiwa_0.16.0-1_amd64.deb
-dpkg -i uchiwa_0.16.0-1_amd64.deb
+apt-get install uchiwa
 ```
 ## 5 - Configuração do Sensu - Dashboard ( Uchiwa )
 

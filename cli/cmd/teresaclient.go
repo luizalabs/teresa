@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"errors"
+	"fmt"
+	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/go-openapi/runtime"
@@ -24,10 +26,29 @@ type TeresaClient struct {
 	apiKeyAuthFunc runtime.ClientAuthInfoWriter
 }
 
+// TeresaServer scheme and host where the api server is running
+type TeresaServer struct {
+	scheme string
+	host   string
+}
+
 // AppInfo foo bar
 type AppInfo struct {
 	AppID  int64
 	TeamID int64
+}
+
+// ParseServerURL parse the server url and ensure its in the format we expect
+func ParseServerURL(s string) (TeresaServer, error) {
+	u, err := url.Parse(s)
+	if err != nil {
+		return TeresaServer{}, fmt.Errorf("Failed to parse server: %+v\n", err)
+	}
+	if u.Scheme == "" || u.Scheme != "http" && u.Scheme != "https" {
+		return TeresaServer{}, errors.New("accepted server url format: http(s)://hostname[:port]")
+	}
+	ts := TeresaServer{scheme: u.Scheme, host: u.Host}
+	return ts, nil
 }
 
 // NewTeresa foo bar
@@ -46,15 +67,14 @@ func NewTeresa() TeresaClient {
 	tc := TeresaClient{teresa: apiclient.Default}
 	log.Debugf(`Setting new teresa client. server: %s, api suffix: %s`, cluster.Server, suffix)
 
-	// the split is ugly.
-	// using unecessary vars for clarity
-	ss := strings.Split(cluster.Server, "://")
-	scheme := ss[0]
-	host := ss[1]
+	ts, err := ParseServerURL(cluster.Server)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// FIXME: this should come from config
 	client.DefaultTimeout = 60 * time.Second
-	c := client.New(host, suffix, []string{scheme})
+	c := client.New(ts.host, suffix, []string{ts.scheme})
 
 	tc.teresa.SetTransport(c)
 

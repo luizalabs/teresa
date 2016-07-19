@@ -16,7 +16,9 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/luizalabs/paas/api/models"
 	"github.com/spf13/cobra"
 )
 
@@ -72,9 +74,141 @@ var getAppCmd = &cobra.Command{
 	},
 }
 
+var setEnvVarCmd = &cobra.Command{
+	Use:   "env [KEY=value, ...]",
+	Short: "Set env vars for the app",
+	Long: `Create or update environment variables for the app.
+
+You can add a new environment variable for the app, or update if it already exists.
+
+WARNING:
+	If you need to set more than one env var to the application, provide all at once.
+	Every time this command is called, the application needs to be updated.
+
+To add an new env var called "FOO":
+
+	$ teresa set env FOO=bar --app my_app --team my_team
+
+You can also provide more than one env var at a time.
+
+	$ teresa set env FOO=bar BAR=foo --app my_app --team my_team
+
+The application name is always required.
+The team name is only required if you are part of more than one.
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if appNameFlag == "" {
+			log.Debug("App name not provided")
+			return newInputError("App not provided")
+		}
+		// checking for env vars
+		if len(args) == 0 {
+			log.Debug("Env vars not provided")
+			return newInputError("Env vars not provided")
+		}
+		// parse args to env vars
+		evars := make([]*models.PatchAppEnvVar, len(args))
+		for i, s := range args {
+			x := strings.SplitN(s, "=", 2)
+			if len(x) != 2 {
+				return newInputError("Env vars must be in the format FOO=bar")
+			}
+			e := models.PatchAppEnvVar{
+				Key:   &x[0],
+				Value: x[1],
+			}
+			evars[i] = &e
+		}
+
+		action := "add"
+		path := "/envvars"
+		op := models.PatchAppRequest{
+			Op:    &action,
+			Path:  &path,
+			Value: evars,
+		}
+
+		tc := NewTeresa()
+		// FIXME: change this to return error if any
+		a := tc.GetAppInfo(teamNameFlag, appNameFlag)
+
+		// partial update envvars... jsonpatch
+		ops := []*models.PatchAppRequest{&op}
+		err := tc.PartialUpdateApp(a.TeamID, a.AppID, ops)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Info("App env vars updated successfully")
+		return nil
+	},
+}
+
+var unsetEnvVarCmd = &cobra.Command{
+	Use:   "env [var, ...]",
+	Short: "Unset env vars from the app",
+	Long: `Unset env vars from the app.
+
+You can remove one or more environment variables from the application.
+
+WARNING:
+	If you need to unset more than one env var from the application, provide all at once.
+	Every time this command is called, the application needs to be updated.
+
+To unset an env var called "FOO":
+
+	$ teresa unset env FOO --app my_app --team my_team
+
+You can also provide more than one env var at a time.
+
+	$ teresa unset env FOO BAR --app my_app --team my_team
+
+The application name is always required.
+The team name is only required if you are part of more than one.
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if appNameFlag == "" {
+			log.Debug("App name not provided")
+			return newInputError("App not provided")
+		}
+		// checking for env vars
+		if len(args) == 0 {
+			log.Debug("Env vars not provided")
+			return newInputError("Env vars not provided")
+		}
+		// parse args to env vars
+		evars := make([]*models.PatchAppEnvVar, len(args))
+		for i, k := range args {
+			key := k
+			e := models.PatchAppEnvVar{
+				Key: &key,
+			}
+			evars[i] = &e
+		}
+
+		action := "remove"
+		path := "/envvars"
+		op := models.PatchAppRequest{
+			Op:    &action,
+			Path:  &path,
+			Value: evars,
+		}
+		tc := NewTeresa()
+		// FIXME: change this to return error if any
+		a := tc.GetAppInfo(teamNameFlag, appNameFlag)
+
+		// partial update envvars... jsonpatch
+		ops := []*models.PatchAppRequest{&op}
+		err := tc.PartialUpdateApp(a.TeamID, a.AppID, ops)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Info("App env var(s) removed successfully")
+		return nil
+	},
+}
+
 func init() {
 	createCmd.AddCommand(createAppCmd)
-
 	createAppCmd.Flags().StringVar(&appNameFlag, "name", "", "app name [required]")
 	createAppCmd.Flags().IntVar(&appScaleFlag, "scale", 1, "replicas [required]")
 
@@ -82,4 +216,11 @@ func init() {
 	getAppCmd.Flags().StringVar(&appNameFlag, "app", "", "app name [required]")
 	getAppCmd.Flags().StringVar(&teamNameFlag, "team", "", "team name")
 
+	setCmd.AddCommand(setEnvVarCmd)
+	setEnvVarCmd.Flags().StringVar(&appNameFlag, "app", "", "app name [required]")
+	setEnvVarCmd.Flags().StringVar(&teamNameFlag, "team", "", "team name")
+
+	unsetCmd.AddCommand(unsetEnvVarCmd)
+	unsetEnvVarCmd.Flags().StringVar(&appNameFlag, "app", "", "app name [required]")
+	unsetEnvVarCmd.Flags().StringVar(&teamNameFlag, "team", "", "team name")
 }

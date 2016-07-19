@@ -207,6 +207,17 @@ func (tc TeresaClient) CreateDeploy(teamID, appID int64, description string, tar
 	return r.Payload, nil
 }
 
+// PartialUpdateApp partial updates app... for now, updates only envvars
+func (tc TeresaClient) PartialUpdateApp(teamID, appID int64, operations []*models.PatchAppRequest) error {
+	p := apps.NewPartialUpdateAppParams()
+	p.TeamID = teamID
+	p.AppID = appID
+	p.Body = operations
+
+	_, err := tc.teresa.Apps.PartialUpdateApp(p, tc.apiKeyAuthFunc)
+	return err
+}
+
 /*
 func main() {
 	teresa := NewTeresa(os.Getenv("TERESA_SERVER"), os.Getenv("TERESA_SERVER_PORT"), os.Getenv("TERESA_API_SUFFIX"))

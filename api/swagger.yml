@@ -315,6 +315,46 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/Error"
+    patch:
+      summary: Partial update app
+      description: Update some app properties, for now, only accept envvars
+      tags:
+        - apps
+      operationId: partialUpdateApp
+      security:
+        - api_key: []
+        - token_header: []
+      # consumes:
+      #   - application/json-patch+json
+      parameters:
+        - $ref: "#/parameters/appId"
+        - $ref: "#/parameters/teamId"
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/PatchAppRequest"
+      responses:
+        200:
+          description: App
+          schema:
+            $ref: "#/definitions/App"
+        401:
+          description: User not authorized
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        403:
+          description: |
+            User does not have the credentials to access this resource
+          schema:
+            $ref: "#/definitions/Unauthorized"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+
   /teams/{team_id}/apps/{app_id}/deployments:
     get:
       summary: Get app deployments
@@ -758,6 +798,37 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/EnvVar"
+  PatchAppRequest: # for now, only this two https://tools.ietf.org/html/rfc6902 || http://jsonpatch.com/
+    type: object
+    description: used to create a patch update to an app
+    required:
+      - op
+      - path
+      - value
+    properties:
+      op:
+        type: string
+        default: add
+        enum:
+          - add
+          - remove
+      path:
+        type: string
+        default: /envvars
+      value:
+        type: array
+        items:
+          $ref: "#/definitions/PatchAppEnvVar"
+  PatchAppEnvVar:
+    type: object
+    description: app environment var
+    required:
+      - key
+    properties:
+      key:
+        type: string
+      value:
+        type: string
   EnvVar:
     type: object
     description: app environment var

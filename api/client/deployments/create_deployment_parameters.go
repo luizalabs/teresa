@@ -5,9 +5,11 @@ package deployments
 
 import (
 	"os"
+	"time"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
+	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/swag"
 
 	strfmt "github.com/go-openapi/strfmt"
@@ -17,7 +19,20 @@ import (
 // with the default values initialized.
 func NewCreateDeploymentParams() *CreateDeploymentParams {
 	var ()
-	return &CreateDeploymentParams{}
+	return &CreateDeploymentParams{
+
+		timeout: cr.DefaultTimeout,
+	}
+}
+
+// NewCreateDeploymentParamsWithTimeout creates a new CreateDeploymentParams object
+// with the default values initialized, and the ability to set a timeout on a request
+func NewCreateDeploymentParamsWithTimeout(timeout time.Duration) *CreateDeploymentParams {
+	var ()
+	return &CreateDeploymentParams{
+
+		timeout: timeout,
+	}
 }
 
 /*CreateDeploymentParams contains all the parameters to send to the API endpoint
@@ -39,6 +54,8 @@ type CreateDeploymentParams struct {
 
 	*/
 	TeamID int64
+
+	timeout time.Duration
 }
 
 // WithAppTarball adds the appTarball to the create deployment params
@@ -68,6 +85,7 @@ func (o *CreateDeploymentParams) WithTeamID(TeamID int64) *CreateDeploymentParam
 // WriteToRequest writes these params to a swagger request
 func (o *CreateDeploymentParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
+	r.SetTimeout(o.timeout)
 	var res []error
 
 	// form file param appTarball

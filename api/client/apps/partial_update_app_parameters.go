@@ -16,30 +16,30 @@ import (
 	"github.com/luizalabs/paas/api/models"
 )
 
-// NewUpdateAppParams creates a new UpdateAppParams object
+// NewPartialUpdateAppParams creates a new PartialUpdateAppParams object
 // with the default values initialized.
-func NewUpdateAppParams() *UpdateAppParams {
+func NewPartialUpdateAppParams() *PartialUpdateAppParams {
 	var ()
-	return &UpdateAppParams{
+	return &PartialUpdateAppParams{
 
 		timeout: cr.DefaultTimeout,
 	}
 }
 
-// NewUpdateAppParamsWithTimeout creates a new UpdateAppParams object
+// NewPartialUpdateAppParamsWithTimeout creates a new PartialUpdateAppParams object
 // with the default values initialized, and the ability to set a timeout on a request
-func NewUpdateAppParamsWithTimeout(timeout time.Duration) *UpdateAppParams {
+func NewPartialUpdateAppParamsWithTimeout(timeout time.Duration) *PartialUpdateAppParams {
 	var ()
-	return &UpdateAppParams{
+	return &PartialUpdateAppParams{
 
 		timeout: timeout,
 	}
 }
 
-/*UpdateAppParams contains all the parameters to send to the API endpoint
-for the update app operation typically these are written to a http.Request
+/*PartialUpdateAppParams contains all the parameters to send to the API endpoint
+for the partial update app operation typically these are written to a http.Request
 */
-type UpdateAppParams struct {
+type PartialUpdateAppParams struct {
 
 	/*AppID
 	  App ID
@@ -47,7 +47,7 @@ type UpdateAppParams struct {
 	*/
 	AppID int64
 	/*Body*/
-	Body *models.App
+	Body []*models.PatchAppRequest
 	/*TeamID
 	  Team ID
 
@@ -57,26 +57,26 @@ type UpdateAppParams struct {
 	timeout time.Duration
 }
 
-// WithAppID adds the appId to the update app params
-func (o *UpdateAppParams) WithAppID(AppID int64) *UpdateAppParams {
+// WithAppID adds the appId to the partial update app params
+func (o *PartialUpdateAppParams) WithAppID(AppID int64) *PartialUpdateAppParams {
 	o.AppID = AppID
 	return o
 }
 
-// WithBody adds the body to the update app params
-func (o *UpdateAppParams) WithBody(Body *models.App) *UpdateAppParams {
+// WithBody adds the body to the partial update app params
+func (o *PartialUpdateAppParams) WithBody(Body []*models.PatchAppRequest) *PartialUpdateAppParams {
 	o.Body = Body
 	return o
 }
 
-// WithTeamID adds the teamId to the update app params
-func (o *UpdateAppParams) WithTeamID(TeamID int64) *UpdateAppParams {
+// WithTeamID adds the teamId to the partial update app params
+func (o *PartialUpdateAppParams) WithTeamID(TeamID int64) *PartialUpdateAppParams {
 	o.TeamID = TeamID
 	return o
 }
 
 // WriteToRequest writes these params to a swagger request
-func (o *UpdateAppParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
+func (o *PartialUpdateAppParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
 	r.SetTimeout(o.timeout)
 	var res []error
@@ -84,10 +84,6 @@ func (o *UpdateAppParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Reg
 	// path param app_id
 	if err := r.SetPathParam("app_id", swag.FormatInt64(o.AppID)); err != nil {
 		return err
-	}
-
-	if o.Body == nil {
-		o.Body = new(models.App)
 	}
 
 	if err := r.SetBodyParam(o.Body); err != nil {

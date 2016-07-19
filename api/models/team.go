@@ -66,6 +66,21 @@ func (m *Team) validateApps(formats strfmt.Registry) error {
 		return nil
 	}
 
+	for i := 0; i < len(m.Apps); i++ {
+
+		if swag.IsZero(m.Apps[i]) { // not required
+			continue
+		}
+
+		if m.Apps[i] != nil {
+
+			if err := m.Apps[i].Validate(formats); err != nil {
+				return err
+			}
+		}
+
+	}
+
 	return nil
 }
 

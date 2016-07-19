@@ -4,8 +4,11 @@ package auth
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"time"
+
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
+	cr "github.com/go-openapi/runtime/client"
 
 	strfmt "github.com/go-openapi/strfmt"
 
@@ -16,7 +19,20 @@ import (
 // with the default values initialized.
 func NewUserLoginParams() *UserLoginParams {
 	var ()
-	return &UserLoginParams{}
+	return &UserLoginParams{
+
+		timeout: cr.DefaultTimeout,
+	}
+}
+
+// NewUserLoginParamsWithTimeout creates a new UserLoginParams object
+// with the default values initialized, and the ability to set a timeout on a request
+func NewUserLoginParamsWithTimeout(timeout time.Duration) *UserLoginParams {
+	var ()
+	return &UserLoginParams{
+
+		timeout: timeout,
+	}
 }
 
 /*UserLoginParams contains all the parameters to send to the API endpoint
@@ -26,6 +42,8 @@ type UserLoginParams struct {
 
 	/*Body*/
 	Body *models.Login
+
+	timeout time.Duration
 }
 
 // WithBody adds the body to the user login params
@@ -37,6 +55,7 @@ func (o *UserLoginParams) WithBody(Body *models.Login) *UserLoginParams {
 // WriteToRequest writes these params to a swagger request
 func (o *UserLoginParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
+	r.SetTimeout(o.timeout)
 	var res []error
 
 	if o.Body == nil {

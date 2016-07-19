@@ -107,6 +107,34 @@ func (a *Client) GetApps(params *GetAppsParams, authInfo runtime.ClientAuthInfoW
 }
 
 /*
+PartialUpdateApp partials update app
+
+Update some app properties, for now, only accept envvars
+*/
+func (a *Client) PartialUpdateApp(params *PartialUpdateAppParams, authInfo runtime.ClientAuthInfoWriter) (*PartialUpdateAppOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPartialUpdateAppParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "partialUpdateApp",
+		Method:             "PATCH",
+		PathPattern:        "/teams/{team_id}/apps/{app_id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PartialUpdateAppReader{formats: a.formats},
+		AuthInfo:           authInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*PartialUpdateAppOK), nil
+}
+
+/*
 UpdateApp updates app
 
 Update app properties, such as number of replicas and other things.

@@ -35,9 +35,9 @@ const (
 	k8sUsername            = "admin"
 	k8sPassword            = "VOpgP0Ggnty5mLcq"
 	k8sInsecure            = true
-	sessionIdleInterval    = time.Duration(1) * time.Second
-	builderPodTickDuration = time.Duration(1) * time.Second
-	builderPodWaitDuration = time.Duration(3) * time.Minute
+	sessionIdleInterval    = 1 * time.Second
+	builderPodTickDuration = 1 * time.Second
+	builderPodWaitDuration = 3 * time.Minute
 )
 
 var (
@@ -69,8 +69,9 @@ func init() {
 	}
 }
 
-// GenerateSlug from the package github.com/mrvdot/golang-utils/
-func GenerateSlug(str string) (slug string) {
+// slugify the input text
+// copy from the package github.com/mrvdot/golang-utils/
+func slugify(str string) (slug string) {
 	return strings.Map(func(r rune) rune {
 		switch {
 		case r == ' ', r == '-':
@@ -93,11 +94,12 @@ type deployParams struct {
 	slugPath   string
 }
 
+// newDeployParams return a struct with the parameters to use for deploy
 func newDeployParams(app *storage.Application) *deployParams {
 	d := deployParams{
 		id:   uuid.New()[:8],
-		app:  GenerateSlug(app.Name),
-		team: GenerateSlug(app.Team.Name),
+		app:  slugify(app.Name),
+		team: slugify(app.Team.Name),
 	}
 	d.namespace = fmt.Sprintf("%s--%s", d.team, d.app)
 	d.storageIn = fmt.Sprintf("deploys/%s/%s/%s/in/app.tar.gz", d.team, d.app, d.id)
@@ -106,6 +108,7 @@ func newDeployParams(app *storage.Application) *deployParams {
 	return &d
 }
 
+// uploadArchiveToStorage uploads a file (AppTarball) to storage (AWS S3)
 func uploadArchiveToStorage(path *string, file *runtime.File) error {
 	log.Printf("starting upload to storage [%s]\n", *path)
 	po := &s3.PutObjectInput{
@@ -121,6 +124,7 @@ func uploadArchiveToStorage(path *string, file *runtime.File) error {
 	return nil
 }
 
+// deleteArchiveOnStorage deletes a file (AppTarball) from storage (AWS S3)
 func deleteArchiveOnStorage(path *string) error {
 	log.Printf("deleting archive from storage [%s]\n", *path)
 	d := &s3.DeleteObjectInput{
@@ -134,7 +138,8 @@ func deleteArchiveOnStorage(path *string) error {
 	return nil
 }
 
-func buildApp(p *deployParams) error {
+// buildAppSlug starts a POD who builds the final slug from the AppTarball.
+func buildAppSlug(p *deployParams) error {
 	buildName := fmt.Sprintf("build--%s--%s", p.app, p.id)
 	log.Printf("building the app... builder POD name [%s/%s]", p.namespace, buildName)
 
@@ -176,7 +181,8 @@ func buildApp(p *deployParams) error {
 	return nil
 }
 
-func createDeploy(p *deployParams, a *storage.Application) (deploy *extensions.Deployment, err error) {
+// createSlugRunnerDeploy creates a "deis slugRunner" deploy on k8s
+func createSlugRunnerDeploy(p *deployParams, a *storage.Application) (deploy *extensions.Deployment, err error) {
 	log.Printf("creating k8s deploy [%s/%s]\n", p.namespace, p.app)
 	// check for env vars
 	env := make(map[string]string)
@@ -195,28 +201,8 @@ func createDeploy(p *deployParams, a *storage.Application) (deploy *extensions.D
 	return
 }
 
-func deleteDeploy(p *deployParams) error {
-	log.Printf("deleting k8s deploy [%s/%s]\n", p.namespace, p.app)
-	if err := k8sClient.Deployments(p.namespace).Delete(p.app, nil); err != nil {
-		log.Printf("error deleting deployment. Err: %s\n", err.Error())
-		return err
-	}
-	return nil
-}
-
-func getDeploy(p *deployParams) (deploy *extensions.Deployment, err error) {
-	log.Printf("get k8s deploy [%s/%s]\n", p.namespace, p.app)
-	deploy, err = k8sClient.Deployments(p.namespace).Get(p.app)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil, nil
-		}
-		log.Printf("error when checking if deploy exists. Err: %s", err)
-	}
-	return
-}
-
-func updateDeploySlug(p *deployParams, d *extensions.Deployment) (deploy *extensions.Deployment, err error) {
+// updateSlugRunnerDeploySlug search and update the "SLUG_URL" on k8s deploys EnvVars
+func updateSlugRunnerDeploySlug(p *deployParams, d *extensions.Deployment) (deploy *extensions.Deployment, err error) {
 	log.Printf("updating k8s deploy [%s/%s]\n", d.GetNamespace(), d.GetName())
 	// deployment change-cause
 	d.Annotations = map[string]string{
@@ -237,6 +223,30 @@ func updateDeploySlug(p *deployParams, d *extensions.Deployment) (deploy *extens
 	return
 }
 
+// deleteDeploy deletes the deploy from k8s
+func deleteDeploy(p *deployParams) error {
+	log.Printf("deleting k8s deploy [%s/%s]\n", p.namespace, p.app)
+	if err := k8sClient.Deployments(p.namespace).Delete(p.app, nil); err != nil {
+		log.Printf("error deleting deployment. Err: %s\n", err.Error())
+		return err
+	}
+	return nil
+}
+
+// getDeploy get the deploy from k8s
+func getDeploy(p *deployParams) (deploy *extensions.Deployment, err error) {
+	log.Printf("get k8s deploy [%s/%s]\n", p.namespace, p.app)
+	deploy, err = k8sClient.Deployments(p.namespace).Get(p.app)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, nil
+		}
+		log.Printf("error when checking if deploy exists. Err: %s", err)
+	}
+	return
+}
+
+// createServiceAndGetLBHostName creates the k8s service and wait the exposition of the LoadBalancer... after this, return the loadbalancer
 func createServiceAndGetLBHostName(p *deployParams) (lb string, err error) {
 	log.Printf("creating service [%s/%s]\n", p.namespace, p.app)
 	// create service
@@ -270,7 +280,8 @@ func createServiceAndGetLBHostName(p *deployParams) (lb string, err error) {
 	return
 }
 
-func createHandlerResponder(p *deployParams, appID uint, description *string, errorDescription string) (resp middleware.Responder) {
+// responder saves informations about the deploy to DB and returns the middleware.Responder object
+func responder(p *deployParams, appID uint, description *string, errorDescription string) (resp middleware.Responder) {
 	// saving deployment to db...
 	sd := storage.Deployment{
 		UUID:  p.id,
@@ -297,7 +308,7 @@ func createHandlerResponder(p *deployParams, appID uint, description *string, er
 	return
 }
 
-// CreateDeploymentHandler creates deploy
+// CreateDeploymentHandler handler triggered when a deploy url is requested
 func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principal interface{}) middleware.Responder {
 	appID := uint(params.AppID)
 	// get app info from DB
@@ -312,32 +323,32 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 	log.Printf("starting deploy proccess [%s/%s/%s]\n", x.team, x.app, x.id)
 	// upload file
 	if err := uploadArchiveToStorage(&x.storageIn, &params.AppTarball); err != nil {
-		return createHandlerResponder(x, appID, params.Description, "uploading app tarball")
+		return responder(x, appID, params.Description, "uploading app tarball")
 	}
 	// build app
-	if err := buildApp(x); err != nil {
+	if err := buildAppSlug(x); err != nil {
 		deleteArchiveOnStorage(&x.storageIn)
-		return createHandlerResponder(x, appID, params.Description, "building app")
+		return responder(x, appID, params.Description, "building app")
 	}
 
 	// creating deploy
 	deploy, err := getDeploy(x)
 	if err != nil {
 		deleteArchiveOnStorage(&x.storageIn)
-		return createHandlerResponder(x, appID, params.Description, "creating deploy")
+		return responder(x, appID, params.Description, "creating deploy")
 	}
 	if deploy == nil { // k8s deploy doesn't exists...
 		// creating k8s deployment...
-		if _, err = createDeploy(x, &sa); err != nil {
+		if _, err = createSlugRunnerDeploy(x, &sa); err != nil {
 			deleteArchiveOnStorage(&x.storageIn)
-			return createHandlerResponder(x, appID, params.Description, "creating deploy")
+			return responder(x, appID, params.Description, "creating deploy")
 		}
 		// creating k8s service with LoadBalance...
 		lbHostName, err := createServiceAndGetLBHostName(x)
 		if err != nil {
 			deleteDeploy(x)
 			deleteArchiveOnStorage(&x.storageIn)
-			return createHandlerResponder(x, appID, params.Description, "creating service")
+			return responder(x, appID, params.Description, "creating service")
 		}
 		// save address fo the LB to db...
 		saa := storage.AppAddress{
@@ -346,10 +357,10 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 		}
 		storage.DB.Create(&saa)
 	} else {
-		if _, err := updateDeploySlug(x, deploy); err != nil {
+		if _, err := updateSlugRunnerDeploySlug(x, deploy); err != nil {
 			deleteArchiveOnStorage(&x.storageIn)
-			return createHandlerResponder(x, appID, params.Description, "rolling update deploy")
+			return responder(x, appID, params.Description, "rolling update deploy")
 		}
 	}
-	return createHandlerResponder(x, appID, params.Description, "")
+	return responder(x, appID, params.Description, "")
 }

@@ -270,11 +270,39 @@ func createServiceAndGetLBHostName(p *deployParams) (lb string, err error) {
 	return
 }
 
+func createHandlerResponder(p *deployParams, appID uint, description *string, errorDescription string) (resp middleware.Responder) {
+	// saving deployment to db...
+	sd := storage.Deployment{
+		UUID:  p.id,
+		AppID: appID,
+	}
+	if description != nil {
+		sd.Description = *description
+	}
+	if errorDescription != "" {
+		log.Printf("deploy finished with error. %s\n", errorDescription)
+		sd.Error = errorDescription
+		resp = deployments.NewCreateDeploymentDefault(500)
+	} else {
+		log.Println("deploy finished with success")
+		r := deployments.NewCreateDeploymentOK()
+		payload := models.Deployment{
+			When: strfmt.NewDateTime(),
+		}
+		r.SetPayload(&payload)
+		resp = r
+	}
+	// save deploy to DB
+	storage.DB.Save(&sd)
+	return
+}
+
 // CreateDeploymentHandler creates deploy
 func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principal interface{}) middleware.Responder {
+	appID := uint(params.AppID)
 	// get app info from DB
 	sa := storage.Application{}
-	sa.ID = uint(params.AppID)
+	sa.ID = appID
 	if storage.DB.Where(&storage.Application{TeamID: uint(params.TeamID)}).Preload("Team").Preload("EnvVars").Preload("Deployments").First(&sa).RecordNotFound() {
 		log.Println("app info not found")
 		return deployments.NewCreateDeploymentUnauthorized()
@@ -284,63 +312,44 @@ func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principa
 	log.Printf("starting deploy proccess [%s/%s/%s]\n", x.team, x.app, x.id)
 	// upload file
 	if err := uploadArchiveToStorage(&x.storageIn, &params.AppTarball); err != nil {
-		return deployments.NewCreateDeploymentDefault(500)
+		return createHandlerResponder(x, appID, params.Description, "uploading app tarball")
 	}
 	// build app
 	if err := buildApp(x); err != nil {
 		deleteArchiveOnStorage(&x.storageIn)
-		return deployments.NewCreateDeploymentDefault(500)
+		return createHandlerResponder(x, appID, params.Description, "building app")
 	}
 
+	// creating deploy
 	deploy, err := getDeploy(x)
 	if err != nil {
 		deleteArchiveOnStorage(&x.storageIn)
-		return deployments.NewCreateDeploymentDefault(500)
+		return createHandlerResponder(x, appID, params.Description, "creating deploy")
 	}
 	if deploy == nil { // k8s deploy doesn't exists...
 		// creating k8s deployment...
 		if _, err = createDeploy(x, &sa); err != nil {
 			deleteArchiveOnStorage(&x.storageIn)
-			return deployments.NewCreateDeploymentDefault(500)
+			return createHandlerResponder(x, appID, params.Description, "creating deploy")
 		}
 		// creating k8s service with LoadBalance...
 		lbHostName, err := createServiceAndGetLBHostName(x)
 		if err != nil {
 			deleteDeploy(x)
 			deleteArchiveOnStorage(&x.storageIn)
-			return deployments.NewCreateDeploymentDefault(500)
+			return createHandlerResponder(x, appID, params.Description, "creating service")
 		}
 		// save address fo the LB to db...
 		saa := storage.AppAddress{
 			Address: lbHostName,
-			AppID:   sa.ID,
+			AppID:   appID,
 		}
 		storage.DB.Create(&saa)
 	} else {
 		if _, err := updateDeploySlug(x, deploy); err != nil {
 			deleteArchiveOnStorage(&x.storageIn)
-			return deployments.NewCreateDeploymentDefault(500)
+			return createHandlerResponder(x, appID, params.Description, "rolling update deploy")
 		}
 	}
-
-	// saving deployment to db...
-	sd := storage.Deployment{
-		UUID:  x.id,
-		AppID: sa.ID,
-	}
-	if params.Description != nil {
-		sd.Description = *params.Description
-	}
-	storage.DB.Save(&sd)
-
-	// save deploy to db...
-	r := deployments.NewCreateDeploymentOK()
-	payload := models.Deployment{
-		When: strfmt.NewDateTime(),
-	}
-	r.SetPayload(&payload)
-
-	log.Println("deploy finished with success")
-
-	return r
+	return createHandlerResponder(x, appID, params.Description, "")
 }

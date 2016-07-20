@@ -17,20 +17,21 @@ var log *logrus.Logger
 
 // variables used to capture the cli flags
 var (
-	cfgFile          string
-	serverFlag       string
-	currentFlag      bool
-	teamIDFlag       int64
-	teamNameFlag     string
-	teamEmailFlag    string
-	teamURLFlag      string
-	userIDFlag       int64
-	userNameFlag     string
-	userEmailFlag    string
-	userPasswordFlag string
-	appNameFlag      string
-	appScaleFlag     int
-	descriptionFlag  string
+	cfgFile            string
+	serverFlag         string
+	currentFlag        bool
+	teamIDFlag         int64
+	teamNameFlag       string
+	teamEmailFlag      string
+	teamURLFlag        string
+	userIDFlag         int64
+	userNameFlag       string
+	userEmailFlag      string
+	userPasswordFlag   string
+	appNameFlag        string
+	appScaleFlag       int
+	descriptionFlag    string
+	autocompleteTarget string
 )
 
 const (

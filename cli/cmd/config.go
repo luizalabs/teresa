@@ -15,7 +15,7 @@ import (
 // configCmd represents the config command
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "View and modifies the config file",
+	Short: "Setup cluster servers and view config file",
 }
 
 func init() {

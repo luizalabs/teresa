@@ -10,7 +10,7 @@ import (
 
 var loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "login in the current cluster",
+	Short: "Login in the currently selected cluster",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if userNameFlag == "" {
 			return newInputError("User must be provided")
@@ -40,5 +40,5 @@ var loginCmd = &cobra.Command{
 
 func init() {
 	loginCmd.Flags().StringVar(&userNameFlag, "user", "", "username to login with")
-	configCmd.AddCommand(loginCmd)
+	RootCmd.AddCommand(loginCmd)
 }

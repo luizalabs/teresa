@@ -16,6 +16,21 @@ import (
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Setup cluster servers and view config file",
+	Long: `Setup clusters and view the configuration.
+
+To perform any action, you must have at least one cluster setup.
+To add one named "aws-staging", for instance:
+
+	$ teresa config set-cluster aws-staging -s http://mycluster.mydomain.com
+
+That will add the "aws-staging" cluster to the configuration file,
+but won't set it as the default. To do that, you must run:
+
+	$ teresa config use-cluster aws-staging
+
+From that point on, teresa will use this cluster until you select
+another via: teresa config use-cluster another-cluster.
+	`,
 }
 
 func init() {

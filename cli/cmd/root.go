@@ -43,7 +43,29 @@ const (
 var RootCmd = &cobra.Command{
 	Use:   "cli",
 	Short: "Teresa cli",
-	Long:  `Teresa cli. You can manage teams, users and applications with it.`,
+	Long: `Teresa cli. You can manage teams, users and applications with it.
+
+Teresa CLI works by sending HTTP requests to Kubernetes clusters that have a
+Teresa API server running. You can have multiple clusters configured on your
+local box, one for each cloud provider or one for each environment or a mix
+of those - whatever you want.
+
+Teresa doesn't start using any cluster by it's own: you have to tell her which
+one to use.
+
+To set a cluster, eg.:
+
+  $ teresa config set-cluster my_cluster_name -s https://mycluster.mydomain.com
+
+To use that cluster:
+
+  $ teresa config use-cluster my_cluster_name
+
+From that point on, all the operations will be directed to that cluster. You can
+view the whole configuration anytime by running:
+
+  $ teresa config view
+	`,
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.

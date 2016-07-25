@@ -20,11 +20,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// appCmd represents the app command
-var appCmd = &cobra.Command{
+// createAppCmd represents the app command
+var createAppCmd = &cobra.Command{
 	Use:   "app",
 	Short: "Create an app",
-	Long:  `Create an app`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if appNameFlag == "" {
 			return newInputError("app name is required")
@@ -74,13 +73,13 @@ var getAppCmd = &cobra.Command{
 }
 
 func init() {
-	createCmd.AddCommand(appCmd)
+	createCmd.AddCommand(createAppCmd)
 
-	appCmd.Flags().StringVar(&appNameFlag, "name", "", "app name [required]")
-	appCmd.Flags().IntVar(&appScaleFlag, "scale", 1, "replicas [required]")
+	createAppCmd.Flags().StringVar(&appNameFlag, "name", "", "app name [required]")
+	createAppCmd.Flags().IntVar(&appScaleFlag, "scale", 1, "replicas [required]")
 
 	getCmd.AddCommand(getAppCmd)
-	getAppCmd.Flags().StringVarP(&appNameFlag, "app", "a", "", "app name [required]")
-	getAppCmd.Flags().StringVarP(&teamNameFlag, "team", "t", "", "team name")
+	getAppCmd.Flags().StringVar(&appNameFlag, "app", "", "app name [required]")
+	getAppCmd.Flags().StringVar(&teamNameFlag, "team", "", "team name")
 
 }

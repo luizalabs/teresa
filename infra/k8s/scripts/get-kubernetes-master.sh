@@ -1,4 +1,5 @@
 #!/bin/bash
+
 source settings.sh
 source kubernetes-helpers.sh
 export AWS_DEFAULT_OUTPUT=text

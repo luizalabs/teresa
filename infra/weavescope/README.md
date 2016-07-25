@@ -15,6 +15,7 @@ Instalação WeaveScope no Kubernetes
 ```
 kubectl create -f 'https://scope.weave.works/launch/k8s/weavescope.yaml' --validate=false --namespace=kube-infra
 ```
+
 Segue abaixo o scope manifest `weavescope.yaml`,  executado no passo anterior.
 
 ```json

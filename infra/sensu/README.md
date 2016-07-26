@@ -25,6 +25,7 @@
 `mkdir -p /etc/sensu/conf.d/sensu-server`
 
 `/etc/sensu/conf.d/sensu-server/redis.json`
+
 ```
 {
   "redis": {

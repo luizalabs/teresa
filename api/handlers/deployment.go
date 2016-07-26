@@ -202,12 +202,8 @@ func createSlugRunnerDeploy(p *deployParams, a *storage.Application) (deploy *ex
 }
 
 // updateSlugRunnerDeploySlug search and update the "SLUG_URL" on k8s deploys EnvVars
+// FIXME: this should be transformed to a simple helper function
 func updateSlugRunnerDeploySlug(p *deployParams, d *extensions.Deployment) (deploy *extensions.Deployment, err error) {
-	log.Printf("updating k8s deploy [%s/%s]\n", d.GetNamespace(), d.GetName())
-	// deployment change-cause
-	d.Annotations = map[string]string{
-		"kubernetes.io/change-cause": fmt.Sprintf("deployUUID:%s", p.id),
-	}
 	// updating slug
 	for i, e := range d.Spec.Template.Spec.Containers[0].Env {
 		if e.Name == "SLUG_URL" {
@@ -215,6 +211,17 @@ func updateSlugRunnerDeploySlug(p *deployParams, d *extensions.Deployment) (depl
 			d.Spec.Template.Spec.Containers[0].Env[i] = e
 			break
 		}
+	}
+	cause := fmt.Sprintf("deployUUID:%s", p.id)
+	deploy, err = updateDeploy(d, cause)
+	return
+}
+
+func updateDeploy(d *extensions.Deployment, changeCause string) (deploy *extensions.Deployment, err error) {
+	log.Printf("updating k8s deploy [%s/%s]\n", d.GetNamespace(), d.GetName())
+	// deployment change-cause
+	d.Annotations = map[string]string{
+		"kubernetes.io/change-cause": changeCause,
 	}
 	deploy, err = k8sClient.Deployments(d.GetNamespace()).Update(d)
 	if err != nil {
@@ -233,7 +240,8 @@ func deleteDeploy(p *deployParams) error {
 	return nil
 }
 
-// getDeploy get the deploy from k8s
+// FIXME: change the model of parameters for getDeploy
+// getDeploy gets the deploy from k8s
 func getDeploy(p *deployParams) (deploy *extensions.Deployment, err error) {
 	log.Printf("get k8s deploy [%s/%s]\n", p.namespace, p.app)
 	deploy, err = k8sClient.Deployments(p.namespace).Get(p.app)

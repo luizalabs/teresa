@@ -45,10 +45,10 @@ type TeresaAPI struct {
 	formats         strfmt.Registry
 	defaultConsumes string
 	defaultProduces string
-	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
-	MultipartformConsumer runtime.Consumer
 	// JSONConsumer registers a consumer for a "application/json" mime type
 	JSONConsumer runtime.Consumer
+	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
+	MultipartformConsumer runtime.Consumer
 
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
@@ -89,6 +89,8 @@ type TeresaAPI struct {
 	UsersGetUserDetailsHandler users.GetUserDetailsHandler
 	// UsersGetUsersHandler sets the operation handler for the get users operation
 	UsersGetUsersHandler users.GetUsersHandler
+	// AppsPartialUpdateAppHandler sets the operation handler for the partial update app operation
+	AppsPartialUpdateAppHandler apps.PartialUpdateAppHandler
 	// AppsUpdateAppHandler sets the operation handler for the update app operation
 	AppsUpdateAppHandler apps.UpdateAppHandler
 	// TeamsUpdateTeamHandler sets the operation handler for the update team operation
@@ -108,6 +110,9 @@ type TeresaAPI struct {
 
 	// Custom command line argument groups with their descriptions
 	CommandLineOptionsGroups []swag.CommandLineOptionsGroup
+
+	// User defined logger function.
+	Logger func(string, ...interface{})
 }
 
 // SetDefaultProduces sets the default produces media type
@@ -144,12 +149,12 @@ func (o *TeresaAPI) RegisterFormat(name string, format strfmt.Format, validator 
 func (o *TeresaAPI) Validate() error {
 	var unregistered []string
 
-	if o.MultipartformConsumer == nil {
-		unregistered = append(unregistered, "MultipartformConsumer")
-	}
-
 	if o.JSONConsumer == nil {
 		unregistered = append(unregistered, "JSONConsumer")
+	}
+
+	if o.MultipartformConsumer == nil {
+		unregistered = append(unregistered, "MultipartformConsumer")
 	}
 
 	if o.JSONProducer == nil {
@@ -220,6 +225,10 @@ func (o *TeresaAPI) Validate() error {
 		unregistered = append(unregistered, "users.GetUsersHandler")
 	}
 
+	if o.AppsPartialUpdateAppHandler == nil {
+		unregistered = append(unregistered, "apps.PartialUpdateAppHandler")
+	}
+
 	if o.AppsUpdateAppHandler == nil {
 		unregistered = append(unregistered, "apps.UpdateAppHandler")
 	}
@@ -276,11 +285,11 @@ func (o *TeresaAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consume
 	for _, mt := range mediaTypes {
 		switch mt {
 
-		case "multipart/form-data":
-			result["multipart/form-data"] = o.MultipartformConsumer
-
 		case "application/json":
 			result["application/json"] = o.JSONConsumer
+
+		case "multipart/form-data":
+			result["multipart/form-data"] = o.MultipartformConsumer
 
 		}
 	}
@@ -395,6 +404,11 @@ func (o *TeresaAPI) initHandlerCache() {
 		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/users"] = users.NewGetUsers(o.context, o.UsersGetUsersHandler)
+
+	if o.handlers["PATCH"] == nil {
+		o.handlers[strings.ToUpper("PATCH")] = make(map[string]http.Handler)
+	}
+	o.handlers["PATCH"]["/teams/{team_id}/apps/{app_id}"] = apps.NewPartialUpdateApp(o.context, o.AppsPartialUpdateAppHandler)
 
 	if o.handlers["PUT"] == nil {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)

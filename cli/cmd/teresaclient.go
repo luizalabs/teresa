@@ -117,8 +117,9 @@ func (tc TeresaClient) DeleteTeam(ID int64) error {
 }
 
 // CreateApp creates an user
-func (tc TeresaClient) CreateApp(name string, scale int64) (app *models.App, err error) {
+func (tc TeresaClient) CreateApp(name string, scale int64, teamID int64) (app *models.App, err error) {
 	params := apps.NewCreateAppParams()
+	params.TeamID = teamID
 	params.WithBody(&models.App{Name: &name, Scale: &scale})
 	r, err := tc.teresa.Apps.CreateApp(params, tc.apiKeyAuthFunc)
 	if err != nil {
@@ -193,6 +194,25 @@ func (tc TeresaClient) GetAppInfo(teamName, appName string) (appInfo AppInfo) {
 	return
 }
 
+// GetTeamID returns teamID from team_name
+func (tc TeresaClient) GetTeamID(teamName string) (teamID int64) {
+	me, err := tc.Me()
+	if err != nil {
+		log.Fatalf("unable to get user information: %s", err)
+	}
+	if len(me.Teams) > 1 && teamName == "" {
+		log.Fatalln("User is in more than one team and provided none")
+	}
+	for _, t := range me.Teams {
+		if teamName == "" || *t.Name == teamName {
+			return t.ID
+		}
+	}
+
+	log.Fatalf("Invalid Team [%s]\n", teamName)
+	return
+}
+
 // CreateDeploy creates a new deploy
 func (tc TeresaClient) CreateDeploy(teamID, appID int64, description string, tarBall *os.File) (deploy *models.Deployment, err error) {
 	p := deployments.NewCreateDeploymentParams()
@@ -205,6 +225,17 @@ func (tc TeresaClient) CreateDeploy(teamID, appID int64, description string, tar
 		return nil, err
 	}
 	return r.Payload, nil
+}
+
+// PartialUpdateApp partial updates app... for now, updates only envvars
+func (tc TeresaClient) PartialUpdateApp(teamID, appID int64, operations []*models.PatchAppRequest) error {
+	p := apps.NewPartialUpdateAppParams()
+	p.TeamID = teamID
+	p.AppID = appID
+	p.Body = operations
+
+	_, err := tc.teresa.Apps.PartialUpdateApp(p, tc.apiKeyAuthFunc)
+	return err
 }
 
 /*

@@ -47,16 +47,15 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.AppsCreateAppHandler = apps.CreateAppHandlerFunc(func(params apps.CreateAppParams, principal interface{}) middleware.Responder {
 		return handlers.CreateAppHandler(params, principal)
 	})
-
 	// create deployment
 	api.DeploymentsCreateDeploymentHandler = deployments.CreateDeploymentHandlerFunc(func(params deployments.CreateDeploymentParams, principal interface{}) middleware.Responder {
 		return handlers.CreateDeploymentHandler(params, principal)
 	})
-	// create a team
+	// create team
 	api.TeamsCreateTeamHandler = teams.CreateTeamHandlerFunc(func(params teams.CreateTeamParams, principal interface{}) middleware.Responder {
 		return handlers.CreateTeamHandler(params, principal)
 	})
-	// create a user
+	// create user
 	api.UsersCreateUserHandler = users.CreateUserHandlerFunc(func(params users.CreateUserParams, principal interface{}) middleware.Responder {
 		return handlers.CreateUserHandler(params, principal)
 	})
@@ -74,7 +73,7 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.AppsGetAppsHandler = apps.GetAppsHandlerFunc(func(params apps.GetAppsParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation apps.GetApps has not yet been implemented")
 	})
-	api.UsersGetCurrentUserHandler = users.GetCurrentUserHandlerFunc(func(principal interface{}) middleware.Responder {
+	api.UsersGetCurrentUserHandler = users.GetCurrentUserHandlerFunc(func(params users.GetCurrentUserParams, principal interface{}) middleware.Responder {
 		return handlers.GetCurrentUserHandler(principal)
 	})
 	api.DeploymentsGetDeploymentsHandler = deployments.GetDeploymentsHandlerFunc(func(params deployments.GetDeploymentsParams, principal interface{}) middleware.Responder {
@@ -93,6 +92,10 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	})
 	api.UsersGetUsersHandler = users.GetUsersHandlerFunc(func(params users.GetUsersParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation users.GetUsers has not yet been implemented")
+	})
+	// partial update app... update envVars
+	api.AppsPartialUpdateAppHandler = apps.PartialUpdateAppHandlerFunc(func(params apps.PartialUpdateAppParams, principal interface{}) middleware.Responder {
+		return handlers.PartialUpdateAppHandler(params, principal)
 	})
 	api.AppsUpdateAppHandler = apps.UpdateAppHandlerFunc(func(params apps.UpdateAppParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation apps.UpdateApp has not yet been implemented")

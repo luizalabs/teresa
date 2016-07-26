@@ -30,7 +30,6 @@ var createDeployCmd = &cobra.Command{
 func createDeploy(appName, teamName, description, appFolder string) error {
 	tc := NewTeresa()
 	a := tc.GetAppInfo(teamName, appName)
-	tc.GetAppInfo(teamName, appName)
 	// create and get the archive
 	tar, err := createTempArchiveToUpload(appName, teamName, appFolder)
 	if err != nil {

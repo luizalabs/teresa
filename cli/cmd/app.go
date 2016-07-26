@@ -24,10 +24,10 @@ import (
 
 // createAppCmd represents the app command
 var createAppCmd = &cobra.Command{
-	Use:   "app",
+	Use:   "app [app_name]",
 	Short: "Create an app",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if appNameFlag == "" {
+		if len(args) == 0 {
 			return newInputError("app name is required")
 		}
 		if appScaleFlag == 0 {
@@ -35,7 +35,8 @@ var createAppCmd = &cobra.Command{
 		}
 
 		tc := NewTeresa()
-		app, err := tc.CreateApp(appNameFlag, int64(appScaleFlag))
+		teamID := tc.GetTeamID(teamNameFlag)
+		app, err := tc.CreateApp(args[0], int64(appScaleFlag), teamID)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -173,8 +174,8 @@ var unsetEnvVarCmd = &cobra.Command{
 
 func init() {
 	createCmd.AddCommand(createAppCmd)
-	createAppCmd.Flags().StringVar(&appNameFlag, "name", "", "app name [required]")
-	createAppCmd.Flags().IntVar(&appScaleFlag, "scale", 1, "replicas [required]")
+	createAppCmd.Flags().StringVar(&teamNameFlag, "team", "", "team name")
+	createAppCmd.Flags().IntVar(&appScaleFlag, "scale", 1, "replicas")
 
 	getCmd.AddCommand(getAppCmd)
 	getAppCmd.Flags().StringVar(&appNameFlag, "app", "", "app name [required]")

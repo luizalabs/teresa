@@ -19,12 +19,14 @@ type Login struct {
 	/* email
 
 	Required: true
+	Min Length: 1
 	*/
 	Email *strfmt.Email `json:"email"`
 
 	/* password
 
 	Required: true
+	Min Length: 1
 	*/
 	Password *strfmt.Password `json:"password"`
 }
@@ -55,12 +57,20 @@ func (m *Login) validateEmail(formats strfmt.Registry) error {
 		return err
 	}
 
+	if err := validate.MinLength("email", "body", string(*m.Email), 1); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (m *Login) validatePassword(formats strfmt.Registry) error {
 
 	if err := validate.Required("password", "body", m.Password); err != nil {
+		return err
+	}
+
+	if err := validate.MinLength("password", "body", string(*m.Password), 1); err != nil {
 		return err
 	}
 

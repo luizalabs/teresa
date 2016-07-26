@@ -703,9 +703,11 @@ definitions:
       email:
         type: string
         format: email
+        minLength: 1
       password:
         type: string
         format: password
+        minLength: 1
   Pagination:
     properties:
       pagination:

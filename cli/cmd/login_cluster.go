@@ -25,7 +25,7 @@ var loginCmd = &cobra.Command{
 		}
 
 		tc := NewTeresa()
-		token, err := tc.Login(strfmt.Email(userEmailFlag), strfmt.Password(p))
+		token, err := tc.Login(strfmt.Email(userNameFlag), strfmt.Password(p))
 		if err != nil {
 			log.Fatalf("Failed to login: %s\n", err)
 		}

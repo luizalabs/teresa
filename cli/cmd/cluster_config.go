@@ -8,7 +8,7 @@ import (
 )
 
 var setClusterCmd = &cobra.Command{
-	Use:   "set-cluster NAME",
+	Use:   "set-cluster name",
 	Short: "sets a cluster entry in the config file",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
@@ -25,7 +25,7 @@ var setClusterCmd = &cobra.Command{
 }
 
 var useClusterCmd = &cobra.Command{
-	Use:   "use-cluster NAME",
+	Use:   "use-cluster name",
 	Short: "sets a cluster as the current in the config file",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {

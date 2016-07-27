@@ -101,11 +101,15 @@ func newDeployParams(app *storage.Application) *deployParams {
 		app:  slugify(app.Name),
 		team: slugify(app.Team.Name),
 	}
-	d.namespace = fmt.Sprintf("%s--%s", d.team, d.app)
+	d.namespace = getNamespaceName(d.team, d.app)
 	d.storageIn = fmt.Sprintf("deploys/%s/%s/%s/in/app.tar.gz", d.team, d.app, d.id)
 	d.storageOut = fmt.Sprintf("deploys/%s/%s/%s/out", d.team, d.app, d.id)
 	d.slugPath = fmt.Sprintf("%s/slug.tgz", d.storageOut)
 	return &d
+}
+
+func getNamespaceName(team, app string) string {
+	return fmt.Sprintf("%s--%s", team, app)
 }
 
 // uploadArchiveToStorage uploads a file (AppTarball) to storage (AWS S3)

@@ -89,6 +89,8 @@ type TeresaAPI struct {
 	UsersGetUserDetailsHandler users.GetUserDetailsHandler
 	// UsersGetUsersHandler sets the operation handler for the get users operation
 	UsersGetUsersHandler users.GetUsersHandler
+	// AppsPartialUpdateAppHandler sets the operation handler for the partial update app operation
+	AppsPartialUpdateAppHandler apps.PartialUpdateAppHandler
 	// AppsUpdateAppHandler sets the operation handler for the update app operation
 	AppsUpdateAppHandler apps.UpdateAppHandler
 	// TeamsUpdateTeamHandler sets the operation handler for the update team operation
@@ -108,6 +110,9 @@ type TeresaAPI struct {
 
 	// Custom command line argument groups with their descriptions
 	CommandLineOptionsGroups []swag.CommandLineOptionsGroup
+
+	// User defined logger function.
+	Logger func(string, ...interface{})
 }
 
 // SetDefaultProduces sets the default produces media type
@@ -218,6 +223,10 @@ func (o *TeresaAPI) Validate() error {
 
 	if o.UsersGetUsersHandler == nil {
 		unregistered = append(unregistered, "users.GetUsersHandler")
+	}
+
+	if o.AppsPartialUpdateAppHandler == nil {
+		unregistered = append(unregistered, "apps.PartialUpdateAppHandler")
 	}
 
 	if o.AppsUpdateAppHandler == nil {
@@ -395,6 +404,11 @@ func (o *TeresaAPI) initHandlerCache() {
 		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/users"] = users.NewGetUsers(o.context, o.UsersGetUsersHandler)
+
+	if o.handlers["PATCH"] == nil {
+		o.handlers[strings.ToUpper("PATCH")] = make(map[string]http.Handler)
+	}
+	o.handlers["PATCH"]["/teams/{team_id}/apps/{app_id}"] = apps.NewPartialUpdateApp(o.context, o.AppsPartialUpdateAppHandler)
 
 	if o.handlers["PUT"] == nil {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)

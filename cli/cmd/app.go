@@ -85,22 +85,23 @@ Example:
 			log.Fatal(err)
 		}
 
-		o := fmt.Sprintf("App: %s\n", *app.Name)
+		o := fmt.Sprintf("\nApp: %s\n", *app.Name)
 		o = o + fmt.Sprintf("Scale: %d\n", *app.Scale)
 		// env vars
 		if len(app.EnvVars) > 0 {
-			o = o + "Env Vars:\n"
+			o = o + "\nEnv Vars:\n"
 			for _, x := range app.EnvVars {
 				o = o + fmt.Sprintf("  %s: %s\n", *x.Key, *x.Value)
 			}
 		}
 		// address
 		if len(app.AddressList) > 0 {
-			o = o + "Address:\n"
+			o = o + "\nAddress:\n"
 			for _, x := range app.AddressList {
 				o = o + fmt.Sprintf("  %s\n", x)
 			}
 		}
+		o = o + "\n"
 		fmt.Printf(o)
 		return nil
 	},

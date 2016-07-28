@@ -1,0 +1,11 @@
+{
+  "checks": {
+    "kube_pod_pending_prd": {
+      "command": "/etc/sensu/plugins/check-kube-pods-pending.rb --token IcqwLBuBq6oEblcCubQLN7Lr2YQuOnOG --api-server https://k8s.a.luizalabs.com -t 5",
+      "interval": 30,
+      "handler": "slack",
+      "refresh": 300,
+      "subscribers": [ "kube-master-prd" ]
+    }
+  }
+}

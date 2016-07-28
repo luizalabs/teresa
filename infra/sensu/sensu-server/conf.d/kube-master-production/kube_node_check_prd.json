@@ -1,0 +1,11 @@
+{
+    "checks": {
+    "kube_node_prd": {
+      "command": "/etc/sensu/plugins/check-kube-nodes-ready.rb --token IcqwLBuBq6oEblcCubQLN7Lr2YQuOnOG --api-server https://k8s.a.luizalabs.com",
+      "interval": 30,
+      "handler": "slack",
+      "refresh": 300,
+      "subscribers": [ "kube-master-prd" ]
+      }
+    }
+}

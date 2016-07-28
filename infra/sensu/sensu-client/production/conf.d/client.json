@@ -1,0 +1,22 @@
+{
+  "client": {
+    "name": "Kube-master-production",
+    "address": "k8s.a.luizalabs.com",
+    "Environment": "Production",
+    "subscriptions": [
+      "kube-master-prd"
+    ],
+    "socket": {
+      "bind": "127.0.0.1",
+      "port": 3030
+    },
+    "keepalive": {
+        "thresholds": {
+            "warning": 30,
+            "critical": 40
+        },
+        "handlers": ["slack"],
+        "refresh": 300
+    }
+  }
+}

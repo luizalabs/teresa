@@ -1,0 +1,13 @@
+{
+    "handlers": {
+        "slack": {
+            "type": "pipe",
+            "command": "/etc/sensu/plugins/handler-slack.rb",
+            "severites": ["critical", "unknown"]
+        }
+    },
+    "slack": {
+        "webhook_url": "https://hooks.slack.com/services/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",
+        "template" : ""
+    }
+}  

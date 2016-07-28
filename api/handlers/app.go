@@ -18,8 +18,9 @@ func CreateAppHandler(params apps.CreateAppParams, principal interface{}) middle
 		Scale: params.Body.Scale,
 	}
 	sa := storage.Application{
-		Name:  *params.Body.Name,
-		Scale: int16(*params.Body.Scale),
+		Name:   *params.Body.Name,
+		Scale:  int16(*params.Body.Scale),
+		TeamID: uint(params.TeamID),
 	}
 	if err := storage.DB.Create(&sa).Error; err != nil {
 		log.Printf("CreateAppHandler failed: %s\n", err)

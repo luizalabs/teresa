@@ -111,7 +111,6 @@ sudo update-rc.d uchiwa defaults
 
 ```
 apt-get install build-essential
-ln -s /opt/sensu/embedded/bin/gem /usr/bin/gem
 
 sensu-install slack
 cp /opt/sensu/embedded/bin/handler-slack* /etc/sensu/plugins/

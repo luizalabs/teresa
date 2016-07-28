@@ -110,15 +110,28 @@ func GetAppDetailsHandler(params apps.GetAppDetailsParams, principal interface{}
 	for i, x := range sa.Addresses {
 		m.AddressList[i] = x.Address
 	}
-	// TODO: add envvars ?!?
-	// m.EnvVars
+
+	m.EnvVars = make([]*models.EnvVar, len(sa.EnvVars))
+	for i, x := range sa.EnvVars {
+		k := x.Key
+		v := x.Value
+		e := models.EnvVar{
+			Key:   &k,
+			Value: &v,
+		}
+		m.EnvVars[i] = &e
+	}
+
 	m.DeploymentList = make([]*models.Deployment, len(sa.Deployments))
 	for i, x := range sa.Deployments {
+		id := x.UUID
 		w, _ := strfmt.ParseDateTime(x.CreatedAt.String())
 		d := models.Deployment{
-			UUID: &x.UUID,
+			UUID: &id,
 			When: w,
-			// Description: &x.Description
+		}
+		if des := x.Description; des != "" {
+			d.Description = &des
 		}
 		m.DeploymentList[i] = &d
 	}

@@ -55,17 +55,25 @@ func GetTeamDetailsHandler(params teams.GetTeamDetailParams, principal interface
 
 // GetTeamsHandler ...
 func GetTeamsHandler(params teams.GetTeamsParams, principal interface{}) middleware.Responder {
+	tk := principal.(*Token)
 	var sts []*storage.Team
 
-	d := storage.DB.Find(&sts)
-
-	if err := d.Error; err != nil {
+	// return only my teams
+	rows, err := storage.DB.Model(&storage.Team{}).Where("teams_users.user_id = ?", tk.UserID).Select("teams.name, teams.email, teams.url").Joins("inner join teams_users on teams.id = teams_users.team_id").Rows()
+	if err != nil {
 		log.Printf("ERROR querying teams: %s", err)
 		return teams.NewGetTeamsDefault(500)
 	}
-	if d.RecordNotFound() {
-		return teams.NewGetTeamsOK()
+	defer rows.Close()
+	for rows.Next() {
+		t := storage.Team{}
+		storage.DB.ScanRows(rows, &t)
+		sts = append(sts, &t)
 	}
+	if len(sts) == 0 {
+		return teams.NewGetTeamsNotFound()
+	}
+
 	rts := make([]*models.Team, len(sts))
 	for i := range sts {
 		t := models.Team{

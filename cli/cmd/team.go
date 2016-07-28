@@ -14,7 +14,11 @@
 
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+)
 
 // create a team
 var teamCmd = &cobra.Command{
@@ -51,6 +55,30 @@ var deleteTeamCmd = &cobra.Command{
 	},
 }
 
+var getTeamsCmd = &cobra.Command{
+	Use:   "teams",
+	Short: "Get teams",
+	// Long:  `Delete a team`,
+	Run: func(cmd *cobra.Command, args []string) {
+		teams, err := NewTeresa().GetTeams()
+		if err != nil {
+			log.Fatalf("Failed to retrieve teams: %s", err)
+		}
+
+		fmt.Println("\nTeams:")
+		for _, t := range teams {
+			fmt.Printf("- %s\n", *t.Name)
+			if t.Email != "" {
+				fmt.Printf("  e-mail: %s\n", t.Email)
+			}
+			if t.URL != "" {
+				fmt.Printf("  url: %s\n", t.URL)
+			}
+		}
+		fmt.Println("")
+	},
+}
+
 func init() {
 	createCmd.AddCommand(teamCmd)
 	teamCmd.Flags().StringVarP(&teamNameFlag, "name", "n", "", "team name [required]")
@@ -59,4 +87,6 @@ func init() {
 
 	deleteCmd.AddCommand(deleteTeamCmd)
 	deleteTeamCmd.Flags().Int64Var(&teamIDFlag, "id", 0, "team ID [required]")
+
+	getCmd.AddCommand(getTeamsCmd)
 }

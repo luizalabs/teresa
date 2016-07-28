@@ -213,6 +213,16 @@ func (tc TeresaClient) GetTeamID(teamName string) (teamID int64) {
 	return
 }
 
+// GetTeams returns a list with my teams
+func (tc TeresaClient) GetTeams() (teamsList []*models.Team, err error) {
+	params := teams.NewGetTeamsParams()
+	r, err := tc.teresa.Teams.GetTeams(params, tc.apiKeyAuthFunc)
+	if err != nil {
+		return nil, err
+	}
+	return r.Payload.Items, nil
+}
+
 // CreateDeploy creates a new deploy
 func (tc TeresaClient) CreateDeploy(teamID, appID int64, description string, tarBall *os.File) (deploy *models.Deployment, err error) {
 	p := deployments.NewCreateDeploymentParams()

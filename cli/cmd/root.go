@@ -43,12 +43,13 @@ const (
 var RootCmd = &cobra.Command{
 	Use:   "cli",
 	Short: "Teresa cli",
-	Long: `Teresa cli. You can manage teams, users and applications with it.
+	Long: `Teresa cli. You can manage teams, users and create and deploy applications with
+it.
 
 Teresa CLI works by sending HTTP requests to Kubernetes clusters that have a
 Teresa API server running. You can have multiple clusters configured on your
 local box, one for each cloud provider or one for each environment or a mix
-of those - whatever you want.
+of those.
 
 Teresa doesn't start using any cluster by it's own: you have to tell her which
 one to use.
@@ -147,8 +148,15 @@ func initConfig() {
 // Fatalf Prints formatted output, prepends the cli usage and exits
 func Fatalf(cmd *cobra.Command, format string, a ...interface{}) {
 	s := fmt.Sprintf(format, a...)
-	s = fmt.Sprintf("%s\n\n%s", s, cmd.UsageString())
+	s = fmt.Sprintf("%s\n%s\n\n%s", s, cmd.Long, cmd.UsageString())
 	log.Fatalf(s)
+}
+
+// Usagef Prints formatted output and prepends the cli usage
+func Usagef(cmd *cobra.Command, format string, a ...interface{}) {
+	s := fmt.Sprintf(format, a...)
+	s = fmt.Sprintf("%s\n%s\n\n%s", s, cmd.Long, cmd.UsageString())
+	fmt.Printf(s)
 }
 
 type cmdError struct {

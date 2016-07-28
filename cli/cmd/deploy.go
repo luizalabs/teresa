@@ -5,32 +5,54 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/jhoonb/archivex"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 )
 
-var createDeployCmd = &cobra.Command{
+var deployCmd = &cobra.Command{
 	Use:   "deploy APP_FOLDER",
-	Short: "deploy an app",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Short: "Deploy an app",
+	Long: `Deploy an application.
+
+To deploy an app you have to pass it's name, the team the app
+belongs and the path to the source code. You might want to
+describe your deployments through --description, as that'll
+eventually help on rollbacks.
+
+eg.:
+
+  $ teresa deploy --app webapi --team site --description "release 1.2 with new checkout"
+	`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if appNameFlag == "" && len(args) == 0 {
+			Usagef(cmd, "")
+			return
+		}
 		if appNameFlag == "" {
-			log.Debug("App name not provided")
-			return newInputError("App not provided")
+			Fatalf(cmd, "app name required")
 		}
 		if len(args) == 0 || (len(args) > 0 && args[0] == "") {
-			log.Debug("App folder not provided")
-			return newInputError("App folder not provided")
+			Fatalf(cmd, "app folder required")
 		}
-		return createDeploy(appNameFlag, teamNameFlag, descriptionFlag, args[0])
+		createDeploy(appNameFlag, teamNameFlag, descriptionFlag, args[0])
 	},
 }
 
 func createDeploy(appName, teamName, description, appFolder string) error {
+	clusterName, err := getCurrentClusterName()
+	if err != nil {
+		log.Fatalf("You have to select a cluster first, check the config help: teresa config")
+	}
+
 	tc := NewTeresa()
+	log.Infof("Getting app info from cluster %s", clusterName)
 	a := tc.GetAppInfo(teamName, appName)
 	// create and get the archive
+	log.Infof("Generating tarball of %s", appFolder)
 	tar, err := createTempArchiveToUpload(appName, teamName, appFolder)
 	if err != nil {
 		log.Fatalf("error creating the archive. %s", err)
@@ -40,11 +62,16 @@ func createDeploy(appName, teamName, description, appFolder string) error {
 		log.Fatalf("error getting the archive to upload. %s", err)
 	}
 	defer file.Close()
+
+	log.Infof("Deploying application to cluster %s", clusterName)
+	s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
+	s.Start()
 	_, err = tc.CreateDeploy(a.TeamID, a.AppID, description, file)
+	s.Stop()
 	if err != nil {
 		log.Fatalf("error creating the deploy. %s", err)
 	}
-	log.Infoln("Deploy created with success")
+	log.Infoln("Done")
 	return nil
 }
 
@@ -81,9 +108,9 @@ func createArchive(source string, target string) error {
 }
 
 func init() {
-	createDeployCmd.Flags().StringVarP(&appNameFlag, "app", "a", "", "app name [required]")
-	createDeployCmd.Flags().StringVarP(&teamNameFlag, "team", "t", "", "team name")
-	createDeployCmd.Flags().StringVarP(&descriptionFlag, "description", "d", "", "deploy description")
+	deployCmd.Flags().StringVarP(&appNameFlag, "app", "a", "", "app name [required]")
+	deployCmd.Flags().StringVarP(&teamNameFlag, "team", "t", "", "team name")
+	deployCmd.Flags().StringVarP(&descriptionFlag, "description", "d", "", "deploy description")
 
-	createCmd.AddCommand(createDeployCmd)
+	RootCmd.AddCommand(deployCmd)
 }

@@ -64,8 +64,14 @@ Like in the example bellow, let's run in 4 pods:
 
 var getAppCmd = &cobra.Command{
 	Use:   "app",
-	Short: "Get an app",
-	Long:  `Get an app`,
+	Short: "Get app info",
+	Long: `Return informations about the app.
+
+The application name is always required, but team name is only required if you are part of more than one.
+Example:
+
+	$ teresa get app --app my_app_name --team my_team
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if appNameFlag == "" {
 			log.Debug("App name not provided")
@@ -78,8 +84,17 @@ var getAppCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		o := fmt.Sprintf("App: %s\n", *app.Name)
 		o = o + fmt.Sprintf("Scale: %d\n", *app.Scale)
+		// env vars
+		if len(app.EnvVars) > 0 {
+			o = o + "Env Vars:\n"
+			for _, x := range app.EnvVars {
+				o = o + fmt.Sprintf("  %s: %s\n", *x.Key, *x.Value)
+			}
+		}
+		// address
 		if len(app.AddressList) > 0 {
 			o = o + "Address:\n"
 			for _, x := range app.AddressList {

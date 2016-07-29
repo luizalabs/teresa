@@ -11,9 +11,16 @@ import (
 var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Login in the currently selected cluster",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Long: `Login in the selected cluster.
+
+eg.:
+
+	$ teresa login --user user@mydomain.com
+	`,
+	Run: func(cmd *cobra.Command, args []string) {
 		if userNameFlag == "" {
-			return newInputError("User must be provided")
+			Usage(cmd)
+			return
 		}
 		fmt.Printf("Password: ")
 		p, err := gopass.GetPasswdMasked()
@@ -21,7 +28,7 @@ var loginCmd = &cobra.Command{
 			if err != gopass.ErrInterrupted {
 				log.WithError(err).Error("Error trying to get the user password")
 			}
-			return nil
+			return
 		}
 
 		tc := NewTeresa()
@@ -34,7 +41,6 @@ var loginCmd = &cobra.Command{
 		if err := SetAuthToken(token); err != nil {
 			log.Fatalf("Failed to update the auth token: %s\n", err)
 		}
-		return nil
 	},
 }
 

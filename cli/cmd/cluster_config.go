@@ -10,30 +10,43 @@ import (
 var setClusterCmd = &cobra.Command{
 	Use:   "set-cluster name",
 	Short: "sets a cluster entry in the config file",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Long: `Add or update a cluster entry.
+
+eg.:
+
+	$ teresa config set-cluster aws_staging --server https://staging.mydomain.com
+	`,
+	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			log.Debug("Cluster name not provided")
-			return newInputError("Cluster name must be provided")
+			Usage(cmd)
+			return
 		}
 		name := args[0]
 		if serverFlag == "" {
-			log.Debug("Server not provided")
-			return newInputError("Server not provided")
+			Fatalf(cmd, "Server not provided")
 		}
-		return setCluster(name, serverFlag, currentFlag, cfgFile)
+		if err := setCluster(name, serverFlag, currentFlag, cfgFile); err != nil {
+			Fatalf(cmd, "%s", err)
+		}
 	},
 }
 
 var useClusterCmd = &cobra.Command{
 	Use:   "use-cluster name",
 	Short: "sets a cluster as the current in the config file",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Long: `Set a cluster as in-use, so every action will be sent to it.
+
+eg.:
+
+	$ teresa config use-cluster aws_staging
+	`,
+	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			log.Debug("Cluster name not provided")
-			return newInputError("Cluster name must be provided")
+			Usage(cmd)
+			return
 		}
 		name := args[0]
-		return setCurrentCluster(name, cfgFile)
+		setCurrentCluster(name, cfgFile)
 	},
 }
 
@@ -45,7 +58,7 @@ func setCluster(name string, server string, current bool, f string) error {
 
 	// try and parse the server url upfront
 	if _, err := ParseServerURL(server); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	c, err := readOrCreateConfigFile(f)

@@ -26,10 +26,12 @@ import (
 var createAppCmd = &cobra.Command{
 	Use:   "app [app_name]",
 	Short: "Create an app",
-	Long: `Create a new application for the team.
+	Long: `Create a new application.
 
-The application name is always required, but team name is only required if you are part of more than one.
-Example:
+The application name is always required, but team name is only required if you
+are part of more than one team.
+
+eg.:
 
 	$ teresa create app my_app_name
 
@@ -37,17 +39,18 @@ or
 
 	$ teresa create app my_app_name --team my_team
 
-You can also provide in how many pods you want your app running.
-Like in the example bellow, let's run in 4 pods:
+You can optionally specify the number of containers/pods you want your app
+to run with the --scale (defaults to 1) option:
 
 	$ teresa create app my_app_name --team my_team --scale 4
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			return newInputError("app name is required")
+			Usage(cmd)
+			return
 		}
 		if appScaleFlag == 0 {
-			return newInputError("at least one replica is required")
+			Fatalf(cmd, "at least one replica is required")
 		}
 
 		tc := NewTeresa()
@@ -57,8 +60,6 @@ Like in the example bellow, let's run in 4 pods:
 			log.Fatal(err)
 		}
 		log.Infof("App created. Name: %s Replicas: %d", *app.Name, *app.Scale)
-
-		return nil
 	},
 }
 
@@ -67,15 +68,17 @@ var getAppCmd = &cobra.Command{
 	Short: "Get app info",
 	Long: `Return informations about the app.
 
-The application name is always required, but team name is only required if you are part of more than one.
-Example:
+The application name is always required, but team name is only required if you
+are part of more than one team.
+
+eg.:
 
 	$ teresa get app --app my_app_name --team my_team
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		if appNameFlag == "" {
-			log.Debug("App name not provided")
-			return newInputError("App not provided")
+			Usage(cmd)
+			return
 		}
 		tc := NewTeresa()
 		a := tc.GetAppInfo(teamNameFlag, appNameFlag)
@@ -103,7 +106,6 @@ Example:
 		}
 		o = o + "\n"
 		fmt.Printf(o)
-		return nil
 	},
 }
 
@@ -129,22 +131,17 @@ You can also provide more than one env var at a time.
 The application name is always required.
 The team name is only required if you are part of more than one.
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if appNameFlag == "" {
-			log.Debug("App name not provided")
-			return newInputError("App not provided")
-		}
-		// checking for env vars
-		if len(args) == 0 {
-			log.Debug("Env vars not provided")
-			return newInputError("Env vars not provided")
+	Run: func(cmd *cobra.Command, args []string) {
+		if appNameFlag == "" || len(args) == 0 {
+			Usage(cmd)
+			return
 		}
 		// parse args to env vars
 		evars := make([]*models.PatchAppEnvVar, len(args))
 		for i, s := range args {
 			x := strings.SplitN(s, "=", 2)
 			if len(x) != 2 {
-				return newInputError("Env vars must be in the format FOO=bar")
+				Fatalf(cmd, "Env vars must be in the format FOO=bar")
 			}
 			e := models.PatchAppEnvVar{
 				Key:   &x[0],
@@ -172,7 +169,7 @@ The team name is only required if you are part of more than one.
 			log.Fatal(err)
 		}
 		log.Info("App env vars updated successfully")
-		return nil
+		return
 	},
 }
 
@@ -198,15 +195,10 @@ You can also provide more than one env var at a time.
 The application name is always required.
 The team name is only required if you are part of more than one.
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if appNameFlag == "" {
-			log.Debug("App name not provided")
-			return newInputError("App not provided")
-		}
-		// checking for env vars
-		if len(args) == 0 {
-			log.Debug("Env vars not provided")
-			return newInputError("Env vars not provided")
+	Run: func(cmd *cobra.Command, args []string) {
+		if appNameFlag == "" || len(args) == 0 {
+			Usage(cmd)
+			return
 		}
 		// parse args to env vars
 		evars := make([]*models.PatchAppEnvVar, len(args))
@@ -236,7 +228,6 @@ The team name is only required if you are part of more than one.
 			log.Fatal(err)
 		}
 		log.Info("App env var(s) removed successfully")
-		return nil
 	},
 }
 

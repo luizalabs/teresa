@@ -41,7 +41,7 @@ const (
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "cli",
+	Use:   "teresa",
 	Short: "Teresa cli",
 	Long: `Teresa cli. You can manage teams, users and create and deploy applications with
 it.
@@ -126,7 +126,7 @@ func initConfig() {
 		cfgFileProvided = true
 		cfgFile = filepath.Clean(cfgFile)
 	} else {
-		cfgFile = filepath.Join(getUserHomeDir(), ".paas_labs", "config.yaml")
+		cfgFile = filepath.Join(getUserHomeDir(), ".teresa", "config.yaml")
 	}
 	viper.SetConfigFile(cfgFile)
 	// defaults
@@ -152,11 +152,9 @@ func Fatalf(cmd *cobra.Command, format string, a ...interface{}) {
 	log.Fatalf(s)
 }
 
-// Usagef Prints formatted output and prepends the cli usage
-func Usagef(cmd *cobra.Command, format string, a ...interface{}) {
-	s := fmt.Sprintf(format, a...)
-	s = fmt.Sprintf("%s\n%s\n\n%s", s, cmd.Long, cmd.UsageString())
-	fmt.Printf(s)
+// Usage Prints the cmd Long description and the usage string
+func Usage(cmd *cobra.Command) {
+	fmt.Printf("%s\n%s", cmd.Long, cmd.UsageString())
 }
 
 type cmdError struct {

@@ -25,11 +25,11 @@ eventually help on rollbacks.
 
 eg.:
 
-  $ teresa deploy --app webapi --team site --description "release 1.2 with new checkout"
+  $ teresa deploy . --app webapi --team site --description "release 1.2 with new checkout"
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if appNameFlag == "" && len(args) == 0 {
-			Usagef(cmd, "")
+			Usage(cmd)
 			return
 		}
 		if appNameFlag == "" {

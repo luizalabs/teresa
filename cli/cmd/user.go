@@ -20,16 +20,16 @@ import "github.com/spf13/cobra"
 var userCmd = &cobra.Command{
 	Use:   "user",
 	Short: "Create a user",
-	Long:  `Create a user`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if userNameFlag == "" {
-			return newInputError("user name is required")
-		}
-		if userEmailFlag == "" {
-			return newInputError("user email is required")
-		}
-		if userPasswordFlag == "" {
-			return newInputError("user password is required")
+	Long: `Create a user.
+
+Note that the user's password must be at least 8 characters long. eg.:
+
+	$ teresa create user --email user@mydomain.com --name john --password foobarfoo
+	`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if userNameFlag == "" || userEmailFlag == "" || userPasswordFlag == "" {
+			Usage(cmd)
+			return
 		}
 		tc := NewTeresa()
 		user, err := tc.CreateUser(userNameFlag, userEmailFlag, userPasswordFlag)
@@ -37,7 +37,6 @@ var userCmd = &cobra.Command{
 			log.Fatalf("Failed to create user: %s", err)
 		}
 		log.Infof("User created. Name: %s Email: %s\n", *user.Name, *user.Email)
-		return err
 	},
 }
 
@@ -45,10 +44,12 @@ var userCmd = &cobra.Command{
 var deleteUserCmd = &cobra.Command{
 	Use:   "user",
 	Short: "Delete an user",
-	Long:  `Delete an user`,
+	Long: `Delete an user.
+	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if userIDFlag == 0 {
-			Fatalf(cmd, "user name is required")
+			Usage(cmd)
+			return
 		}
 		if err := NewTeresa().DeleteUser(userIDFlag); err != nil {
 			Fatalf(cmd, "Failed to delete user, err: %s\n", err)

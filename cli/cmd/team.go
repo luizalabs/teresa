@@ -24,10 +24,16 @@ import (
 var teamCmd = &cobra.Command{
 	Use:   "team",
 	Short: "Create a team",
-	Long:  `Create a team that is able to have many applications.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Long: `Create a team that can have many applications.
+
+eg.:
+
+	$ teresa create team --email sitedev@mydomain.com --name site --url sitedev.mydomain.com
+	`,
+	Run: func(cmd *cobra.Command, args []string) {
 		if teamNameFlag == "" {
-			return newInputError("team name is required")
+			Usage(cmd)
+			return
 		}
 		tc := NewTeresa()
 		team, err := tc.CreateTeam(teamNameFlag, teamEmailFlag, teamURLFlag)
@@ -35,7 +41,6 @@ var teamCmd = &cobra.Command{
 			log.Fatalf("Failed to create team: %s", err)
 		}
 		log.Infof("Team created. Name: %s Email: %s URL: %s\n", *team.Name, team.Email, team.URL)
-		return err
 	},
 }
 

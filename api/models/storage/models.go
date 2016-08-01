@@ -1,23 +1,29 @@
 package storage
 
 import (
+	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite" // blank import sqlite
+	_ "github.com/jinzhu/gorm/dialects/mysql"  // mysql used in production
+	_ "github.com/jinzhu/gorm/dialects/sqlite" // used in dev or test
+	"github.com/kelseyhightower/envconfig"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // DB object to access connection poll
 var DB *gorm.DB
 
+// BaseModel declares base fields that are to be used on all models
 type BaseModel struct {
 	ID        uint      `gorm:"primary_key;"`
 	CreatedAt time.Time `gorm:"not null;"`
 	UpdatedAt time.Time `gorm:"not null;"`
 }
 
+// Team represents a team of developers
 type Team struct {
 	BaseModel
 	Name  string        `gorm:"size:128;not null;unique_index;"`
@@ -27,6 +33,7 @@ type Team struct {
 	Apps  []Application `gorm:"ForeignKey:TeamID"`
 }
 
+// User represents a developer
 type User struct {
 	BaseModel
 	Name     string `gorm:"size:128;not null;unique_index;"`
@@ -35,7 +42,7 @@ type User struct {
 	Teams    []Team `gorm:"many2many:teams_users;"`
 }
 
-// Application ...
+// Application represents an application
 type Application struct {
 	BaseModel
 	Name        string       `gorm:"size(128);not null;unique_index:idx_application_team_unique_key;"`
@@ -47,7 +54,7 @@ type Application struct {
 	TeamID      uint `gorm:"unique_index:idx_application_team_unique_key;"`
 }
 
-// EnvVar ...
+// EnvVar represents an application environment variable
 type EnvVar struct {
 	BaseModel
 	Key   string `gorm:"size(64);unique_index:idx_envvar_unique_key"`
@@ -55,21 +62,12 @@ type EnvVar struct {
 	AppID uint   `gorm:"unique_index:idx_envvar_unique_key;"`
 }
 
-// AppAddress ...
+// AppAddress represents an application fqdn
 type AppAddress struct {
 	BaseModel
 	Address string `orm:"unique;size(1024)"`
 	AppID   uint
 }
-
-type deploymentOrigin string
-
-// DeploymentOrigin const
-// const (
-// 	CliAppDeploy deploymentOrigin = "cli_app_deploy"
-// 	GIT          deploymentOrigin = "git"
-// 	CI           deploymentOrigin = "ci"
-// )
 
 // Deployment ...
 type Deployment struct {
@@ -81,7 +79,7 @@ type Deployment struct {
 	AppID uint
 }
 
-// Authenticate ...
+// Authenticate check if the user's password matches via bcrypt
 func (u *User) Authenticate(p *string) (err error) {
 	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(*p))
 	if err == nil {
@@ -92,18 +90,46 @@ func (u *User) Authenticate(p *string) (err error) {
 	return err
 }
 
+// DatabaseConfig holds the database configuration variables
+type DatabaseConfig struct {
+	Hostname string
+	Port     int
+	Username string
+	Password string
+	Database string
+}
+
 func init() {
 	var err error
-	DB, err = gorm.Open("sqlite3", "teresa.sqlite") // FIXME: make it configurable and per-env
-	if err != nil {
-		panic("failed to connect database")
+	var conf DatabaseConfig
+	var dialect, uri string
+
+	// on production, we read the database configuration only from envvars
+	env := os.Getenv("TERESA_ENVIRONMENT")
+
+	err = envconfig.Process("teresadb", &conf)
+	if env == "PRODUCTION" && err != nil {
+		log.Fatalf("Failed to read configuration from environment: %s", err.Error())
 	}
-	// DB.DB().SetMaxIdleConns(10)
-	// DB.DB().SetMaxOpenConns(50)
+
+	// we got to read the conf from env
+	if env == "PRODUCTION" || err == nil {
+		dialect = "mysql"
+		uri = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", conf.Username, conf.Password, conf.Hostname, conf.Port, conf.Database)
+	} else {
+		dialect = "sqlite3"
+		uri = "teresa.sqlite"
+	}
+	log.Printf("Using %s to connect to %s", dialect, uri)
+
+	DB, err = gorm.Open(dialect, uri)
+	if err != nil {
+		log.Fatalf("failed to connect database: %s", err.Error())
+	}
+
 	// Print log.
 	DB.LogMode(true)
 
 	// only create, never change
 	DB.AutoMigrate(&Team{}, &User{}, &Application{}, &EnvVar{}, &AppAddress{}, &Deployment{})
-
 }

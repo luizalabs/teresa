@@ -16,9 +16,12 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/luizalabs/paas/api/models"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -66,46 +69,66 @@ to run with the --scale (defaults to 1) option:
 var getAppCmd = &cobra.Command{
 	Use:   "app",
 	Short: "Get app info",
-	Long: `Return informations about the app.
+	Long: `Return informations about the app(s).
 
-The application name is always required, but team name is only required if you
-are part of more than one team.
+Return a list of apps if no name is provided
+
+If the name is provided, all informations about the app will be returned.
+Team name is only required if you are part of more than one team.
 
 eg.:
 
 	$ teresa get app --app my_app_name --team my_team
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		if appNameFlag == "" {
-			Usage(cmd)
-			return
-		}
 		tc := NewTeresa()
-		a := tc.GetAppInfo(teamNameFlag, appNameFlag)
 
-		app, err := tc.GetAppDetail(a.TeamID, a.AppID)
-		if err != nil {
-			log.Fatal(err)
-		}
+		if appNameFlag != "" {
+			a := tc.GetAppInfo(teamNameFlag, appNameFlag)
 
-		o := fmt.Sprintf("\nApp: %s\n", *app.Name)
-		o = o + fmt.Sprintf("Scale: %d\n", *app.Scale)
-		// env vars
-		if len(app.EnvVars) > 0 {
-			o = o + "\nEnv Vars:\n"
-			for _, x := range app.EnvVars {
-				o = o + fmt.Sprintf("  %s: %s\n", *x.Key, *x.Value)
+			app, err := tc.GetAppDetail(a.TeamID, a.AppID)
+			if err != nil {
+				log.Fatal(err)
 			}
-		}
-		// address
-		if len(app.AddressList) > 0 {
-			o = o + "\nAddress:\n"
-			for _, x := range app.AddressList {
-				o = o + fmt.Sprintf("  %s\n", x)
+
+			fmt.Printf("\nApp: %s\n", *app.Name)
+			fmt.Printf("Scale: %d\n", *app.Scale)
+			// env vars
+			if len(app.EnvVars) > 0 {
+				fmt.Print("\nEnv Vars:\n")
+				for _, x := range app.EnvVars {
+					fmt.Printf("  %s: %s\n", *x.Key, *x.Value)
+				}
 			}
+			// address
+			if len(app.AddressList) > 0 {
+				fmt.Print("\nAddress:\n")
+				for _, x := range app.AddressList {
+					fmt.Printf("  %s\n", x)
+				}
+			}
+			fmt.Println()
+
+		} else {
+			teamID := tc.GetTeamID(teamNameFlag)
+			apps, err := tc.GetApps(teamID)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			table := tablewriter.NewWriter(os.Stdout)
+			table.SetHeader([]string{"APP", "SCALE", "ADDRESS"})
+			table.SetRowLine(true)
+			table.SetAlignment(tablewriter.ALIGN_LEFT)
+			table.SetRowSeparator("-")
+			table.SetAutoWrapText(false)
+
+			for _, a := range apps {
+				r := []string{*a.Name, strconv.Itoa(int(*a.Scale)), strings.Join(a.AddressList, "\n")}
+				table.Append(r)
+			}
+			table.Render()
 		}
-		o = o + "\n"
-		fmt.Printf(o)
 	},
 }
 
@@ -237,7 +260,7 @@ func init() {
 	createAppCmd.Flags().IntVar(&appScaleFlag, "scale", 1, "replicas")
 
 	getCmd.AddCommand(getAppCmd)
-	getAppCmd.Flags().StringVar(&appNameFlag, "app", "", "app name [required]")
+	getAppCmd.Flags().StringVar(&appNameFlag, "app", "", "app name")
 	getAppCmd.Flags().StringVar(&teamNameFlag, "team", "", "team name")
 
 	setCmd.AddCommand(setEnvVarCmd)

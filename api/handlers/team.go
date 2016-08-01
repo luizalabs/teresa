@@ -13,6 +13,13 @@ import (
 
 // CreateTeamHandler ...
 func CreateTeamHandler(params teams.CreateTeamParams, principal interface{}) middleware.Responder {
+	tk := principal.(*Token)
+	// need to have admin permissions to do this action
+	if tk.IsAdmin == false {
+		log.Printf("User [%d: %s] doesn't have permission to create a team", tk.UserID, tk.Email)
+		return teams.NewCreateTeamUnauthorized()
+	}
+
 	t := models.Team{
 		Name:  params.Body.Name,
 		Email: params.Body.Email,
@@ -92,11 +99,18 @@ func GetTeamsHandler(params teams.GetTeamsParams, principal interface{}) middlew
 
 // UpdateTeamHandler ...
 func UpdateTeamHandler(params teams.UpdateTeamParams, principal interface{}) middleware.Responder {
+	tk := principal.(*Token)
+	// need to have admin permissions to do this action
+	if tk.IsAdmin == false {
+		log.Printf("User [%d: %s] doesn't have permission to update a team", tk.UserID, tk.Email)
+		return teams.NewUpdateTeamDefault(401)
+	}
+
 	st := storage.Team{}
 	st.ID = uint(params.TeamID)
 
 	if d := storage.DB.First(&st); d.Error != nil || d.RecordNotFound() {
-		return teams.NewGetTeamsDefault(500)
+		return teams.NewUpdateTeamDefault(500)
 	}
 	if params.Body.Name != nil {
 		st.Name = *params.Body.Name
@@ -107,9 +121,10 @@ func UpdateTeamHandler(params teams.UpdateTeamParams, principal interface{}) mid
 
 	if err := storage.DB.Save(&st).Error; err != nil {
 		log.Printf("ERROR updating team, err: %s", err)
-		return teams.NewGetTeamsDefault(500)
+		return teams.NewUpdateTeamDefault(500)
 	}
-	r := teams.NewGetTeamDetailOK()
+
+	r := teams.NewUpdateTeamOK()
 	t := models.Team{
 		ID:    int64(st.ID),
 		Name:  &st.Name,
@@ -122,11 +137,18 @@ func UpdateTeamHandler(params teams.UpdateTeamParams, principal interface{}) mid
 
 // DeleteTeamHandler ...
 func DeleteTeamHandler(params teams.DeleteTeamParams, principal interface{}) middleware.Responder {
+	tk := principal.(*Token)
+	// need to have admin permissions to do this action
+	if tk.IsAdmin == false {
+		log.Printf("User [%d: %s] doesn't have permission to delete a team", tk.UserID, tk.Email)
+		return teams.NewDeleteTeamDefault(401)
+	}
+
 	st := storage.Team{}
 	st.ID = uint(params.TeamID)
 
 	if storage.DB.Delete(&st).Error != nil {
-		return teams.NewGetTeamsDefault(500)
+		return teams.NewDeleteTeamDefault(500)
 	}
 
 	return teams.NewDeleteTeamNoContent()

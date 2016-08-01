@@ -28,6 +28,12 @@ type User struct {
 	 */
 	ID int64 `json:"id,omitempty"`
 
+	/* is admin
+
+	Required: true
+	*/
+	IsAdmin *bool `json:"isAdmin"`
+
 	/* name
 
 	Required: true
@@ -52,6 +58,11 @@ func (m *User) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateEmail(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateIsAdmin(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -84,6 +95,15 @@ func (m *User) validateEmail(formats strfmt.Registry) error {
 	}
 
 	if err := validate.MinLength("email", "body", string(*m.Email), 8); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *User) validateIsAdmin(formats strfmt.Registry) error {
+
+	if err := validate.Required("isAdmin", "body", m.IsAdmin); err != nil {
 		return err
 	}
 

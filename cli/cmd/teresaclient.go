@@ -128,6 +128,7 @@ func (tc TeresaClient) CreateApp(name string, scale int64, teamID int64) (app *m
 	return r.Payload, nil
 }
 
+// GetApps return apps for a specific team
 func (tc TeresaClient) GetApps(teamID int64) (app []*models.App, err error) {
 	params := apps.NewGetAppsParams().WithTeamID(teamID)
 	r, err := tc.teresa.Apps.GetApps(params, tc.apiKeyAuthFunc)
@@ -148,9 +149,9 @@ func (tc TeresaClient) GetAppDetail(teamID, appID int64) (app *models.App, err e
 }
 
 // CreateUser Create an user
-func (tc TeresaClient) CreateUser(name, email, password string) (user *models.User, err error) {
+func (tc TeresaClient) CreateUser(name, email, password string, isAdmin bool) (user *models.User, err error) {
 	params := users.NewCreateUserParams()
-	params.WithBody(&models.User{Email: &email, Name: &name, Password: &password})
+	params.WithBody(&models.User{Email: &email, Name: &name, Password: &password, IsAdmin: &isAdmin})
 
 	r, err := tc.teresa.Users.CreateUser(params, tc.apiKeyAuthFunc)
 	if err != nil {

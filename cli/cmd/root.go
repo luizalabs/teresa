@@ -32,6 +32,7 @@ var (
 	appScaleFlag       int
 	descriptionFlag    string
 	autocompleteTarget string
+	isAdminFlag        bool
 )
 
 const (

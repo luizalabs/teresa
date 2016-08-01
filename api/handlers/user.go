@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
@@ -13,6 +14,12 @@ import (
 
 // CreateUserHandler ...
 func CreateUserHandler(params users.CreateUserParams, principal interface{}) middleware.Responder {
+	tk := principal.(*Token)
+	// need to have admin permissions to do this action
+	if tk.IsAdmin == false {
+		log.Printf("User [%d: %s] doesn't have permission to create a user", tk.UserID, tk.Email)
+		return users.NewCreateUserUnauthorized()
+	}
 
 	h, err := bcrypt.GenerateFromPassword([]byte(*params.Body.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -23,11 +30,13 @@ func CreateUserHandler(params users.CreateUserParams, principal interface{}) mid
 		Name:     params.Body.Name,
 		Email:    params.Body.Email,
 		Password: &hashedPassword,
+		IsAdmin:  params.Body.IsAdmin,
 	}
 	su := storage.User{
 		Name:     *u.Name,
 		Email:    *u.Email,
 		Password: *u.Password,
+		IsAdmin:  *u.IsAdmin,
 	}
 	err = storage.DB.Create(&su).Error
 	if err != nil {
@@ -108,6 +117,13 @@ func GetCurrentUserHandler(principal interface{}) middleware.Responder {
 
 // DeleteUserHandler ...
 func DeleteUserHandler(params users.DeleteUserParams, principal interface{}) middleware.Responder {
+	tk := principal.(*Token)
+	// need to have admin permissions to do this action
+	if tk.IsAdmin == false {
+		log.Printf("User [%d: %s] doesn't have permission to delete a user", tk.UserID, tk.Email)
+		return users.NewDeleteUserDefault(401)
+	}
+
 	su := storage.User{}
 	su.ID = uint(params.UserID)
 	if storage.DB.Delete(&su).Error != nil {

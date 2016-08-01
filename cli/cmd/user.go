@@ -32,7 +32,7 @@ Note that the user's password must be at least 8 characters long. eg.:
 			return
 		}
 		tc := NewTeresa()
-		user, err := tc.CreateUser(userNameFlag, userEmailFlag, userPasswordFlag)
+		user, err := tc.CreateUser(userNameFlag, userEmailFlag, userPasswordFlag, isAdminFlag)
 		if err != nil {
 			log.Fatalf("Failed to create user: %s", err)
 		}
@@ -63,6 +63,7 @@ func init() {
 	userCmd.Flags().StringVar(&userNameFlag, "name", "", "user name [required]")
 	userCmd.Flags().StringVar(&userEmailFlag, "email", "", "user email [required]")
 	userCmd.Flags().StringVar(&userPasswordFlag, "password", "", "user password [required]")
+	userCmd.Flags().BoolVar(&isAdminFlag, "admin", false, "admin")
 
 	deleteCmd.AddCommand(deleteUserCmd)
 	deleteUserCmd.Flags().Int64Var(&userIDFlag, "id", 0, "user ID [required]")

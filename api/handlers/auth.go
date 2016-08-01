@@ -58,11 +58,17 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	if err != nil {
 		return auth.NewUserLoginUnauthorized()
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+
+	jwtClaims := jwt.MapClaims{
 		"userId": su.ID,
 		"email":  su.Email,
 		"exp":    time.Now().Add(time.Hour * 24 * 14).Unix(),
-	})
+	}
+	if su.IsAdmin {
+		jwtClaims["isAdmin"] = true
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwtClaims)
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString(signKey)
 	if err != nil {
@@ -77,8 +83,9 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 
 // Token foo bar
 type Token struct {
-	UserID uint   `json:"userId"`
-	Email  string `json:"email"`
+	UserID  uint   `json:"userId"`
+	Email   string `json:"email"`
+	IsAdmin bool   `json:"isAdmin"`
 	jwt.StandardClaims
 }
 

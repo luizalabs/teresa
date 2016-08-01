@@ -146,7 +146,7 @@ func GetAppDetailsHandler(params apps.GetAppDetailsParams, principal interface{}
 	return r
 }
 
-// GetAppsParams return apps for a team
+// GetAppsHandler return apps for a team
 func GetAppsHandler(params apps.GetAppsParams, principal interface{}) middleware.Responder {
 	tk := principal.(*Token)
 

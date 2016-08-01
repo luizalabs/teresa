@@ -39,6 +39,7 @@ type User struct {
 	Name     string `gorm:"size:128;not null;unique_index;"`
 	Email    string `gorm:"size:64;not null;unique_index;"`
 	Password string `gorm:"size:60;not null;"`
+	IsAdmin  bool   `gorm:"not null;"`
 	Teams    []Team `gorm:"many2many:teams_users;"`
 }
 

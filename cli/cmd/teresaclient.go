@@ -128,6 +128,15 @@ func (tc TeresaClient) CreateApp(name string, scale int64, teamID int64) (app *m
 	return r.Payload, nil
 }
 
+func (tc TeresaClient) GetApps(teamID int64) (app []*models.App, err error) {
+	params := apps.NewGetAppsParams().WithTeamID(teamID)
+	r, err := tc.teresa.Apps.GetApps(params, tc.apiKeyAuthFunc)
+	if err != nil {
+		return nil, err
+	}
+	return r.Payload.Items, nil
+}
+
 // GetAppDetail Create app attributes
 func (tc TeresaClient) GetAppDetail(teamID, appID int64) (app *models.App, err error) {
 	params := apps.NewGetAppDetailsParams().WithTeamID(teamID).WithAppID(appID)

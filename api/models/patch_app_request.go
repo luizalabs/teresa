@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 
 	strfmt "github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/validate"
@@ -109,21 +108,6 @@ func (m *PatchAppRequest) validateValue(formats strfmt.Registry) error {
 
 	if err := validate.Required("value", "body", m.Value); err != nil {
 		return err
-	}
-
-	for i := 0; i < len(m.Value); i++ {
-
-		if swag.IsZero(m.Value[i]) { // not required
-			continue
-		}
-
-		if m.Value[i] != nil {
-
-			if err := m.Value[i].Validate(formats); err != nil {
-				return err
-			}
-		}
-
 	}
 
 	return nil

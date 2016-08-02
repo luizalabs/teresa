@@ -8,13 +8,13 @@ import (
 	runtime "github.com/go-openapi/runtime"
 	middleware "github.com/go-openapi/runtime/middleware"
 
-	"github.com/luizalabs/paas/api/handlers"
-	"github.com/luizalabs/paas/api/restapi/operations"
-	"github.com/luizalabs/paas/api/restapi/operations/apps"
-	"github.com/luizalabs/paas/api/restapi/operations/auth"
-	"github.com/luizalabs/paas/api/restapi/operations/deployments"
-	"github.com/luizalabs/paas/api/restapi/operations/teams"
-	"github.com/luizalabs/paas/api/restapi/operations/users"
+	"github.com/luizalabs/teresa/api/handlers"
+	"github.com/luizalabs/teresa/api/restapi/operations"
+	"github.com/luizalabs/teresa/api/restapi/operations/apps"
+	"github.com/luizalabs/teresa/api/restapi/operations/auth"
+	"github.com/luizalabs/teresa/api/restapi/operations/deployments"
+	"github.com/luizalabs/teresa/api/restapi/operations/teams"
+	"github.com/luizalabs/teresa/api/restapi/operations/users"
 )
 
 // This file is safe to edit. Once it exists it will not be overwritten

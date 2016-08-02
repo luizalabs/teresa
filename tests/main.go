@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/luizalabs/paas/tests/k8s"
+	"github.com/luizalabs/teresa/tests/k8s"
 
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/client/restclient"

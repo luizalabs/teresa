@@ -7,7 +7,7 @@ The Teresa PaaS API
       http
     Host: localhost:8080
     BasePath: /v1
-    Version: 0.0.1
+    Version: 0.1.0
 
     Consumes:
     - application/json

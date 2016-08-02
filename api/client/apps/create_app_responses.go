@@ -11,7 +11,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/luizalabs/paas/api/models"
+	"github.com/luizalabs/teresa/api/models"
 )
 
 // CreateAppReader is a Reader for the CreateApp structure.

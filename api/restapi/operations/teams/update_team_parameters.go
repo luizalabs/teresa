@@ -14,7 +14,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/luizalabs/paas/api/models"
+	"github.com/luizalabs/teresa/api/models"
 )
 
 // NewUpdateTeamParams creates a new UpdateTeamParams object

@@ -16,11 +16,11 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.com/luizalabs/paas/api/restapi/operations/apps"
-	"github.com/luizalabs/paas/api/restapi/operations/auth"
-	"github.com/luizalabs/paas/api/restapi/operations/deployments"
-	"github.com/luizalabs/paas/api/restapi/operations/teams"
-	"github.com/luizalabs/paas/api/restapi/operations/users"
+	"github.com/luizalabs/teresa/api/restapi/operations/apps"
+	"github.com/luizalabs/teresa/api/restapi/operations/auth"
+	"github.com/luizalabs/teresa/api/restapi/operations/deployments"
+	"github.com/luizalabs/teresa/api/restapi/operations/teams"
+	"github.com/luizalabs/teresa/api/restapi/operations/users"
 )
 
 // NewTeresaAPI creates a new Teresa instance
@@ -110,9 +110,6 @@ type TeresaAPI struct {
 
 	// Custom command line argument groups with their descriptions
 	CommandLineOptionsGroups []swag.CommandLineOptionsGroup
-
-	// User defined logger function.
-	Logger func(string, ...interface{})
 }
 
 // SetDefaultProduces sets the default produces media type

@@ -9,11 +9,11 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/luizalabs/paas/api/client/apps"
-	"github.com/luizalabs/paas/api/client/auth"
-	"github.com/luizalabs/paas/api/client/deployments"
-	"github.com/luizalabs/paas/api/client/teams"
-	"github.com/luizalabs/paas/api/client/users"
+	"github.com/luizalabs/teresa/api/client/apps"
+	"github.com/luizalabs/teresa/api/client/auth"
+	"github.com/luizalabs/teresa/api/client/deployments"
+	"github.com/luizalabs/teresa/api/client/teams"
+	"github.com/luizalabs/teresa/api/client/users"
 )
 
 // Default teresa HTTP client.

@@ -89,21 +89,6 @@ func (m *App) validateDeploymentList(formats strfmt.Registry) error {
 		return nil
 	}
 
-	for i := 0; i < len(m.DeploymentList); i++ {
-
-		if swag.IsZero(m.DeploymentList[i]) { // not required
-			continue
-		}
-
-		if m.DeploymentList[i] != nil {
-
-			if err := m.DeploymentList[i].Validate(formats); err != nil {
-				return err
-			}
-		}
-
-	}
-
 	return nil
 }
 
@@ -111,21 +96,6 @@ func (m *App) validateEnvVars(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.EnvVars) { // not required
 		return nil
-	}
-
-	for i := 0; i < len(m.EnvVars); i++ {
-
-		if swag.IsZero(m.EnvVars[i]) { // not required
-			continue
-		}
-
-		if m.EnvVars[i] != nil {
-
-			if err := m.EnvVars[i].Validate(formats); err != nil {
-				return err
-			}
-		}
-
 	}
 
 	return nil

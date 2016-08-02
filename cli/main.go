@@ -1,6 +1,6 @@
 package main
 
-import "github.com/luizalabs/paas/cli/cmd"
+import "github.com/luizalabs/teresa/cli/cmd"
 
 func main() {
 	cmd.Execute()

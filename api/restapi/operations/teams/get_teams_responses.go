@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.com/luizalabs/paas/api/models"
+	"github.com/luizalabs/teresa/api/models"
 )
 
 /*GetTeamsOK Get teams

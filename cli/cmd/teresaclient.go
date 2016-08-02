@@ -11,13 +11,13 @@ import (
 	"github.com/go-openapi/runtime/client"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	apiclient "github.com/luizalabs/paas/api/client"
-	"github.com/luizalabs/paas/api/client/apps"
-	"github.com/luizalabs/paas/api/client/auth"
-	"github.com/luizalabs/paas/api/client/deployments"
-	"github.com/luizalabs/paas/api/client/teams"
-	"github.com/luizalabs/paas/api/client/users"
-	"github.com/luizalabs/paas/api/models"
+	apiclient "github.com/luizalabs/teresa/api/client"
+	"github.com/luizalabs/teresa/api/client/apps"
+	"github.com/luizalabs/teresa/api/client/auth"
+	"github.com/luizalabs/teresa/api/client/deployments"
+	"github.com/luizalabs/teresa/api/client/teams"
+	"github.com/luizalabs/teresa/api/client/users"
+	"github.com/luizalabs/teresa/api/models"
 )
 
 // TeresaClient foo bar

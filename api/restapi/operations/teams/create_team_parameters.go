@@ -11,7 +11,7 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
-	"github.com/luizalabs/paas/api/models"
+	"github.com/luizalabs/teresa/api/models"
 )
 
 // NewCreateTeamParams creates a new CreateTeamParams object

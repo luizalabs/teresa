@@ -116,7 +116,7 @@ func init() {
 	// we got to read the conf from env
 	if env == "PRODUCTION" || (err == nil && conf.Hostname != "") {
 		dialect = "mysql"
-		uri = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", conf.Username, conf.Password, conf.Hostname, conf.Port, conf.Database)
+		uri = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", conf.Username, conf.Password, conf.Hostname, conf.Port, conf.Database)
 	} else {
 		dialect = "sqlite3"
 		uri = "teresa.sqlite"

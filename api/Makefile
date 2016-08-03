@@ -2,10 +2,11 @@ SWAGGER_SPEC=swagger.yml
 TERESA_API_NAME=Teresa
 
 help:
-	@echo "Targets: api-server, api-client\n"
+	@echo "Targets: run-api-server, validate, gen-api-server, gen-api-client\n"
+	@echo "run-api-server: run the API server on localhost:8080"
 	@echo "validate: validate swagger file $(SWAGGER_SPEC) aginst swagger specification 2.0"
-	@echo "api-server: generate the API server code as described by $(SWAGGER_SPEC)"
-	@echo "api-client: generate the API client code as described by $(SWAGGER_SPEC)"
+	@echo "gen-api-server: generate the API server code as described by $(SWAGGER_SPEC)"
+	@echo "gen-api-client: generate the API client code as described by $(SWAGGER_SPEC)"
 	@echo
 
 all: help

@@ -299,13 +299,10 @@ func createServiceAndGetLBHostName(p *deployParams) (lb string, err error) {
 		if s, cErr = k8sClient.Services(p.namespace).Get(p.app); cErr != nil {
 			return false, cErr
 		}
-		if len(s.Status.LoadBalancer.Ingress) == 0 {
+		if len(s.Status.LoadBalancer.Ingress) == 0 || (len(s.Status.LoadBalancer.Ingress) != 0 && s.Status.LoadBalancer.Ingress[0].Hostname == "") {
 			return false, nil
 		}
-		if s.Status.LoadBalancer.Ingress[0].Hostname == "" {
-			lb = s.Status.LoadBalancer.Ingress[0].Hostname
-			return false, nil
-		}
+		lb = s.Status.LoadBalancer.Ingress[0].Hostname
 		return true, nil
 	})
 	if err != nil {

@@ -7,9 +7,9 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	apiclient "github.com/luizalabs/paas/api/client"
-	"github.com/luizalabs/paas/api/client/teams"
-	"github.com/luizalabs/paas/api/models"
+	apiclient "github.com/luizalabs/teresa/api/client"
+	"github.com/luizalabs/teresa/api/client/teams"
+	"github.com/luizalabs/teresa/api/models"
 )
 
 func AuthenticateRequest(req runtime.ClientRequest, reg strfmt.Registry) error {

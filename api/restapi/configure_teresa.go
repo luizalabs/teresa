@@ -73,7 +73,7 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.AppsGetAppsHandler = apps.GetAppsHandlerFunc(func(params apps.GetAppsParams, principal interface{}) middleware.Responder {
 		return handlers.GetAppsHandler(params, principal)
 	})
-	api.UsersGetCurrentUserHandler = users.GetCurrentUserHandlerFunc(func(params users.GetCurrentUserParams, principal interface{}) middleware.Responder {
+	api.UsersGetCurrentUserHandler = users.GetCurrentUserHandlerFunc(func(principal interface{}) middleware.Responder {
 		return handlers.GetCurrentUserHandler(principal)
 	})
 	api.DeploymentsGetDeploymentsHandler = deployments.GetDeploymentsHandlerFunc(func(params deployments.GetDeploymentsParams, principal interface{}) middleware.Responder {

@@ -5,9 +5,9 @@ import (
 
 	"github.com/go-openapi/runtime/middleware"
 	strfmt "github.com/go-openapi/strfmt"
-	"github.com/luizalabs/paas/api/models"
-	"github.com/luizalabs/paas/api/models/storage"
-	"github.com/luizalabs/paas/api/restapi/operations/apps"
+	"github.com/luizalabs/teresa/api/models"
+	"github.com/luizalabs/teresa/api/models/storage"
+	"github.com/luizalabs/teresa/api/restapi/operations/apps"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 )

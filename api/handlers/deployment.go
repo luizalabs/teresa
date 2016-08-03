@@ -14,10 +14,10 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
-	"github.com/luizalabs/paas/api/k8s"
-	"github.com/luizalabs/paas/api/models"
-	"github.com/luizalabs/paas/api/models/storage"
-	"github.com/luizalabs/paas/api/restapi/operations/deployments"
+	"github.com/luizalabs/teresa/api/k8s"
+	"github.com/luizalabs/teresa/api/models"
+	"github.com/luizalabs/teresa/api/models/storage"
+	"github.com/luizalabs/teresa/api/restapi/operations/deployments"
 	"github.com/pborman/uuid"
 	"k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/apis/extensions"
@@ -30,6 +30,7 @@ import (
 const (
 	awsAccessKeyID         = "AKIAIUARH63XWZUMCFWA"
 	awsSecretAccessKey     = "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"
+	awsRegion              = "us-east-1"
 	storageBucket          = "teresa-staging"
 	k8sHost                = "https://k8s-staging.a.luizalabs.com"
 	k8sUsername            = "admin"
@@ -49,7 +50,7 @@ func init() {
 	// storage
 	awsCredentials := credentials.NewStaticCredentials(awsAccessKeyID, awsSecretAccessKey, "")
 	awsConfig := &aws.Config{
-		Region:      aws.String("us-east-1"),
+		Region:      aws.String(awsRegion),
 		Credentials: awsCredentials,
 	}
 	s3svc = s3.New(session.New(), awsConfig)

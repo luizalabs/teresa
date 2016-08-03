@@ -12,13 +12,6 @@ import (
 	"k8s.io/kubernetes/pkg/api/unversioned"
 )
 
-const (
-	storageRegion     = "us-east-1"
-	storageBucketName = "teresa-staging"
-	storageAccessKey  = "AKIAIUARH63XWZUMCFWA"
-	storageSecretKey  = "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"
-)
-
 // CreateAppHandler create apps
 func CreateAppHandler(params apps.CreateAppParams, principal interface{}) middleware.Responder {
 	a := models.App{
@@ -71,10 +64,10 @@ func CreateAppHandler(params apps.CreateAppParams, principal interface{}) middle
 			Namespace: ns.GetName(),
 		},
 		Data: map[string][]byte{
-			"region":         []byte(storageRegion),
-			"builder-bucket": []byte(storageBucketName),
-			"accesskey":      []byte(storageAccessKey),
-			"secretkey":      []byte(storageSecretKey),
+			"region":         []byte(builderConfig.AwsRegion),
+			"builder-bucket": []byte(builderConfig.AwsBucket),
+			"accesskey":      []byte(builderConfig.AwsKey),
+			"secretkey":      []byte(builderConfig.AwsSecret),
 		},
 	}
 	// creating secret

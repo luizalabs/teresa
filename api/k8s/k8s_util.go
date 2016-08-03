@@ -60,25 +60,8 @@ func BuildSlugbuilderPod(
 	return p
 }
 
-func progress(msg string, interval time.Duration) chan bool {
-	tick := time.Tick(interval)
-	quit := make(chan bool)
-	go func() {
-		for {
-			select {
-			case <-quit:
-				close(quit)
-				return
-			case <-tick:
-				fmt.Println(msg)
-			}
-		}
-	}()
-	return quit
-}
-
 // WaitForPod waits for running stated, among others
-func WaitForPod(c *client.Client, ns, podName string, ticker, interval, timeout time.Duration) error {
+func WaitForPod(c *client.Client, ns, podName string, interval, timeout time.Duration) error {
 	condition := func(pod *api.Pod) (bool, error) {
 		if pod.Status.Phase == api.PodRunning {
 			return true, nil
@@ -91,11 +74,7 @@ func WaitForPod(c *client.Client, ns, podName string, ticker, interval, timeout 
 		}
 		return false, nil
 	}
-
-	quit := progress("...", ticker)
 	err := waitForPodCondition(c, ns, podName, condition, interval, timeout)
-	quit <- true
-	<-quit
 	return err
 }
 

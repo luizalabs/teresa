@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/luizalabs/teresa/api/k8s"
 	"github.com/luizalabs/teresa/api/models"
 	"github.com/luizalabs/teresa/api/models/storage"
@@ -26,48 +27,70 @@ import (
 	"k8s.io/kubernetes/pkg/util/wait"
 )
 
-// TODO: this should came from env or conf
 const (
-	awsAccessKeyID         = "AKIAIUARH63XWZUMCFWA"
-	awsSecretAccessKey     = "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"
-	awsRegion              = "us-east-1"
-	storageBucket          = "teresa-staging"
-	k8sHost                = "https://k8s-staging.a.luizalabs.com"
-	k8sUsername            = "admin"
-	k8sPassword            = "VOpgP0Ggnty5mLcq"
-	k8sInsecure            = true
-	sessionIdleInterval    = 1 * time.Second
-	builderPodTickDuration = 1 * time.Second
-	builderPodWaitDuration = 3 * time.Minute
+	waitConditionTickDuration = 3 * time.Second
 )
 
+// K8sConfig struct to accommodate the k8s env config
+type K8sConfig struct {
+	Host     string `required:"true"`
+	Username string `required:"true"`
+	Password string `required:"true"`
+	Insecure bool   `default:"false"`
+}
+
+// BuilderConfig struct to accommodate the builder config
+type BuilderConfig struct {
+	AwsKey     string        `envconfig:"storage_aws_key"`
+	AwsSecret  string        `envconfig:"storage_aws_secret"`
+	AwsRegion  string        `envconfig:"storage_aws_region"`
+	AwsBucket  string        `envconfig:"storage_aws_bucket"`
+	PodTimeout time.Duration `envconfig:"wait_pod_timeout" default:"3m"`
+	LBTimeout  time.Duration `envconfig:"wait_lb_timeout" default:"5m"`
+}
+
 var (
-	s3svc     *s3.S3
-	k8sClient *unversioned.Client
+	s3svc         *s3.S3
+	k8sClient     *unversioned.Client
+	builderConfig BuilderConfig
 )
 
 func init() {
-	// storage
-	awsCredentials := credentials.NewStaticCredentials(awsAccessKeyID, awsSecretAccessKey, "")
-	awsConfig := &aws.Config{
-		Region:      aws.String(awsRegion),
-		Credentials: awsCredentials,
-	}
-	s3svc = s3.New(session.New(), awsConfig)
+	// FIXME: this code below isn't in the best place, change this when it's possible
 
+	// load k8s config from env
+	var k8sconf K8sConfig
+	err := envconfig.Process("teresak8s", &k8sconf)
+	if err != nil {
+		log.Fatalf("Failed to read k8s configuration from environment: %s", err.Error())
+	}
 	// kubernetes
 	config := &restclient.Config{
-		Host:     k8sHost,
-		Username: k8sUsername,
-		Password: k8sPassword,
-		Insecure: k8sInsecure,
+		Host:     k8sconf.Host,
+		Username: k8sconf.Username,
+		Password: k8sconf.Password,
+		Insecure: k8sconf.Insecure,
 	}
-
-	var err error
 	k8sClient, err = unversioned.New(config)
 	if err != nil {
 		log.Panicf("Erro trying to create a kubernetes client. Error: %s", err.Error())
 	}
+
+	// load builder config from env
+	err = envconfig.Process("teresabuilder", &builderConfig)
+	// FIXME: uncomment this and delete the follow line when supporting another storage than AWS S3
+	// if err != nil {
+	if err != nil || (err == nil && (builderConfig.AwsKey == "" || builderConfig.AwsSecret == "" || builderConfig.AwsRegion == "" || builderConfig.AwsBucket == "")) {
+		log.Fatalf("Failed to read the builder storage configuration from environment: %s", err.Error())
+	}
+
+	// storage
+	awsCredentials := credentials.NewStaticCredentials(builderConfig.AwsKey, builderConfig.AwsSecret, "")
+	awsConfig := &aws.Config{
+		Region:      &builderConfig.AwsRegion,
+		Credentials: awsCredentials,
+	}
+	s3svc = s3.New(session.New(), awsConfig)
 }
 
 // slugify the input text
@@ -117,7 +140,7 @@ func getNamespaceName(team, app string) string {
 func uploadArchiveToStorage(path *string, file *runtime.File) error {
 	log.Printf("starting upload to storage [%s]\n", *path)
 	po := &s3.PutObjectInput{
-		Bucket: aws.String(storageBucket),
+		Bucket: &builderConfig.AwsBucket,
 		Body:   file.Data,
 		Key:    path,
 	}
@@ -133,7 +156,7 @@ func uploadArchiveToStorage(path *string, file *runtime.File) error {
 func deleteArchiveOnStorage(path *string) error {
 	log.Printf("deleting archive from storage [%s]\n", *path)
 	d := &s3.DeleteObjectInput{
-		Bucket: aws.String(storageBucket),
+		Bucket: &builderConfig.AwsBucket,
 		Key:    path,
 	}
 	if _, err := s3svc.DeleteObject(d); err != nil {
@@ -156,12 +179,12 @@ func buildAppSlug(p *deployParams) error {
 	}
 
 	// wainting buider start
-	if err = k8s.WaitForPod(k8sClient, builder.Namespace, builder.Name, sessionIdleInterval, builderPodTickDuration, builderPodWaitDuration); err != nil {
+	if err = k8s.WaitForPod(k8sClient, builder.Namespace, builder.Name, waitConditionTickDuration, builderConfig.PodTimeout); err != nil {
 		log.Printf("error when waiting the start of the builder POD. Err: %s\n", err.Error())
 		return err
 	}
 	// waiting builder end
-	if err = k8s.WaitForPodEnd(k8sClient, builder.Namespace, builder.Name, builderPodTickDuration, builderPodWaitDuration); err != nil {
+	if err = k8s.WaitForPodEnd(k8sClient, builder.Namespace, builder.Name, waitConditionTickDuration, builderConfig.PodTimeout); err != nil {
 		log.Printf("error when waiting the end of the builder POD. Err: %s\n", err.Error())
 		return err
 	}
@@ -270,7 +293,7 @@ func createServiceAndGetLBHostName(p *deployParams) (lb string, err error) {
 	}
 	// wait for lb to return
 	log.Println("waiting for LB hostname")
-	err = wait.PollImmediate(3*time.Second, 1*time.Minute, func() (bool, error) {
+	err = wait.PollImmediate(waitConditionTickDuration, builderConfig.LBTimeout, func() (bool, error) {
 		log.Println("still waiting LB hostname...")
 		var cErr error
 		if s, cErr = k8sClient.Services(p.namespace).Get(p.app); cErr != nil {

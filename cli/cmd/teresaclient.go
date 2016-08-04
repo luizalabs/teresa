@@ -72,8 +72,7 @@ func NewTeresa() TeresaClient {
 		log.Fatal(err)
 	}
 
-	// FIXME: this should come from config
-	client.DefaultTimeout = 60 * time.Second
+	client.DefaultTimeout = 5 * time.Minute // 5 minutes to wait deploy proccess
 	c := client.New(ts.host, suffix, []string{ts.scheme})
 
 	tc.teresa.SetTransport(c)

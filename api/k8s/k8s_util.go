@@ -146,6 +146,6 @@ func BuildSlugRunnerDeployment(
 // BuildSlugRunnerLBService helps to create a slugrunner service pointing to port 5000
 func BuildSlugRunnerLBService(name, namespace, selector string) *api.Service {
 	s := BuildLoadBalancerService(name, namespace, selector)
-	AddPortConfigToService(s, "", api.ProtocolTCP, 5000, 5000)
+	AddPortConfigToService(s, "", api.ProtocolTCP, 80, 5000)
 	return s
 }

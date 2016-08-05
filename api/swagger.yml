@@ -418,9 +418,9 @@ paths:
           type: file
       responses:
         200:
-          description: Deployment
+          description: App
           schema:
-            $ref: "#/definitions/Deployment"
+            $ref: "#/definitions/App"
         401:
           description: User not authorized
           schema:

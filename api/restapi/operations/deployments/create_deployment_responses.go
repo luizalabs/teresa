@@ -11,14 +11,14 @@ import (
 	"github.com/luizalabs/teresa/api/models"
 )
 
-/*CreateDeploymentOK Deployment
+/*CreateDeploymentOK App
 
 swagger:response createDeploymentOK
 */
 type CreateDeploymentOK struct {
 
 	// In: body
-	Payload *models.Deployment `json:"body,omitempty"`
+	Payload *models.App `json:"body,omitempty"`
 }
 
 // NewCreateDeploymentOK creates CreateDeploymentOK with default headers values
@@ -27,13 +27,13 @@ func NewCreateDeploymentOK() *CreateDeploymentOK {
 }
 
 // WithPayload adds the payload to the create deployment o k response
-func (o *CreateDeploymentOK) WithPayload(payload *models.Deployment) *CreateDeploymentOK {
+func (o *CreateDeploymentOK) WithPayload(payload *models.App) *CreateDeploymentOK {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the create deployment o k response
-func (o *CreateDeploymentOK) SetPayload(payload *models.Deployment) {
+func (o *CreateDeploymentOK) SetPayload(payload *models.App) {
 	o.Payload = payload
 }
 

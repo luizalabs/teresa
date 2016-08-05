@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/go-openapi/strfmt"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/luizalabs/teresa/api/k8s"
 	"github.com/luizalabs/teresa/api/models"
@@ -314,7 +314,8 @@ func createServiceAndGetLBHostName(p *deployParams) (lb string, err error) {
 }
 
 // responder saves informations about the deploy to DB and returns the middleware.Responder object
-func responder(p *deployParams, appID uint, description *string, errorDescription string) (resp middleware.Responder) {
+func responder(p *deployParams, appID uint, description *string, errorDescription string) middleware.Responder {
+	errorFound := false
 	// saving deployment to db...
 	sd := storage.Deployment{
 		UUID:  p.id,
@@ -323,22 +324,47 @@ func responder(p *deployParams, appID uint, description *string, errorDescriptio
 	if description != nil {
 		sd.Description = *description
 	}
-	if errorDescription != "" {
-		log.Printf("deploy finished with error. %s\n", errorDescription)
+	if errorDescription != "" { // in case of error
 		sd.Error = errorDescription
-		resp = deployments.NewCreateDeploymentDefault(500)
-	} else {
-		log.Println("deploy finished with success")
-		r := deployments.NewCreateDeploymentOK()
-		payload := models.Deployment{
-			When: strfmt.NewDateTime(),
-		}
-		r.SetPayload(&payload)
-		resp = r
+		errorFound = true
 	}
-	// save deploy to DB
 	storage.DB.Save(&sd)
-	return
+
+	if errorFound {
+		log.Printf("deploy finished with error. %s\n", errorDescription)
+		resp := deployments.NewCreateDeploymentDefault(422)
+		rerr := models.Error{}
+		rerr.Code = 422
+		rerr.Message = errorDescription
+		resp.SetPayload(&rerr)
+		return resp
+	}
+
+	log.Println("deploy finished with success")
+	resp := deployments.NewCreateDeploymentOK()
+	// FIXME: change this... doing a select to DB when we used this info some seconds ago
+	sa := storage.Application{}
+	sa.ID = appID
+	// FIXME: getting all deployments when we need only the last one :( i didn't found an easy way to change this
+	storage.DB.Preload("Team").Preload("Deployments").Preload("Addresses").First(&sa)
+	scale := int64(sa.Scale)
+	a := models.App{
+		Name:  &sa.Name,
+		Scale: &scale,
+	}
+	a.AddressList = []string{}
+	for _, ad := range sa.Addresses {
+		a.AddressList = append(a.AddressList, ad.Address)
+	}
+	sdeploy := sa.Deployments[len(sa.Deployments)-1] // :(
+	deploy := models.Deployment{}
+	deploy.UUID = &sdeploy.UUID
+	deploy.Description = &sdeploy.Description
+	deploy.When = strfmt.DateTime(sdeploy.CreatedAt)
+	a.DeploymentList = []*models.Deployment{&deploy}
+	resp.SetPayload(&a)
+
+	return resp
 }
 
 // CreateDeploymentHandler handler triggered when a deploy url is requested

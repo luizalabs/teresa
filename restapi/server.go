@@ -1,12 +1,15 @@
 package restapi
 
 import (
-	"fmt"
+	"crypto/tls"
+	"errors"
+	"log"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
-	"github.com/go-openapi/swag"
+	flags "github.com/jessevdk/go-flags"
 	graceful "github.com/tylerb/graceful"
 
 	"github.com/luizalabs/tapi/restapi/operations"
@@ -37,13 +40,31 @@ func (s *Server) ConfigureFlags() {
 
 // Server for the teresa API
 type Server struct {
-	Host        string `long:"host" description:"the IP to listen on" default:"localhost" env:"HOST"`
-	Port        int    `long:"port" description:"the port to listen on for insecure connections, defaults to a random value" env:"PORT"`
-	httpServerL net.Listener
+	ForcedSchemes []string `long:"override-scheme" choice:"http" choice:"https" choice:"wss" description:"Override schemes defined in the swagger spec."`
+
+	SocketPath flags.Filename `long:"unix-socket" description:"the unix socket to listen on"`
+	HTTPServer string         `long:"http-server" description:"Host:Port for HTTP Server"`
+
+	HTTPSServer string         `long:"https-server" description:"Host:Port for HTTPS Server"`
+	HTTPSCert   flags.Filename `long:"https-tls-cert" description:"the certificate to use for secure connections"`
+	HTTPSKey    flags.Filename `long:"https-tls-key" description:"the private key to use for secure connections"`
+
+	domainSocketL net.Listener
+	httpsServerL  net.Listener
+	httpServerL   net.Listener
 
 	api          *operations.TeresaAPI
 	handler      http.Handler
 	hasListeners bool
+}
+
+// Logf logs message either via defined user logger or via system one if no user logger is defined.
+func (s *Server) Logf(f string, args ...interface{}) {
+	if s.api != nil && s.api.Logger != nil {
+		s.api.Logger(f, args...)
+	} else {
+		log.Printf(f, args...)
+	}
 }
 
 // SetAPI configures the server with the specified API. Needs to be called before Serve
@@ -55,49 +76,92 @@ func (s *Server) SetAPI(api *operations.TeresaAPI) {
 	}
 
 	s.api = api
+	s.api.Logger = log.Printf
 	s.handler = configureAPI(api)
 }
 
 // Serve the api
-func (s *Server) Serve() (err error) {
-	if !s.hasListeners {
-		if err := s.Listen(); err != nil {
+func (s *Server) Serve() error {
+	var wg sync.WaitGroup
+
+	if s.HTTPServer == "" && s.HTTPSServer == "" && s.SocketPath == "" {
+		return errors.New("At least one listening server have to be defined")
+	}
+
+	if s.HTTPServer != "" {
+		listener, err := net.Listen("tcp", s.HTTPServer)
+		if err != nil {
 			return err
 		}
+
+		s.httpServerL = listener
+
+		httpServer := &graceful.Server{Server: new(http.Server)}
+		httpServer.Handler = s.handler
+		wg.Add(1)
+		go func(l net.Listener) {
+			defer wg.Done()
+			s.Logf("Serving rdb at http://%s", s.httpServerL.Addr())
+			if err := httpServer.Serve(tcpKeepAliveListener{l.(*net.TCPListener)}); err != nil {
+				log.Fatalln(err)
+			}
+		}(s.httpServerL)
 	}
 
-	httpServer := &graceful.Server{Server: new(http.Server)}
-	httpServer.Handler = s.handler
+	if s.HTTPSServer != "" {
+		tlsListener, err := net.Listen("tcp", s.HTTPSServer)
+		if err != nil {
+			return err
+		}
+		s.httpsServerL = tlsListener
 
-	fmt.Printf("serving teresa at http://%s\n", s.httpServerL.Addr())
-	l := s.httpServerL
-	if err := httpServer.Serve(tcpKeepAliveListener{l.(*net.TCPListener)}); err != nil {
-		return err
+		if s.HTTPSCert == "" {
+			return errors.New("TLS Certificate is not provided for HTTPS")
+		}
+		if s.HTTPSKey == "" {
+			return errors.New("TLS Key is not provided for HTTPS")
+		}
+		httpsServer := &graceful.Server{Server: new(http.Server)}
+		httpsServer.Handler = s.handler
+		httpsServer.TLSConfig = new(tls.Config)
+		httpsServer.TLSConfig.NextProtos = []string{"http/1.1"}
+
+		// https://www.owasp.org/index.php/Transport_Layer_Protection_Cheat_Sheet#Rule_-_Only_Support_Strong_Protocols
+		httpsServer.TLSConfig.MinVersion = tls.VersionTLS12
+		httpsServer.TLSConfig.Certificates = make([]tls.Certificate, 1)
+		httpsServer.TLSConfig.Certificates[0], err = tls.LoadX509KeyPair(string(s.HTTPSCert), string(s.HTTPSKey))
+
+		configureTLS(httpsServer.TLSConfig)
+		wg.Add(1)
+		go func(l net.Listener) {
+			defer wg.Done()
+			s.Logf("Serving rdb at http://%s", s.httpsServerL.Addr())
+			if err := httpsServer.Serve(tcpKeepAliveListener{l.(*net.TCPListener)}); err != nil {
+				log.Fatalln(err)
+			}
+		}(s.httpsServerL)
 	}
 
-	return nil
-}
+	if s.SocketPath != "" {
+		domSockListener, err := net.Listen("unix", string(s.SocketPath))
+		if err != nil {
+			return err
+		}
+		s.domainSocketL = domSockListener
 
-// Listen creates the listeners for the server
-func (s *Server) Listen() error {
-	if s.hasListeners { // already done this
-		return nil
+		domainSocket := &graceful.Server{Server: new(http.Server)}
+		domainSocket.Handler = s.handler
+		wg.Add(1)
+		go func(l net.Listener) {
+			defer wg.Done()
+			s.Logf("Serving rdb at unix://%s", s.SocketPath)
+			if err := domainSocket.Serve(l); err != nil {
+				log.Fatalln(err)
+			}
+		}(s.domainSocketL)
 	}
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.Host, s.Port))
-	if err != nil {
-		return err
-	}
-
-	h, p, err := swag.SplitHostPort(listener.Addr().String())
-	if err != nil {
-		return err
-	}
-	s.Host = h
-	s.Port = p
-	s.httpServerL = listener
-
-	s.hasListeners = true
+	wg.Wait()
 	return nil
 }
 
@@ -105,6 +169,11 @@ func (s *Server) Listen() error {
 func (s *Server) Shutdown() error {
 	s.api.ServerShutdown()
 	return nil
+}
+
+// GetHandler returns a handler useful for testing
+func (s *Server) GetHandler() http.Handler {
+	return s.handler
 }
 
 // tcpKeepAliveListener is copied from the stdlib net/http package

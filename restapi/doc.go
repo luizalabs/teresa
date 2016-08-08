@@ -10,9 +10,9 @@ The Teresa PaaS API
     Version: 0.1.0
 
     Consumes:
-    - application/json
-
     - multipart/form-data
+
+    - application/json
 
 
     Produces:

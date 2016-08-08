@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"log"
 	"os"
 
@@ -15,12 +17,13 @@ import (
 // Make sure not to overwrite this file after you generated it because all your edits would be lost!
 
 func main() {
+
 	swaggerSpec, err := loads.Analyzed(restapi.SwaggerJSON, "")
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	api := operations.NewTeresaAPI(swaggerSpec)
+	api := operations.NewTeresaAPI()
 	server := restapi.NewServer(api)
 	defer server.Shutdown()
 
@@ -40,9 +43,29 @@ func main() {
 		os.Exit(1)
 	}
 
+	if len(server.ForcedSchemes) > 0 {
+		d := json.NewDecoder(bytes.NewReader(swaggerSpec.Raw()))
+		d.UseNumber()
+
+		var data interface{}
+		if err := d.Decode(&data); err != nil {
+			panic("Broken schema!")
+		}
+		mdata, _ := data.(map[string]interface{})
+		mdata["schemes"] = server.ForcedSchemes
+
+		rawSpec, _ := json.MarshalIndent(data, " ", "  ")
+		swaggerSpec, err = loads.Analyzed(rawSpec, "")
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
+
+	api.SetSpec(swaggerSpec)
 	server.ConfigureAPI()
 
 	if err := server.Serve(); err != nil {
+		server.Shutdown()
 		log.Fatalln(err)
 	}
 }

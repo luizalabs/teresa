@@ -55,6 +55,9 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.TeamsCreateTeamHandler = teams.CreateTeamHandlerFunc(func(params teams.CreateTeamParams, principal interface{}) middleware.Responder {
 		return handlers.CreateTeamHandler(params, principal)
 	})
+	api.TeamsAddUserToTeamHandler = teams.AddUserToTeamHandlerFunc(func(params teams.AddUserToTeamParams, principal interface{}) middleware.Responder {
+		return handlers.AddUserToTeam(params, principal)
+	})
 	// create user
 	api.UsersCreateUserHandler = users.CreateUserHandlerFunc(func(params users.CreateUserParams, principal interface{}) middleware.Responder {
 		return handlers.CreateUserHandler(params, principal)

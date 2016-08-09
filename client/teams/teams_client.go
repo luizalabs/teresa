@@ -23,6 +23,32 @@ type Client struct {
 }
 
 /*
+AddUserToTeam adds user to team
+*/
+func (a *Client) AddUserToTeam(params *AddUserToTeamParams, authInfo runtime.ClientAuthInfoWriter) (*AddUserToTeamOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewAddUserToTeamParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "addUserToTeam",
+		Method:             "POST",
+		PathPattern:        "/teams/{team_id}/users",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &AddUserToTeamReader{formats: a.formats},
+		AuthInfo:           authInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*AddUserToTeamOK), nil
+}
+
+/*
 CreateTeam creates teams
 
 Create a team.

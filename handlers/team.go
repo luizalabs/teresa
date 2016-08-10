@@ -179,7 +179,7 @@ func AddUserToTeam(params teams.AddUserToTeamParams, principal interface{}) midd
 	}
 	su := storage.User{}
 	if storage.DB.Where("email = ? ", params.User.Email.String()).First(&su).RecordNotFound() {
-		p := models.Error{Message: "User must be registered before add it to a team"}
+		p := models.Error{Message: "User must be registered before adding him/her to a team"}
 		return teams.NewAddUserToTeamDefault(422).WithPayload(&p)
 	}
 	if err := storage.DB.Model(&st).Association("Users").Append(su).Error; err != nil {

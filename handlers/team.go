@@ -153,3 +153,38 @@ func DeleteTeamHandler(params teams.DeleteTeamParams, principal interface{}) mid
 
 	return teams.NewDeleteTeamNoContent()
 }
+
+// AddUserToTeam add user to a specific team
+func AddUserToTeam(params teams.AddUserToTeamParams, principal interface{}) middleware.Responder {
+	tk := principal.(*Token)
+	// need admin permissions to do this action
+	if tk.IsAdmin == false {
+		log.Printf("User [%d: %s] doesn't have permission to include another user to a team", tk.UserID, tk.Email)
+		return teams.NewAddUserToTeamDefault(401)
+	}
+	st := storage.Team{}
+	st.ID = uint(params.TeamID)
+	if storage.DB.First(&st).RecordNotFound() {
+		p := models.Error{Message: "Team must be registered before continue"}
+		return teams.NewAddUserToTeamDefault(422).WithPayload(&p)
+	}
+
+	susers := []storage.User{}
+	storage.DB.Model(&st).Association("Users").Find(&susers)
+	for _, su := range susers {
+		if su.Email == params.User.Email.String() {
+			p := models.Error{Message: "User is already member of the team"}
+			return teams.NewAddUserToTeamDefault(422).WithPayload(&p)
+		}
+	}
+	su := storage.User{}
+	if storage.DB.Where("email = ? ", params.User.Email.String()).First(&su).RecordNotFound() {
+		p := models.Error{Message: "User must be registered before add it to a team"}
+		return teams.NewAddUserToTeamDefault(422).WithPayload(&p)
+	}
+	if err := storage.DB.Model(&st).Association("Users").Append(su).Error; err != nil {
+		log.Printf("Error found when trying to add user [%s] to team [%d]: %s", params.User.Email.String(), params.TeamID, err)
+		return teams.NewAddUserToTeamDefault(500)
+	}
+	return teams.NewAddUserToTeamOK()
+}

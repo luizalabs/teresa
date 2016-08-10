@@ -42,10 +42,10 @@ type TeresaAPI struct {
 	formats         strfmt.Registry
 	defaultConsumes string
 	defaultProduces string
-	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
-	MultipartformConsumer runtime.Consumer
 	// JSONConsumer registers a consumer for a "application/json" mime type
 	JSONConsumer runtime.Consumer
+	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
+	MultipartformConsumer runtime.Consumer
 
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
@@ -58,6 +58,8 @@ type TeresaAPI struct {
 	// it performs authentication based on an api key Authorization provided in the header
 	TokenHeaderAuth func(string) (interface{}, error)
 
+	// TeamsAddUserToTeamHandler sets the operation handler for the add user to team operation
+	TeamsAddUserToTeamHandler teams.AddUserToTeamHandler
 	// AppsCreateAppHandler sets the operation handler for the create app operation
 	AppsCreateAppHandler apps.CreateAppHandler
 	// DeploymentsCreateDeploymentHandler sets the operation handler for the create deployment operation
@@ -151,12 +153,12 @@ func (o *TeresaAPI) RegisterFormat(name string, format strfmt.Format, validator 
 func (o *TeresaAPI) Validate() error {
 	var unregistered []string
 
-	if o.MultipartformConsumer == nil {
-		unregistered = append(unregistered, "MultipartformConsumer")
-	}
-
 	if o.JSONConsumer == nil {
 		unregistered = append(unregistered, "JSONConsumer")
+	}
+
+	if o.MultipartformConsumer == nil {
+		unregistered = append(unregistered, "MultipartformConsumer")
 	}
 
 	if o.JSONProducer == nil {
@@ -169,6 +171,10 @@ func (o *TeresaAPI) Validate() error {
 
 	if o.TokenHeaderAuth == nil {
 		unregistered = append(unregistered, "AuthorizationAuth")
+	}
+
+	if o.TeamsAddUserToTeamHandler == nil {
+		unregistered = append(unregistered, "teams.AddUserToTeamHandler")
 	}
 
 	if o.AppsCreateAppHandler == nil {
@@ -287,11 +293,11 @@ func (o *TeresaAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consume
 	for _, mt := range mediaTypes {
 		switch mt {
 
-		case "multipart/form-data":
-			result["multipart/form-data"] = o.MultipartformConsumer
-
 		case "application/json":
 			result["application/json"] = o.JSONConsumer
+
+		case "multipart/form-data":
+			result["multipart/form-data"] = o.MultipartformConsumer
 
 		}
 	}
@@ -336,6 +342,11 @@ func (o *TeresaAPI) initHandlerCache() {
 	if o.handlers == nil {
 		o.handlers = make(map[string]map[string]http.Handler)
 	}
+
+	if o.handlers["POST"] == nil {
+		o.handlers[strings.ToUpper("POST")] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/teams/{team_id}/users"] = teams.NewAddUserToTeam(o.context, o.TeamsAddUserToTeamHandler)
 
 	if o.handlers["POST"] == nil {
 		o.handlers[strings.ToUpper("POST")] = make(map[string]http.Handler)

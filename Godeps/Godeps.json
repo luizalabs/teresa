@@ -7,6 +7,16 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "cloud.google.com/go/compute/metadata",
+			"Comment": "v0.1.0-11-g3261f00",
+			"Rev": "3261f00d16e92932f49a39672dfd540896ed30d0"
+		},
+		{
+			"ImportPath": "cloud.google.com/go/internal",
+			"Comment": "v0.1.0-11-g3261f00",
+			"Rev": "3261f00d16e92932f49a39672dfd540896ed30d0"
+		},
+		{
 			"ImportPath": "github.com/PuerkitoBio/purell",
 			"Comment": "v1.0.0",
 			"Rev": "8a290539e2e8629dbc4e6bad948158f790ec31f4"
@@ -128,6 +138,10 @@
 			"ImportPath": "github.com/blang/semver",
 			"Comment": "v3.2.0",
 			"Rev": "e64c75d1c910cd81c8caa1f2cc2c6409dd65af81"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry-incubator/candiedyaml",
+			"Rev": "99c3df83b51532e3615f851d8c2dbb638f5313bf"
 		},
 		{
 			"ImportPath": "github.com/coreos/go-oidc/http",
@@ -512,6 +526,38 @@
 		{
 			"ImportPath": "golang.org/x/text/width",
 			"Rev": "2910a502d2bf9e43193af9d68ca516529614eed3"
+		},
+		{
+			"ImportPath": "google.golang.org/appengine",
+			"Rev": "b4728023490a62e70ba739ff62aa65ffcca84210"
+		},
+		{
+			"ImportPath": "google.golang.org/appengine/internal",
+			"Rev": "b4728023490a62e70ba739ff62aa65ffcca84210"
+		},
+		{
+			"ImportPath": "google.golang.org/appengine/internal/app_identity",
+			"Rev": "b4728023490a62e70ba739ff62aa65ffcca84210"
+		},
+		{
+			"ImportPath": "google.golang.org/appengine/internal/base",
+			"Rev": "b4728023490a62e70ba739ff62aa65ffcca84210"
+		},
+		{
+			"ImportPath": "google.golang.org/appengine/internal/datastore",
+			"Rev": "b4728023490a62e70ba739ff62aa65ffcca84210"
+		},
+		{
+			"ImportPath": "google.golang.org/appengine/internal/log",
+			"Rev": "b4728023490a62e70ba739ff62aa65ffcca84210"
+		},
+		{
+			"ImportPath": "google.golang.org/appengine/internal/modules",
+			"Rev": "b4728023490a62e70ba739ff62aa65ffcca84210"
+		},
+		{
+			"ImportPath": "google.golang.org/appengine/internal/remote_api",
+			"Rev": "b4728023490a62e70ba739ff62aa65ffcca84210"
 		},
 		{
 			"ImportPath": "google.golang.org/cloud/compute/metadata",

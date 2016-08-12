@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: The Teresa PaaS API
   title: Teresa API
-  version: 0.1.0
+  version: 0.1.1
 host: localhost:8080
 consumes:
 - application/json

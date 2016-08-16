@@ -65,16 +65,41 @@ func GetTeamsHandler(params teams.GetTeamsParams, principal interface{}) middlew
 	tk := principal.(*Token)
 	var sts []*storage.Team
 
-	// return only my teams
-	rows, err := storage.DB.Model(&storage.Team{}).Where("teams_users.user_id = ?", tk.UserID).Select("teams.name, teams.email, teams.url").Joins("inner join teams_users on teams.id = teams_users.team_id").Rows()
+	query := storage.DB.Model(&storage.Team{})
+	if tk.IsAdmin {
+		query = query.Where("teams_users.user_id = ? OR teams_users.user_id is null", tk.UserID)
+	} else {
+		query = query.Where("teams_users.user_id = ?", tk.UserID)
+	}
+	rows, err := query.
+		Select("teams.id, teams.name, teams.email, teams.url, teams_users.user_id").
+		Joins("left join teams_users on teams.id = teams_users.team_id").
+		Rows()
 	if err != nil {
 		log.Printf("ERROR querying teams: %s", err)
 		return teams.NewGetTeamsDefault(500)
 	}
 	defer rows.Close()
+	type Result struct {
+		ID     uint
+		Name   string
+		Email  string
+		URL    string
+		UserID uint
+	}
 	for rows.Next() {
+		r := Result{}
+		storage.DB.ScanRows(rows, &r)
 		t := storage.Team{}
-		storage.DB.ScanRows(rows, &t)
+		t.ID = r.ID
+		t.Name = r.Name
+		t.Email = r.Email
+		t.URL = r.URL
+		if r.UserID != 0 {
+			u := storage.User{}
+			u.ID = r.UserID
+			t.Users = []storage.User{u}
+		}
 		sts = append(sts, &t)
 	}
 	if len(sts) == 0 {
@@ -88,9 +113,11 @@ func GetTeamsHandler(params teams.GetTeamsParams, principal interface{}) middlew
 			Email: strfmt.Email(sts[i].Email),
 			URL:   sts[i].URL,
 		}
+		if len(sts[i].Users) != 0 {
+			t.IAmMember = true
+		}
 		rts[i] = &t
 	}
-
 	payload := teams.GetTeamsOKBodyBody{Items: rts}
 	r := teams.NewGetTeamsOK()
 	r.SetPayload(payload)

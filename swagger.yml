@@ -767,15 +767,16 @@ definitions:
         format: email
       url:
         type: string
+      iAmMember:
+        type: boolean
       apps:
         type: array
         items:
           $ref: "#/definitions/App"
-      # # FIXME: https://github.com/go-swagger/go-swagger/issues/537
-      # members:
-      #   type: array
-      #   items:
-      #     $ref: "#/definitions/User"
+      members:
+        type: array
+        items:
+          $ref: "#/definitions/User"
   User:
     type: object
     required:

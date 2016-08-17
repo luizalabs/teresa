@@ -177,7 +177,7 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/Error"
-  /teams/{team_id}/users:
+  /teams/{team_name}/users:
     post:
       summary: Add user to team
       tags:
@@ -187,7 +187,12 @@ paths:
         - api_key: []
         - token_header: []
       parameters:
-        - $ref: "#/parameters/teamId"
+        - name: team_name
+          in: path
+          description: Team name
+          type: string
+          required: true
+          pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
         - name: user
           in: body
           schema:

@@ -34,7 +34,7 @@ func (a *Client) AddUserToTeam(params *AddUserToTeamParams, authInfo runtime.Cli
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "addUserToTeam",
 		Method:             "POST",
-		PathPattern:        "/teams/{team_id}/users",
+		PathPattern:        "/teams/{team_name}/users",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http"},

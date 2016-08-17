@@ -9,7 +9,6 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/swag"
 
 	strfmt "github.com/go-openapi/strfmt"
 )
@@ -39,20 +38,20 @@ for the add user to team operation typically these are written to a http.Request
 */
 type AddUserToTeamParams struct {
 
-	/*TeamID
-	  Team ID
+	/*TeamName
+	  Team name
 
 	*/
-	TeamID int64
+	TeamName string
 	/*User*/
 	User AddUserToTeamBody
 
 	timeout time.Duration
 }
 
-// WithTeamID adds the teamId to the add user to team params
-func (o *AddUserToTeamParams) WithTeamID(TeamID int64) *AddUserToTeamParams {
-	o.TeamID = TeamID
+// WithTeamName adds the teamName to the add user to team params
+func (o *AddUserToTeamParams) WithTeamName(TeamName string) *AddUserToTeamParams {
+	o.TeamName = TeamName
 	return o
 }
 
@@ -68,8 +67,8 @@ func (o *AddUserToTeamParams) WriteToRequest(r runtime.ClientRequest, reg strfmt
 	r.SetTimeout(o.timeout)
 	var res []error
 
-	// path param team_id
-	if err := r.SetPathParam("team_id", swag.FormatInt64(o.TeamID)); err != nil {
+	// path param team_name
+	if err := r.SetPathParam("team_name", o.TeamName); err != nil {
 		return err
 	}
 

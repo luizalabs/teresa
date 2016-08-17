@@ -55,7 +55,7 @@ type AddUserToTeamOK struct {
 }
 
 func (o *AddUserToTeamOK) Error() string {
-	return fmt.Sprintf("[POST /teams/{team_id}/users][%d] addUserToTeamOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[POST /teams/{team_name}/users][%d] addUserToTeamOK  %+v", 200, o.Payload)
 }
 
 func (o *AddUserToTeamOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -93,7 +93,7 @@ func (o *AddUserToTeamDefault) Code() int {
 }
 
 func (o *AddUserToTeamDefault) Error() string {
-	return fmt.Sprintf("[POST /teams/{team_id}/users][%d] addUserToTeam default  %+v", o._statusCode, o.Payload)
+	return fmt.Sprintf("[POST /teams/{team_name}/users][%d] addUserToTeam default  %+v", o._statusCode, o.Payload)
 }
 
 func (o *AddUserToTeamDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

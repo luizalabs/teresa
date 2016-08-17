@@ -30,7 +30,7 @@ func NewAddUserToTeam(ctx *middleware.Context, handler AddUserToTeamHandler) *Ad
 	return &AddUserToTeam{Context: ctx, Handler: handler}
 }
 
-/*AddUserToTeam swagger:route POST /teams/{team_id}/users teams addUserToTeam
+/*AddUserToTeam swagger:route POST /teams/{team_name}/users teams addUserToTeam
 
 Add user to team
 

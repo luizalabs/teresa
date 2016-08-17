@@ -9,7 +9,7 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 
 	strfmt "github.com/go-openapi/strfmt"
 )
@@ -30,11 +30,12 @@ type AddUserToTeamParams struct {
 	// HTTP Request Object
 	HTTPRequest *http.Request
 
-	/*Team ID
+	/*Team name
 	  Required: true
+	  Pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
 	  In: path
 	*/
-	TeamID int64
+	TeamName string
 	/*
 	  In: body
 	*/
@@ -47,8 +48,8 @@ func (o *AddUserToTeamParams) BindRequest(r *http.Request, route *middleware.Mat
 	var res []error
 	o.HTTPRequest = r
 
-	rTeamID, rhkTeamID, _ := route.Params.GetOK("team_id")
-	if err := o.bindTeamID(rTeamID, rhkTeamID, route.Formats); err != nil {
+	rTeamName, rhkTeamName, _ := route.Params.GetOK("team_name")
+	if err := o.bindTeamName(rTeamName, rhkTeamName, route.Formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -72,17 +73,26 @@ func (o *AddUserToTeamParams) BindRequest(r *http.Request, route *middleware.Mat
 	return nil
 }
 
-func (o *AddUserToTeamParams) bindTeamID(rawData []string, hasKey bool, formats strfmt.Registry) error {
+func (o *AddUserToTeamParams) bindTeamName(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	var raw string
 	if len(rawData) > 0 {
 		raw = rawData[len(rawData)-1]
 	}
 
-	value, err := swag.ConvertInt64(raw)
-	if err != nil {
-		return errors.InvalidType("team_id", "path", "int64", raw)
+	o.TeamName = raw
+
+	if err := o.validateTeamName(formats); err != nil {
+		return err
 	}
-	o.TeamID = value
+
+	return nil
+}
+
+func (o *AddUserToTeamParams) validateTeamName(formats strfmt.Registry) error {
+
+	if err := validate.Pattern("team_name", "path", string(o.TeamName), `^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`); err != nil {
+		return err
+	}
 
 	return nil
 }

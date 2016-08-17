@@ -189,10 +189,10 @@ func AddUserToTeam(params teams.AddUserToTeamParams, principal interface{}) midd
 		log.Printf("User [%d: %s] doesn't have permission to include another user to a team", tk.UserID, tk.Email)
 		return teams.NewAddUserToTeamDefault(401)
 	}
+
 	st := storage.Team{}
-	st.ID = uint(params.TeamID)
-	if storage.DB.First(&st).RecordNotFound() {
-		p := models.Error{Message: "Team must be registered before continue"}
+	if storage.DB.Where("name = ?", params.TeamName).First(&st).RecordNotFound() {
+		p := models.Error{Message: "Team doesn't exist"}
 		return teams.NewAddUserToTeamDefault(422).WithPayload(&p)
 	}
 
@@ -210,7 +210,7 @@ func AddUserToTeam(params teams.AddUserToTeamParams, principal interface{}) midd
 		return teams.NewAddUserToTeamDefault(422).WithPayload(&p)
 	}
 	if err := storage.DB.Model(&st).Association("Users").Append(su).Error; err != nil {
-		log.Printf("Error found when trying to add user [%s] to team [%d]: %s", params.User.Email.String(), params.TeamID, err)
+		log.Printf("Error found when trying to add user [%s] to team [%s]: %s", params.User.Email.String(), params.TeamName, err)
 		return teams.NewAddUserToTeamDefault(500)
 	}
 	return teams.NewAddUserToTeamOK()

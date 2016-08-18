@@ -40,6 +40,8 @@ type Team struct {
 	/* name
 
 	Required: true
+	Min Length: 3
+	Pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
 	*/
 	Name *string `json:"name"`
 
@@ -124,6 +126,14 @@ func (m *Team) validateMembers(formats strfmt.Registry) error {
 func (m *Team) validateName(formats strfmt.Registry) error {
 
 	if err := validate.Required("name", "body", m.Name); err != nil {
+		return err
+	}
+
+	if err := validate.MinLength("name", "body", string(*m.Name), 3); err != nil {
+		return err
+	}
+
+	if err := validate.Pattern("name", "body", string(*m.Name), `^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`); err != nil {
 		return err
 	}
 

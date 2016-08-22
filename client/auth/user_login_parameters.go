@@ -47,8 +47,8 @@ type UserLoginParams struct {
 }
 
 // WithBody adds the body to the user login params
-func (o *UserLoginParams) WithBody(Body *models.Login) *UserLoginParams {
-	o.Body = Body
+func (o *UserLoginParams) WithBody(body *models.Login) *UserLoginParams {
+	o.Body = body
 	return o
 }
 

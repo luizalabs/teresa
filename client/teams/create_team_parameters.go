@@ -47,8 +47,8 @@ type CreateTeamParams struct {
 }
 
 // WithBody adds the body to the create team params
-func (o *CreateTeamParams) WithBody(Body *models.Team) *CreateTeamParams {
-	o.Body = Body
+func (o *CreateTeamParams) WithBody(body *models.Team) *CreateTeamParams {
+	o.Body = body
 	return o
 }
 

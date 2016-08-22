@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 	"unicode"
@@ -13,13 +15,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
-	strfmt "github.com/go-openapi/strfmt"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/luizalabs/tapi/k8s"
-	"github.com/luizalabs/tapi/models"
 	"github.com/luizalabs/tapi/models/storage"
 	"github.com/luizalabs/tapi/restapi/operations/deployments"
 	"github.com/pborman/uuid"
+	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/apis/extensions"
 	"k8s.io/kubernetes/pkg/client/restclient"
@@ -47,6 +48,34 @@ type BuilderConfig struct {
 	AwsBucket  string        `envconfig:"storage_aws_bucket"`
 	PodTimeout time.Duration `envconfig:"wait_pod_timeout" default:"3m"`
 	LBTimeout  time.Duration `envconfig:"wait_lb_timeout" default:"5m"`
+}
+
+type flushResponseWriter struct {
+	f http.Flusher
+	w io.Writer
+}
+
+func newFlushResponseWriter(w io.Writer) *flushResponseWriter {
+	fw := flushResponseWriter{w: w}
+	if f, ok := w.(http.Flusher); ok {
+		fw.f = f
+	}
+	return &fw
+}
+func (fw flushResponseWriter) Write(p []byte) (n int, err error) {
+	n, err = fw.w.Write(p)
+	if fw.f != nil {
+		fw.f.Flush()
+	}
+	return
+}
+func (fw flushResponseWriter) Println(a ...interface{}) (n int, err error) {
+	n, err = fw.Write([]byte(fmt.Sprintln(a...)))
+	return
+}
+func (fw flushResponseWriter) Printf(format string, a ...interface{}) (n int, err error) {
+	n, err = fw.Write([]byte(fmt.Sprintf(format, a...)))
+	return
 }
 
 var (
@@ -167,7 +196,7 @@ func deleteArchiveOnStorage(path *string) error {
 }
 
 // buildAppSlug starts a POD who builds the final slug from the AppTarball.
-func buildAppSlug(p *deployParams) error {
+func buildAppSlug(p *deployParams, fw *flushResponseWriter) error {
 	buildName := fmt.Sprintf("build--%s--%s", p.app, p.id)
 	log.Printf("building the app... builder POD name [%s/%s]", p.namespace, buildName)
 
@@ -183,6 +212,19 @@ func buildAppSlug(p *deployParams) error {
 		log.Printf("error when waiting the start of the builder POD. Err: %s\n", err.Error())
 		return err
 	}
+
+	req := k8sClient.Pods(builder.Namespace).GetLogs(builder.Name, &api.PodLogOptions{
+		Follow: true,
+	})
+	rc, err := req.Stream()
+	if err != nil {
+		log.Printf("error trying to get builder log. Err: %s\n", err.Error())
+		return err
+	}
+	defer rc.Close()
+
+	io.Copy(fw, rc)
+
 	// waiting builder end
 	if err = k8s.WaitForPodEnd(k8sClient, builder.Namespace, builder.Name, waitConditionTickDuration, builderConfig.PodTimeout); err != nil {
 		log.Printf("error when waiting the end of the builder POD. Err: %s\n", err.Error())
@@ -314,7 +356,7 @@ func createServiceAndGetLBHostName(p *deployParams) (lb string, err error) {
 }
 
 // responder saves informations about the deploy to DB and returns the middleware.Responder object
-func responder(p *deployParams, appID uint, description *string, errorDescription string) middleware.Responder {
+func responder(p *deployParams, appID uint, description *string, errorDescription string, fw *flushResponseWriter) {
 	errorFound := false
 	// saving deployment to db...
 	sd := storage.Deployment{
@@ -331,95 +373,97 @@ func responder(p *deployParams, appID uint, description *string, errorDescriptio
 	storage.DB.Save(&sd)
 
 	if errorFound {
-		log.Printf("deploy finished with error. %s\n", errorDescription)
-		resp := deployments.NewCreateDeploymentDefault(422)
-		rerr := models.Error{}
-		rerr.Code = 422
-		rerr.Message = errorDescription
-		resp.SetPayload(&rerr)
-		return resp
+		m := fmt.Sprintf("deploy finished with error. %s\n", errorDescription)
+		log.Print(m)
+		fw.Println(m)
+		return
 	}
 
 	log.Println("deploy finished with success")
-	resp := deployments.NewCreateDeploymentOK()
-	// FIXME: change this... doing a select to DB when we used this info some seconds ago
+	// FIXME: change this... we are doing a select to DB when we used this info some seconds ago
 	sa := storage.Application{}
 	sa.ID = appID
 	// FIXME: getting all deployments when we need only the last one :( i didn't found an easy way to change this
 	storage.DB.Preload("Team").Preload("Deployments").Preload("Addresses").First(&sa)
-	scale := int64(sa.Scale)
-	a := models.App{
-		Name:  &sa.Name,
-		Scale: &scale,
-	}
-	a.AddressList = []string{}
+
+	fw.Printf("\nApp:  %s\n", sa.Name)
+	fw.Printf("Scale: %d\n", sa.Scale)
+	fw.Println("Addresses:")
 	for _, ad := range sa.Addresses {
-		a.AddressList = append(a.AddressList, ad.Address)
+		fw.Printf("  - %s\n", ad.Address)
 	}
 	sdeploy := sa.Deployments[len(sa.Deployments)-1] // :(
-	deploy := models.Deployment{}
-	deploy.UUID = &sdeploy.UUID
-	deploy.Description = &sdeploy.Description
-	deploy.When = strfmt.DateTime(sdeploy.CreatedAt)
-	a.DeploymentList = []*models.Deployment{&deploy}
-	resp.SetPayload(&a)
-
-	return resp
+	fw.Printf("Deploy: %s\n", sdeploy.UUID)
 }
 
 // CreateDeploymentHandler handler triggered when a deploy url is requested
-func CreateDeploymentHandler(params deployments.CreateDeploymentParams, principal interface{}) middleware.Responder {
-	appID := uint(params.AppID)
-	// get app info from DB
-	sa := storage.Application{}
-	sa.ID = appID
-	if storage.DB.Where(&storage.Application{TeamID: uint(params.TeamID)}).Preload("Team").Preload("EnvVars").Preload("Deployments").First(&sa).RecordNotFound() {
-		log.Println("app info not found")
-		return deployments.NewCreateDeploymentUnauthorized()
-	}
-	// creating deploy params obj
-	x := newDeployParams(&sa)
-	log.Printf("starting deploy proccess [%s/%s/%s]\n", x.team, x.app, x.id)
-	// upload file
-	if err := uploadArchiveToStorage(&x.storageIn, &params.AppTarball); err != nil {
-		return responder(x, appID, params.Description, "uploading app tarball")
-	}
-	// build app
-	if err := buildAppSlug(x); err != nil {
-		deleteArchiveOnStorage(&x.storageIn)
-		return responder(x, appID, params.Description, "building app")
-	}
-
-	// creating deploy
-	deploy, err := getDeploy(x)
-	if err != nil {
-		deleteArchiveOnStorage(&x.storageIn)
-		return responder(x, appID, params.Description, "creating deploy")
-	}
-	if deploy == nil { // k8s deploy doesn't exists...
-		// creating k8s deployment...
-		if _, err = createSlugRunnerDeploy(x, &sa); err != nil {
-			deleteArchiveOnStorage(&x.storageIn)
-			return responder(x, appID, params.Description, "creating deploy")
+var CreateDeploymentHandler deployments.CreateDeploymentHandlerFunc = func(params deployments.CreateDeploymentParams, principal interface{}) middleware.Responder {
+	var r middleware.ResponderFunc = func(rw http.ResponseWriter, pr runtime.Producer) {
+		appID := uint(params.AppID)
+		// get app info from DB
+		sa := storage.Application{}
+		sa.ID = appID
+		// creating a flush response writer to stream data for the request (text/plain)
+		fw := newFlushResponseWriter(rw)
+		// check if the user is member of the team before start deploy
+		if storage.DB.Where(&storage.Application{TeamID: uint(params.TeamID)}).Preload("Team").Preload("EnvVars").Preload("Deployments").First(&sa).RecordNotFound() {
+			log.Println("app info not found")
+			fw.Write([]byte("App or team invalid... stopping proccess."))
+			// fw.Println("App or team invalid... stopping proccess.")
+			return
 		}
-		// creating k8s service with LoadBalance...
-		lbHostName, err := createServiceAndGetLBHostName(x)
+		// creating deploy params obj
+		x := newDeployParams(&sa)
+		log.Printf("starting deploy proccess [%s/%s/%s]\n", x.team, x.app, x.id)
+		// upload file
+		if err := uploadArchiveToStorage(&x.storageIn, &params.AppTarball); err != nil {
+			responder(x, appID, params.Description, "uploading app tarball", fw)
+			return
+		}
+		// build app
+		fw.Println("starting the build...")
+		if err := buildAppSlug(x, fw); err != nil {
+			deleteArchiveOnStorage(&x.storageIn)
+			responder(x, appID, params.Description, "building app", fw)
+			return
+		}
+		// creating deploy
+		deploy, err := getDeploy(x)
 		if err != nil {
-			deleteDeploy(x)
 			deleteArchiveOnStorage(&x.storageIn)
-			return responder(x, appID, params.Description, "creating service")
+			responder(x, appID, params.Description, "creating deploy", fw)
+			return
 		}
-		// save address fo the LB to db...
-		saa := storage.AppAddress{
-			Address: lbHostName,
-			AppID:   appID,
+		if deploy == nil { // k8s deploy doesn't exists...
+			// creating k8s deployment...
+			if _, err = createSlugRunnerDeploy(x, &sa); err != nil {
+				deleteArchiveOnStorage(&x.storageIn)
+				responder(x, appID, params.Description, "creating deploy", fw)
+				return
+			}
+			// creating k8s service with LoadBalance...
+			fw.Println("creating the load balancer...")
+			lbHostName, err := createServiceAndGetLBHostName(x)
+			if err != nil {
+				deleteDeploy(x)
+				deleteArchiveOnStorage(&x.storageIn)
+				responder(x, appID, params.Description, "creating service", fw)
+				return
+			}
+			// save address fo the LB to db...
+			saa := storage.AppAddress{
+				Address: lbHostName,
+				AppID:   appID,
+			}
+			storage.DB.Create(&saa)
+		} else {
+			if _, err := updateSlugRunnerDeploySlug(x, deploy); err != nil {
+				deleteArchiveOnStorage(&x.storageIn)
+				responder(x, appID, params.Description, "rolling update deploy", fw)
+				return
+			}
 		}
-		storage.DB.Create(&saa)
-	} else {
-		if _, err := updateSlugRunnerDeploySlug(x, deploy); err != nil {
-			deleteArchiveOnStorage(&x.storageIn)
-			return responder(x, appID, params.Description, "rolling update deploy")
-		}
+		responder(x, appID, params.Description, "", fw)
 	}
-	return responder(x, appID, params.Description, "")
+	return r
 }

@@ -47,8 +47,8 @@ type CreateUserParams struct {
 }
 
 // WithBody adds the body to the create user params
-func (o *CreateUserParams) WithBody(Body *models.User) *CreateUserParams {
-	o.Body = Body
+func (o *CreateUserParams) WithBody(body *models.User) *CreateUserParams {
+	o.Body = body
 	return o
 }
 

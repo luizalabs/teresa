@@ -48,9 +48,8 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 		return handlers.CreateAppHandler(params, principal)
 	})
 	// create deployment
-	api.DeploymentsCreateDeploymentHandler = deployments.CreateDeploymentHandlerFunc(func(params deployments.CreateDeploymentParams, principal interface{}) middleware.Responder {
-		return handlers.CreateDeploymentHandler(params, principal)
-	})
+	api.DeploymentsCreateDeploymentHandler = handlers.CreateDeploymentHandler
+
 	// create team
 	api.TeamsCreateTeamHandler = teams.CreateTeamHandlerFunc(func(params teams.CreateTeamParams, principal interface{}) middleware.Responder {
 		return handlers.CreateTeamHandler(params, principal)

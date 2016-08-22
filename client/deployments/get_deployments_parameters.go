@@ -18,8 +18,8 @@ import (
 // with the default values initialized.
 func NewGetDeploymentsParams() *GetDeploymentsParams {
 	var (
-		limitDefault int64 = int64(20)
-		sinceDefault int64 = int64(0)
+		limitDefault = int64(20)
+		sinceDefault = int64(0)
 	)
 	return &GetDeploymentsParams{
 		Limit: &limitDefault,
@@ -73,27 +73,27 @@ type GetDeploymentsParams struct {
 	timeout time.Duration
 }
 
-// WithAppID adds the appId to the get deployments params
-func (o *GetDeploymentsParams) WithAppID(AppID int64) *GetDeploymentsParams {
-	o.AppID = AppID
+// WithAppID adds the appID to the get deployments params
+func (o *GetDeploymentsParams) WithAppID(appID int64) *GetDeploymentsParams {
+	o.AppID = appID
 	return o
 }
 
 // WithLimit adds the limit to the get deployments params
-func (o *GetDeploymentsParams) WithLimit(Limit *int64) *GetDeploymentsParams {
-	o.Limit = Limit
+func (o *GetDeploymentsParams) WithLimit(limit *int64) *GetDeploymentsParams {
+	o.Limit = limit
 	return o
 }
 
 // WithSince adds the since to the get deployments params
-func (o *GetDeploymentsParams) WithSince(Since *int64) *GetDeploymentsParams {
-	o.Since = Since
+func (o *GetDeploymentsParams) WithSince(since *int64) *GetDeploymentsParams {
+	o.Since = since
 	return o
 }
 
-// WithTeamID adds the teamId to the get deployments params
-func (o *GetDeploymentsParams) WithTeamID(TeamID int64) *GetDeploymentsParams {
-	o.TeamID = TeamID
+// WithTeamID adds the teamID to the get deployments params
+func (o *GetDeploymentsParams) WithTeamID(teamID int64) *GetDeploymentsParams {
+	o.TeamID = teamID
 	return o
 }
 

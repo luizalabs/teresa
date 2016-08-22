@@ -48,9 +48,9 @@ type DeleteTeamParams struct {
 	timeout time.Duration
 }
 
-// WithTeamID adds the teamId to the delete team params
-func (o *DeleteTeamParams) WithTeamID(TeamID int64) *DeleteTeamParams {
-	o.TeamID = TeamID
+// WithTeamID adds the teamID to the delete team params
+func (o *DeleteTeamParams) WithTeamID(teamID int64) *DeleteTeamParams {
+	o.TeamID = teamID
 	return o
 }
 

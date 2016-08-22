@@ -48,9 +48,9 @@ type GetTeamDetailParams struct {
 	timeout time.Duration
 }
 
-// WithTeamID adds the teamId to the get team detail params
-func (o *GetTeamDetailParams) WithTeamID(TeamID int64) *GetTeamDetailParams {
-	o.TeamID = TeamID
+// WithTeamID adds the teamID to the get team detail params
+func (o *GetTeamDetailParams) WithTeamID(teamID int64) *GetTeamDetailParams {
+	o.TeamID = teamID
 	return o
 }
 

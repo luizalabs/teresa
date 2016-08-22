@@ -53,14 +53,14 @@ type UpdateTeamParams struct {
 }
 
 // WithBody adds the body to the update team params
-func (o *UpdateTeamParams) WithBody(Body *models.Team) *UpdateTeamParams {
-	o.Body = Body
+func (o *UpdateTeamParams) WithBody(body *models.Team) *UpdateTeamParams {
+	o.Body = body
 	return o
 }
 
-// WithTeamID adds the teamId to the update team params
-func (o *UpdateTeamParams) WithTeamID(TeamID int64) *UpdateTeamParams {
-	o.TeamID = TeamID
+// WithTeamID adds the teamID to the update team params
+func (o *UpdateTeamParams) WithTeamID(teamID int64) *UpdateTeamParams {
+	o.TeamID = teamID
 	return o
 }
 

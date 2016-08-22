@@ -18,8 +18,8 @@ import (
 // with the default values initialized.
 func NewGetTeamsParams() *GetTeamsParams {
 	var (
-		limitDefault int64 = int64(20)
-		sinceDefault int64 = int64(0)
+		limitDefault = int64(20)
+		sinceDefault = int64(0)
 	)
 	return &GetTeamsParams{
 		Limit: &limitDefault,
@@ -64,14 +64,14 @@ type GetTeamsParams struct {
 }
 
 // WithLimit adds the limit to the get teams params
-func (o *GetTeamsParams) WithLimit(Limit *int64) *GetTeamsParams {
-	o.Limit = Limit
+func (o *GetTeamsParams) WithLimit(limit *int64) *GetTeamsParams {
+	o.Limit = limit
 	return o
 }
 
 // WithSince adds the since to the get teams params
-func (o *GetTeamsParams) WithSince(Since *int64) *GetTeamsParams {
-	o.Since = Since
+func (o *GetTeamsParams) WithSince(since *int64) *GetTeamsParams {
+	o.Since = since
 	return o
 }
 

@@ -57,21 +57,21 @@ type UpdateAppParams struct {
 	timeout time.Duration
 }
 
-// WithAppID adds the appId to the update app params
-func (o *UpdateAppParams) WithAppID(AppID int64) *UpdateAppParams {
-	o.AppID = AppID
+// WithAppID adds the appID to the update app params
+func (o *UpdateAppParams) WithAppID(appID int64) *UpdateAppParams {
+	o.AppID = appID
 	return o
 }
 
 // WithBody adds the body to the update app params
-func (o *UpdateAppParams) WithBody(Body *models.App) *UpdateAppParams {
-	o.Body = Body
+func (o *UpdateAppParams) WithBody(body *models.App) *UpdateAppParams {
+	o.Body = body
 	return o
 }
 
-// WithTeamID adds the teamId to the update app params
-func (o *UpdateAppParams) WithTeamID(TeamID int64) *UpdateAppParams {
-	o.TeamID = TeamID
+// WithTeamID adds the teamID to the update app params
+func (o *UpdateAppParams) WithTeamID(teamID int64) *UpdateAppParams {
+	o.TeamID = teamID
 	return o
 }
 

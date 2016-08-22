@@ -59,26 +59,26 @@ type CreateDeploymentParams struct {
 }
 
 // WithAppTarball adds the appTarball to the create deployment params
-func (o *CreateDeploymentParams) WithAppTarball(AppTarball os.File) *CreateDeploymentParams {
-	o.AppTarball = AppTarball
+func (o *CreateDeploymentParams) WithAppTarball(appTarball os.File) *CreateDeploymentParams {
+	o.AppTarball = appTarball
 	return o
 }
 
-// WithAppID adds the appId to the create deployment params
-func (o *CreateDeploymentParams) WithAppID(AppID int64) *CreateDeploymentParams {
-	o.AppID = AppID
+// WithAppID adds the appID to the create deployment params
+func (o *CreateDeploymentParams) WithAppID(appID int64) *CreateDeploymentParams {
+	o.AppID = appID
 	return o
 }
 
 // WithDescription adds the description to the create deployment params
-func (o *CreateDeploymentParams) WithDescription(Description *string) *CreateDeploymentParams {
-	o.Description = Description
+func (o *CreateDeploymentParams) WithDescription(description *string) *CreateDeploymentParams {
+	o.Description = description
 	return o
 }
 
-// WithTeamID adds the teamId to the create deployment params
-func (o *CreateDeploymentParams) WithTeamID(TeamID int64) *CreateDeploymentParams {
-	o.TeamID = TeamID
+// WithTeamID adds the teamID to the create deployment params
+func (o *CreateDeploymentParams) WithTeamID(teamID int64) *CreateDeploymentParams {
+	o.TeamID = teamID
 	return o
 }
 

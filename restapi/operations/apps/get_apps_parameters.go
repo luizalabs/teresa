@@ -18,8 +18,8 @@ import (
 // with the default values initialized.
 func NewGetAppsParams() GetAppsParams {
 	var (
-		limitDefault int64 = int64(20)
-		sinceDefault int64 = int64(0)
+		limitDefault = int64(20)
+		sinceDefault = int64(0)
 	)
 	return GetAppsParams{
 		Limit: &limitDefault,

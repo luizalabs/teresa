@@ -18,8 +18,8 @@ import (
 // with the default values initialized.
 func NewGetAppsParams() *GetAppsParams {
 	var (
-		limitDefault int64 = int64(20)
-		sinceDefault int64 = int64(0)
+		limitDefault = int64(20)
+		sinceDefault = int64(0)
 	)
 	return &GetAppsParams{
 		Limit: &limitDefault,
@@ -69,20 +69,20 @@ type GetAppsParams struct {
 }
 
 // WithLimit adds the limit to the get apps params
-func (o *GetAppsParams) WithLimit(Limit *int64) *GetAppsParams {
-	o.Limit = Limit
+func (o *GetAppsParams) WithLimit(limit *int64) *GetAppsParams {
+	o.Limit = limit
 	return o
 }
 
 // WithSince adds the since to the get apps params
-func (o *GetAppsParams) WithSince(Since *int64) *GetAppsParams {
-	o.Since = Since
+func (o *GetAppsParams) WithSince(since *int64) *GetAppsParams {
+	o.Since = since
 	return o
 }
 
-// WithTeamID adds the teamId to the get apps params
-func (o *GetAppsParams) WithTeamID(TeamID int64) *GetAppsParams {
-	o.TeamID = TeamID
+// WithTeamID adds the teamID to the get apps params
+func (o *GetAppsParams) WithTeamID(teamID int64) *GetAppsParams {
+	o.TeamID = teamID
 	return o
 }
 

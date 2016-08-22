@@ -77,7 +77,7 @@ gen-api-server:
 	swagger generate server -A $(TERESA_API_NAME) -f $(SWAGGER_SPEC)
 
 run-api-server:
-	go run ./cmd/teresa-server/main.go --http-server 127.0.0.1:8080
+	go run ./cmd/teresa-server/main.go --port 8080
 
 gen-api-client:
 	swagger generate client -A $(TERESA_API_NAME) -f $(SWAGGER_SPEC)

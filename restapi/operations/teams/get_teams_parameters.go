@@ -18,8 +18,8 @@ import (
 // with the default values initialized.
 func NewGetTeamsParams() GetTeamsParams {
 	var (
-		limitDefault int64 = int64(20)
-		sinceDefault int64 = int64(0)
+		limitDefault = int64(20)
+		sinceDefault = int64(0)
 	)
 	return GetTeamsParams{
 		Limit: &limitDefault,

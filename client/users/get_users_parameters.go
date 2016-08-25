@@ -18,8 +18,8 @@ import (
 // with the default values initialized.
 func NewGetUsersParams() *GetUsersParams {
 	var (
-		limitDefault int64 = int64(20)
-		sinceDefault int64 = int64(0)
+		limitDefault = int64(20)
+		sinceDefault = int64(0)
 	)
 	return &GetUsersParams{
 		Limit: &limitDefault,
@@ -64,14 +64,14 @@ type GetUsersParams struct {
 }
 
 // WithLimit adds the limit to the get users params
-func (o *GetUsersParams) WithLimit(Limit *int64) *GetUsersParams {
-	o.Limit = Limit
+func (o *GetUsersParams) WithLimit(limit *int64) *GetUsersParams {
+	o.Limit = limit
 	return o
 }
 
 // WithSince adds the since to the get users params
-func (o *GetUsersParams) WithSince(Since *int64) *GetUsersParams {
-	o.Since = Since
+func (o *GetUsersParams) WithSince(since *int64) *GetUsersParams {
+	o.Since = since
 	return o
 }
 

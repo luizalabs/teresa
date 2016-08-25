@@ -48,9 +48,9 @@ type UpdateUserParams struct {
 	timeout time.Duration
 }
 
-// WithUserID adds the userId to the update user params
-func (o *UpdateUserParams) WithUserID(UserID int64) *UpdateUserParams {
-	o.UserID = UserID
+// WithUserID adds the userID to the update user params
+func (o *UpdateUserParams) WithUserID(userID int64) *UpdateUserParams {
+	o.UserID = userID
 	return o
 }
 

@@ -48,9 +48,9 @@ type DeleteUserParams struct {
 	timeout time.Duration
 }
 
-// WithUserID adds the userId to the delete user params
-func (o *DeleteUserParams) WithUserID(UserID int64) *DeleteUserParams {
-	o.UserID = UserID
+// WithUserID adds the userID to the delete user params
+func (o *DeleteUserParams) WithUserID(userID int64) *DeleteUserParams {
+	o.UserID = userID
 	return o
 }
 

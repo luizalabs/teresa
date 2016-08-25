@@ -53,15 +53,15 @@ type GetAppDetailsParams struct {
 	timeout time.Duration
 }
 
-// WithAppID adds the appId to the get app details params
-func (o *GetAppDetailsParams) WithAppID(AppID int64) *GetAppDetailsParams {
-	o.AppID = AppID
+// WithAppID adds the appID to the get app details params
+func (o *GetAppDetailsParams) WithAppID(appID int64) *GetAppDetailsParams {
+	o.AppID = appID
 	return o
 }
 
-// WithTeamID adds the teamId to the get app details params
-func (o *GetAppDetailsParams) WithTeamID(TeamID int64) *GetAppDetailsParams {
-	o.TeamID = TeamID
+// WithTeamID adds the teamID to the get app details params
+func (o *GetAppDetailsParams) WithTeamID(teamID int64) *GetAppDetailsParams {
+	o.TeamID = teamID
 	return o
 }
 

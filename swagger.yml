@@ -442,6 +442,8 @@ paths:
         - token_header: []
       consumes:
         - multipart/form-data
+      produces:
+        - text/plain
       parameters:
         - $ref: "#/parameters/teamId"
         - $ref: "#/parameters/appId"

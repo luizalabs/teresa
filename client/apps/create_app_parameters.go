@@ -53,14 +53,14 @@ type CreateAppParams struct {
 }
 
 // WithBody adds the body to the create app params
-func (o *CreateAppParams) WithBody(Body *models.App) *CreateAppParams {
-	o.Body = Body
+func (o *CreateAppParams) WithBody(body *models.App) *CreateAppParams {
+	o.Body = body
 	return o
 }
 
-// WithTeamID adds the teamId to the create app params
-func (o *CreateAppParams) WithTeamID(TeamID int64) *CreateAppParams {
-	o.TeamID = TeamID
+// WithTeamID adds the teamID to the create app params
+func (o *CreateAppParams) WithTeamID(teamID int64) *CreateAppParams {
+	o.TeamID = teamID
 	return o
 }
 

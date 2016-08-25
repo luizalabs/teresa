@@ -37,7 +37,7 @@ func (a *Client) CreateDeployment(params *CreateDeploymentParams, authInfo runti
 		ID:                 "createDeployment",
 		Method:             "POST",
 		PathPattern:        "/teams/{team_id}/apps/{app_id}/deployments",
-		ProducesMediaTypes: []string{"application/json"},
+		ProducesMediaTypes: []string{"text/plain"},
 		ConsumesMediaTypes: []string{"multipart/form-data"},
 		Schemes:            []string{"http"},
 		Params:             params,

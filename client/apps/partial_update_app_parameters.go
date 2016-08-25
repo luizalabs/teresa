@@ -57,21 +57,21 @@ type PartialUpdateAppParams struct {
 	timeout time.Duration
 }
 
-// WithAppID adds the appId to the partial update app params
-func (o *PartialUpdateAppParams) WithAppID(AppID int64) *PartialUpdateAppParams {
-	o.AppID = AppID
+// WithAppID adds the appID to the partial update app params
+func (o *PartialUpdateAppParams) WithAppID(appID int64) *PartialUpdateAppParams {
+	o.AppID = appID
 	return o
 }
 
 // WithBody adds the body to the partial update app params
-func (o *PartialUpdateAppParams) WithBody(Body []*models.PatchAppRequest) *PartialUpdateAppParams {
-	o.Body = Body
+func (o *PartialUpdateAppParams) WithBody(body []*models.PatchAppRequest) *PartialUpdateAppParams {
+	o.Body = body
 	return o
 }
 
-// WithTeamID adds the teamId to the partial update app params
-func (o *PartialUpdateAppParams) WithTeamID(TeamID int64) *PartialUpdateAppParams {
-	o.TeamID = TeamID
+// WithTeamID adds the teamID to the partial update app params
+func (o *PartialUpdateAppParams) WithTeamID(teamID int64) *PartialUpdateAppParams {
+	o.TeamID = teamID
 	return o
 }
 

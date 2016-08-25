@@ -18,8 +18,8 @@ import (
 // with the default values initialized.
 func NewGetUserDetailsParams() *GetUserDetailsParams {
 	var (
-		limitDefault int64 = int64(20)
-		sinceDefault int64 = int64(0)
+		limitDefault = int64(20)
+		sinceDefault = int64(0)
 	)
 	return &GetUserDetailsParams{
 		Limit: &limitDefault,
@@ -69,20 +69,20 @@ type GetUserDetailsParams struct {
 }
 
 // WithLimit adds the limit to the get user details params
-func (o *GetUserDetailsParams) WithLimit(Limit *int64) *GetUserDetailsParams {
-	o.Limit = Limit
+func (o *GetUserDetailsParams) WithLimit(limit *int64) *GetUserDetailsParams {
+	o.Limit = limit
 	return o
 }
 
 // WithSince adds the since to the get user details params
-func (o *GetUserDetailsParams) WithSince(Since *int64) *GetUserDetailsParams {
-	o.Since = Since
+func (o *GetUserDetailsParams) WithSince(since *int64) *GetUserDetailsParams {
+	o.Since = since
 	return o
 }
 
-// WithUserID adds the userId to the get user details params
-func (o *GetUserDetailsParams) WithUserID(UserID int64) *GetUserDetailsParams {
-	o.UserID = UserID
+// WithUserID adds the userID to the get user details params
+func (o *GetUserDetailsParams) WithUserID(userID int64) *GetUserDetailsParams {
+	o.UserID = userID
 	return o
 }
 

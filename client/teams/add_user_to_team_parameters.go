@@ -50,14 +50,14 @@ type AddUserToTeamParams struct {
 }
 
 // WithTeamName adds the teamName to the add user to team params
-func (o *AddUserToTeamParams) WithTeamName(TeamName string) *AddUserToTeamParams {
-	o.TeamName = TeamName
+func (o *AddUserToTeamParams) WithTeamName(teamName string) *AddUserToTeamParams {
+	o.TeamName = teamName
 	return o
 }
 
 // WithUser adds the user to the add user to team params
-func (o *AddUserToTeamParams) WithUser(User AddUserToTeamBody) *AddUserToTeamParams {
-	o.User = User
+func (o *AddUserToTeamParams) WithUser(user AddUserToTeamBody) *AddUserToTeamParams {
+	o.User = user
 	return o
 }
 

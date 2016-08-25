@@ -18,8 +18,8 @@ import (
 // with the default values initialized.
 func NewGetUsersParams() GetUsersParams {
 	var (
-		limitDefault int64 = int64(20)
-		sinceDefault int64 = int64(0)
+		limitDefault = int64(20)
+		sinceDefault = int64(0)
 	)
 	return GetUsersParams{
 		Limit: &limitDefault,

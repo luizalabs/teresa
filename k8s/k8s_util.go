@@ -6,6 +6,7 @@ import (
 
 	"github.com/pborman/uuid"
 	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/apis/extensions"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/labels"
@@ -13,13 +14,14 @@ import (
 )
 
 const (
-	slugBuilderName = "deis-slugbuilder"
-	tarPath         = "TAR_PATH"
-	putPath         = "PUT_PATH"
-	debugKey        = "DEIS_DEBUG"
-	builderStorage  = "BUILDER_STORAGE"
-	objectStore     = "s3-storage"
-	objectStorePath = "/var/run/secrets/deis/objectstore/creds"
+	slugBuilderName  = "deis-slugbuilder"
+	slugBuilderImage = "luizalabs/slugbuilder:git-923c9f8"
+	tarPath          = "TAR_PATH"
+	putPath          = "PUT_PATH"
+	debugKey         = "DEIS_DEBUG"
+	builderStorage   = "BUILDER_STORAGE"
+	objectStore      = "s3-storage"
+	objectStorePath  = "/var/run/secrets/deis/objectstore/creds"
 )
 
 // SlugBuilderPodName is used to generate a temp name to the builder pod
@@ -29,13 +31,7 @@ func SlugBuilderPodName(appName, shortSha string) string {
 }
 
 // BuildSlugbuilderPod is used to create an builder pod
-func BuildSlugbuilderPod(
-	debug bool,
-	name,
-	namespace,
-	tarKey,
-	putKey,
-	buildpackURL string) *api.Pod {
+func BuildSlugbuilderPod(env map[string]string, name, namespace, tarKey, putKey, buildpackURL string, debug bool) *api.Pod {
 	bn := fmt.Sprintf("slugbuilder-%s", name)
 	e := make(map[string]interface{})
 	e["BUILDER_STORAGE"] = "s3"
@@ -47,17 +43,58 @@ func BuildSlugbuilderPod(
 	if buildpackURL != "" {
 		e["BUILDPACK_URL"] = buildpackURL
 	}
-	c := buildContainer("deis-slugbuilder", "luizalabs/slugbuilder:git-923c9f8",
-		api.PullIfNotPresent, nil, e)
-	addVolMountToContainer(c, "storage-keys", "/var/run/secrets/deis/objectstore/creds", true)
+	for k, v := range env {
+		e[k] = v
+	}
+	c := buildContainer(slugBuilderName, slugBuilderImage, api.PullIfNotPresent, nil, e)
+	addVolMountToContainer(c, "storage-keys", objectStorePath, true)
 	podSpec := buildPodSpec(api.RestartPolicyNever, []api.Container{*c})
 	addVolSecretToPodSpec(podSpec, "storage-keys", "s3-storage")
-	l := map[string]string{
+	labels := map[string]string{
 		"heritage": bn,
 	}
-	p := BuildPod(bn, namespace, l, podSpec)
 
-	return p
+	pod := api.Pod{
+		TypeMeta: unversioned.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: api.ObjectMeta{
+			Name:      bn,
+			Namespace: namespace,
+			Labels:    labels,
+		},
+		Spec: *podSpec,
+	}
+	return &pod
+}
+
+// BuildSlugRunnerDeployment builds a deployment using a slugrunner image
+// with the slug built by the slugbuilder some steps earlier.
+func BuildSlugRunnerDeployment(
+	name string,
+	namespace string,
+	maxUnavailable int,
+	maxSurge int,
+	replicas int,
+	selector string,
+	slugURL string,
+	env map[string]string) *extensions.Deployment {
+	// TODO: we should remove the selector and use the name
+	e := make(map[string]interface{})
+	e["PORT"] = "5000"
+	e["BUILDER_STORAGE"] = "s3"
+	e["DEIS_DEBUG"] = true
+	e["SLUG_URL"] = slugURL
+	for k, v := range env {
+		e[k] = v
+	}
+	c := buildContainer(slugBuilderName, slugBuilderImage, api.PullIfNotPresent, []string{"start", "web"}, e)
+	addVolMountToContainer(c, "storage-keys", objectStorePath, true)
+	podSpec := buildPodSpec(api.RestartPolicyAlways, []api.Container{*c})
+	addVolSecretToPodSpec(podSpec, "storage-keys", "s3-storage")
+
+	return BuildDeployment(name, namespace, maxUnavailable, maxSurge, replicas, selector, *podSpec)
 }
 
 // WaitForPod waits for running stated, among others
@@ -112,35 +149,6 @@ func waitForPodCondition(c *client.Client, ns, podName string, condition func(po
 
 		return false, nil
 	})
-}
-
-// BuildSlugRunnerDeployment builds a deployment using a slugrunner image
-// with the slug built by the slugbuilder some steps earlier.
-func BuildSlugRunnerDeployment(
-	name string,
-	namespace string,
-	maxUnavailable int,
-	maxSurge int,
-	replicas int,
-	selector string,
-	slugURL string,
-	env map[string]string) *extensions.Deployment {
-	// TODO: we should remove the selector and use the name
-	e := make(map[string]interface{})
-	e["PORT"] = "5000"
-	e["BUILDER_STORAGE"] = "s3"
-	e["DEIS_DEBUG"] = true
-	e["SLUG_URL"] = slugURL
-	for k, v := range env {
-		e[k] = v
-	}
-	c := buildContainer("deis-slugrunner", "luizalabs/slugrunner:git-044f85c",
-		api.PullIfNotPresent, []string{"start", "web"}, e)
-	addVolMountToContainer(c, "storage-keys", "/var/run/secrets/deis/objectstore/creds", true)
-	podSpec := buildPodSpec(api.RestartPolicyAlways, []api.Container{*c})
-	addVolSecretToPodSpec(podSpec, "storage-keys", "s3-storage")
-
-	return BuildDeployment(name, namespace, maxUnavailable, maxSurge, replicas, selector, *podSpec)
 }
 
 // BuildSlugRunnerLBService helps to create a slugrunner service pointing to port 5000

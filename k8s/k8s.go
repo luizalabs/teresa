@@ -110,24 +110,6 @@ func BuildDeployment(
 	return &d
 }
 
-// BuildPod qwreewrwqerwerweqr
-func BuildPod(name string, namespace string, labels map[string]string, podSpec *api.PodSpec) *api.Pod {
-	p := api.Pod{
-		TypeMeta: unversioned.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
-		ObjectMeta: api.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			Labels:    labels,
-		},
-		Spec: *podSpec,
-	}
-
-	return &p
-}
-
 // BuildLoadBalancerService creates a service of type load balancer
 func BuildLoadBalancerService(name, namespace, selector string) *api.Service {
 	s := api.Service{

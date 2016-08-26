@@ -4,6 +4,7 @@ package deployments
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/go-openapi/runtime"
@@ -18,7 +19,7 @@ swagger:response createDeploymentOK
 type CreateDeploymentOK struct {
 
 	// In: body
-	Payload *models.App `json:"body,omitempty"`
+	Payload io.ReadCloser `json:"body,omitempty"`
 }
 
 // NewCreateDeploymentOK creates CreateDeploymentOK with default headers values
@@ -27,13 +28,13 @@ func NewCreateDeploymentOK() *CreateDeploymentOK {
 }
 
 // WithPayload adds the payload to the create deployment o k response
-func (o *CreateDeploymentOK) WithPayload(payload *models.App) *CreateDeploymentOK {
+func (o *CreateDeploymentOK) WithPayload(payload io.ReadCloser) *CreateDeploymentOK {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the create deployment o k response
-func (o *CreateDeploymentOK) SetPayload(payload *models.App) {
+func (o *CreateDeploymentOK) SetPayload(payload io.ReadCloser) {
 	o.Payload = payload
 }
 
@@ -41,11 +42,10 @@ func (o *CreateDeploymentOK) SetPayload(payload *models.App) {
 func (o *CreateDeploymentOK) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
 	rw.WriteHeader(200)
-	if o.Payload != nil {
-		if err := producer.Produce(rw, o.Payload); err != nil {
-			panic(err) // let the recovery middleware deal with this
-		}
+	if err := producer.Produce(rw, o.Payload); err != nil {
+		panic(err) // let the recovery middleware deal with this
 	}
+
 }
 
 /*CreateDeploymentUnauthorized User not authorized

@@ -248,31 +248,31 @@
 		},
 		{
 			"ImportPath": "github.com/go-openapi/runtime",
-			"Rev": "11e322eeecc1032d5a0a96c566ed53f2b5c26e22"
+			"Rev": "b5bd5f10b3ecfc154ac2bdf3cfe5119d313a81fb"
 		},
 		{
 			"ImportPath": "github.com/go-openapi/runtime/client",
-			"Rev": "11e322eeecc1032d5a0a96c566ed53f2b5c26e22"
+			"Rev": "b5bd5f10b3ecfc154ac2bdf3cfe5119d313a81fb"
 		},
 		{
 			"ImportPath": "github.com/go-openapi/runtime/middleware",
-			"Rev": "11e322eeecc1032d5a0a96c566ed53f2b5c26e22"
+			"Rev": "b5bd5f10b3ecfc154ac2bdf3cfe5119d313a81fb"
 		},
 		{
 			"ImportPath": "github.com/go-openapi/runtime/middleware/denco",
-			"Rev": "11e322eeecc1032d5a0a96c566ed53f2b5c26e22"
+			"Rev": "b5bd5f10b3ecfc154ac2bdf3cfe5119d313a81fb"
 		},
 		{
 			"ImportPath": "github.com/go-openapi/runtime/middleware/header",
-			"Rev": "11e322eeecc1032d5a0a96c566ed53f2b5c26e22"
+			"Rev": "b5bd5f10b3ecfc154ac2bdf3cfe5119d313a81fb"
 		},
 		{
 			"ImportPath": "github.com/go-openapi/runtime/middleware/untyped",
-			"Rev": "11e322eeecc1032d5a0a96c566ed53f2b5c26e22"
+			"Rev": "b5bd5f10b3ecfc154ac2bdf3cfe5119d313a81fb"
 		},
 		{
 			"ImportPath": "github.com/go-openapi/runtime/security",
-			"Rev": "11e322eeecc1032d5a0a96c566ed53f2b5c26e22"
+			"Rev": "b5bd5f10b3ecfc154ac2bdf3cfe5119d313a81fb"
 		},
 		{
 			"ImportPath": "github.com/go-openapi/spec",
@@ -367,15 +367,15 @@
 		},
 		{
 			"ImportPath": "github.com/mailru/easyjson/buffer",
-			"Rev": "d5b7844b561a7bc640052f1b935f7b800330d7e0"
+			"Rev": "34560e358dc05e2c28f6fda2f5c9e7494a4b9b19"
 		},
 		{
 			"ImportPath": "github.com/mailru/easyjson/jlexer",
-			"Rev": "d5b7844b561a7bc640052f1b935f7b800330d7e0"
+			"Rev": "34560e358dc05e2c28f6fda2f5c9e7494a4b9b19"
 		},
 		{
 			"ImportPath": "github.com/mailru/easyjson/jwriter",
-			"Rev": "d5b7844b561a7bc640052f1b935f7b800330d7e0"
+			"Rev": "34560e358dc05e2c28f6fda2f5c9e7494a4b9b19"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-sqlite3",

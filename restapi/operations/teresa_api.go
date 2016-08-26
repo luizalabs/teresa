@@ -48,10 +48,10 @@ type TeresaAPI struct {
 	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
 	MultipartformConsumer runtime.Consumer
 
-	// TxtProducer registers a producer for a "text/plain" mime type
-	TxtProducer runtime.Producer
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
+	// BinProducer registers a producer for a "application/octet-stream" mime type
+	BinProducer runtime.Producer
 
 	// APIKeyAuth registers a function that takes a token and returns a principal
 	// it performs authentication based on an api key token provided in the query
@@ -164,12 +164,12 @@ func (o *TeresaAPI) Validate() error {
 		unregistered = append(unregistered, "MultipartformConsumer")
 	}
 
-	if o.TxtProducer == nil {
-		unregistered = append(unregistered, "TxtProducer")
-	}
-
 	if o.JSONProducer == nil {
 		unregistered = append(unregistered, "JSONProducer")
+	}
+
+	if o.BinProducer == nil {
+		unregistered = append(unregistered, "BinProducer")
 	}
 
 	if o.APIKeyAuth == nil {
@@ -319,11 +319,11 @@ func (o *TeresaAPI) ProducersFor(mediaTypes []string) map[string]runtime.Produce
 	for _, mt := range mediaTypes {
 		switch mt {
 
-		case "text/plain":
-			result["text/plain"] = o.TxtProducer
-
 		case "application/json":
 			result["application/json"] = o.JSONProducer
+
+		case "application/octet-stream":
+			result["application/octet-stream"] = o.BinProducer
 
 		}
 	}

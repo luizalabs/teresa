@@ -4,6 +4,8 @@ package deployments
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"io"
+
 	"github.com/go-openapi/runtime"
 
 	strfmt "github.com/go-openapi/strfmt"
@@ -27,7 +29,7 @@ CreateDeployment creates a new deploy
 
 Create a deploy for an app
 */
-func (a *Client) CreateDeployment(params *CreateDeploymentParams, authInfo runtime.ClientAuthInfoWriter) (*CreateDeploymentOK, error) {
+func (a *Client) CreateDeployment(params *CreateDeploymentParams, authInfo runtime.ClientAuthInfoWriter, writer io.Writer) (*CreateDeploymentOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewCreateDeploymentParams()
@@ -37,11 +39,11 @@ func (a *Client) CreateDeployment(params *CreateDeploymentParams, authInfo runti
 		ID:                 "createDeployment",
 		Method:             "POST",
 		PathPattern:        "/teams/{team_id}/apps/{app_id}/deployments",
-		ProducesMediaTypes: []string{"text/plain"},
+		ProducesMediaTypes: []string{"application/octet-stream"},
 		ConsumesMediaTypes: []string{"multipart/form-data"},
 		Schemes:            []string{"http"},
 		Params:             params,
-		Reader:             &CreateDeploymentReader{formats: a.formats},
+		Reader:             &CreateDeploymentReader{formats: a.formats, writer: writer},
 		AuthInfo:           authInfo,
 	})
 	if err != nil {

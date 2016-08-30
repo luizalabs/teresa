@@ -16,6 +16,7 @@ import (
 const (
 	slugBuilderName  = "deis-slugbuilder"
 	slugBuilderImage = "luizalabs/slugbuilder:git-923c9f8"
+	slugRunnerImage  = "luizalabs/slugrunner:git-044f85c"
 	tarPath          = "TAR_PATH"
 	putPath          = "PUT_PATH"
 	debugKey         = "DEIS_DEBUG"
@@ -89,7 +90,7 @@ func BuildSlugRunnerDeployment(
 	for k, v := range env {
 		e[k] = v
 	}
-	c := buildContainer(slugBuilderName, slugBuilderImage, api.PullIfNotPresent, []string{"start", "web"}, e)
+	c := buildContainer(slugBuilderName, slugRunnerImage, api.PullIfNotPresent, []string{"start", "web"}, e)
 	addVolMountToContainer(c, "storage-keys", objectStorePath, true)
 	podSpec := buildPodSpec(api.RestartPolicyAlways, []api.Container{*c})
 	addVolSecretToPodSpec(podSpec, "storage-keys", "s3-storage")

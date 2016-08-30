@@ -380,7 +380,7 @@ func responder(p *deployParams, appID uint, description *string, errorDescriptio
 	storage.DB.Save(&sd)
 
 	if errorFound {
-		m := fmt.Sprintf("deploy finished with error. %s\n", errorDescription)
+		m := fmt.Sprintf("deploy finished with the error: %s\n", errorDescription)
 		log.Print(m)
 		fw.Println(m)
 		return
@@ -403,6 +403,31 @@ func responder(p *deployParams, appID uint, description *string, errorDescriptio
 	fw.Printf("Deploy: %s\n", sdeploy.UUID)
 }
 
+type teresaResponder struct {
+	params           *deployParams
+	appID            uint
+	description      *string
+	errorDescription string
+	fw               *flushResponseWriter
+}
+
+func (tr *teresaResponder) run(err error, format string, a ...interface{}) {
+	d := ""
+	if a != nil {
+		d = fmt.Sprintf(format, a)
+	}
+	if err != nil {
+		log.Println("responding error")
+		s := fmt.Sprintf("%s\n%v", err.Error(), d)
+		responder(tr.params, tr.appID, tr.description, s, tr.fw)
+		tr.fw.Write([]byte("----------deployment-error----------"))
+	} else {
+		log.Println("responding success")
+		responder(tr.params, tr.appID, tr.description, d, tr.fw)
+		tr.fw.Write([]byte("----------deployment-success----------"))
+	}
+}
+
 // CreateDeploymentHandler handler triggered when a deploy url is requested
 var CreateDeploymentHandler deployments.CreateDeploymentHandlerFunc = func(params deployments.CreateDeploymentParams, principal interface{}) middleware.Responder {
 	var r middleware.ResponderFunc = func(rw http.ResponseWriter, pr runtime.Producer) {
@@ -421,31 +446,38 @@ var CreateDeploymentHandler deployments.CreateDeploymentHandlerFunc = func(param
 		}
 		// creating deploy params obj
 		x := newDeployParams(&sa)
+		teresaResp := &teresaResponder{
+			params:           x,
+			appID:            appID,
+			description:      params.Description,
+			errorDescription: "",
+			fw:               fw,
+		}
 		log.Printf("starting deploy proccess [%s/%s/%s]\n", x.teamName, x.appName, x.id)
 		// upload file
 		if err := uploadArchiveToStorage(&x.storageIn, &params.AppTarball); err != nil {
-			responder(x, appID, params.Description, "uploading app tarball", fw)
+			teresaResp.run(err, "uploading app tarball")
 			return
 		}
 		// build app
-		fw.Println("starting the build...")
+		fw.Println("Starting the build")
 		if err := buildAppSlug(x, fw); err != nil {
 			deleteArchiveOnStorage(&x.storageIn)
-			responder(x, appID, params.Description, "building app", fw)
+			teresaResp.run(err, "building app")
 			return
 		}
 		// creating deploy
 		deploy, err := getDeploy(x)
 		if err != nil {
 			deleteArchiveOnStorage(&x.storageIn)
-			responder(x, appID, params.Description, "creating deploy", fw)
+			teresaResp.run(err, "get existant deploy")
 			return
 		}
 		if deploy == nil { // k8s deploy doesn't exists...
 			// creating k8s deployment...
 			if _, err = createSlugRunnerDeploy(x, &sa); err != nil {
 				deleteArchiveOnStorage(&x.storageIn)
-				responder(x, appID, params.Description, "creating deploy", fw)
+				teresaResp.run(err, "creating deploy")
 				return
 			}
 			// creating k8s service with LoadBalance...
@@ -454,7 +486,7 @@ var CreateDeploymentHandler deployments.CreateDeploymentHandlerFunc = func(param
 			if err != nil {
 				deleteDeploy(x)
 				deleteArchiveOnStorage(&x.storageIn)
-				responder(x, appID, params.Description, "creating service", fw)
+				teresaResp.run(err, "creating service")
 				return
 			}
 			// save address fo the LB to db...
@@ -466,11 +498,11 @@ var CreateDeploymentHandler deployments.CreateDeploymentHandlerFunc = func(param
 		} else {
 			if _, err := updateSlugRunnerDeploySlug(x, deploy); err != nil {
 				deleteArchiveOnStorage(&x.storageIn)
-				responder(x, appID, params.Description, "rolling update deploy", fw)
+				teresaResp.run(err, "rolling update deploy")
 				return
 			}
 		}
-		responder(x, appID, params.Description, "", fw)
+		teresaResp.run(nil, "deployment process finished succesfully")
 	}
 	return r
 }

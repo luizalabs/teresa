@@ -17,6 +17,7 @@ import (
 // CreateDeploymentReader is a Reader for the CreateDeployment structure.
 type CreateDeploymentReader struct {
 	formats strfmt.Registry
+	writer  io.Writer
 }
 
 // ReadResponse reads a server response into the recieved o.
@@ -24,7 +25,7 @@ func (o *CreateDeploymentReader) ReadResponse(response runtime.ClientResponse, c
 	switch response.Code() {
 
 	case 200:
-		result := NewCreateDeploymentOK()
+		result := NewCreateDeploymentOK(o.writer)
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -54,8 +55,10 @@ func (o *CreateDeploymentReader) ReadResponse(response runtime.ClientResponse, c
 }
 
 // NewCreateDeploymentOK creates a CreateDeploymentOK with default headers values
-func NewCreateDeploymentOK() *CreateDeploymentOK {
-	return &CreateDeploymentOK{}
+func NewCreateDeploymentOK(writer io.Writer) *CreateDeploymentOK {
+	return &CreateDeploymentOK{
+		Payload: writer,
+	}
 }
 
 /*CreateDeploymentOK handles this case with default header values.
@@ -63,7 +66,7 @@ func NewCreateDeploymentOK() *CreateDeploymentOK {
 App
 */
 type CreateDeploymentOK struct {
-	Payload *models.App
+	Payload io.Writer
 }
 
 func (o *CreateDeploymentOK) Error() string {
@@ -71,8 +74,6 @@ func (o *CreateDeploymentOK) Error() string {
 }
 
 func (o *CreateDeploymentOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.App)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

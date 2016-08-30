@@ -443,7 +443,7 @@ paths:
       consumes:
         - multipart/form-data
       produces:
-        - text/plain
+        - application/octet-stream
       parameters:
         - $ref: "#/parameters/teamId"
         - $ref: "#/parameters/appId"
@@ -459,7 +459,8 @@ paths:
         200:
           description: App
           schema:
-            $ref: "#/definitions/App"
+            type: string
+            format: binary
         401:
           description: User not authorized
           schema:

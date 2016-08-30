@@ -39,6 +39,8 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 
 	api.JSONProducer = runtime.JSONProducer()
 
+	api.BinProducer = runtime.ByteStreamProducer()
+
 	// authentication
 	api.APIKeyAuth = handlers.TokenAuthHandler
 	api.TokenHeaderAuth = handlers.TokenAuthHandler

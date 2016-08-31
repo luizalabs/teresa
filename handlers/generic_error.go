@@ -1,0 +1,94 @@
+package handlers
+
+import (
+	"net/http"
+
+	"github.com/go-openapi/runtime"
+	"github.com/luizalabs/tapi/models"
+)
+
+// Reason is used to keep the reasons to attach with the error
+type Reason string
+
+// List of reasons to attach with the error response
+const (
+	BadRequest          Reason = "BadRequest"
+	Unauthorized        Reason = "Unauthorized"
+	Forbidden           Reason = "Forbidden"
+	NotFound            Reason = "NotFound"
+	Conflict            Reason = "Conflict"
+	InternalServerError Reason = "InternalServerError"
+)
+
+// const (
+// 	TooManyTeams Reason = "TooManyTeams"
+// 	TeamNotValid Reason = "TeamNotValid"
+//
+// // UserNotMemberOfAnyTeam Reason = "UserNotMemberOfAnyTeam"
+// )
+
+// GenericError is used to help when returning simple and descritive errors
+// to the api
+type GenericError struct {
+	Payload *models.Error `json:"body,omitempty"`
+}
+
+// WithMessage add a message to the error
+func (e *GenericError) WithMessage(message string) *GenericError {
+	e.Payload.Message = &message
+	return e
+}
+
+// WithReason add a reason to the error
+func (e *GenericError) WithReason(reason Reason) *GenericError {
+	e.Payload.Reason = string(reason)
+	return e
+}
+
+// WriteResponse to fits the interface of middleware.Responder
+func (e *GenericError) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+	if e.Payload != nil {
+		rw.WriteHeader(int(*e.Payload.Code))
+		if err := producer.Produce(rw, e.Payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
+}
+
+// NewGenericError is a helper to create a GenericError
+func NewGenericError(code int32, message string) *GenericError {
+	return &GenericError{
+		Payload: &models.Error{
+			Code:    &code,
+			Message: &message,
+		},
+	}
+}
+
+func NewBadRequestError(message string) *GenericError {
+	return NewGenericError(400, message).WithReason(BadRequest)
+}
+
+func NewUnauthorizedError(message string) *GenericError {
+	return NewGenericError(401, message).WithReason(Unauthorized)
+}
+
+func NewForbiddenError() *GenericError {
+	return NewGenericError(403, "Forbidden").WithReason(Forbidden)
+}
+
+func NewNotFoundError() *GenericError {
+	return NewGenericError(404, "Not Found").WithReason(NotFound)
+}
+
+func NewConflictError(message string) *GenericError {
+	return NewGenericError(409, message).WithReason(Conflict)
+}
+
+// func NewUnprocessableEntityError(message string, reason Reason) *GenericError {
+// 	return NewGenericError(422, message).WithReason(reason)
+// }
+
+func NewInternalServerError() *GenericError {
+	return NewGenericError(500, "Internal Server Error").WithReason(InternalServerError)
+}

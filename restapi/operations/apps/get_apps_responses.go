@@ -130,7 +130,7 @@ type GetAppsDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.Error `json:"body,omitempty"`
+	Payload *models.GenericError `json:"body,omitempty"`
 }
 
 // NewGetAppsDefault creates GetAppsDefault with default headers values
@@ -156,13 +156,13 @@ func (o *GetAppsDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the get apps default response
-func (o *GetAppsDefault) WithPayload(payload *models.Error) *GetAppsDefault {
+func (o *GetAppsDefault) WithPayload(payload *models.GenericError) *GetAppsDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get apps default response
-func (o *GetAppsDefault) SetPayload(payload *models.Error) {
+func (o *GetAppsDefault) SetPayload(payload *models.GenericError) {
 	o.Payload = payload
 }
 

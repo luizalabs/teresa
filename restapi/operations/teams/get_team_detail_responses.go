@@ -131,7 +131,7 @@ type GetTeamDetailDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.Error `json:"body,omitempty"`
+	Payload *models.GenericError `json:"body,omitempty"`
 }
 
 // NewGetTeamDetailDefault creates GetTeamDetailDefault with default headers values
@@ -157,13 +157,13 @@ func (o *GetTeamDetailDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the get team detail default response
-func (o *GetTeamDetailDefault) WithPayload(payload *models.Error) *GetTeamDetailDefault {
+func (o *GetTeamDetailDefault) WithPayload(payload *models.GenericError) *GetTeamDetailDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get team detail default response
-func (o *GetTeamDetailDefault) SetPayload(payload *models.Error) {
+func (o *GetTeamDetailDefault) SetPayload(payload *models.GenericError) {
 	o.Payload = payload
 }
 

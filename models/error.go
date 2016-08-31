@@ -7,6 +7,7 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/validate"
 )
 
 /*Error error
@@ -15,21 +16,59 @@ swagger:model Error
 */
 type Error struct {
 
-	/* code
-	 */
-	Code int64 `json:"code,omitempty"`
+	/* http status of the error
+
+	Required: true
+	*/
+	Code *int32 `json:"code"`
 
 	/* message
-	 */
-	Message string `json:"message,omitempty"`
+
+	Required: true
+	*/
+	Message *string `json:"message"`
+
+	/* reason of the error if any.
+	always represented as an enum in pascal case
+
+	*/
+	Reason string `json:"reason,omitempty"`
 }
 
 // Validate validates this error
 func (m *Error) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateCode(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateMessage(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Error) validateCode(formats strfmt.Registry) error {
+
+	if err := validate.Required("code", "body", m.Code); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Error) validateMessage(formats strfmt.Registry) error {
+
+	if err := validate.Required("message", "body", m.Message); err != nil {
+		return err
+	}
+
 	return nil
 }

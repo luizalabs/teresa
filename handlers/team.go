@@ -192,7 +192,7 @@ func AddUserToTeam(params teams.AddUserToTeamParams, principal interface{}) midd
 
 	st := storage.Team{}
 	if storage.DB.Where("name = ?", params.TeamName).First(&st).RecordNotFound() {
-		p := models.Error{Message: "Team doesn't exist"}
+		p := models.GenericError{Message: "Team doesn't exist"}
 		return teams.NewAddUserToTeamDefault(422).WithPayload(&p)
 	}
 
@@ -200,13 +200,13 @@ func AddUserToTeam(params teams.AddUserToTeamParams, principal interface{}) midd
 	storage.DB.Model(&st).Association("Users").Find(&susers)
 	for _, su := range susers {
 		if su.Email == params.User.Email.String() {
-			p := models.Error{Message: "User is already member of the team"}
+			p := models.GenericError{Message: "User is already member of the team"}
 			return teams.NewAddUserToTeamDefault(422).WithPayload(&p)
 		}
 	}
 	su := storage.User{}
 	if storage.DB.Where("email = ? ", params.User.Email.String()).First(&su).RecordNotFound() {
-		p := models.Error{Message: "User must be registered before adding him/her to a team"}
+		p := models.GenericError{Message: "User must be registered before adding him/her to a team"}
 		return teams.NewAddUserToTeamDefault(422).WithPayload(&p)
 	}
 	if err := storage.DB.Model(&st).Association("Users").Append(su).Error; err != nil {

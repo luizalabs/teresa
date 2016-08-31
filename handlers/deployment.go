@@ -246,8 +246,9 @@ func buildAppSlug(p *deployParams, fw *flushResponseWriter) error {
 	for _, containerStatus := range builder.Status.ContainerStatuses {
 		state := containerStatus.State.Terminated
 		if state.ExitCode != 0 {
-			log.Printf("build pod exited with code %d, stopping deploy.\n", state.ExitCode)
-			return err
+			msg := fmt.Sprintf("build pod exited with code %d, stopping deploy.\n", state.ExitCode)
+			log.Printf(msg)
+			return errors.New(msg)
 		}
 	}
 	// deleting slugbuilder pod from k8s

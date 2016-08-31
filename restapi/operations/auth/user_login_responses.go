@@ -130,7 +130,7 @@ type UserLoginDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.Error `json:"body,omitempty"`
+	Payload *models.GenericError `json:"body,omitempty"`
 }
 
 // NewUserLoginDefault creates UserLoginDefault with default headers values
@@ -156,13 +156,13 @@ func (o *UserLoginDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the user login default response
-func (o *UserLoginDefault) WithPayload(payload *models.Error) *UserLoginDefault {
+func (o *UserLoginDefault) WithPayload(payload *models.GenericError) *UserLoginDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the user login default response
-func (o *UserLoginDefault) SetPayload(payload *models.Error) {
+func (o *UserLoginDefault) SetPayload(payload *models.GenericError) {
 	o.Payload = payload
 }
 

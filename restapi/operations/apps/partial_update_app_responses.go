@@ -131,7 +131,7 @@ type PartialUpdateAppDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.Error `json:"body,omitempty"`
+	Payload *models.GenericError `json:"body,omitempty"`
 }
 
 // NewPartialUpdateAppDefault creates PartialUpdateAppDefault with default headers values
@@ -157,13 +157,13 @@ func (o *PartialUpdateAppDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the partial update app default response
-func (o *PartialUpdateAppDefault) WithPayload(payload *models.Error) *PartialUpdateAppDefault {
+func (o *PartialUpdateAppDefault) WithPayload(payload *models.GenericError) *PartialUpdateAppDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the partial update app default response
-func (o *PartialUpdateAppDefault) SetPayload(payload *models.Error) {
+func (o *PartialUpdateAppDefault) SetPayload(payload *models.GenericError) {
 	o.Payload = payload
 }
 

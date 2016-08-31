@@ -16,10 +16,17 @@ import (
 swagger:model App
 */
 type App struct {
+	AppIn
 
 	/* list of the external addresses of the app
 	 */
 	AddressList []string `json:"addressList,omitempty"`
+
+	/* creator
+
+	Required: true
+	*/
+	Creator *User `json:"creator"`
 
 	/* deployment list
 	 */
@@ -28,43 +35,29 @@ type App struct {
 	/* env vars
 	 */
 	EnvVars []*EnvVar `json:"envVars,omitempty"`
-
-	/* id
-	 */
-	ID int64 `json:"id,omitempty"`
-
-	/* name
-
-	Required: true
-	*/
-	Name *string `json:"name"`
-
-	/* number of PODs running the app
-	 */
-	Scale *int64 `json:"scale,omitempty"`
 }
 
 // Validate validates this app
 func (m *App) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.AppIn.Validate(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateAddressList(formats); err != nil {
-		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateCreator(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if err := m.validateDeploymentList(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateEnvVars(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateName(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -76,18 +69,26 @@ func (m *App) Validate(formats strfmt.Registry) error {
 
 func (m *App) validateAddressList(formats strfmt.Registry) error {
 
-	if swag.IsZero(m.AddressList) { // not required
-		return nil
+	return nil
+}
+
+func (m *App) validateCreator(formats strfmt.Registry) error {
+
+	if err := validate.Required("creator", "body", m.Creator); err != nil {
+		return err
+	}
+
+	if m.Creator != nil {
+
+		if err := m.Creator.Validate(formats); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
 func (m *App) validateDeploymentList(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.DeploymentList) { // not required
-		return nil
-	}
 
 	for i := 0; i < len(m.DeploymentList); i++ {
 
@@ -109,10 +110,6 @@ func (m *App) validateDeploymentList(formats strfmt.Registry) error {
 
 func (m *App) validateEnvVars(formats strfmt.Registry) error {
 
-	if swag.IsZero(m.EnvVars) { // not required
-		return nil
-	}
-
 	for i := 0; i < len(m.EnvVars); i++ {
 
 		if swag.IsZero(m.EnvVars[i]) { // not required
@@ -126,15 +123,6 @@ func (m *App) validateEnvVars(formats strfmt.Registry) error {
 			}
 		}
 
-	}
-
-	return nil
-}
-
-func (m *App) validateName(formats strfmt.Registry) error {
-
-	if err := validate.Required("name", "body", m.Name); err != nil {
-		return err
 	}
 
 	return nil

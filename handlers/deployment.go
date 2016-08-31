@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -21,7 +22,7 @@ import (
 	"github.com/luizalabs/tapi/restapi/operations/deployments"
 	"github.com/pborman/uuid"
 	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/errors"
+	k8s_errors "k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/apis/extensions"
 	"k8s.io/kubernetes/pkg/client/restclient"
 	"k8s.io/kubernetes/pkg/client/unversioned"
@@ -324,7 +325,7 @@ func getDeploy(p *deployParams) (deploy *extensions.Deployment, err error) {
 	log.Printf("get k8s deploy [%s/%s]\n", p.namespace, p.appName)
 	deploy, err = k8sClient.Deployments(p.namespace).Get(p.appName)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if k8s_errors.IsNotFound(err) {
 			return nil, nil
 		}
 		log.Printf("error when checking if deploy exists. Err: %s", err)

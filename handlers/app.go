@@ -82,6 +82,12 @@ func CreateAppHandler(params apps.CreateAppParams, principal interface{}) middle
 			return NewBadRequestError("team is required when user is in more than one team")
 		}
 	}
+	// App informations
+	app := models.App{AppIn: *params.Body}
+	creator := models.User{
+		Email: &tk.Email,
+	}
+	app.Creator = &creator
 	// creating namespace (aka App) params...
 	nsParams := api.Namespace{
 		TypeMeta: unversioned.TypeMeta{
@@ -99,7 +105,7 @@ func CreateAppHandler(params apps.CreateAppParams, principal interface{}) middle
 		},
 	}
 	// marshalling the params appIn to store inside namespace annotations...
-	ai, err := json.Marshal(params.Body)
+	ai, err := json.Marshal(app)
 	if err != nil {
 		log.Printf(`error when trying to marshal the parameters for the namespace "%s". Err: %s`, *params.Body.Name, err)
 		return NewInternalServerError()
@@ -179,14 +185,7 @@ func CreateAppHandler(params apps.CreateAppParams, principal interface{}) middle
 
 	log.Printf(`namespace (aka App) "%s" created with success by the user "%s" for the team "%s"`, *params.Body.Name, tk.Email, params.Body.Team)
 
-	app := models.App{AppIn: *params.Body}
-	creator := models.User{
-		Name: &tk.Email,
-	}
-	app.Creator = &creator
-	res := apps.NewCreateAppCreated()
-	res.SetPayload(&app)
-	return res
+	return apps.NewCreateAppCreated().WithPayload(&app)
 }
 
 // parseAppFromStorageToResponse receives a storage object and return an response object

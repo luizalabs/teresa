@@ -16,37 +16,41 @@ import (
 	"k8s.io/kubernetes/pkg/api/unversioned"
 )
 
-func addQuantityToResourceList(r *api.ResourceList, quota []*models.LimitRangeQuantity) error {
-	if quota != nil {
-		rl := api.ResourceList{}
-		for _, item := range quota {
-			name := api.ResourceName(*item.Resource)
-			q, err := resource.ParseQuantity(*item.Quantity)
-			if err != nil {
-				log.Printf(`error when trying to parse limits value "%s:%s". Err: %s`, *item.Resource, *item.Quantity, err)
-				return err
-			}
-			rl[name] = q
-		}
-		*r = rl
+// addLimitRangeQuantityToResourceList is a helper to the function parseLimitRangeParams, used to add a limit range
+// to a specific limit range list
+func addLimitRangeQuantityToResourceList(r *api.ResourceList, limitRangeQuantity []*models.LimitRangeQuantity) error {
+	if limitRangeQuantity == nil {
+		return nil
 	}
+	rl := api.ResourceList{}
+	for _, item := range limitRangeQuantity {
+		name := api.ResourceName(*item.Resource)
+		q, err := resource.ParseQuantity(*item.Quantity)
+		if err != nil {
+			log.Printf(`error when trying to parse limits value "%s:%s". Err: %s`, *item.Resource, *item.Quantity, err)
+			return err
+		}
+		rl[name] = q
+	}
+	*r = rl
 	return nil
 }
 
-func parseLimitsParams(limitRangeItem *api.LimitRangeItem, limits *models.AppInLimits) error {
-	if err := addQuantityToResourceList(&limitRangeItem.Default, limits.Default); err != nil {
+// parse limit range parameters, used to controll the namespace quota
+func parseLimitRangeParams(limitRangeItem *api.LimitRangeItem, limits *models.AppInLimits) error {
+	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Default, limits.Default); err != nil {
 		return err
 	}
-	if err := addQuantityToResourceList(&limitRangeItem.DefaultRequest, limits.DefaultRequest); err != nil {
+	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.DefaultRequest, limits.DefaultRequest); err != nil {
 		return err
 	}
-	if err := addQuantityToResourceList(&limitRangeItem.Max, limits.Max); err != nil {
+	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Max, limits.Max); err != nil {
 		return err
 	}
-	if err := addQuantityToResourceList(&limitRangeItem.Min, limits.Min); err != nil {
+	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Min, limits.Min); err != nil {
 		return err
 	}
-	if err := addQuantityToResourceList(&limitRangeItem.MaxLimitRequestRatio, limits.LimitRequestRatio); err != nil {
+	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.MaxLimitRequestRatio, limits.LimitRequestRatio); err != nil {
 		return err
 	}
 	return nil
@@ -103,15 +107,15 @@ func CreateAppHandler(params apps.CreateAppParams, principal interface{}) middle
 	nsParams.Annotations["teresa.io/app"] = string(ai)
 	// checking for quota specifications...
 	if params.Body.Limits == nil {
-		log.Printf(`error when trying to create a namespace "%s". limits is not provide`, *params.Body.Name)
-		return NewBadRequestError("limits is not provided")
+		log.Printf(`error when trying to create a namespace "%s". limits were not provided`, *params.Body.Name)
+		return NewBadRequestError("limits were not provided")
 	}
 	// creating quota specifications...
 	lrItem := api.LimitRangeItem{
 		Type: api.LimitTypeContainer,
 	}
 	// parse limits params to k8s params
-	if err := parseLimitsParams(&lrItem, params.Body.Limits); err != nil {
+	if err := parseLimitRangeParams(&lrItem, params.Body.Limits); err != nil {
 		log.Printf(`error when trying to parse "limits" for the app "%s"`, *params.Body.Name)
 		return NewBadRequestError(fmt.Sprintf(`error found when parsing "limits". err.: %s`, err))
 	}

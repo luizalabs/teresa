@@ -1,189 +1,48 @@
 package handlers
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/go-openapi/runtime/middleware"
 	strfmt "github.com/go-openapi/strfmt"
+	"github.com/luizalabs/teresa-api/helpers"
+	"github.com/luizalabs/teresa-api/k8s"
 	"github.com/luizalabs/teresa-api/models"
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/restapi/operations/apps"
 	"k8s.io/kubernetes/pkg/api"
-	k8s_errors "k8s.io/kubernetes/pkg/api/errors"
-	"k8s.io/kubernetes/pkg/api/resource"
-	"k8s.io/kubernetes/pkg/api/unversioned"
 )
 
-// addLimitRangeQuantityToResourceList is a helper to the function parseLimitRangeParams, used to add a limit range
-// to a specific limit range list
-func addLimitRangeQuantityToResourceList(r *api.ResourceList, limitRangeQuantity []*models.LimitRangeQuantity) error {
-	if limitRangeQuantity == nil {
-		return nil
-	}
-	rl := api.ResourceList{}
-	for _, item := range limitRangeQuantity {
-		name := api.ResourceName(*item.Resource)
-		q, err := resource.ParseQuantity(*item.Quantity)
-		if err != nil {
-			log.Printf(`error when trying to parse limits value "%s:%s". Err: %s`, *item.Resource, *item.Quantity, err)
-			return err
-		}
-		rl[name] = q
-	}
-	*r = rl
-	return nil
-}
-
-// parse limit range parameters, used to controll the namespace quota
-func parseLimitRangeParams(limitRangeItem *api.LimitRangeItem, limits *models.AppInLimits) error {
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Default, limits.Default); err != nil {
-		return err
-	}
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.DefaultRequest, limits.DefaultRequest); err != nil {
-		return err
-	}
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Max, limits.Max); err != nil {
-		return err
-	}
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Min, limits.Min); err != nil {
-		return err
-	}
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.MaxLimitRequestRatio, limits.LimitRequestRatio); err != nil {
-		return err
-	}
-	return nil
-}
-
-// CreateAppHandler create apps
-func CreateAppHandler(params apps.CreateAppParams, principal interface{}) middleware.Responder {
+// CreateAppHandler handler for "-X POST /apps"
+var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParams, principal interface{}) middleware.Responder {
 	tk := principal.(*Token)
 
-	// FIXME: wee should mode this "team checking" to a middleware ASAP!!!
-	var teamsFound int
-	if params.Body.Team != "" {
-		if err := storage.DB.Raw("select count(*) as count from teams where name = ?", params.Body.Team).Count(&teamsFound).Error; err != nil {
-			log.Printf(`error when trying to check if the team "%s" is valid for the user "%s". Err: %s`, params.Body.Team, tk.Email, err)
-			return NewInternalServerError()
-		}
-		if teamsFound == 0 {
-			log.Printf(`team "%s" not found`, params.Body.Team)
-			return NewUnauthorizedError("team not found or user dont have permission to do actions with the team provided")
-		}
+	// FIXME: remove this to a middleware or something like this ASAP
+	var (
+		dbQuery  string
+		dbParams []interface{}
+	)
+	if tk.IsAdmin {
+		dbQuery = "select * from teams where name = ?"
+		dbParams = append(dbParams, []interface{}{*params.Body.Team})
 	} else {
-		if tk.IsAdmin {
-			log.Printf(`user "%s" is admin and not provided a team`, tk.Email)
-			return NewBadRequestError("team is required when user is in more than one team")
-		}
-		q := "select * from teams inner join teams_users on teams.id = teams_users.team_id inner join users on teams_users.user_id = users.id where users.email = ?"
-		if err := storage.DB.Raw(q, tk.Email).Count(&teamsFound).Error; err != nil {
-			log.Printf(`user "%s" is in more than one team and provided none`, tk.Email)
-			return NewBadRequestError("team is required when user is in more than one team")
-		}
+		dbQuery = "select * from teams inner join teams_users on teams.id = teams_users.team_id inner join users on teams_users.user_id = users.id where users.email = ? and teams.name = ?"
+		dbParams = append(dbParams, []interface{}{tk.Email, *params.Body.Team})
 	}
+	if storage.DB.Exec(dbQuery, dbParams...).RecordNotFound() {
+		return NewUnauthorizedError("team not found or user dont have permission to do actions with the team provided")
+	}
+
 	// App informations
 	app := models.App{AppIn: *params.Body}
-	creator := models.User{
-		Email: &tk.Email,
-	}
-	app.Creator = &creator
-	// creating namespace (aka App) params...
-	nsParams := api.Namespace{
-		TypeMeta: unversioned.TypeMeta{
-			Kind:       "Namespace",
-			APIVersion: "v1",
-		},
-		ObjectMeta: api.ObjectMeta{
-			Name: *params.Body.Name,
-			Labels: map[string]string{
-				"teresa.io/team": params.Body.Team,
-			},
-			Annotations: map[string]string{
-				"teresa.io/last-user": tk.Email,
-			},
-		},
-	}
-	// marshalling the params appIn to store inside namespace annotations...
-	ai, err := json.Marshal(app)
-	if err != nil {
-		log.Printf(`error when trying to marshal the parameters for the namespace "%s". Err: %s`, *params.Body.Name, err)
-		return NewInternalServerError()
-	}
-	nsParams.Annotations["teresa.io/app"] = string(ai)
-	// checking for quota specifications...
-	if params.Body.Limits == nil {
-		log.Printf(`error when trying to create a namespace "%s". limits were not provided`, *params.Body.Name)
-		return NewBadRequestError("limits were not provided")
-	}
-	// creating quota specifications...
-	lrItem := api.LimitRangeItem{
-		Type: api.LimitTypeContainer,
-	}
-	// parse limits params to k8s params
-	if err := parseLimitRangeParams(&lrItem, params.Body.Limits); err != nil {
-		log.Printf(`error when trying to parse "limits" for the app "%s"`, *params.Body.Name)
-		return NewBadRequestError(fmt.Sprintf(`error found when parsing "limits". err.: %s`, err))
-	}
-	// creating namespace limits params
-	limitsParams := api.LimitRange{
-		TypeMeta: unversioned.TypeMeta{
-			Kind:       "LimitRange",
-			APIVersion: "v1",
-		},
-		ObjectMeta: api.ObjectMeta{
-			Name: "limits",
-		},
-		Spec: api.LimitRangeSpec{
-			Limits: []api.LimitRangeItem{
-				lrItem,
-			},
-		},
-	}
-	// create namespace
-	if _, err := k8sClient.Namespaces().Create(&nsParams); err != nil {
-		if k8s_errors.IsAlreadyExists(err) {
-			log.Printf(`already exists a namespace with this name "%s". Err: %s`, *params.Body.Name, err)
-			return NewConflictError("team already exists")
+	if err := k8s.Client.Apps().Create(&app, tk.Email, helpers.FileStorage); err != nil {
+		if k8s.IsInputError(err) {
+			return NewBadRequestError(err)
+		} else if k8s.IsAlreadyExistsError(err) {
+			return NewConflictError(err)
 		}
-		log.Printf(`error when trying to create the namespace "%s"`, *params.Body.Name)
-		return NewInternalServerError()
+		return NewInternalServerError(err)
 	}
-	log.Printf(`namespace "%s" created with success`, *params.Body.Name)
-	// create quota (aka limit range)
-	if _, err := k8sClient.LimitRanges(*params.Body.Name).Create(&limitsParams); err != nil {
-		log.Printf(`error when trying to create the "limit range" for the namespace "%s". Err: %s `, *params.Body.Name, err)
-		return NewInternalServerError()
-	}
-	log.Printf(`limit ranges created with success for the namespace "%s"`, *params.Body.Name)
-	// creating k8s secrets for the namespace.
-	// this will be used by the building and runner proccess to access the storage
-	// FIXME: maybe we need only one of this secret to everybody
-	svcParams := api.Secret{
-		TypeMeta: unversioned.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		Type: api.SecretTypeOpaque,
-		ObjectMeta: api.ObjectMeta{
-			Name:      "s3-storage",
-			Namespace: *params.Body.Name,
-		},
-		Data: map[string][]byte{
-			"region":         []byte(builderConfig.AwsRegion),
-			"builder-bucket": []byte(builderConfig.AwsBucket),
-			"accesskey":      []byte(builderConfig.AwsKey),
-			"secretkey":      []byte(builderConfig.AwsSecret),
-		},
-	}
-	// creating the secret
-	if _, err := k8sClient.Secrets(*params.Body.Name).Create(&svcParams); err != nil {
-		log.Printf(`error when creating the storage secret for the namespace "%s" . Err: %s`, *params.Body.Name, err)
-		return NewInternalServerError()
-	}
-	log.Printf(`secret created with success for the namespace "%s"`, *params.Body.Name)
-
-	log.Printf(`namespace (aka App) "%s" created with success by the user "%s" for the team "%s"`, *params.Body.Name, tk.Email, params.Body.Team)
 
 	return apps.NewCreateAppCreated().WithPayload(&app)
 }

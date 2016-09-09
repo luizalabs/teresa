@@ -50,9 +50,10 @@ type AppIn struct {
 	if the user is in only one team, this is parameter is not required
 
 
+	Required: true
 	Pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
 	*/
-	Team string `json:"team,omitempty"`
+	Team *string `json:"team"`
 }
 
 // Validate validates this app in
@@ -192,11 +193,11 @@ func (m *AppIn) validateScale(formats strfmt.Registry) error {
 
 func (m *AppIn) validateTeam(formats strfmt.Registry) error {
 
-	if swag.IsZero(m.Team) { // not required
-		return nil
+	if err := validate.Required("team", "body", m.Team); err != nil {
+		return err
 	}
 
-	if err := validate.Pattern("team", "body", string(m.Team), `^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`); err != nil {
+	if err := validate.Pattern("team", "body", string(*m.Team), `^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`); err != nil {
 		return err
 	}
 

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-openapi/runtime"
@@ -56,39 +57,46 @@ func (e *GenericError) WriteResponse(rw http.ResponseWriter, producer runtime.Pr
 }
 
 // NewGenericError is a helper to create a GenericError
-func NewGenericError(code int32, message string) *GenericError {
+func NewGenericError(code int32, message ...interface{}) *GenericError {
+	msg := fmt.Sprint(message...)
 	return &GenericError{
 		Payload: &models.Error{
 			Code:    &code,
-			Message: &message,
+			Message: &msg,
 		},
 	}
 }
 
-func NewBadRequestError(message string) *GenericError {
-	return NewGenericError(400, message).WithReason(BadRequest)
+// NewBadRequestError returns a Bad Request (http status code 400) to the Api
+func NewBadRequestError(message ...interface{}) *GenericError {
+	return NewGenericError(400, message...).WithReason(BadRequest)
 }
 
-func NewUnauthorizedError(message string) *GenericError {
-	return NewGenericError(401, message).WithReason(Unauthorized)
+// NewUnauthorizedError returns a Unauthorized Error (http status code 401) to the Api
+func NewUnauthorizedError(message ...interface{}) *GenericError {
+	return NewGenericError(401, message...).WithReason(Unauthorized)
 }
 
+// NewForbiddenError returns a Forbidden Error (http status code 403) to the Api
 func NewForbiddenError() *GenericError {
 	return NewGenericError(403, "Forbidden").WithReason(Forbidden)
 }
 
+// NewNotFoundError returns a Not Found Error (http status code 404) to the Api
 func NewNotFoundError() *GenericError {
 	return NewGenericError(404, "Not Found").WithReason(NotFound)
 }
 
-func NewConflictError(message string) *GenericError {
-	return NewGenericError(409, message).WithReason(Conflict)
+// NewConflictError returns a Conflict Error (http status code 409) to the Api
+func NewConflictError(message ...interface{}) *GenericError {
+	return NewGenericError(409, message...).WithReason(Conflict)
 }
 
-// func NewUnprocessableEntityError(message string, reason Reason) *GenericError {
+// func NewUnprocessableEntityError(message ...interface{}, reason Reason) *GenericError {
 // 	return NewGenericError(422, message).WithReason(reason)
 // }
 
-func NewInternalServerError() *GenericError {
-	return NewGenericError(500, "Internal Server Error").WithReason(InternalServerError)
+// NewInternalServerError returns a Internal Server Error (http status code 500) to the Api
+func NewInternalServerError(message ...interface{}) *GenericError {
+	return NewGenericError(500, message).WithReason(InternalServerError)
 }

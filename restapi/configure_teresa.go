@@ -32,6 +32,7 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	//
 	// Example:
 	// s.api.Logger = log.Printf
+	//
 
 	api.MultipartformConsumer = runtime.DiscardConsumer
 
@@ -46,9 +47,8 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.TokenHeaderAuth = handlers.TokenAuthHandler
 
 	// create an app
-	api.AppsCreateAppHandler = apps.CreateAppHandlerFunc(func(params apps.CreateAppParams, principal interface{}) middleware.Responder {
-		return handlers.CreateAppHandler(params, principal)
-	})
+	api.AppsCreateAppHandler = handlers.CreateAppHandler
+
 	// create deployment
 	api.DeploymentsCreateDeploymentHandler = handlers.CreateDeploymentHandler
 

@@ -810,6 +810,7 @@ definitions:
     description: Application data
     required:
       - name
+      - team
     properties:
       name:
         type: string

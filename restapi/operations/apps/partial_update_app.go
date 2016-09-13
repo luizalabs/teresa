@@ -27,7 +27,7 @@ func NewPartialUpdateApp(ctx *middleware.Context, handler PartialUpdateAppHandle
 	return &PartialUpdateApp{Context: ctx, Handler: handler}
 }
 
-/*PartialUpdateApp swagger:route PATCH /teams/{team_id}/apps/{app_id} apps partialUpdateApp
+/*PartialUpdateApp swagger:route PATCH /apps/{app_name} apps partialUpdateApp
 
 Partial update app
 

@@ -98,9 +98,8 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 		return middleware.NotImplemented("operation users.GetUsers has not yet been implemented")
 	})
 	// partial update app... update envVars
-	api.AppsPartialUpdateAppHandler = apps.PartialUpdateAppHandlerFunc(func(params apps.PartialUpdateAppParams, principal interface{}) middleware.Responder {
-		return handlers.PartialUpdateAppHandler(params, principal)
-	})
+	api.AppsPartialUpdateAppHandler = handlers.PartialUpdateAppHandler
+
 	api.AppsUpdateAppHandler = apps.UpdateAppHandlerFunc(func(params apps.UpdateAppParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation apps.UpdateApp has not yet been implemented")
 	})

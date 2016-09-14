@@ -9,6 +9,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/luizalabs/teresa-api/k8s"
 	"github.com/luizalabs/teresa-api/models"
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/restapi/operations/auth"
@@ -60,14 +61,9 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	}
 
 	jwtClaims := jwt.MapClaims{
-		"userId": su.ID,
-		"email":  su.Email,
-		"exp":    time.Now().Add(time.Hour * 24 * 14).Unix(),
+		"email": su.Email,
+		"exp":   time.Now().Add(time.Hour * 24 * 14).Unix(),
 	}
-	if su.IsAdmin {
-		jwtClaims["isAdmin"] = true
-	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwtClaims)
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString(signKey)
@@ -81,17 +77,9 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	return r
 }
 
-// Token foo bar
-type Token struct {
-	UserID  uint   `json:"userId"`
-	Email   string `json:"email"`
-	IsAdmin bool   `json:"isAdmin"`
-	jwt.StandardClaims
-}
-
 // TokenAuthHandler try and validate the jwt token
 func TokenAuthHandler(t string) (interface{}, error) {
-	token, err := jwt.ParseWithClaims(t, &Token{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(t, &k8s.Token{}, func(token *jwt.Token) (interface{}, error) {
 		return verifyKey, nil
 	})
 
@@ -104,7 +92,12 @@ func TokenAuthHandler(t string) (interface{}, error) {
 		}
 		// see stdout and watch for the CustomUserInfo, nicely unmarshalled
 		log.Printf("JWT token validation - granting access with token: %+v", token)
-		tc, _ := token.Claims.(*Token)
+		tc, _ := token.Claims.(*k8s.Token)
+
+		err := k8s.Client.Users().LoadUserToToken(tc)
+		if err != nil {
+			log.Printf(`error when trying to load user "%s" informations for the token`, *tc.Email)
+		}
 		return tc, nil
 	case *jwt.ValidationError: // something was wrong during the validation
 		vErr := err.(*jwt.ValidationError)

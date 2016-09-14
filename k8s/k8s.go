@@ -30,6 +30,14 @@ func (k *k8sHelper) Apps() AppInterface {
 	return newApps(k)
 }
 
+func (k *k8sHelper) Users() UserInterface {
+	return newUsers(k)
+}
+
+func (k *k8sHelper) Teams() TeamInterface {
+	return newTeams(k)
+}
+
 func init() {
 	// Loading kubernetes (k8s) config from env
 	configenv := &k8sConfig{}

@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"log"
-
 	"github.com/go-openapi/runtime/middleware"
 	strfmt "github.com/go-openapi/strfmt"
 	"github.com/luizalabs/teresa-api/helpers"
@@ -14,14 +12,14 @@ import (
 
 // CreateAppHandler handler for "-X POST /apps"
 var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParams, principal interface{}) middleware.Responder {
-	tk := principal.(*Token)
+	tk := k8s.IToToken(principal)
 
 	// FIXME: remove this to a middleware or something like this ASAP
 	var (
 		dbQuery  string
 		dbParams []interface{}
 	)
-	if tk.IsAdmin {
+	if *tk.IsAdmin {
 		dbQuery = "select * from teams where name = ?"
 		dbParams = append(dbParams, []interface{}{*params.Body.Team})
 	} else {
@@ -34,7 +32,7 @@ var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParam
 
 	// App informations
 	app := models.App{AppIn: *params.Body}
-	if err := k8s.Client.Apps().Create(&app, tk.Email, helpers.FileStorage); err != nil {
+	if err := k8s.Client.Apps().Create(&app, *tk.Email, helpers.FileStorage); err != nil {
 		if k8s.IsInputError(err) {
 			return NewBadRequestError(err)
 		} else if k8s.IsAlreadyExistsError(err) {
@@ -86,86 +84,89 @@ func parseAppFromStorageToResponse(sa *storage.Application) (app *models.App) {
 }
 
 // GetAppDetailsHandler return app details
-func GetAppDetailsHandler(params apps.GetAppDetailsParams, principal interface{}) middleware.Responder {
-	// FIXME: check if the token have permission on this team and app; maybe it's a good idea to centralize this check
-	sa := storage.Application{}
-	sa.ID = uint(params.AppID)
-	if storage.DB.Where(&storage.Application{TeamID: uint(params.TeamID)}).Preload("Addresses").Preload("EnvVars").Preload("Deployments").First(&sa).RecordNotFound() {
-		log.Println("app info not found")
-		return apps.NewGetAppDetailsForbidden()
-	}
+var GetAppDetailsHandler apps.GetAppDetailsHandlerFunc = func(params apps.GetAppDetailsParams, principal interface{}) middleware.Responder {
+	tk := k8s.IToToken(principal)
 
-	a := parseAppFromStorageToResponse(&sa)
-	r := apps.NewGetAppDetailsOK()
-	r.SetPayload(a)
-	return r
+	// FIXME: implements a functions GetFull, that will return the App + LB address + Deployments
+
+	app, err := k8s.Client.Apps().Get(params.AppName, tk)
+	if err != nil {
+		if k8s.IsNotFoundError(err) {
+			return NewNotFoundError(err)
+		} else if k8s.IsUnauthorizedError(err) {
+			return NewUnauthorizedError(err)
+		}
+		return NewInternalServerError(err)
+	}
+	return apps.NewGetAppDetailsOK().WithPayload(app)
 }
 
 // GetAppsHandler return apps for a team
 func GetAppsHandler(params apps.GetAppsParams, principal interface{}) middleware.Responder {
-	tk := principal.(*Token)
-
-	// get user teams to check before continue
-	rows, err := storage.DB.Table("teams_users").Where("user_id = ?", tk.UserID).Select("team_id as id").Rows()
-	if err != nil {
-		log.Printf("ERROR querying user teams: %s", err)
-		return apps.NewGetAppsDefault(500)
-	}
-	defer rows.Close()
-	userTeams := []int{}
-	for rows.Next() {
-		var teamID int
-		rows.Scan(&teamID)
-		userTeams = append(userTeams, teamID)
-	}
-	// check if user can se this team
-	tf := false
-	for _, x := range userTeams {
-		if x == int(params.TeamID) {
-			tf = true
-			break
-		}
-	}
-	if tf == false {
-		log.Printf("ERROR user can see info about this team. Teams allowed: [%v]. Team provided: [%d]", userTeams, params.TeamID)
-		return apps.NewGetAppsUnauthorized()
-	}
-
-	// TODO: admin user can see all teams... change here
-
-	// FIXME: we can use this solution bellow to get more than one team from DB
-	// if storage.DB.Where("team_id in (?)", userTeams).Preload("Addresses").Preload("EnvVars").Find(&storageAppList).RecordNotFound() {
-
-	storageAppList := []*storage.Application{}
-	if err = storage.DB.Where(&storage.Application{TeamID: uint(params.TeamID)}).Preload("Addresses").Preload("EnvVars").Find(&storageAppList).Error; err != nil {
-		log.Printf("ERROR when trying to recover apps from db: %s", err)
-		return apps.NewGetAppsDefault(500)
-	}
-	if len(storageAppList) == 0 {
-		log.Printf("No apps found for this team: %d", params.TeamID)
-		return apps.NewGetAppsDefault(404)
-	}
-
-	appsList := []*models.App{}
-	for _, sa := range storageAppList {
-		a := parseAppFromStorageToResponse(sa)
-		appsList = append(appsList, a)
-	}
-
-	r := apps.NewGetAppsOK()
-
-	rb := apps.GetAppsOKBodyBody{}
-	rb.Items = appsList
-	r.SetPayload(rb)
-
-	return r
+	// tk := k8s.IToToken(principal)
+	//
+	// // get user teams to check before continue
+	// rows, err := storage.DB.Table("teams_users").Where("user_id = ?", tk.UserID).Select("team_id as id").Rows()
+	// if err != nil {
+	// 	log.Printf("ERROR querying user teams: %s", err)
+	// 	return apps.NewGetAppsDefault(500)
+	// }
+	// defer rows.Close()
+	// userTeams := []int{}
+	// for rows.Next() {
+	// 	var teamID int
+	// 	rows.Scan(&teamID)
+	// 	userTeams = append(userTeams, teamID)
+	// }
+	// // check if user can se this team
+	// tf := false
+	// for _, x := range userTeams {
+	// 	if x == int(params.TeamID) {
+	// 		tf = true
+	// 		break
+	// 	}
+	// }
+	// if tf == false {
+	// 	log.Printf("ERROR user can see info about this team. Teams allowed: [%v]. Team provided: [%d]", userTeams, params.TeamID)
+	// 	return apps.NewGetAppsUnauthorized()
+	// }
+	//
+	// // TODO: admin user can see all teams... change here
+	//
+	// // FIXME: we can use this solution bellow to get more than one team from DB
+	// // if storage.DB.Where("team_id in (?)", userTeams).Preload("Addresses").Preload("EnvVars").Find(&storageAppList).RecordNotFound() {
+	//
+	// storageAppList := []*storage.Application{}
+	// if err = storage.DB.Where(&storage.Application{TeamID: uint(params.TeamID)}).Preload("Addresses").Preload("EnvVars").Find(&storageAppList).Error; err != nil {
+	// 	log.Printf("ERROR when trying to recover apps from db: %s", err)
+	// 	return apps.NewGetAppsDefault(500)
+	// }
+	// if len(storageAppList) == 0 {
+	// 	log.Printf("No apps found for this team: %d", params.TeamID)
+	// 	return apps.NewGetAppsDefault(404)
+	// }
+	//
+	// appsList := []*models.App{}
+	// for _, sa := range storageAppList {
+	// 	a := parseAppFromStorageToResponse(sa)
+	// 	appsList = append(appsList, a)
+	// }
+	//
+	// r := apps.NewGetAppsOK()
+	//
+	// rb := apps.GetAppsOKBodyBody{}
+	// rb.Items = appsList
+	// r.SetPayload(rb)
+	//
+	// return r
+	return apps.NewGetAppsOK()
 }
 
 // PartialUpdateAppHandler partial updating app... only envvars for now
 var PartialUpdateAppHandler apps.PartialUpdateAppHandlerFunc = func(params apps.PartialUpdateAppParams, principal interface{}) middleware.Responder {
-	tk := principal.(*Token)
+	tk := k8s.IToToken(principal)
 
-	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, tk.Email, tk.IsAdmin, params.Body)
+	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, *tk.Email, *tk.IsAdmin, params.Body)
 	if err != nil {
 		if k8s.IsInputError(err) {
 			return NewBadRequestError(err)

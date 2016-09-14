@@ -391,7 +391,7 @@ func (o *TeresaAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/teams/{team_id}/apps/{app_id}"] = apps.NewGetAppDetails(o.context, o.AppsGetAppDetailsHandler)
+	o.handlers["GET"]["/apps/{app_name}"] = apps.NewGetAppDetails(o.context, o.AppsGetAppDetailsHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)

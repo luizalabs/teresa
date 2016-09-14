@@ -71,9 +71,9 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.TeamsDeleteTeamHandler = teams.DeleteTeamHandlerFunc(func(params teams.DeleteTeamParams, principal interface{}) middleware.Responder {
 		return handlers.DeleteTeamHandler(params, principal)
 	})
-	api.AppsGetAppDetailsHandler = apps.GetAppDetailsHandlerFunc(func(params apps.GetAppDetailsParams, principal interface{}) middleware.Responder {
-		return handlers.GetAppDetailsHandler(params, principal)
-	})
+	// app details
+	api.AppsGetAppDetailsHandler = handlers.GetAppDetailsHandler
+
 	api.AppsGetAppsHandler = apps.GetAppsHandlerFunc(func(params apps.GetAppsParams, principal interface{}) middleware.Responder {
 		return handlers.GetAppsHandler(params, principal)
 	})

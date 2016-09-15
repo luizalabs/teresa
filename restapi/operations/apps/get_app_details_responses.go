@@ -48,81 +48,6 @@ func (o *GetAppDetailsOK) WriteResponse(rw http.ResponseWriter, producer runtime
 	}
 }
 
-/*GetAppDetailsUnauthorized User not authorized
-
-swagger:response getAppDetailsUnauthorized
-*/
-type GetAppDetailsUnauthorized struct {
-
-	// In: body
-	Payload *models.Unauthorized `json:"body,omitempty"`
-}
-
-// NewGetAppDetailsUnauthorized creates GetAppDetailsUnauthorized with default headers values
-func NewGetAppDetailsUnauthorized() *GetAppDetailsUnauthorized {
-	return &GetAppDetailsUnauthorized{}
-}
-
-// WithPayload adds the payload to the get app details unauthorized response
-func (o *GetAppDetailsUnauthorized) WithPayload(payload *models.Unauthorized) *GetAppDetailsUnauthorized {
-	o.Payload = payload
-	return o
-}
-
-// SetPayload sets the payload to the get app details unauthorized response
-func (o *GetAppDetailsUnauthorized) SetPayload(payload *models.Unauthorized) {
-	o.Payload = payload
-}
-
-// WriteResponse to the client
-func (o *GetAppDetailsUnauthorized) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
-
-	rw.WriteHeader(401)
-	if o.Payload != nil {
-		if err := producer.Produce(rw, o.Payload); err != nil {
-			panic(err) // let the recovery middleware deal with this
-		}
-	}
-}
-
-/*GetAppDetailsForbidden User does not have the credentials to access this resource
-
-
-swagger:response getAppDetailsForbidden
-*/
-type GetAppDetailsForbidden struct {
-
-	// In: body
-	Payload *models.Unauthorized `json:"body,omitempty"`
-}
-
-// NewGetAppDetailsForbidden creates GetAppDetailsForbidden with default headers values
-func NewGetAppDetailsForbidden() *GetAppDetailsForbidden {
-	return &GetAppDetailsForbidden{}
-}
-
-// WithPayload adds the payload to the get app details forbidden response
-func (o *GetAppDetailsForbidden) WithPayload(payload *models.Unauthorized) *GetAppDetailsForbidden {
-	o.Payload = payload
-	return o
-}
-
-// SetPayload sets the payload to the get app details forbidden response
-func (o *GetAppDetailsForbidden) SetPayload(payload *models.Unauthorized) {
-	o.Payload = payload
-}
-
-// WriteResponse to the client
-func (o *GetAppDetailsForbidden) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
-
-	rw.WriteHeader(403)
-	if o.Payload != nil {
-		if err := producer.Produce(rw, o.Payload); err != nil {
-			panic(err) // let the recovery middleware deal with this
-		}
-	}
-}
-
 /*GetAppDetailsDefault Error
 
 swagger:response getAppDetailsDefault
@@ -131,7 +56,7 @@ type GetAppDetailsDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.GenericError `json:"body,omitempty"`
+	Payload *models.Error `json:"body,omitempty"`
 }
 
 // NewGetAppDetailsDefault creates GetAppDetailsDefault with default headers values
@@ -157,13 +82,13 @@ func (o *GetAppDetailsDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the get app details default response
-func (o *GetAppDetailsDefault) WithPayload(payload *models.GenericError) *GetAppDetailsDefault {
+func (o *GetAppDetailsDefault) WithPayload(payload *models.Error) *GetAppDetailsDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get app details default response
-func (o *GetAppDetailsDefault) SetPayload(payload *models.GenericError) {
+func (o *GetAppDetailsDefault) SetPayload(payload *models.Error) {
 	o.Payload = payload
 }
 

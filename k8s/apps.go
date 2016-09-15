@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	// "github.com/luizalabs/tapi/handlers"
+
 	"github.com/luizalabs/tapi/helpers"
 	"github.com/luizalabs/tapi/models"
 	"github.com/luizalabs/tapi/models/storage"
@@ -23,6 +25,7 @@ type AppsInterface interface {
 type AppInterface interface {
 	Create(app *models.App, userEmail string, storage helpers.Storage) error
 	UpdateEnvVars(appName, userEmail string, userIsAdmin bool, operations []*models.PatchAppRequest) (app *models.App, err error)
+	Get(appName string, tk *Token) (app *models.App, err error)
 }
 
 type apps struct {
@@ -116,6 +119,31 @@ func (c apps) UpdateEnvVars(appName, userEmail string, userIsAdmin bool, operati
 	return
 }
 
+// Get returns an App by the name
+func (c apps) Get(appName string, tk *Token) (app *models.App, err error) {
+	ns, err := c.getNamespace(appName)
+	if err != nil {
+		return nil, err
+	}
+	app, err = unmarshalAppFromNamespace(ns)
+	if err != nil {
+		return nil, err
+	}
+	if err != nil {
+		if IsNotFoundError(err) {
+			return nil, err
+		}
+		log.Printf(`error found when trying to get the App "%s" by name. Err: %s`, appName, err)
+		return nil, err
+	}
+	// check if the user is authorized to get this App
+	if tk.IsAuthorized(*app.Team) == false {
+		log.Printf(`user token "%s" is not allowed to see the app "%s"`, *tk.Email, appName)
+		return nil, NewUnauthorizedError("token is not allowed to see this App")
+	}
+	return
+}
+
 // createAppQuota creates an k8s Limit Range for the App (namespace)
 func (c apps) createAppQuota(appName string, lr *api.LimitRange) error {
 	_, err := c.k.k8sClient.LimitRanges(appName).Create(lr)
@@ -171,12 +199,26 @@ func (c apps) getNamespace(name string) (ns *api.Namespace, err error) {
 	ns, err = c.k.k8sClient.Namespaces().Get(name)
 	if err != nil {
 		if k8s_errors.IsNotFound(err) {
-			return nil, NewNotFoundErrorf(`namespace "%s" not found`, name)
+			return nil, NewNotFoundErrorf(`"%s" not found`, name)
 		}
 		return nil, err
 	}
 	return
 }
+
+//
+// // get an App by the name
+// func (c apps) get(appName string) (app *models.App, err error) {
+// 	ns, err := c.getNamespace(appName)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	app, err = unmarshalAppFromNamespace(ns)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return
+// }
 
 // validateBeforeCreate validade all App parameters and return an InputError if any
 func validateBeforeCreate(app *models.App, userEmail string) error {

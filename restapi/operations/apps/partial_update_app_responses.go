@@ -48,82 +48,7 @@ func (o *PartialUpdateAppOK) WriteResponse(rw http.ResponseWriter, producer runt
 	}
 }
 
-/*PartialUpdateAppUnauthorized User not authorized
-
-swagger:response partialUpdateAppUnauthorized
-*/
-type PartialUpdateAppUnauthorized struct {
-
-	// In: body
-	Payload *models.Unauthorized `json:"body,omitempty"`
-}
-
-// NewPartialUpdateAppUnauthorized creates PartialUpdateAppUnauthorized with default headers values
-func NewPartialUpdateAppUnauthorized() *PartialUpdateAppUnauthorized {
-	return &PartialUpdateAppUnauthorized{}
-}
-
-// WithPayload adds the payload to the partial update app unauthorized response
-func (o *PartialUpdateAppUnauthorized) WithPayload(payload *models.Unauthorized) *PartialUpdateAppUnauthorized {
-	o.Payload = payload
-	return o
-}
-
-// SetPayload sets the payload to the partial update app unauthorized response
-func (o *PartialUpdateAppUnauthorized) SetPayload(payload *models.Unauthorized) {
-	o.Payload = payload
-}
-
-// WriteResponse to the client
-func (o *PartialUpdateAppUnauthorized) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
-
-	rw.WriteHeader(401)
-	if o.Payload != nil {
-		if err := producer.Produce(rw, o.Payload); err != nil {
-			panic(err) // let the recovery middleware deal with this
-		}
-	}
-}
-
-/*PartialUpdateAppForbidden User does not have the credentials to access this resource
-
-
-swagger:response partialUpdateAppForbidden
-*/
-type PartialUpdateAppForbidden struct {
-
-	// In: body
-	Payload *models.Unauthorized `json:"body,omitempty"`
-}
-
-// NewPartialUpdateAppForbidden creates PartialUpdateAppForbidden with default headers values
-func NewPartialUpdateAppForbidden() *PartialUpdateAppForbidden {
-	return &PartialUpdateAppForbidden{}
-}
-
-// WithPayload adds the payload to the partial update app forbidden response
-func (o *PartialUpdateAppForbidden) WithPayload(payload *models.Unauthorized) *PartialUpdateAppForbidden {
-	o.Payload = payload
-	return o
-}
-
-// SetPayload sets the payload to the partial update app forbidden response
-func (o *PartialUpdateAppForbidden) SetPayload(payload *models.Unauthorized) {
-	o.Payload = payload
-}
-
-// WriteResponse to the client
-func (o *PartialUpdateAppForbidden) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
-
-	rw.WriteHeader(403)
-	if o.Payload != nil {
-		if err := producer.Produce(rw, o.Payload); err != nil {
-			panic(err) // let the recovery middleware deal with this
-		}
-	}
-}
-
-/*PartialUpdateAppDefault Error
+/*PartialUpdateAppDefault Unexpected error
 
 swagger:response partialUpdateAppDefault
 */
@@ -131,7 +56,7 @@ type PartialUpdateAppDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.GenericError `json:"body,omitempty"`
+	Payload *models.Error `json:"body,omitempty"`
 }
 
 // NewPartialUpdateAppDefault creates PartialUpdateAppDefault with default headers values
@@ -157,13 +82,13 @@ func (o *PartialUpdateAppDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the partial update app default response
-func (o *PartialUpdateAppDefault) WithPayload(payload *models.GenericError) *PartialUpdateAppDefault {
+func (o *PartialUpdateAppDefault) WithPayload(payload *models.Error) *PartialUpdateAppDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the partial update app default response
-func (o *PartialUpdateAppDefault) SetPayload(payload *models.GenericError) {
+func (o *PartialUpdateAppDefault) SetPayload(payload *models.Error) {
 	o.Payload = payload
 }
 

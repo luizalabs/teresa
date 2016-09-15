@@ -7,8 +7,10 @@ type ErrorReason string
 
 // Error Reasons const used to check error types
 const (
-	InputError    ErrorReason = "InputError"
-	AlreadyExists ErrorReason = "AlreadyExists"
+	InputError        ErrorReason = "InputError"
+	AlreadyExists     ErrorReason = "AlreadyExists"
+	NotFound          ErrorReason = "NotFound"
+	UnauthorizedError ErrorReason = "UnauthorizedError"
 )
 
 type k8sError struct {
@@ -59,6 +61,26 @@ func NewAlreadyExistsErrorf(format string, a ...interface{}) error {
 	return newErrorf(AlreadyExists, format, a...)
 }
 
+// NewNotFoundError creates a new "not found" error
+func NewNotFoundError(a ...interface{}) error {
+	return newError(NotFound, a...)
+}
+
+// NewNotFoundErrorf formats a message according to a format specifier and returns the error
+func NewNotFoundErrorf(format string, a ...interface{}) error {
+	return newErrorf(NotFound, format, a...)
+}
+
+// NewUnauthorizedError creates a new "unauthorized error" error
+func NewUnauthorizedError(a ...interface{}) error {
+	return newError(UnauthorizedError, a...)
+}
+
+// NewUnauthorizedErrorf formats a message according to a format specifier and returns the error
+func NewUnauthorizedErrorf(format string, a ...interface{}) error {
+	return newErrorf(NotFound, format, a...)
+}
+
 // IsInputError checks if the error is of type "input"
 func IsInputError(err error) bool {
 	return checkError(err, InputError)
@@ -67,4 +89,14 @@ func IsInputError(err error) bool {
 // IsAlreadyExistsError checks if the error is of type "already exists"
 func IsAlreadyExistsError(err error) bool {
 	return checkError(err, AlreadyExists)
+}
+
+// IsNotFoundError checks if the error is of type "not found"
+func IsNotFoundError(err error) bool {
+	return checkError(err, NotFound)
+}
+
+// IsUnauthorizedError checks if the error is of type "unauthorized error"
+func IsUnauthorizedError(err error) bool {
+	return checkError(err, UnauthorizedError)
 }

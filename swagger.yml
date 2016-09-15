@@ -133,7 +133,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
     put:
       summary: Update team
       description: Update team details
@@ -158,7 +158,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
     delete:
       summary: Delete team
       description: Delete team
@@ -176,7 +176,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
   /teams/{team_name}/users:
     post:
       summary: Add user to team
@@ -187,12 +187,7 @@ paths:
         - api_key: []
         - token_header: []
       parameters:
-        - name: team_name
-          in: path
-          description: Team name
-          type: string
-          required: true
-          pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+        - $ref: "#/parameters/teamName"
         - name: user
           in: body
           schema:
@@ -212,8 +207,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
-
+            $ref: "#/definitions/GenericError"
   /teams/{team_id}/apps:
     get:
       summary: Get team apps
@@ -251,7 +245,8 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
+  /apps:
     post:
       summary: Create an app
       description: Create an app
@@ -262,28 +257,18 @@ paths:
         - api_key: []
         - token_header: []
       parameters:
-        - $ref: "#/parameters/teamId"
         - name: body
           in: body
           required: true
           schema:
-            $ref: "#/definitions/App"
+            $ref: "#/definitions/AppIn"
       responses:
         201:
           description: Newly created app
           schema:
             $ref: "#/definitions/App"
-        401:
-          description: User not authorized
-          schema:
-            $ref: "#/definitions/Unauthorized"
-        403:
-          description: |
-            User does not have the credentials to access this resource
-          schema:
-            $ref: "#/definitions/Unauthorized"
         default:
-          description: Error
+          description: Unexpected error
           schema:
             $ref: "#/definitions/Error"
   /teams/{team_id}/apps/{app_id}:
@@ -316,7 +301,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
     put:
       summary: Update app
       description: Update app properties, such as number of replicas and other things.
@@ -351,7 +336,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
     patch:
       summary: Partial update app
       description: Update some app properties, for now, only accept envvars
@@ -390,7 +375,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
 
   /teams/{team_id}/apps/{app_id}/deployments:
     get:
@@ -430,7 +415,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
     post:
       summary: Create a new deploy
       description: Create a deploy for an app
@@ -473,7 +458,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
   /users:
     get:
       summary: Get users
@@ -518,7 +503,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
     post:
       summary: Create user
       description: Create a user.
@@ -555,7 +540,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
   /users/{user_id}:
     get:
       summary: Get user details
@@ -591,7 +576,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
     delete:
       summary: Delete user
       description: Delete user
@@ -609,7 +594,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
     put:
       summary: Update user
       description: Update user details
@@ -642,7 +627,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
   /users/me:
     get:
       summary: Get logged user info
@@ -665,7 +650,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
   /login:
     post:
       summary: Log the user
@@ -695,7 +680,7 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/GenericError"
   /swagger:
     x-swagger-pipe: swagger_raw
 parameters:
@@ -713,6 +698,13 @@ parameters:
     type: integer
     format: int64
     required: true
+  teamName:
+    name: team_name
+    in: path
+    description: Team name
+    type: string
+    required: true
+    pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
   userId:
     name: user_id
     description: User ID
@@ -813,39 +805,196 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Team"
-  App:
+  AppIn:
     type: object
+    description: Application data
     required:
       - name
+      - team
     properties:
-      id:
-        type: integer
-        format: int64
       name:
         type: string
-      # creator:
-      #   $ref: "#/definitions/User"
+        description: the name of the app
+        pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+      team:
+        type: string
+        description: |
+          the name of the team that this app belongs.
+          if the user is in only one team, this is parameter is not required
+        pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+      healthCheck:
+        type: object
+        description: app health check
+        properties:
+          liveness:
+            description: |
+              check if the app is responding.
+              containers of the app will be restarted if this check fails
+            $ref: "#/definitions/HealthCheckProbe"
+          readiness:
+            description: |
+              check if the app is fully working.
+              containers of the app will be removed from service endpoints if the check fails
+            $ref: "#/definitions/HealthCheckProbe"
       scale:
         type: integer
         description: number of PODs running the app
         default: 1
-      # # TODO: in a future not to far far away, we will have a git deployment
-      # repository:
-      #   type: string
-      #   description: internal git repository
-      addressList:
-        type: array
-        description: list of the external addresses of the app
-        items:
-          type: string
-      deploymentList:
-        type: array
-        items:
-          $ref: "#/definitions/Deployment"
-      envVars:
-        type: array
-        items:
-          $ref: "#/definitions/EnvVar"
+        minimum: 1
+      autoScale:
+        type: object
+        description: horizontal auto scale params
+        properties:
+          min:
+            type: integer
+            description: minimum number of PODs running the app
+            default: 1
+            minimum: 1
+          max:
+            type: integer
+            description: maximum number of PODs running the app
+            default: 10
+            minimum: 1
+          cpuTargetUtilization:
+            type: integer
+            description: target average CPU utilization (represented as a percentage of requested CPU) over all the pods
+            default: 80
+            minimum: 0
+            maximum: 100
+      rollingUpdate:
+        type: object
+        description: params to use when starting a new deployment
+        required:
+          - maxSurge
+          - maxUnavailable
+        properties:
+          maxSurge:
+            type: string
+            description: |
+              specifies the maximum number of PODs that can be created above the desired number of PODs during deployment.
+              this can be percentage (of the scale) or a specific number os PODs
+            minLength: 1
+            default: '1'
+            pattern: '^\d+%?$'
+          maxUnavailable:
+            type: string
+            description: |
+              specifies the maximun number of unavailable PODs during deployment percentage (of the desired scale).
+              this can be percentage (of the scale) or a specific number os PODs
+            minLength: 1
+            default: 70%
+            pattern: '^\d+%?$'
+      limits:
+        type: object
+        description: specifies the limit ranges of the APP
+        required:
+          - default
+          - defaultRequest
+        properties:
+          max:
+            type: array
+            items:
+              $ref: "#/definitions/LimitRangeQuantity"
+          min:
+            type: array
+            items:
+              $ref: "#/definitions/LimitRangeQuantity"
+          default:
+            type: array
+            items:
+              $ref: "#/definitions/LimitRangeQuantity"
+          defaultRequest:
+            type: array
+            items:
+              $ref: "#/definitions/LimitRangeQuantity"
+          limitRequestRatio:
+            type: array
+            items:
+              $ref: "#/definitions/LimitRangeQuantity"
+  HealthCheckProbe:
+    type: object
+    properties:
+      path:
+        type: string
+        description: path of the health check
+        example: /health
+      initialDelaySeconds:
+        type: integer
+        description: length of time before health checking is activated
+        minimum: 1
+        maximum: 60
+        default: 3
+      periodSeconds:
+        type: integer
+        description: how often to perform the health check
+        default: 5
+        minimum: 1
+        maximum: 300
+      timeoutSeconds:
+        type: integer
+        description: length of time before health checking times out
+        default: 1
+        minimum: 1
+        maximum: 15
+      successThreshold:
+        type: integer
+        description: minimum consecutive successes for the health check to be considered successful after having failed
+        default: 1
+        minimum: 1
+        maximum: 10
+      failureThreshold:
+        type: integer
+        description: minimum consecutive failures for the health check to be considered failed after having succeeded.
+        default: 3
+        minimum: 1
+        maximum: 10
+  LimitRangeQuantity:
+    type: object
+    required:
+      - resource
+      - quantity
+    properties:
+      resource:
+        type: string
+        description: resouce type
+        enum:
+          - cpu
+          - memory
+          - storage
+      quantity:
+        type: string
+        description: |
+          quantity of the resource.
+          example:
+          can be:
+            binarySI: Ki | Mi | Gi | Ti | Pi | Ei
+            (International System of units; See: http://physics.nist.gov/cuu/Units/binary.html)
+            decimalSI: m | "" | k | M | G | T | P | E
+          Note that 1024 = 1Ki but 1000 = 1k
+        example: 512Mi
+        pattern: '^\d+(([KMGTPE]{1}i)|([mkMGTPE]))?$'
+  App:
+    allOf:
+    - $ref: "#/definitions/AppIn"
+    - type: object
+      required:
+      - creator
+      properties:
+        creator:
+          $ref: "#/definitions/User"
+        addressList:
+          type: array
+          description: list of the external addresses of the app
+          items:
+            type: string
+        deploymentList:
+          type: array
+          items:
+            $ref: "#/definitions/Deployment"
+        envVars:
+          type: array
+          items:
+            $ref: "#/definitions/EnvVar"
   PatchAppRequest: # for now, only this two https://tools.ietf.org/html/rfc6902 || http://jsonpatch.com/
     type: object
     description: used to create a patch update to an app
@@ -959,7 +1108,7 @@ definitions:
       message:
         type: string
         default: Forbidden
-  Error:
+  GenericError:
     type: object
     properties:
       code:
@@ -967,3 +1116,21 @@ definitions:
         format: int64
       message:
         type: string
+  Error:
+    type: object
+    required:
+    - code
+    - message
+    properties:
+      code:
+        description: http status of the error
+        type: integer
+        format: int32
+      message:
+        type: string
+      reason:
+        type: string
+        description: |
+          reason of the error if any.
+          always represented as an enum in pascal case
+        example: UserNotMemberOfTeam

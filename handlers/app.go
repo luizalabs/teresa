@@ -5,92 +5,55 @@ import (
 
 	"github.com/go-openapi/runtime/middleware"
 	strfmt "github.com/go-openapi/strfmt"
+	"github.com/luizalabs/teresa-api/helpers"
+	"github.com/luizalabs/teresa-api/k8s"
 	"github.com/luizalabs/teresa-api/models"
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/restapi/operations/apps"
 	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
 )
 
-// CreateAppHandler create apps
-func CreateAppHandler(params apps.CreateAppParams, principal interface{}) middleware.Responder {
-	a := models.App{
-		Name:  params.Body.Name,
-		Scale: params.Body.Scale,
+// CreateAppHandler handler for "-X POST /apps"
+var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParams, principal interface{}) middleware.Responder {
+	tk := principal.(*Token)
+
+	// FIXME: remove this to a middleware or something like this ASAP
+	var (
+		dbQuery  string
+		dbParams []interface{}
+	)
+	if tk.IsAdmin {
+		dbQuery = "select * from teams where name = ?"
+		dbParams = append(dbParams, []interface{}{*params.Body.Team})
+	} else {
+		dbQuery = "select * from teams inner join teams_users on teams.id = teams_users.team_id inner join users on teams_users.user_id = users.id where users.email = ? and teams.name = ?"
+		dbParams = append(dbParams, []interface{}{tk.Email, *params.Body.Team})
 	}
-	sa := storage.Application{
-		Name:   *params.Body.Name,
-		Scale:  int16(*params.Body.Scale),
-		TeamID: uint(params.TeamID),
-	}
-	// save to DB
-	if err := storage.DB.Create(&sa).Error; err != nil {
-		log.Printf("CreateAppHandler failed: %s\n", err)
-		return apps.NewCreateAppDefault(500)
+	if storage.DB.Exec(dbQuery, dbParams...).RecordNotFound() {
+		return NewUnauthorizedError("team not found or user dont have permission to do actions with the team provided")
 	}
 
-	// get app and team info
-	if storage.DB.Where(&storage.Application{TeamID: uint(params.TeamID)}).Preload("Team").First(&sa).RecordNotFound() {
-		log.Println("app info not found")
-		return apps.NewCreateAppDefault(500)
+	// App informations
+	app := models.App{AppIn: *params.Body}
+	if err := k8s.Client.Apps().Create(&app, tk.Email, helpers.FileStorage); err != nil {
+		if k8s.IsInputError(err) {
+			return NewBadRequestError(err)
+		} else if k8s.IsAlreadyExistsError(err) {
+			return NewConflictError(err)
+		}
+		return NewInternalServerError(err)
 	}
 
-	// namespaces yaml
-	nsy := api.Namespace{
-		TypeMeta: unversioned.TypeMeta{
-			Kind:       "Namespace",
-			APIVersion: "v1",
-		},
-		ObjectMeta: api.ObjectMeta{
-			Name: getNamespaceName(sa.Team.Name, sa.Name),
-		},
-	}
-	// creating namespace
-	ns, err := k8sClient.Namespaces().Create(&nsy)
-	if err != nil {
-		log.Printf("Error when create the namespace [%s] for the app. Err: %s\n", nsy.GetName(), err)
-		return apps.NewCreateAppDefault(500)
-	}
-
-	// secret yaml
-	svcy := api.Secret{
-		TypeMeta: unversioned.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		Type: api.SecretTypeOpaque,
-		ObjectMeta: api.ObjectMeta{
-			Name:      "s3-storage",
-			Namespace: ns.GetName(),
-		},
-		Data: map[string][]byte{
-			"region":         []byte(builderConfig.AwsRegion),
-			"builder-bucket": []byte(builderConfig.AwsBucket),
-			"accesskey":      []byte(builderConfig.AwsKey),
-			"secretkey":      []byte(builderConfig.AwsSecret),
-		},
-	}
-	// creating secret
-	_, err = k8sClient.Secrets(ns.GetName()).Create(&svcy)
-	if err != nil {
-		log.Printf("Error creating the storage secret for the namespace [%s] . Err: %s\n", nsy.GetName(), err)
-		return apps.NewCreateAppDefault(500)
-	}
-
-	a.ID = int64(sa.ID)
-	r := apps.NewCreateAppCreated()
-	r.SetPayload(&a)
-	return r
+	return apps.NewCreateAppCreated().WithPayload(&app)
 }
 
 // parseAppFromStorageToResponse receives a storage object and return an response object
 func parseAppFromStorageToResponse(sa *storage.Application) (app *models.App) {
 	scale := int64(sa.Scale)
-	app = &models.App{
-		ID:    int64(sa.ID),
-		Name:  &sa.Name,
-		Scale: &scale,
-	}
+	app = &models.App{}
+	app.Name = &sa.Name
+	app.Scale = scale
+
 	app.AddressList = make([]string, len(sa.Addresses))
 	for i, x := range sa.Addresses {
 		app.AddressList[i] = x.Address

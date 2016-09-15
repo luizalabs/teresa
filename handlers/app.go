@@ -10,7 +10,6 @@ import (
 	"github.com/luizalabs/teresa-api/models"
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/restapi/operations/apps"
-	"k8s.io/kubernetes/pkg/api"
 )
 
 // CreateAppHandler handler for "-X POST /apps"
@@ -163,141 +162,19 @@ func GetAppsHandler(params apps.GetAppsParams, principal interface{}) middleware
 }
 
 // PartialUpdateAppHandler partial updating app... only envvars for now
-func PartialUpdateAppHandler(params apps.PartialUpdateAppParams, principal interface{}) middleware.Responder {
-	log.Printf("executing partial update for app [%d] envvars\n", params.AppID)
-	// TODO: find a better place to put this centralized
-	slugRunnerEnvVars := []string{"SLUG_URL", "PORT", "DEIS_DEBUG", "BUILDER_STORAGE"}
+var PartialUpdateAppHandler apps.PartialUpdateAppHandlerFunc = func(params apps.PartialUpdateAppParams, principal interface{}) middleware.Responder {
+	tk := principal.(*Token)
 
-	// get info about the app
-	appID := uint(params.AppID)
-	sApp := storage.Application{}
-	sApp.ID = appID
-	if storage.DB.Where(&storage.Application{TeamID: uint(params.TeamID)}).Preload("Team").Preload("EnvVars").First(&sApp).RecordNotFound() {
-		log.Printf("app [%d] not found in db.\n", appID)
-		return apps.NewPartialUpdateAppDefault(500)
-	}
-
-	sEnvVars := &sApp.EnvVars
-
-	// start transaction
-	t := storage.DB.Begin()
-	var te error
-	// checking operations
-	for _, op := range params.Body {
-		createUpdateEnvVars := func() error {
-			for _, opv := range op.Value {
-				kf := false // key found controll
-				for _, e := range *sEnvVars {
-					if *opv.Key != e.Key {
-						continue
-					}
-					// envvar already exists... update
-					kf = true
-					if err := t.Model(&e).UpdateColumns(storage.EnvVar{Value: opv.Value}).Error; err != nil {
-						return err
-					}
-					break
-				}
-				if kf == false {
-					newEnv := storage.EnvVar{ // envvar not found... create
-						AppID: appID,
-						Key:   *opv.Key,
-						Value: opv.Value,
-					}
-					if err := t.Create(&newEnv).Error; err != nil {
-						return err
-					}
-				}
-			}
-			return nil
-		}
-		deleteEnvVars := func() error {
-			for _, o := range op.Value {
-				for _, e := range *sEnvVars {
-					if *o.Key != e.Key {
-						continue
-					}
-					if err := t.Delete(&e).Error; err != nil {
-						return err
-					}
-					break
-				}
-			}
-			return nil
-		}
-		// checking for invalid keys to be changed manually
-		for i, opv := range op.Value {
-			for _, k := range slugRunnerEnvVars {
-				if *opv.Key != k {
-					continue
-				}
-				log.Printf(`invalid key "%s" to be changed manually... discarding this before do something\n`, k)
-				op.Value = append(op.Value[:i], op.Value[i+1:]...)
-				break
-			}
-		}
-		if *op.Op == "add" {
-			te = createUpdateEnvVars()
-		} else if *op.Op == "remove" {
-			te = deleteEnvVars()
-		}
-		if te != nil {
-			break
-		}
-	}
-	// check for errors
-	if te != nil {
-		t.Rollback()
-		log.Printf("error doing a partial update to app envvars. %s\n", te)
-		return apps.NewPartialUpdateAppDefault(500)
-	}
-	// commit transaction
-	if err := t.Commit().Error; err != nil {
-		log.Printf("error doing a partial update to app envvars. %s\n", err)
-		return apps.NewPartialUpdateAppDefault(500)
-	}
-
-	// check if the k8s deploy exists and update his envvars
-	dp := newDeployParams(&sApp)
-
-	// get k8s deploy
-	d, err := getDeploy(dp)
+	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, tk.Email, tk.IsAdmin, params.Body)
 	if err != nil {
-		log.Printf("error when trying to collect info about the k8s_deploy. %s\n", err)
-		return apps.NewPartialUpdateAppDefault(500)
+		if k8s.IsInputError(err) {
+			return NewBadRequestError(err)
+		} else if k8s.IsNotFoundError(err) {
+			return NewNotFoundError()
+		} else if k8s.IsUnauthorizedError(err) {
+			return NewUnauthorizedError(err)
+		}
+		return NewInternalServerError(err)
 	}
-	if d != nil { // deploy exists
-		// get and update envvars
-		sEnvVars := []storage.EnvVar{}
-		if r := storage.DB.Where(&storage.EnvVar{AppID: appID}).Find(&sEnvVars); r.Error != nil && r.RecordNotFound() == false {
-			log.Printf("error getting env_vars for the app [%d] from db to update deployment. %s\n", params.AppID, r.Error)
-			return apps.NewPartialUpdateAppDefault(500)
-		}
-		// extract slugrunner env vars from deployment
-		newEnvVars := []api.EnvVar{}
-		for _, se := range slugRunnerEnvVars {
-			for _, e := range d.Spec.Template.Spec.Containers[0].Env {
-				if e.Name == se {
-					newEnvVars = append(newEnvVars, e)
-					break
-				}
-			}
-		}
-		// insert app env vars
-		for _, ne := range sEnvVars {
-			e := api.EnvVar{
-				Name:  ne.Key,
-				Value: ne.Value,
-			}
-			newEnvVars = append(newEnvVars, e)
-		}
-		d.Spec.Template.Spec.Containers[0].Env = newEnvVars
-		// update k8s deploy
-		if _, err := updateDeploy(d, "update on envvars"); err != nil {
-			log.Printf("error when updating the k8s deploy [%s/%s]. %s\n", d.GetNamespace(), d.GetName(), err)
-			return apps.NewPartialUpdateAppDefault(500)
-		}
-	}
-
-	return apps.NewPartialUpdateAppOK()
+	return apps.NewPartialUpdateAppOK().WithPayload(app)
 }

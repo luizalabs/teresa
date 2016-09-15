@@ -48,10 +48,10 @@ type TeresaAPI struct {
 	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
 	MultipartformConsumer runtime.Consumer
 
-	// BinProducer registers a producer for a "application/octet-stream" mime type
-	BinProducer runtime.Producer
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
+	// BinProducer registers a producer for a "application/octet-stream" mime type
+	BinProducer runtime.Producer
 
 	// APIKeyAuth registers a function that takes a token and returns a principal
 	// it performs authentication based on an api key token provided in the query
@@ -164,12 +164,12 @@ func (o *TeresaAPI) Validate() error {
 		unregistered = append(unregistered, "MultipartformConsumer")
 	}
 
-	if o.BinProducer == nil {
-		unregistered = append(unregistered, "BinProducer")
-	}
-
 	if o.JSONProducer == nil {
 		unregistered = append(unregistered, "JSONProducer")
+	}
+
+	if o.BinProducer == nil {
+		unregistered = append(unregistered, "BinProducer")
 	}
 
 	if o.APIKeyAuth == nil {
@@ -319,11 +319,11 @@ func (o *TeresaAPI) ProducersFor(mediaTypes []string) map[string]runtime.Produce
 	for _, mt := range mediaTypes {
 		switch mt {
 
-		case "application/octet-stream":
-			result["application/octet-stream"] = o.BinProducer
-
 		case "application/json":
 			result["application/json"] = o.JSONProducer
+
+		case "application/octet-stream":
+			result["application/octet-stream"] = o.BinProducer
 
 		}
 	}
@@ -431,7 +431,7 @@ func (o *TeresaAPI) initHandlerCache() {
 	if o.handlers["PATCH"] == nil {
 		o.handlers[strings.ToUpper("PATCH")] = make(map[string]http.Handler)
 	}
-	o.handlers["PATCH"]["/teams/{team_id}/apps/{app_id}"] = apps.NewPartialUpdateApp(o.context, o.AppsPartialUpdateAppHandler)
+	o.handlers["PATCH"]["/apps/{app_name}"] = apps.NewPartialUpdateApp(o.context, o.AppsPartialUpdateAppHandler)
 
 	if o.handlers["PUT"] == nil {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)

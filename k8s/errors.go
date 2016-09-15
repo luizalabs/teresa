@@ -73,6 +73,9 @@ func NewNotFoundErrorf(format string, a ...interface{}) error {
 
 // NewUnauthorizedError creates a new "unauthorized error" error
 func NewUnauthorizedError(a ...interface{}) error {
+	if len(a) == 0 {
+		return newError(UnauthorizedError, "User token unauthorized to do this action")
+	}
 	return newError(UnauthorizedError, a...)
 }
 

@@ -272,6 +272,26 @@ paths:
           schema:
             $ref: "#/definitions/Error"
   /apps/{app_name}:
+    get:
+      summary: Get app details
+      description: Get app details
+      tags:
+        - apps
+      operationId: getAppDetails
+      security:
+        - api_key: []
+        - token_header: []
+      parameters:
+        - $ref: "#/parameters/appName"
+      responses:
+        200:
+          description: App details
+          schema:
+            $ref: "#/definitions/App"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
     patch:
       summary: Partial update app
       description: Update some app properties, for now, only accept envvars
@@ -302,36 +322,6 @@ paths:
           schema:
             $ref: "#/definitions/Error"
   /teams/{team_id}/apps/{app_id}:
-    get:
-      summary: Get app details
-      description: Get app details
-      tags:
-        - apps
-      operationId: getAppDetails
-      security:
-        - api_key: []
-        - token_header: []
-      parameters:
-        - $ref: "#/parameters/teamId"
-        - $ref: "#/parameters/appId"
-      responses:
-        200:
-          description: App details
-          schema:
-            $ref: "#/definitions/App"
-        401:
-          description: User not authorized
-          schema:
-            $ref: "#/definitions/Unauthorized"
-        403:
-          description: |
-            User does not have the credentials to access this resource
-          schema:
-            $ref: "#/definitions/Unauthorized"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/GenericError"
     put:
       summary: Update app
       description: Update app properties, such as number of replicas and other things.

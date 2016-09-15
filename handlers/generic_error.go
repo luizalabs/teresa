@@ -83,8 +83,8 @@ func NewForbiddenError() *GenericError {
 }
 
 // NewNotFoundError returns a Not Found Error (http status code 404) to the Api
-func NewNotFoundError() *GenericError {
-	return NewGenericError(404, "Not Found").WithReason(NotFound)
+func NewNotFoundError(message ...interface{}) *GenericError {
+	return NewGenericError(404, message...).WithReason(NotFound)
 }
 
 // NewConflictError returns a Conflict Error (http status code 409) to the Api

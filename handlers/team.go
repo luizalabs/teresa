@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
+	"github.com/luizalabs/teresa-api/k8s"
 	"github.com/luizalabs/teresa-api/models"
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/restapi/operations/teams"
@@ -13,10 +14,10 @@ import (
 
 // CreateTeamHandler ...
 func CreateTeamHandler(params teams.CreateTeamParams, principal interface{}) middleware.Responder {
-	tk := principal.(*Token)
+	tk := k8s.IToToken(principal)
 	// need to have admin permissions to do this action
-	if tk.IsAdmin == false {
-		log.Printf("User [%d: %s] doesn't have permission to create a team", tk.UserID, tk.Email)
+	if *tk.IsAdmin == false {
+		log.Printf("User [%s] doesn't have permission to create a team", *tk.Email)
 		return teams.NewCreateTeamUnauthorized()
 	}
 
@@ -62,74 +63,74 @@ func GetTeamDetailsHandler(params teams.GetTeamDetailParams, principal interface
 
 // GetTeamsHandler ...
 func GetTeamsHandler(params teams.GetTeamsParams, principal interface{}) middleware.Responder {
-	tk := principal.(*Token)
-	var sts []*storage.Team
-
-	query := storage.DB.Model(&storage.Team{})
-	if tk.IsAdmin {
-		query = query.Where("teams_users.user_id = ? OR teams_users.user_id is null", tk.UserID)
-	} else {
-		query = query.Where("teams_users.user_id = ?", tk.UserID)
-	}
-	rows, err := query.
-		Select("teams.id, teams.name, teams.email, teams.url, teams_users.user_id").
-		Joins("left join teams_users on teams.id = teams_users.team_id").
-		Rows()
-	if err != nil {
-		log.Printf("ERROR querying teams: %s", err)
-		return teams.NewGetTeamsDefault(500)
-	}
-	defer rows.Close()
-	type Result struct {
-		ID     uint
-		Name   string
-		Email  string
-		URL    string
-		UserID uint
-	}
-	for rows.Next() {
-		r := Result{}
-		storage.DB.ScanRows(rows, &r)
-		t := storage.Team{}
-		t.ID = r.ID
-		t.Name = r.Name
-		t.Email = r.Email
-		t.URL = r.URL
-		if r.UserID != 0 {
-			u := storage.User{}
-			u.ID = r.UserID
-			t.Users = []storage.User{u}
-		}
-		sts = append(sts, &t)
-	}
-	if len(sts) == 0 {
-		return teams.NewGetTeamsNotFound()
-	}
-
-	rts := make([]*models.Team, len(sts))
-	for i := range sts {
-		t := models.Team{
-			Name:  &sts[i].Name,
-			Email: strfmt.Email(sts[i].Email),
-			URL:   sts[i].URL,
-		}
-		if len(sts[i].Users) != 0 {
-			t.IAmMember = true
-		}
-		rts[i] = &t
-	}
-	payload := teams.GetTeamsOKBodyBody{Items: rts}
+	// tk := k8s.IToToken(principal)
+	// var sts []*storage.Team
+	//
+	// query := storage.DB.Model(&storage.Team{})
+	// if *tk.IsAdmin {
+	// 	query = query.Where("teams_users.user_id = ? OR teams_users.user_id is null", tk.UserID)
+	// } else {
+	// 	query = query.Where("teams_users.user_id = ?", tk.UserID)
+	// }
+	// rows, err := query.
+	// 	Select("teams.id, teams.name, teams.email, teams.url, teams_users.user_id").
+	// 	Joins("left join teams_users on teams.id = teams_users.team_id").
+	// 	Rows()
+	// if err != nil {
+	// 	log.Printf("ERROR querying teams: %s", err)
+	// 	return teams.NewGetTeamsDefault(500)
+	// }
+	// defer rows.Close()
+	// type Result struct {
+	// 	ID     uint
+	// 	Name   string
+	// 	Email  string
+	// 	URL    string
+	// 	UserID uint
+	// }
+	// for rows.Next() {
+	// 	r := Result{}
+	// 	storage.DB.ScanRows(rows, &r)
+	// 	t := storage.Team{}
+	// 	t.ID = r.ID
+	// 	t.Name = r.Name
+	// 	t.Email = r.Email
+	// 	t.URL = r.URL
+	// 	if r.UserID != 0 {
+	// 		u := storage.User{}
+	// 		u.ID = r.UserID
+	// 		t.Users = []storage.User{u}
+	// 	}
+	// 	sts = append(sts, &t)
+	// }
+	// if len(sts) == 0 {
+	// 	return teams.NewGetTeamsNotFound()
+	// }
+	//
+	// rts := make([]*models.Team, len(sts))
+	// for i := range sts {
+	// 	t := models.Team{
+	// 		Name:  &sts[i].Name,
+	// 		Email: strfmt.Email(sts[i].Email),
+	// 		URL:   sts[i].URL,
+	// 	}
+	// 	if len(sts[i].Users) != 0 {
+	// 		t.IAmMember = true
+	// 	}
+	// 	rts[i] = &t
+	// }
+	// payload := teams.GetTeamsOKBodyBody{Items: rts}
 	r := teams.NewGetTeamsOK()
-	r.SetPayload(payload)
+	// r.SetPayload(payload)
 	return r
 }
 
 // UpdateTeamHandler ...
 func UpdateTeamHandler(params teams.UpdateTeamParams, principal interface{}) middleware.Responder {
-	tk := principal.(*Token)
+	tk := k8s.IToToken(principal)
 	// need to have admin permissions to do this action
-	if tk.IsAdmin == false {
-		log.Printf("User [%d: %s] doesn't have permission to update a team", tk.UserID, tk.Email)
+	if *tk.IsAdmin == false {
+		log.Printf("User [%s] doesn't have permission to update a team", *tk.Email)
 		return teams.NewUpdateTeamDefault(401)
 	}
 
@@ -164,29 +165,29 @@ func UpdateTeamHandler(params teams.UpdateTeamParams, principal interface{}) mid
 
 // DeleteTeamHandler ...
 func DeleteTeamHandler(params teams.DeleteTeamParams, principal interface{}) middleware.Responder {
-	tk := principal.(*Token)
-	// need to have admin permissions to do this action
-	if tk.IsAdmin == false {
-		log.Printf("User [%d: %s] doesn't have permission to delete a team", tk.UserID, tk.Email)
-		return teams.NewDeleteTeamDefault(401)
-	}
-
-	st := storage.Team{}
-	st.ID = uint(params.TeamID)
-
-	if storage.DB.Delete(&st).Error != nil {
-		return teams.NewDeleteTeamDefault(500)
-	}
+	// tk := k8s.IToToken(principal)
+	// // need to have admin permissions to do this action
+	// if *tk.IsAdmin == false {
+	// 	log.Printf("User [%d: %s] doesn't have permission to delete a team", tk.UserID, tk.Email)
+	// 	return teams.NewDeleteTeamDefault(401)
+	// }
+	//
+	// st := storage.Team{}
+	// st.ID = uint(params.TeamID)
+	//
+	// if storage.DB.Delete(&st).Error != nil {
+	// 	return teams.NewDeleteTeamDefault(500)
+	// }
 
 	return teams.NewDeleteTeamNoContent()
 }
 
 // AddUserToTeam add user to a specific team
 func AddUserToTeam(params teams.AddUserToTeamParams, principal interface{}) middleware.Responder {
-	tk := principal.(*Token)
+	tk := k8s.IToToken(principal)
 	// need admin permissions to do this action
-	if tk.IsAdmin == false {
-		log.Printf("User [%d: %s] doesn't have permission to include another user to a team", tk.UserID, tk.Email)
+	if *tk.IsAdmin == false {
+		log.Printf("User [%s] doesn't have permission to include another user to a team", *tk.Email)
 		return teams.NewAddUserToTeamDefault(401)
 	}
 

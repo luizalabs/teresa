@@ -47,7 +47,7 @@ func init() {
 	// Creating k8s client
 	k8sc, err := unversioned.New(config)
 	if err != nil {
-		log.Panicf("Erro trying to create a kubernetes client. Error: %s", err.Error())
+		log.Panicf("Error trying to create a kubernetes client. Error: %s", err.Error())
 	}
 	// Exporting k8sHelper with the name Client
 	Client = &k8sHelper{k8sClient: k8sc}

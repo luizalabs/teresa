@@ -131,7 +131,7 @@ type UpdateAppDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.Error `json:"body,omitempty"`
+	Payload *models.GenericError `json:"body,omitempty"`
 }
 
 // NewUpdateAppDefault creates UpdateAppDefault with default headers values
@@ -157,13 +157,13 @@ func (o *UpdateAppDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the update app default response
-func (o *UpdateAppDefault) WithPayload(payload *models.Error) *UpdateAppDefault {
+func (o *UpdateAppDefault) WithPayload(payload *models.GenericError) *UpdateAppDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the update app default response
-func (o *UpdateAppDefault) SetPayload(payload *models.Error) {
+func (o *UpdateAppDefault) SetPayload(payload *models.GenericError) {
 	o.Payload = payload
 }
 

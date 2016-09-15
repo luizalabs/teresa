@@ -101,11 +101,9 @@ func GetCurrentUserHandler(principal interface{}) middleware.Responder {
 		for i, sa := range st.Apps {
 			scale := int64(sa.Scale)
 			name := sa.Name
-			a := models.App{
-				ID:    int64(sa.ID),
-				Name:  &name,
-				Scale: &scale,
-			}
+			a := models.App{}
+			a.Name = &name
+			a.Scale = scale
 			t.Apps[i] = &a
 		}
 		u.Teams[i] = &t

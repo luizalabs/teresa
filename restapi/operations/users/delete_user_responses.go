@@ -37,7 +37,7 @@ type DeleteUserDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.Error `json:"body,omitempty"`
+	Payload *models.GenericError `json:"body,omitempty"`
 }
 
 // NewDeleteUserDefault creates DeleteUserDefault with default headers values
@@ -63,13 +63,13 @@ func (o *DeleteUserDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the delete user default response
-func (o *DeleteUserDefault) WithPayload(payload *models.Error) *DeleteUserDefault {
+func (o *DeleteUserDefault) WithPayload(payload *models.GenericError) *DeleteUserDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the delete user default response
-func (o *DeleteUserDefault) SetPayload(payload *models.Error) {
+func (o *DeleteUserDefault) SetPayload(payload *models.GenericError) {
 	o.Payload = payload
 }
 

@@ -204,7 +204,7 @@ type GetUsersDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.Error `json:"body,omitempty"`
+	Payload *models.GenericError `json:"body,omitempty"`
 }
 
 // NewGetUsersDefault creates GetUsersDefault with default headers values
@@ -230,13 +230,13 @@ func (o *GetUsersDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the get users default response
-func (o *GetUsersDefault) WithPayload(payload *models.Error) *GetUsersDefault {
+func (o *GetUsersDefault) WithPayload(payload *models.GenericError) *GetUsersDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get users default response
-func (o *GetUsersDefault) SetPayload(payload *models.Error) {
+func (o *GetUsersDefault) SetPayload(payload *models.GenericError) {
 	o.Payload = payload
 }
 

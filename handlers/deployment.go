@@ -24,22 +24,12 @@ import (
 	"k8s.io/kubernetes/pkg/api"
 	k8s_errors "k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/apis/extensions"
-	"k8s.io/kubernetes/pkg/client/restclient"
-	"k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/util/wait"
 )
 
 const (
 	waitConditionTickDuration = 3 * time.Second
 )
-
-// K8sConfig struct to accommodate the k8s env config
-type K8sConfig struct {
-	Host     string `required:"true"`
-	Username string `required:"true"`
-	Password string `required:"true"`
-	Insecure bool   `default:"false"`
-}
 
 // BuilderConfig struct to accommodate the builder config
 type BuilderConfig struct {
@@ -81,33 +71,12 @@ func (fw flushResponseWriter) Printf(format string, a ...interface{}) (n int, er
 
 var (
 	s3svc         *s3.S3
-	k8sClient     *unversioned.Client
 	builderConfig BuilderConfig
 )
 
 func init() {
-	// FIXME: this code below isn't in the best place, change this when it's possible
-
-	// load k8s config from env
-	var k8sconf K8sConfig
-	err := envconfig.Process("teresak8s", &k8sconf)
-	if err != nil {
-		log.Fatalf("Failed to read k8s configuration from environment: %s", err.Error())
-	}
-	// kubernetes
-	config := &restclient.Config{
-		Host:     k8sconf.Host,
-		Username: k8sconf.Username,
-		Password: k8sconf.Password,
-		Insecure: k8sconf.Insecure,
-	}
-	k8sClient, err = unversioned.New(config)
-	if err != nil {
-		log.Panicf("Erro trying to create a kubernetes client. Error: %s", err.Error())
-	}
-
 	// load builder config from env
-	err = envconfig.Process("teresabuilder", &builderConfig)
+	err := envconfig.Process("teresabuilder", &builderConfig)
 	// FIXME: uncomment this and delete the follow line when supporting another storage than AWS S3
 	// if err != nil {
 	if err != nil || (err == nil && (builderConfig.AwsKey == "" || builderConfig.AwsSecret == "" || builderConfig.AwsRegion == "" || builderConfig.AwsBucket == "")) {
@@ -209,19 +178,19 @@ func buildAppSlug(p *deployParams, fw *flushResponseWriter) error {
 	}
 
 	bp := k8s.BuildSlugbuilderPod(env, buildName, p.namespace, p.storageIn, p.storageOut, "", false)
-	builder, err := k8sClient.Pods(p.namespace).Create(bp)
+	builder, err := k8s.K8sClient.Pods(p.namespace).Create(bp)
 	if err != nil {
 		log.Printf("error creating the builder pod for the app. Err: %s\n", err.Error())
 		return err
 	}
 
 	// wainting buider start
-	if err = k8s.WaitForPod(k8sClient, builder.Namespace, builder.Name, waitConditionTickDuration, builderConfig.PodTimeout); err != nil {
+	if err = k8s.WaitForPod(k8s.K8sClient, builder.Namespace, builder.Name, waitConditionTickDuration, builderConfig.PodTimeout); err != nil {
 		log.Printf("error when waiting the start of the builder POD. Err: %s\n", err.Error())
 		return err
 	}
 
-	req := k8sClient.Pods(builder.Namespace).GetLogs(builder.Name, &api.PodLogOptions{
+	req := k8s.K8sClient.Pods(builder.Namespace).GetLogs(builder.Name, &api.PodLogOptions{
 		Follow: true,
 	})
 	rc, err := req.Stream()
@@ -234,12 +203,12 @@ func buildAppSlug(p *deployParams, fw *flushResponseWriter) error {
 	io.Copy(fw, rc)
 
 	// waiting builder end
-	if err = k8s.WaitForPodEnd(k8sClient, builder.Namespace, builder.Name, waitConditionTickDuration, builderConfig.PodTimeout); err != nil {
+	if err = k8s.WaitForPodEnd(k8s.K8sClient, builder.Namespace, builder.Name, waitConditionTickDuration, builderConfig.PodTimeout); err != nil {
 		log.Printf("error when waiting the end of the builder POD. Err: %s\n", err.Error())
 		return err
 	}
 	// check the builder exit code
-	builder, err = k8sClient.Pods(builder.Namespace).Get(builder.Name)
+	builder, err = k8s.K8sClient.Pods(builder.Namespace).Get(builder.Name)
 	if err != nil {
 		log.Printf("error trying to discover the builder exit code. Err: %s\n", err.Error())
 		return err
@@ -253,7 +222,7 @@ func buildAppSlug(p *deployParams, fw *flushResponseWriter) error {
 		}
 	}
 	// deleting slugbuilder pod from k8s
-	if err := k8sClient.Pods(builder.Namespace).Delete(builder.Name, nil); err != nil {
+	if err := k8s.K8sClient.Pods(builder.Namespace).Delete(builder.Name, nil); err != nil {
 		log.Printf("error trying to delete the builder pod. Err: %s\n", err.Error())
 		return err
 	}
@@ -273,7 +242,7 @@ func createSlugRunnerDeploy(p *deployParams, a *storage.Application) (deploy *ex
 	d.Annotations = map[string]string{
 		"kubernetes.io/change-cause": fmt.Sprintf("deployUUID:%s", p.id),
 	}
-	deploy, err = k8sClient.Deployments(p.namespace).Create(d)
+	deploy, err = k8s.K8sClient.Deployments(p.namespace).Create(d)
 	if err != nil {
 		log.Printf("error creating deployment. Err: %s\n", err.Error())
 	}
@@ -302,7 +271,7 @@ func updateDeploy(d *extensions.Deployment, changeCause string) (deploy *extensi
 	d.Annotations = map[string]string{
 		"kubernetes.io/change-cause": changeCause,
 	}
-	deploy, err = k8sClient.Deployments(d.GetNamespace()).Update(d)
+	deploy, err = k8s.K8sClient.Deployments(d.GetNamespace()).Update(d)
 	if err != nil {
 		log.Printf("error updating deployment. Err: %s\n", err.Error())
 	}
@@ -312,7 +281,7 @@ func updateDeploy(d *extensions.Deployment, changeCause string) (deploy *extensi
 // deleteDeploy deletes the deploy from k8s
 func deleteDeploy(p *deployParams) error {
 	log.Printf("deleting k8s deploy [%s/%s]\n", p.namespace, p.appName)
-	if err := k8sClient.Deployments(p.namespace).Delete(p.appName, nil); err != nil {
+	if err := k8s.K8sClient.Deployments(p.namespace).Delete(p.appName, nil); err != nil {
 		log.Printf("error deleting deployment. Err: %s\n", err.Error())
 		return err
 	}
@@ -323,7 +292,7 @@ func deleteDeploy(p *deployParams) error {
 // getDeploy gets the deploy from k8s
 func getDeploy(p *deployParams) (deploy *extensions.Deployment, err error) {
 	log.Printf("get k8s deploy [%s/%s]\n", p.namespace, p.appName)
-	deploy, err = k8sClient.Deployments(p.namespace).Get(p.appName)
+	deploy, err = k8s.K8sClient.Deployments(p.namespace).Get(p.appName)
 	if err != nil {
 		if k8s_errors.IsNotFound(err) {
 			return nil, nil
@@ -338,7 +307,7 @@ func createServiceAndGetLBHostName(p *deployParams) (lb string, err error) {
 	log.Printf("creating service [%s/%s]\n", p.namespace, p.appName)
 	// create service
 	s := k8s.BuildSlugRunnerLBService(p.appName, p.namespace, p.appName)
-	if _, err = k8sClient.Services(p.namespace).Create(s); err != nil {
+	if _, err = k8s.K8sClient.Services(p.namespace).Create(s); err != nil {
 		log.Printf("error creating the LB for the deployment. Err: %s\n", err.Error())
 		return
 	}
@@ -347,7 +316,7 @@ func createServiceAndGetLBHostName(p *deployParams) (lb string, err error) {
 	err = wait.PollImmediate(waitConditionTickDuration, builderConfig.LBTimeout, func() (bool, error) {
 		log.Println("still waiting LB hostname...")
 		var cErr error
-		if s, cErr = k8sClient.Services(p.namespace).Get(p.appName); cErr != nil {
+		if s, cErr = k8s.K8sClient.Services(p.namespace).Get(p.appName); cErr != nil {
 			return false, cErr
 		}
 		if len(s.Status.LoadBalancer.Ingress) == 0 || (len(s.Status.LoadBalancer.Ingress) != 0 && s.Status.LoadBalancer.Ingress[0].Hostname == "") {

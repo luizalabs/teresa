@@ -101,6 +101,10 @@ func (c apps) UpdateEnvVars(appName string, operations []*models.PatchAppRequest
 	if err = updateAppEnvVars(app, operations, l); err != nil {
 		return nil, err
 	}
+	if tk.IsAuthorized(*app.Team) == false {
+		log.Printf(`token "%s" is not allowed to update env vars for the App "%s/%s"`, *tk.Email, *app.Team, *app.Name)
+		return nil, NewUnauthorizedErrorf(`token not allowed to make changes for the App "%s"`, *app.Name)
+	}
 
 	if err := c.Update(app, tk, l); err != nil {
 		return nil, err
@@ -178,7 +182,7 @@ func (c apps) updateNamespace(app *models.App, userEmail string, l *log.Entry) e
 		return err
 	}
 	ns.Annotations["teresa.io/app"] = string(ai)
-	ns.Annotations["teresa.io/last-user"] = userEmail
+	ns.Annotations["teresa.io/last-user"] = *tk.Email
 	if _, err := c.k.k8sClient.Namespaces().Update(ns); err != nil {
 		l.WithError(err).Error("error when updating the namespace")
 		return err

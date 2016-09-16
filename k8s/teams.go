@@ -15,7 +15,7 @@ type TeamsInterface interface {
 
 // TeamInterface is used to interact with Kubernetes and also to allow mock testing
 type TeamInterface interface {
-	List() (teams []*models.Team, err error)
+	ListAll() (teams []*models.Team, err error)
 }
 
 type teams struct {
@@ -26,7 +26,8 @@ func newTeams(c *k8sHelper) *teams {
 	return &teams{k: c}
 }
 
-func (c teams) List() (teams []*models.Team, err error) {
+// ListAll gets all teams, no mather if the user can see that team or not
+func (c teams) ListAll() (teams []*models.Team, err error) {
 	sts := []*storage.Team{}
 	if storage.DB.Find(&sts).RecordNotFound() {
 		log.Print("there are no teams registered")

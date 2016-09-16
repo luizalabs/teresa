@@ -32,7 +32,7 @@ var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParam
 
 	// App informations
 	app := models.App{AppIn: *params.Body}
-	if err := k8s.Client.Apps().Create(&app, *tk.Email, helpers.FileStorage); err != nil {
+	if err := k8s.Client.Apps().Create(&app, helpers.FileStorage, tk); err != nil {
 		if k8s.IsInputError(err) {
 			return NewBadRequestError(err)
 		} else if k8s.IsAlreadyExistsError(err) {
@@ -40,7 +40,6 @@ var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParam
 		}
 		return NewInternalServerError(err)
 	}
-
 	return apps.NewCreateAppCreated().WithPayload(&app)
 }
 
@@ -166,12 +165,12 @@ func GetAppsHandler(params apps.GetAppsParams, principal interface{}) middleware
 var PartialUpdateAppHandler apps.PartialUpdateAppHandlerFunc = func(params apps.PartialUpdateAppParams, principal interface{}) middleware.Responder {
 	tk := k8s.IToToken(principal)
 
-	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, *tk.Email, *tk.IsAdmin, params.Body)
+	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, params.Body, tk)
 	if err != nil {
 		if k8s.IsInputError(err) {
 			return NewBadRequestError(err)
 		} else if k8s.IsNotFoundError(err) {
-			return NewNotFoundError()
+			return NewNotFoundError(err)
 		} else if k8s.IsUnauthorizedError(err) {
 			return NewUnauthorizedError(err)
 		}

@@ -81,7 +81,7 @@ func NewUnauthorizedError(a ...interface{}) error {
 
 // NewUnauthorizedErrorf formats a message according to a format specifier and returns the error
 func NewUnauthorizedErrorf(format string, a ...interface{}) error {
-	return newErrorf(NotFound, format, a...)
+	return newErrorf(UnauthorizedError, format, a...)
 }
 
 // IsInputError checks if the error is of type "input"

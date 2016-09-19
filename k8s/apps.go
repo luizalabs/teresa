@@ -24,6 +24,7 @@ type AppsInterface interface {
 // AppInterface is used to interact with Kubernetes and also to allow mock testing
 type AppInterface interface {
 	Create(app *models.App, storage helpers.Storage, tk *Token) error
+	Update(app *models.App, tk *Token) error
 	UpdateEnvVars(appName string, operations []*models.PatchAppRequest, tk *Token) (app *models.App, err error)
 	Get(appName string, tk *Token) (app *models.App, err error)
 }
@@ -52,60 +53,63 @@ func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token) error 
 	app.Creator = &models.User{
 		Email: tk.Email,
 	}
-	// creating namespace yaml
-	nsYaml := newAppNamespaceYaml(app, *tk.Email)
-	if err := addAppToNamespaceYaml(app, nsYaml); err != nil {
-		return err
-	}
-	// creating quota (limit ranges) yaml
-	appQuota, err := newAppQuotaYaml(app)
-	if err != nil {
-		return err
-	}
-	// creating App namespace
-	if err := c.createAppNamespace(nsYaml); err != nil {
+
+	// creating namespace
+	log.Printf(`creating namespace "%s"`, *app.Name)
+	if err := c.createNamespace(app, *tk.Email); err != nil {
 		return err
 	}
 	log.Printf(`namespace "%s" created with success`, *app.Name)
-	// creating namespace quota (limit range)
-	if err := c.createAppQuota(*app.Name, appQuota); err != nil {
+
+	// creating quota (limit ranges) for namespace
+	log.Printf(`creating quota (limit range) for namespace "%s"`, *app.Name)
+	if err := c.createQuota(app); err != nil {
 		return err
 	}
-	log.Printf(`namespace quota created with success for the App "%s"`, *app.Name)
+	log.Printf(`namespace quota created with success for namespace "%s"`, *app.Name)
+
 	// creating storage secret. this will be used to store the builded App
+	log.Printf(`creating storage secret for namespace "%s"`, *app.Name)
 	if err := c.createAppStorageSecret(*app.Name, storage); err != nil {
 		return err
 	}
-	log.Printf(`secret created with success for the namespace "%s"`, *app.Name)
+	log.Printf(`secret created with success for namespace "%s"`, *app.Name)
 
-	log.Printf(`app (a.k.a. namespace in k8s) "%s" created with success by the user "%s" for the team "%s"`, *app.Name, *tk.Email, *app.Team)
+	log.Printf(`app "%s" created with success by user "%s" for team "%s"`, *app.Name, *tk.Email, *app.Team)
+	return nil
+}
+
+func (c apps) Update(app *models.App, tk *Token) error {
+
+	// TODO: update the deployment here if exists...
+	// TODO: update namespace quota here if exists...
+
+	if err := c.updateNamespace(app, *tk.Email); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (c apps) UpdateEnvVars(appName string, operations []*models.PatchAppRequest, tk *Token) (app *models.App, err error) {
-	log.Printf(`updating env vars for the App "%s"`, appName)
-	ns, err := c.getNamespace(appName)
+	log.Printf(`updating env vars for App "%s"`, appName)
+	// getting app
+	app, err = c.Get(appName, tk)
 	if err != nil {
+		if IsUnauthorizedError(err) {
+			log.Printf(`token "%s" is not allowed to update env vars for the App "%s"`, *tk.Email, *app.Name)
+		}
 		return nil, err
 	}
-	// extracting and unmarshalling the App from the namespace
-	if app, err = unmarshalAppFromNamespace(ns); err != nil {
-		return nil, err
-	}
+
 	// applying the operations to App
 	if err = updateAppEnvVars(app, operations); err != nil {
 		return nil, err
 	}
-	if tk.IsAuthorized(*app.Team) == false {
-		log.Printf(`token "%s" is not allowed to update env vars for the App "%s/%s"`, *tk.Email, *app.Team, *app.Name)
-		return nil, NewUnauthorizedErrorf(`token not allowed to make changes for the App "%s"`, *app.Name)
-	}
 
-	// TODO: update the deployment here if exists...
-
-	if err = c.updateNamespace(ns, app, tk); err != nil {
+	if err := c.Update(app, tk); err != nil {
 		return nil, err
 	}
+
 	log.Printf(`env vars updated with success for the App "%s/%s" by the user "%s"`, *app.Team, *app.Name, *tk.Email)
 	return
 }
@@ -126,47 +130,56 @@ func (c apps) Get(appName string, tk *Token) (app *models.App, err error) {
 	// check if the user is authorized to get this App
 	if tk.IsAuthorized(*app.Team) == false {
 		log.Printf(`user token "%s" is not allowed to see the App "%s"`, *tk.Email, appName)
-		return nil, NewUnauthorizedError("token is not allowed to see this App")
+		return nil, NewUnauthorizedErrorf(`app "%s" not found or user is not allowed to see the same`, appName)
 	}
 	return
 }
 
-// createAppQuota creates an k8s Limit Range for the App (namespace)
-func (c apps) createAppQuota(appName string, lr *api.LimitRange) error {
-	log.Printf(`creating quota (limit range) for the namespaces "%s"`, appName)
-	_, err := c.k.k8sClient.LimitRanges(appName).Create(lr)
+// createQuota creates an k8s Limit Range for the App (namespace)
+func (c apps) createQuota(app *models.App) error {
+	appQuota, err := newAppQuotaYaml(app)
 	if err != nil {
-		log.Printf(`error when creating "quotas" for the namespace "%s". Err: %s`, appName, err)
+		return err
+	}
+	if _, err = c.k.k8sClient.LimitRanges(*app.Name).Create(appQuota); err != nil {
+		log.Printf(`error when creating "quotas" for the namespace "%s". Err: %s`, *app.Name, err)
 		return err
 	}
 	return nil
 }
 
-// createAppNamespace creates an k8s namespace
+// createNamespace creates an k8s namespace
 // Inside kubernetes, every app is a k8s namespaces (1:1) with the App information inside
-func (c apps) createAppNamespace(ns *api.Namespace) error {
-	log.Printf(`creating namespace "%s"`, ns.Name)
-	if _, err := c.k.k8sClient.Namespaces().Create(ns); err != nil {
+func (c apps) createNamespace(app *models.App, userEmail string) error {
+	nsYaml := newAppNamespaceYaml(app, userEmail)
+	if err := addAppToNamespaceYaml(app, nsYaml); err != nil {
+		return err
+	}
+	if _, err := c.k.k8sClient.Namespaces().Create(nsYaml); err != nil {
 		if k8s_errors.IsAlreadyExists(err) {
-			msg := fmt.Sprintf(`already exists an app (aka namespace) with the name "%s"`, ns.Name)
+			msg := fmt.Sprintf(`already exists a namespace with the name "%s"`, *app.Name)
 			log.Print(msg)
 			return NewAlreadyExistsError(msg)
 		}
-		log.Printf(`error found when creating the namespace "%s". Err: %s`, ns.Name, err)
+		log.Printf(`error found when creating the namespace "%s". Err: %s`, *app.Name, err)
 		return err
 	}
 	return nil
 }
 
 // updateNamespace updates App information inside the namespace
-func (c apps) updateNamespace(ns *api.Namespace, app *models.App, tk *Token) error {
+func (c apps) updateNamespace(app *models.App, userEmail string) error {
+	ns, err := c.getNamespace(*app.Name)
+	if err != nil {
+		return err
+	}
 	ai, err := json.Marshal(app)
 	if err != nil {
 		log.Printf(`error when updating the namespace "%s". Err: %s`, *app.Name, err)
 		return err
 	}
 	ns.Annotations["teresa.io/app"] = string(ai)
-	ns.Annotations["teresa.io/last-user"] = *tk.Email
+	ns.Annotations["teresa.io/last-user"] = userEmail
 	if _, err := c.k.k8sClient.Namespaces().Update(ns); err != nil {
 		log.Printf(`error when updating the namespace "%s". Err: %s`, *app.Name, err)
 		return err

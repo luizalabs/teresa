@@ -182,7 +182,7 @@ func (c apps) updateNamespace(app *models.App, userEmail string, l *log.Entry) e
 		return err
 	}
 	ns.Annotations["teresa.io/app"] = string(ai)
-	ns.Annotations["teresa.io/last-user"] = *tk.Email
+	ns.Annotations["teresa.io/last-user"] = userEmail
 	if _, err := c.k.k8sClient.Namespaces().Update(ns); err != nil {
 		l.WithError(err).Error("error when updating the namespace")
 		return err

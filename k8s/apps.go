@@ -70,7 +70,7 @@ func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token) error 
 
 	// creating storage secret. this will be used to store the builded App
 	log.Printf(`creating storage secret for namespace "%s"`, *app.Name)
-	if err := c.createAppStorageSecret(*app.Name, storage); err != nil {
+	if err := c.createStorageSecret(*app.Name, storage); err != nil {
 		return err
 	}
 	log.Printf(`secret created with success for namespace "%s"`, *app.Name)
@@ -137,11 +137,11 @@ func (c apps) Get(appName string, tk *Token) (app *models.App, err error) {
 
 // createQuota creates an k8s Limit Range for the App (namespace)
 func (c apps) createQuota(app *models.App) error {
-	appQuota, err := newAppQuotaYaml(app)
+	quota, err := newQuotaYaml(app)
 	if err != nil {
 		return err
 	}
-	if _, err = c.k.k8sClient.LimitRanges(*app.Name).Create(appQuota); err != nil {
+	if _, err = c.k.k8sClient.LimitRanges(*app.Name).Create(quota); err != nil {
 		log.Printf(`error when creating "quotas" for the namespace "%s". Err: %s`, *app.Name, err)
 		return err
 	}
@@ -151,11 +151,11 @@ func (c apps) createQuota(app *models.App) error {
 // createNamespace creates an k8s namespace
 // Inside kubernetes, every app is a k8s namespaces (1:1) with the App information inside
 func (c apps) createNamespace(app *models.App, userEmail string) error {
-	nsYaml := newAppNamespaceYaml(app, userEmail)
-	if err := addAppToNamespaceYaml(app, nsYaml); err != nil {
+	nsy := newAppNamespaceYaml(app, userEmail)
+	if err := addAppToNamespaceYaml(app, nsy); err != nil {
 		return err
 	}
-	if _, err := c.k.k8sClient.Namespaces().Create(nsYaml); err != nil {
+	if _, err := c.k.k8sClient.Namespaces().Create(nsy); err != nil {
 		if k8s_errors.IsAlreadyExists(err) {
 			msg := fmt.Sprintf(`already exists a namespace with the name "%s"`, *app.Name)
 			log.Print(msg)
@@ -187,8 +187,8 @@ func (c apps) updateNamespace(app *models.App, userEmail string) error {
 	return nil
 }
 
-// createAppStorageSecret creates a K8s Secret that will be used by the Builder and Runner processes
-func (c apps) createAppStorageSecret(appName string, storage helpers.Storage) error {
+// createStorageSecret creates a K8s Secret that will be used by the Builder and Runner processes
+func (c apps) createStorageSecret(appName string, storage helpers.Storage) error {
 	log.Printf(`creating secret for namespace "%s"`, appName)
 	svc := &api.Secret{
 		TypeMeta: unversioned.TypeMeta{
@@ -261,7 +261,7 @@ func newAppNamespaceYaml(app *models.App, userEmail string) (ns *api.Namespace) 
 func addAppToNamespaceYaml(app *models.App, ns *api.Namespace) error {
 	ai, err := json.Marshal(app)
 	if err != nil {
-		log.Printf(`error found when marshalling the app to put inside the App "%s" namespace annotations (teresa.io/app). Err: %s`, *app.Name, err)
+		log.Printf(`error found when marshalling the app to put inside the namespace annotation. App "%s". Err: %s`, *app.Name, err)
 		return err
 	}
 	ns.Annotations["teresa.io/app"] = string(ai)
@@ -308,8 +308,8 @@ func parseLimitRangeParams(limitRangeItem *api.LimitRangeItem, limits *models.Ap
 	return nil
 }
 
-// newAppQuotaYaml is a helper to create an k8s LimitRange based on App Limits
-func newAppQuotaYaml(app *models.App) (lr *api.LimitRange, err error) {
+// newQuotaYaml is a helper to create an k8s LimitRange based on App Limits
+func newQuotaYaml(app *models.App) (lr *api.LimitRange, err error) {
 	lrItem := api.LimitRangeItem{
 		Type: api.LimitTypeContainer,
 	}
@@ -357,7 +357,7 @@ func checkForProtectedEnvVars(operations []*models.PatchAppRequest) error {
 		for _, operationValue := range operation.Value {
 			for _, pv := range protectedEnvVars {
 				if *operationValue.Key == pv {
-					msg := fmt.Sprintf(`it is not allowed to manual change the env var "%s"`, pv)
+					msg := fmt.Sprintf(`manually changing the env var "%s" isn't allowed`, pv)
 					log.Print(msg)
 					return NewInputError(msg)
 				}

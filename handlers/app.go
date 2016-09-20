@@ -19,9 +19,7 @@ var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParam
 
 	l := log.WithField("app", *app.Name).WithField("team", *app.Team).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
 
-	// App informations
-	app := models.App{AppIn: *params.Body}
-	if err := k8s.Client.Apps().Create(&app, helpers.FileStorage, tk); err != nil {
+	if err := k8s.Client.Apps().Create(app, helpers.FileStorage, tk, l); err != nil {
 		if k8s.IsInputError(err) {
 			return NewBadRequestError(err)
 		} else if k8s.IsAlreadyExistsError(err) {
@@ -29,7 +27,7 @@ var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParam
 		}
 		return NewInternalServerError(err)
 	}
-	return apps.NewCreateAppCreated().WithPayload(&app)
+	return apps.NewCreateAppCreated().WithPayload(app)
 }
 
 // parseAppFromStorageToResponse receives a storage object and return an response object
@@ -156,7 +154,9 @@ func GetAppsHandler(params apps.GetAppsParams, principal interface{}) middleware
 var PartialUpdateAppHandler apps.PartialUpdateAppHandlerFunc = func(params apps.PartialUpdateAppParams, principal interface{}) middleware.Responder {
 	tk := k8s.IToToken(principal)
 
-	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, params.Body, tk)
+	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("reqId", helpers.NewRequestID())
+
+	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, params.Body, tk, l)
 	if err != nil {
 		if k8s.IsInputError(err) {
 			return NewBadRequestError(err)

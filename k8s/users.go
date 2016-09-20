@@ -1,7 +1,7 @@
 package k8s
 
 import (
-	"log"
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-openapi/strfmt"
@@ -16,8 +16,8 @@ type UsersInterface interface {
 
 // UserInterface is used to interact with Kubernetes and also to allow mock testing
 type UserInterface interface {
-	GetWithTeams(userEmail string, tk *Token) (user *models.User, err error)
-	LoadUserToToken(tk *Token) error
+	GetWithTeams(userEmail string, tk *Token, l *log.Entry) (user *models.User, err error)
+	LoadUserToToken(tk *Token, l *log.Entry) error
 }
 
 type users struct {
@@ -38,10 +38,10 @@ func newUsers(c *k8sHelper) *users {
 // If the user is admin, return all teams.
 // If the user is member of any team, the team will have a flag true to "IAmMember",
 // that represents the users is member of the team.
-func (c users) getWithTeams(userEmail string) (user *models.User, err error) {
+func (c users) getWithTeams(userEmail string, l *log.Entry) (user *models.User, err error) {
 	su := storage.User{}
 	if storage.DB.Where(&storage.User{Email: userEmail}).Preload("Teams").First(&su).RecordNotFound() {
-		log.Printf(`user "%s" not found`, userEmail)
+		l.WithField("user", userEmail).Debug("user not found")
 		return nil, NewNotFoundError("user not found")
 	}
 	user = &models.User{}
@@ -58,7 +58,7 @@ func (c users) getWithTeams(userEmail string) (user *models.User, err error) {
 	}
 	// admin users can see all teams
 	if *user.IsAdmin {
-		allTeams, _ := c.k.Teams().ListAll()
+		allTeams, _ := c.k.Teams().ListAll(l)
 		for _, t := range allTeams {
 			found := false
 			for _, td := range user.Teams {
@@ -76,13 +76,13 @@ func (c users) getWithTeams(userEmail string) (user *models.User, err error) {
 }
 
 // GetWithTeams get the user with teams, checking first token permissions
-func (c users) GetWithTeams(userEmail string, tk *Token) (user *models.User, err error) {
+func (c users) GetWithTeams(userEmail string, tk *Token, l *log.Entry) (user *models.User, err error) {
 	// only admins can see other users of the system
 	if *tk.IsAdmin == false && *tk.Email != userEmail {
-		log.Printf(`user token "%s" is not allowed to see another user (%s) information`, *tk.Email, userEmail)
+		l.WithField("user", userEmail).Debug("user token is not allowed to see another user")
 		return nil, NewUnauthorizedError("token is not allowed to see this user")
 	}
-	user, err = c.getWithTeams(userEmail)
+	user, err = c.getWithTeams(userEmail, l)
 	if err != nil {
 		return nil, err
 	}
@@ -90,8 +90,8 @@ func (c users) GetWithTeams(userEmail string, tk *Token) (user *models.User, err
 }
 
 // LoadUserToToken load the user inside the token
-func (c users) LoadUserToToken(tk *Token) error {
-	u, err := c.getWithTeams(*tk.Email)
+func (c users) LoadUserToToken(tk *Token, l *log.Entry) error {
+	u, err := c.getWithTeams(*tk.Email, l)
 	if err != nil {
 		return err
 	}

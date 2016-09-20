@@ -1,8 +1,7 @@
 package k8s
 
 import (
-	"log"
-
+	log "github.com/Sirupsen/logrus"
 	"github.com/kelseyhightower/envconfig"
 	"k8s.io/kubernetes/pkg/client/restclient"
 	"k8s.io/kubernetes/pkg/client/unversioned"

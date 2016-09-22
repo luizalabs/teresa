@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/satori/go.uuid"
+
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/apis/extensions"
@@ -28,7 +29,8 @@ const (
 
 // SlugBuilderPodName is used to generate a temp name to the builder pod
 func SlugBuilderPodName(appName, shortSha string) string {
-	uid := uuid.New()[:8]
+	// FIXME: change this uuid to use the helper function
+	uid := uuid.NewV4().String()[:8]
 	return fmt.Sprintf("slugbuild-%s-%s-%s", appName, shortSha, uid)
 }
 

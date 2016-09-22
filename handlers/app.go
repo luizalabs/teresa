@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/go-openapi/runtime/middleware"
 	strfmt "github.com/go-openapi/strfmt"
 	"github.com/luizalabs/teresa-api/helpers"
@@ -13,26 +14,12 @@ import (
 // CreateAppHandler handler for "-X POST /apps"
 var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParams, principal interface{}) middleware.Responder {
 	tk := k8s.IToToken(principal)
-
-	// FIXME: remove this to a middleware or something like this ASAP
-	var (
-		dbQuery  string
-		dbParams []interface{}
-	)
-	if *tk.IsAdmin {
-		dbQuery = "select * from teams where name = ?"
-		dbParams = append(dbParams, []interface{}{*params.Body.Team})
-	} else {
-		dbQuery = "select * from teams inner join teams_users on teams.id = teams_users.team_id inner join users on teams_users.user_id = users.id where users.email = ? and teams.name = ?"
-		dbParams = append(dbParams, []interface{}{tk.Email, *params.Body.Team})
-	}
-	if storage.DB.Exec(dbQuery, dbParams...).RecordNotFound() {
-		return NewUnauthorizedError("team not found or user dont have permission to do actions with the team provided")
-	}
-
 	// App informations
-	app := models.App{AppIn: *params.Body}
-	if err := k8s.Client.Apps().Create(&app, *tk.Email, helpers.FileStorage); err != nil {
+	app := &models.App{AppIn: *params.Body}
+
+	l := log.WithField("app", *app.Name).WithField("team", *app.Team).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
+
+	if err := k8s.Client.Apps().Create(app, helpers.FileStorage, tk, l); err != nil {
 		if k8s.IsInputError(err) {
 			return NewBadRequestError(err)
 		} else if k8s.IsAlreadyExistsError(err) {
@@ -40,8 +27,7 @@ var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParam
 		}
 		return NewInternalServerError(err)
 	}
-
-	return apps.NewCreateAppCreated().WithPayload(&app)
+	return apps.NewCreateAppCreated().WithPayload(app)
 }
 
 // parseAppFromStorageToResponse receives a storage object and return an response object
@@ -87,9 +73,11 @@ func parseAppFromStorageToResponse(sa *storage.Application) (app *models.App) {
 var GetAppDetailsHandler apps.GetAppDetailsHandlerFunc = func(params apps.GetAppDetailsParams, principal interface{}) middleware.Responder {
 	tk := k8s.IToToken(principal)
 
+	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
+
 	// FIXME: implements a functions GetFull, that will return the App + LB address + Deployments
 
-	app, err := k8s.Client.Apps().Get(params.AppName, tk)
+	app, err := k8s.Client.Apps().Get(params.AppName, tk, l)
 	if err != nil {
 		if k8s.IsNotFoundError(err) {
 			return NewNotFoundError(err)
@@ -166,12 +154,14 @@ func GetAppsHandler(params apps.GetAppsParams, principal interface{}) middleware
 var PartialUpdateAppHandler apps.PartialUpdateAppHandlerFunc = func(params apps.PartialUpdateAppParams, principal interface{}) middleware.Responder {
 	tk := k8s.IToToken(principal)
 
-	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, *tk.Email, *tk.IsAdmin, params.Body)
+	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
+
+	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, params.Body, tk, l)
 	if err != nil {
 		if k8s.IsInputError(err) {
 			return NewBadRequestError(err)
 		} else if k8s.IsNotFoundError(err) {
-			return NewNotFoundError()
+			return NewNotFoundError(err)
 		} else if k8s.IsUnauthorizedError(err) {
 			return NewUnauthorizedError(err)
 		}

@@ -4,10 +4,10 @@ import (
 	"crypto/tls"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
 	errors "github.com/go-openapi/errors"
 	runtime "github.com/go-openapi/runtime"
 	middleware "github.com/go-openapi/runtime/middleware"
-
 	"github.com/luizalabs/teresa-api/handlers"
 	"github.com/luizalabs/teresa-api/restapi/operations"
 	"github.com/luizalabs/teresa-api/restapi/operations/apps"
@@ -15,6 +15,7 @@ import (
 	"github.com/luizalabs/teresa-api/restapi/operations/deployments"
 	"github.com/luizalabs/teresa-api/restapi/operations/teams"
 	"github.com/luizalabs/teresa-api/restapi/operations/users"
+	"github.com/x-cray/logrus-prefixed-formatter"
 )
 
 // This file is safe to edit. Once it exists it will not be overwritten
@@ -23,16 +24,16 @@ func configureFlags(api *operations.TeresaAPI) {
 	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }
 }
 
+func init() {
+	log.SetLevel(log.DebugLevel)
+	log.SetFormatter(new(prefixed.TextFormatter))
+}
+
 func configureAPI(api *operations.TeresaAPI) http.Handler {
 	// configure the api here
 	api.ServeError = errors.ServeError
 
-	// Set your custom logger if needed. Default one is log.Printf
-	// Expected interface func(string, ...interface{})
-	//
-	// Example:
-	// s.api.Logger = log.Printf
-	//
+	api.Logger = log.Infof
 
 	api.MultipartformConsumer = runtime.DiscardConsumer
 

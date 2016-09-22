@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"crypto/rsa"
+	log "github.com/Sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -51,7 +51,7 @@ func fatal(err error) {
 func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	su := storage.User{}
 	if storage.DB.Where(&storage.User{Email: params.Body.Email.String()}).First(&su).RecordNotFound() {
-		log.Printf("Login unauthorized for user: [%s]\n", params.Body.Email)
+		log.WithField("user", params.Body.Email).Info("unauthorized")
 		return auth.NewUserLoginUnauthorized()
 	}
 	p := params.Body.Password.String()
@@ -59,7 +59,6 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	if err != nil {
 		return auth.NewUserLoginUnauthorized()
 	}
-
 	jwtClaims := jwt.MapClaims{
 		"email": su.Email,
 		"exp":   time.Now().Add(time.Hour * 24 * 14).Unix(),
@@ -68,7 +67,7 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString(signKey)
 	if err != nil {
-		log.Printf("Failed to sign jwt token, err: %s\n", err)
+		log.WithError(err).Error("failed to sign jwt token")
 		return auth.NewUserLoginDefault(500)
 	}
 	r := auth.NewUserLoginOK()
@@ -87,16 +86,19 @@ func TokenAuthHandler(t string) (interface{}, error) {
 	switch err.(type) {
 	case nil: // no error
 		if !token.Valid { // but may still be invalid
-			log.Printf("JWT token validation - invalid token received: %+v\n", token)
+			log.WithField("tokenObj", token).Warn("invalid JWT token received")
 			return nil, errors.Unauthenticated("Invalid credentials")
 		}
 		// see stdout and watch for the CustomUserInfo, nicely unmarshalled
-		log.Printf("JWT token validation - granting access with token: %+v", token)
+		log.WithField("tokenObj", token).Debug("granting access for token")
 		tc, _ := token.Claims.(*k8s.Token)
 
-		err := k8s.Client.Users().LoadUserToToken(tc)
+		l := log.WithField("token", *tc.Email)
+
+		err := k8s.Client.Users().LoadUserToToken(tc, l)
 		if err != nil {
-			log.Printf(`error when trying to load user "%s" informations for the token`, *tc.Email)
+			l.WithError(err).Error("error when trying to load user information to append to token")
+			return nil, errors.Unauthenticated("Invalid credentials")
 		}
 		return tc, nil
 	case *jwt.ValidationError: // something was wrong during the validation
@@ -104,14 +106,14 @@ func TokenAuthHandler(t string) (interface{}, error) {
 
 		switch vErr.Errors {
 		case jwt.ValidationErrorExpired:
-			log.Printf("JWT token validation - token expired: %+v\n", token)
+			log.WithError(vErr).WithField("tokenObj", token).Debug("token JWT expired")
 			return nil, errors.Unauthenticated("Invalid credentials")
 		default:
-			log.Printf("JWT token validation - ValidationError error on token: %+v\n", token)
+			log.WithError(vErr).WithField("tokenObj", token).Debug("ValidationError error on token")
 			return nil, errors.Unauthenticated("Invalid credentials")
 		}
 	default: // something else went wrong
-		log.Printf("JWT token validation - parse error: %v\n", err)
+		log.WithError(err).WithField("tokenObj", token).Debug("JWT token parse error")
 		return nil, errors.Unauthenticated("Invalid credentials")
 	}
 }

@@ -20,7 +20,7 @@ import (
 	"github.com/luizalabs/teresa-api/k8s"
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/restapi/operations/deployments"
-	"github.com/pborman/uuid"
+	"github.com/satori/go.uuid"
 	"k8s.io/kubernetes/pkg/api"
 	k8s_errors "k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/apis/extensions"
@@ -120,8 +120,9 @@ type deployParams struct {
 
 // newDeployParams return a struct with the parameters to use for deploy
 func newDeployParams(app *storage.Application) *deployParams {
+	// FIXME: change this uuid to use the helper function
 	d := deployParams{
-		id:       uuid.New()[:8],
+		id:       uuid.NewV4().String()[:8],
 		app:      app,
 		appName:  slugify(app.Name),
 		teamName: slugify(app.Team.Name),

@@ -154,7 +154,7 @@ func GetAppsHandler(params apps.GetAppsParams, principal interface{}) middleware
 var PartialUpdateAppHandler apps.PartialUpdateAppHandlerFunc = func(params apps.PartialUpdateAppParams, principal interface{}) middleware.Responder {
 	tk := k8s.IToToken(principal)
 
-	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("reqId", helpers.NewRequestID())
+	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
 
 	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, params.Body, tk, l)
 	if err != nil {

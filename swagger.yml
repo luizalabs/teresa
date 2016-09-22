@@ -396,6 +396,7 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/GenericError"
+  /apps/{app_name}/deployments:
     post:
       summary: Create a new deploy
       description: Create a deploy for an app
@@ -410,8 +411,7 @@ paths:
       produces:
         - application/octet-stream
       parameters:
-        - $ref: "#/parameters/teamId"
-        - $ref: "#/parameters/appId"
+        - $ref: "#/parameters/appName"
         - name: description
           in: formData
           required: false
@@ -426,19 +426,10 @@ paths:
           schema:
             type: string
             format: binary
-        401:
-          description: User not authorized
-          schema:
-            $ref: "#/definitions/Unauthorized"
-        403:
-          description: |
-            User does not have the credentials to access this resource
-          schema:
-            $ref: "#/definitions/Unauthorized"
         default:
           description: Error
           schema:
-            $ref: "#/definitions/GenericError"
+            $ref: "#/definitions/Error"
   /users:
     get:
       summary: Get users

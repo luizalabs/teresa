@@ -11,6 +11,7 @@ const (
 	AlreadyExists     ErrorReason = "AlreadyExists"
 	NotFound          ErrorReason = "NotFound"
 	UnauthorizedError ErrorReason = "UnauthorizedError"
+	AppBuilderError   ErrorReason = "AppBuilderError"
 )
 
 type k8sError struct {
@@ -82,6 +83,16 @@ func NewUnauthorizedError(a ...interface{}) error {
 // NewUnauthorizedErrorf formats a message according to a format specifier and returns the error
 func NewUnauthorizedErrorf(format string, a ...interface{}) error {
 	return newErrorf(UnauthorizedError, format, a...)
+}
+
+// NewAppBuilderError creates a new "App Builder" error
+func NewAppBuilderError(a ...interface{}) error {
+	return newError(AppBuilderError, a...)
+}
+
+// NewAppBuilderErrorf formats a message according to a format specifier and returns the error
+func NewAppBuilderErrorf(format string, a ...interface{}) error {
+	return newErrorf(AppBuilderError, format, a...)
 }
 
 // IsInputError checks if the error is of type "input"

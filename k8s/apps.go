@@ -131,6 +131,9 @@ func (c apps) Get(appName string, tk *Token, l *log.Entry) (app *models.App, err
 	if tk.IsAuthorized(*app.Team) == false {
 		return nil, NewUnauthorizedErrorf(`app "%s" not found or user not allowed to see it`, appName)
 	}
+
+	// TODO: get LB + Deployments here
+
 	return
 }
 

@@ -98,5 +98,5 @@ func NewConflictError(message ...interface{}) *GenericError {
 
 // NewInternalServerError returns a Internal Server Error (http status code 500) to the Api
 func NewInternalServerError(message ...interface{}) *GenericError {
-	return NewGenericError(500, message).WithReason(InternalServerError)
+	return NewGenericError(500, message...).WithReason(InternalServerError)
 }

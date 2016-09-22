@@ -1,12 +1,13 @@
 package helpers
 
 import (
-	"log"
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/go-openapi/runtime"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -28,6 +29,8 @@ type storageConfig struct {
 type Storage interface {
 	GetK8sSecretName() string
 	GetAccessData() map[string][]byte
+	UploadFile(path string, file *runtime.File) error
+	Type() string
 }
 
 type awsS3Storage struct {
@@ -49,6 +52,23 @@ func (a *awsS3Storage) GetAccessData() map[string][]byte {
 		"accesskey":      []byte(a.Key),
 		"secretkey":      []byte(a.Secret),
 	}
+}
+
+func (a *awsS3Storage) UploadFile(path string, file *runtime.File) error {
+	defer file.Data.Close()
+	po := &s3.PutObjectInput{
+		Bucket: &a.Bucket,
+		Body:   file.Data,
+		Key:    &path,
+	}
+	if _, err := a.Client.PutObject(po); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *awsS3Storage) Type() string {
+	return string(awsS3)
 }
 
 // FileStorage is used to concentrate all storage functions in only one place

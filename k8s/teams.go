@@ -1,7 +1,7 @@
 package k8s
 
 import (
-	"log"
+	log "github.com/Sirupsen/logrus"
 
 	strfmt "github.com/go-openapi/strfmt"
 	"github.com/luizalabs/tapi/models"
@@ -15,7 +15,7 @@ type TeamsInterface interface {
 
 // TeamInterface is used to interact with Kubernetes and also to allow mock testing
 type TeamInterface interface {
-	List() (teams []*models.Team, err error)
+	ListAll(l *log.Entry) (teams []*models.Team, err error)
 }
 
 type teams struct {
@@ -26,11 +26,13 @@ func newTeams(c *k8sHelper) *teams {
 	return &teams{k: c}
 }
 
-func (c teams) List() (teams []*models.Team, err error) {
+// ListAll gets all teams, no mather if the user can see that team or not
+func (c teams) ListAll(l *log.Entry) (teams []*models.Team, err error) {
 	sts := []*storage.Team{}
 	if storage.DB.Find(&sts).RecordNotFound() {
-		log.Print("there are no teams registered")
-		return nil, NewNotFoundError("there are no teams registered")
+		msg := "there are no teams registered"
+		log.Debug(msg)
+		return nil, NewNotFoundError(msg)
 	}
 	for _, st := range sts {
 		t := &models.Team{}

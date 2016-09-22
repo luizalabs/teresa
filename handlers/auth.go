@@ -51,7 +51,7 @@ func fatal(err error) {
 func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	su := storage.User{}
 	if storage.DB.Where(&storage.User{Email: params.Body.Email.String()}).First(&su).RecordNotFound() {
-		log.WithField("user", params.Body.Email).Info("unauthorized for user")
+		log.WithField("user", params.Body.Email).Info("unauthorized")
 		return auth.NewUserLoginUnauthorized()
 	}
 	p := params.Body.Password.String()
@@ -67,7 +67,7 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString(signKey)
 	if err != nil {
-		log.WithError(err).Error("faield to sign jwt token")
+		log.WithError(err).Error("failed to sign jwt token")
 		return auth.NewUserLoginDefault(500)
 	}
 	r := auth.NewUserLoginOK()
@@ -97,7 +97,7 @@ func TokenAuthHandler(t string) (interface{}, error) {
 
 		err := k8s.Client.Users().LoadUserToToken(tc, l)
 		if err != nil {
-			l.WithError(err).Error("error when trying to load user informations for append on token")
+			l.WithError(err).Error("error when trying to load user information to append to token")
 			return nil, errors.Unauthenticated("Invalid credentials")
 		}
 		return tc, nil
@@ -113,7 +113,7 @@ func TokenAuthHandler(t string) (interface{}, error) {
 			return nil, errors.Unauthenticated("Invalid credentials")
 		}
 	default: // something else went wrong
-		log.WithError(err).WithField("tokenObj", token).Debug("parse error for token JWT")
+		log.WithError(err).WithField("tokenObj", token).Debug("JWT token parse error")
 		return nil, errors.Unauthenticated("Invalid credentials")
 	}
 }

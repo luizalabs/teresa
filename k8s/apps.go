@@ -62,7 +62,7 @@ func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token, l *log
 		return err
 	}
 	l.Debug("namespace quota created with success for namespace")
-	// creating storage secret. this will be used to store the builded App
+	// creating storage secret. this will be used to store the built App
 	l.Debug("creating storage secret for namespace")
 	if err := c.createStorageSecret(*app.Name, storage, l); err != nil {
 		return err
@@ -105,7 +105,7 @@ func (c apps) UpdateEnvVars(appName string, operations []*models.PatchAppRequest
 	if err := c.Update(app, tk, l); err != nil {
 		return nil, err
 	}
-	l.Info("env vars update with success for the app")
+	l.Info("app env vars updated successfully")
 	return
 }
 
@@ -115,7 +115,7 @@ func (c apps) Get(appName string, tk *Token, l *log.Entry) (app *models.App, err
 	ns, err := c.getNamespace(appName, l)
 	if err != nil {
 		if IsNotFoundError(err) {
-			return nil, NewUnauthorizedErrorf(`app "%s" not found or user is not allowed to see the same`, appName)
+			return nil, NewUnauthorizedErrorf(`app "%s" not found or user not allowed to see it`, appName)
 		}
 		return nil, err
 	}
@@ -125,8 +125,7 @@ func (c apps) Get(appName string, tk *Token, l *log.Entry) (app *models.App, err
 	}
 	// check if the user is authorized to get this App
 	if tk.IsAuthorized(*app.Team) == false {
-		l.Warn("user token is not allowed to get the app.")
-		return nil, NewUnauthorizedErrorf(`app "%s" not found or user is not allowed to see the same`, appName)
+		return nil, NewUnauthorizedErrorf(`app "%s" not found or user not allowed to see it`, appName)
 	}
 	return
 }
@@ -139,7 +138,7 @@ func (c apps) createQuota(app *models.App, l *log.Entry) error {
 		return err
 	}
 	if _, err = c.k.k8sClient.LimitRanges(*app.Name).Create(quota); err != nil {
-		l.WithError(err).Error("error when creating \"quotas\" for the namespace")
+		l.WithError(err).Error(`error when creating "quotas" for the namespace`)
 		return err
 	}
 	return nil
@@ -155,7 +154,7 @@ func (c apps) createNamespace(app *models.App, userEmail string, l *log.Entry) e
 	}
 	if _, err := c.k.k8sClient.Namespaces().Create(nsy); err != nil {
 		if k8s_errors.IsAlreadyExists(err) {
-			msg := fmt.Sprintf(`already exists a namespace with the name "%s"`, *app.Name)
+			msg := fmt.Sprintf(`a namespace with the name "%s" already exists`, *app.Name)
 			l.Info(msg)
 			return NewAlreadyExistsError(msg)
 		}
@@ -324,7 +323,7 @@ func newQuotaYaml(app *models.App, l *log.Entry) (lr *api.LimitRange, err error)
 	// parse limits params to k8s params
 	l.Debug("parse limit ranges...")
 	if err = parseLimitRangeParams(&lrItem, app.Limits, l); err != nil {
-		msg := "error found wher parsing \"limits\" for the app"
+		msg := `found error when parsing app "limits"`
 		l.Error(msg)
 		return nil, NewInputError(msg)
 	}
@@ -348,7 +347,7 @@ func newQuotaYaml(app *models.App, l *log.Entry) (lr *api.LimitRange, err error)
 func unmarshalAppFromNamespace(ns *api.Namespace, l *log.Entry) (app *models.App, err error) {
 	s, ok := ns.GetAnnotations()["teresa.io/app"]
 	if ok == false {
-		msg := fmt.Sprintf("annotation \"teresa.io/app\" not found on this provided namespace")
+		msg := fmt.Sprintf(`annotation "teresa.io/app" not found on this provided namespace`)
 		l.WithField("namespace", ns.Name).Error(msg)
 		return nil, errors.New(msg)
 	}

@@ -17,7 +17,7 @@ var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParam
 	// App informations
 	app := &models.App{AppIn: *params.Body}
 
-	l := log.WithField("app", *app.Name).WithField("team", *app.Team).WithField("token", *tk.Email).WithField("reqId", helpers.NewRequestID())
+	l := log.WithField("app", *app.Name).WithField("team", *app.Team).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
 
 	if err := k8s.Client.Apps().Create(app, helpers.FileStorage, tk, l); err != nil {
 		if k8s.IsInputError(err) {
@@ -73,7 +73,7 @@ func parseAppFromStorageToResponse(sa *storage.Application) (app *models.App) {
 var GetAppDetailsHandler apps.GetAppDetailsHandlerFunc = func(params apps.GetAppDetailsParams, principal interface{}) middleware.Responder {
 	tk := k8s.IToToken(principal)
 
-	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("reqId", helpers.NewRequestID())
+	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
 
 	// FIXME: implements a functions GetFull, that will return the App + LB address + Deployments
 
@@ -154,7 +154,7 @@ func GetAppsHandler(params apps.GetAppsParams, principal interface{}) middleware
 var PartialUpdateAppHandler apps.PartialUpdateAppHandlerFunc = func(params apps.PartialUpdateAppParams, principal interface{}) middleware.Responder {
 	tk := k8s.IToToken(principal)
 
-	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("reqId", helpers.NewRequestID())
+	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
 
 	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, params.Body, tk, l)
 	if err != nil {

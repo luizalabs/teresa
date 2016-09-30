@@ -4,6 +4,8 @@ IMAGE_NAME=teresa
 IMAGE_VERSION=0.1.1
 IMAGE_INSTANCE=default
 TERESA_DOCKER_PORT ?= 8080
+REGISTRY ?= localhost:5000
+IMAGE_TAG=$(IMAGE_NAME):$(IMAGE_VERSION)
 
 DOCKER_RUN_CMD=docker run \
 	-e TERESAK8S_HOST=$(TERESAK8S_HOST) \
@@ -22,6 +24,13 @@ help:
 	@echo "Targets are:\n"
 	@echo "build"
 	@echo " build the teresa API server docker image"
+	@echo
+	@echo "push"
+	@echo " push the teresa API server docker image to a registry"
+	@echo " Defaults to localhost:5000, use REGISTRY env variable"
+	@echo " to override:"
+	@echo
+	@echo " REGISTRY=my-registry docker push"
 	@echo
 	@echo "run"
 	@echo " run the teresa API docker image"
@@ -59,19 +68,23 @@ help:
 all: help
 
 build:
-	docker build -t $(IMAGE_NAME):$(IMAGE_VERSION) .
+	docker build -t $(IMAGE_TAG) .
+
+push:
+	docker tag $(IMAGE_TAG) $(REGISTRY)/$(IMAGE_TAG)
+	docker push $(REGISTRY)/$(IMAGE_TAG)
 
 run:
-	$(DOCKER_RUN_CMD) --rm --name $(IMAGE_NAME)-$(IMAGE_INSTANCE) $(IMAGE_NAME):$(IMAGE_VERSION)
+	$(DOCKER_RUN_CMD) --rm --name $(IMAGE_NAME)-$(IMAGE_INSTANCE) $(IMAGE_TAG)
 
 start:
-	$(DOCKER_RUN_CMD) -d $(IMAGE_NAME):$(IMAGE_VERSION)
+	$(DOCKER_RUN_CMD) -d $(IMAGE_TAG)
 
 stop:
 	docker stop $(IMAGE_NAME)-$(IMAGE_INSTANCE)
 
 shell:
-	docker run --rm --name $(IMAGE_NAME)-$(IMAGE_INSTANCE) -i -t $(IMAGE_NAME):$(IMAGE_VERSION) /bin/bash
+	docker run --rm --name $(IMAGE_NAME)-$(IMAGE_INSTANCE) -i -t $(IMAGE_TAG) /bin/bash
 
 gen-api-server:
 	swagger generate server -A $(TERESA_API_NAME) -f $(SWAGGER_SPEC)

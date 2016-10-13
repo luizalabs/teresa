@@ -6,6 +6,8 @@ COPY . /go/src/github.com/luizalabs/tapi
 
 RUN go get github.com/tools/godep
 RUN godep go install ./cmd/teresa-server/...
+RUN apt-get update && apt-get -y install sqlite3
+RUN sh scripts/create_dummy_user.sh
 
 ENV TERESAK8S_HOST $TERESAK8S_HOST
 ENV TERESAK8S_USERNAME $TERESAK8S_USERNAME

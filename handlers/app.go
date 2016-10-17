@@ -19,12 +19,15 @@ var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParam
 
 	l := log.WithField("app", *app.Name).WithField("team", *app.Team).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
 
-	if err := k8s.Client.Apps().Create(app, helpers.FileStorage, tk, l); err != nil {
+	if err := k8s.Client.Apps().Create(app, helpers.FileStorage, tk); err != nil {
 		if k8s.IsInputError(err) {
+			l.WithError(err).Warn("error when creating app")
 			return NewBadRequestError(err)
 		} else if k8s.IsAlreadyExistsError(err) {
-			return NewConflictError(err)
+			l.WithError(err).Debug("error when creating app")
+			return NewConflictError("app already exists")
 		}
+		l.WithError(err).Error("error when creating app")
 		return NewInternalServerError(err)
 	}
 	return apps.NewCreateAppCreated().WithPayload(app)
@@ -77,13 +80,16 @@ var GetAppDetailsHandler apps.GetAppDetailsHandlerFunc = func(params apps.GetApp
 
 	// FIXME: implements a functions GetFull, that will return the App + LB address + Deployments
 
-	app, err := k8s.Client.Apps().Get(params.AppName, tk, l)
+	app, err := k8s.Client.Apps().Get(params.AppName, tk)
 	if err != nil {
 		if k8s.IsNotFoundError(err) {
+			l.WithError(err).Debug("error when getting detail for the app")
 			return NewNotFoundError(err)
 		} else if k8s.IsUnauthorizedError(err) {
+			l.WithError(err).Info("error when getting detail for the app")
 			return NewUnauthorizedError(err)
 		}
+		l.WithError(err).Error("error when getting detail for the app")
 		return NewInternalServerError(err)
 	}
 	return apps.NewGetAppDetailsOK().WithPayload(app)
@@ -153,18 +159,21 @@ func GetAppsHandler(params apps.GetAppsParams, principal interface{}) middleware
 // PartialUpdateAppHandler partial updating app... only envvars for now
 var PartialUpdateAppHandler apps.PartialUpdateAppHandlerFunc = func(params apps.PartialUpdateAppParams, principal interface{}) middleware.Responder {
 	tk := k8s.IToToken(principal)
-
 	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
 
-	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, params.Body, tk, l)
+	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, params.Body, tk)
 	if err != nil {
 		if k8s.IsInputError(err) {
+			l.WithError(err).Warn("error during partial update for the app")
 			return NewBadRequestError(err)
 		} else if k8s.IsNotFoundError(err) {
+			l.WithError(err).Debug("error during partial update for the app")
 			return NewNotFoundError(err)
 		} else if k8s.IsUnauthorizedError(err) {
+			l.WithError(err).Warn("error during partial update for the app")
 			return NewUnauthorizedError(err)
 		}
+		l.WithError(err).Error("error during partial update for the app")
 		return NewInternalServerError(err)
 	}
 	return apps.NewPartialUpdateAppOK().WithPayload(app)

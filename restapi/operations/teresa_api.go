@@ -43,23 +43,23 @@ type TeresaAPI struct {
 	formats         strfmt.Registry
 	defaultConsumes string
 	defaultProduces string
-	// JSONConsumer registers a consumer for a "application/json" mime type
-	JSONConsumer runtime.Consumer
 	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
 	MultipartformConsumer runtime.Consumer
+	// JSONConsumer registers a consumer for a "application/json" mime type
+	JSONConsumer runtime.Consumer
 
-	// BinProducer registers a producer for a "application/octet-stream" mime type
-	BinProducer runtime.Producer
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
-
-	// APIKeyAuth registers a function that takes a token and returns a principal
-	// it performs authentication based on an api key token provided in the query
-	APIKeyAuth func(string) (interface{}, error)
+	// BinProducer registers a producer for a "application/octet-stream" mime type
+	BinProducer runtime.Producer
 
 	// TokenHeaderAuth registers a function that takes a token and returns a principal
 	// it performs authentication based on an api key Authorization provided in the header
 	TokenHeaderAuth func(string) (interface{}, error)
+
+	// APIKeyAuth registers a function that takes a token and returns a principal
+	// it performs authentication based on an api key token provided in the query
+	APIKeyAuth func(string) (interface{}, error)
 
 	// TeamsAddUserToTeamHandler sets the operation handler for the add user to team operation
 	TeamsAddUserToTeamHandler teams.AddUserToTeamHandler
@@ -95,6 +95,8 @@ type TeresaAPI struct {
 	AppsPartialUpdateAppHandler apps.PartialUpdateAppHandler
 	// AppsUpdateAppHandler sets the operation handler for the update app operation
 	AppsUpdateAppHandler apps.UpdateAppHandler
+	// AppsUpdateAppScaleHandler sets the operation handler for the update app scale operation
+	AppsUpdateAppScaleHandler apps.UpdateAppScaleHandler
 	// TeamsUpdateTeamHandler sets the operation handler for the update team operation
 	TeamsUpdateTeamHandler teams.UpdateTeamHandler
 	// UsersUpdateUserHandler sets the operation handler for the update user operation
@@ -156,28 +158,28 @@ func (o *TeresaAPI) RegisterFormat(name string, format strfmt.Format, validator 
 func (o *TeresaAPI) Validate() error {
 	var unregistered []string
 
-	if o.JSONConsumer == nil {
-		unregistered = append(unregistered, "JSONConsumer")
-	}
-
 	if o.MultipartformConsumer == nil {
 		unregistered = append(unregistered, "MultipartformConsumer")
 	}
 
-	if o.BinProducer == nil {
-		unregistered = append(unregistered, "BinProducer")
+	if o.JSONConsumer == nil {
+		unregistered = append(unregistered, "JSONConsumer")
 	}
 
 	if o.JSONProducer == nil {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
-	if o.APIKeyAuth == nil {
-		unregistered = append(unregistered, "TokenAuth")
+	if o.BinProducer == nil {
+		unregistered = append(unregistered, "BinProducer")
 	}
 
 	if o.TokenHeaderAuth == nil {
 		unregistered = append(unregistered, "AuthorizationAuth")
+	}
+
+	if o.APIKeyAuth == nil {
+		unregistered = append(unregistered, "TokenAuth")
 	}
 
 	if o.TeamsAddUserToTeamHandler == nil {
@@ -248,6 +250,10 @@ func (o *TeresaAPI) Validate() error {
 		unregistered = append(unregistered, "apps.UpdateAppHandler")
 	}
 
+	if o.AppsUpdateAppScaleHandler == nil {
+		unregistered = append(unregistered, "apps.UpdateAppScaleHandler")
+	}
+
 	if o.TeamsUpdateTeamHandler == nil {
 		unregistered = append(unregistered, "teams.UpdateTeamHandler")
 	}
@@ -279,13 +285,13 @@ func (o *TeresaAPI) AuthenticatorsFor(schemes map[string]spec.SecurityScheme) ma
 	for name, scheme := range schemes {
 		switch name {
 
-		case "api_key":
-
-			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.APIKeyAuth)
-
 		case "token_header":
 
 			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.TokenHeaderAuth)
+
+		case "api_key":
+
+			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.APIKeyAuth)
 
 		}
 	}
@@ -300,11 +306,11 @@ func (o *TeresaAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consume
 	for _, mt := range mediaTypes {
 		switch mt {
 
-		case "application/json":
-			result["application/json"] = o.JSONConsumer
-
 		case "multipart/form-data":
 			result["multipart/form-data"] = o.MultipartformConsumer
+
+		case "application/json":
+			result["application/json"] = o.JSONConsumer
 
 		}
 	}
@@ -319,11 +325,11 @@ func (o *TeresaAPI) ProducersFor(mediaTypes []string) map[string]runtime.Produce
 	for _, mt := range mediaTypes {
 		switch mt {
 
-		case "application/octet-stream":
-			result["application/octet-stream"] = o.BinProducer
-
 		case "application/json":
 			result["application/json"] = o.JSONProducer
+
+		case "application/octet-stream":
+			result["application/octet-stream"] = o.BinProducer
 
 		}
 	}
@@ -436,7 +442,12 @@ func (o *TeresaAPI) initHandlerCache() {
 	if o.handlers["PUT"] == nil {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)
 	}
-	o.handlers["PUT"]["/teams/{team_id}/apps/{app_id}"] = apps.NewUpdateApp(o.context, o.AppsUpdateAppHandler)
+	o.handlers["PUT"]["/apps/{app_name}"] = apps.NewUpdateApp(o.context, o.AppsUpdateAppHandler)
+
+	if o.handlers["PUT"] == nil {
+		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)
+	}
+	o.handlers["PUT"]["/apps/{app_name}/scale"] = apps.NewUpdateAppScale(o.context, o.AppsUpdateAppScaleHandler)
 
 	if o.handlers["PUT"] == nil {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)

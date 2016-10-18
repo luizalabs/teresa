@@ -101,9 +101,11 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	// partial update app... update envVars
 	api.AppsPartialUpdateAppHandler = handlers.PartialUpdateAppHandler
 
-	api.AppsUpdateAppHandler = apps.UpdateAppHandlerFunc(func(params apps.UpdateAppParams, principal interface{}) middleware.Responder {
-		return middleware.NotImplemented("operation apps.UpdateApp has not yet been implemented")
-	})
+	// update app
+	api.AppsUpdateAppHandler = handlers.UpdateAppHandler
+
+	api.AppsUpdateAppScaleHandler = handlers.UpdateAppScaleHandler
+
 	// update a team
 	api.TeamsUpdateTeamHandler = teams.UpdateTeamHandlerFunc(func(params teams.UpdateTeamParams, principal interface{}) middleware.Responder {
 		return handlers.UpdateTeamHandler(params, principal)

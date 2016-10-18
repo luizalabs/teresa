@@ -29,6 +29,7 @@ type DeploymentInterface interface {
 	Get(appName string) (d *extensions.Deployment, err error)
 	CreateWelcomeDeployment(app *models.App) error
 	Create(appName, description string, file *runtime.File, storage helpers.Storage, tk *Token) (io.ReadCloser, error)
+	Update(app *models.App, description string, storage helpers.Storage) error
 }
 
 type deployments struct {
@@ -52,7 +53,6 @@ func newDeploy(appName, description string) *deploy {
 	d := &deploy{
 		uuid: uuid.New()[:8],
 	}
-	d.appName = appName
 	d.description = description
 	d.storageIn = fmt.Sprintf("deploys/%s/%s/in/app.tar.gz", appName, d.uuid)
 	d.storageOut = fmt.Sprintf("deploys/%s/%s/out", appName, d.uuid)
@@ -112,7 +112,7 @@ func (c deployments) Create(appName, description string, file *runtime.File, sto
 		// updating deployment
 		lc.Debug("updating deployment for rolling update...")
 		fmt.Fprintln(w, "rolling update...")
-		if err := c.updateDeployment(app, deploy, storage); err != nil {
+		if err := c.updateDeployment(app, deploy.slugPath, deploy.description, storage); err != nil {
 			lc.WithError(err).Error("error updating deployment")
 			fmt.Fprintln(w, "error when doing rolling update")
 			return
@@ -126,7 +126,7 @@ func (c deployments) Get(appName string) (d *extensions.Deployment, err error) {
 	d, err = c.k.k8sClient.Deployments(appName).Get(appName)
 	if err != nil {
 		if k8s_errors.IsNotFound(err) {
-			return nil, NewNotFoundErrorf(`app "%s" not found`, appName)
+			return nil, NewNotFoundErrorf(`deployment "%s" not found`, appName)
 		}
 	}
 	return
@@ -453,17 +453,18 @@ func appendDeploymentAnnotation(d *extensions.Deployment, key, value string) {
 }
 
 // newSlugRunnerDeployment creates a new slug runner deployment based on the app info
-func newSlugRunnerDeployment(app *models.App, deploy *deploy, storage helpers.Storage) (d *extensions.Deployment) {
+func newSlugRunnerDeployment(app *models.App, slug, description string, storage helpers.Storage) (d *extensions.Deployment) {
 	// creating slug runner container
-	c := newSlugRunnerContainer(app, deploy.slugPath, storage.Type())
+	c := newSlugRunnerContainer(app, slug, storage.Type())
 	// creating PodSpec
 	ps := newPodSpec(c)
 	// appending volume to PodSpec
 	appendPodSpecSecretVolume(ps, "storage-keys", storage.GetK8sSecretName())
 	// creating deployment yaml...
 	d = newDeployment(app, ps)
-	// appending description annotation
-	appendDeploymentAnnotation(d, "kubernetes.io/change-cause", fmt.Sprintf(`deploy_success::%s`, deploy.description))
+	// appending annotations
+	appendDeploymentAnnotation(d, "kubernetes.io/change-cause", description)
+	appendDeploymentAnnotation(d, "teresa.io/slug", slug)
 	return
 }
 
@@ -474,8 +475,18 @@ func newWelcomeDeployment(app *models.App) (d *extensions.Deployment) {
 	return
 }
 
-func (c deployments) updateDeployment(app *models.App, deploy *deploy, storage helpers.Storage) error {
-	d := newSlugRunnerDeployment(app, deploy, storage)
+func (c deployments) updateDeployment(app *models.App, slug, description string, storage helpers.Storage) error {
+	d := newSlugRunnerDeployment(app, slug, description, storage)
 	_, err := c.k.k8sClient.Deployments(*app.Name).Update(d)
+	return err
+}
+
+func (c deployments) Update(app *models.App, description string, storage helpers.Storage) error {
+	d, err := c.Get(*app.Name)
+	if err != nil {
+		return err
+	}
+	slug := d.Annotations["teresa.io/slug"]
+	err = c.updateDeployment(app, slug, description, storage)
 	return err
 }

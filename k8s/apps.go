@@ -20,8 +20,9 @@ type AppsInterface interface {
 // AppInterface is used to interact with Kubernetes and also to allow mock testing
 type AppInterface interface {
 	Create(app *models.App, storage helpers.Storage, tk *Token) error
-	Update(app *models.App, description string, storage helpers.Storage, tk *Token) error
+	Update(app *models.App, storage helpers.Storage, tk *Token) error
 	UpdateEnvVars(appName string, operations []*models.PatchAppRequest, storage helpers.Storage, tk *Token) (app *models.App, err error)
+	UpdateScale(appName string, scale int64, storage helpers.Storage, tk *Token) (app *models.App, err error)
 	Get(appName string, tk *Token) (app *models.App, err error)
 }
 
@@ -74,17 +75,35 @@ func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token) error 
 	return nil
 }
 
-func (c apps) Update(app *models.App, description string, storage helpers.Storage, tk *Token) error {
-	// updating deployment
-	if err := c.k.Deployments().Update(app, fmt.Sprintf("update:%s", description), storage); err != nil {
-		return err
-	}
+func (c apps) Update(app *models.App, storage helpers.Storage, tk *Token) error {
+	// TODO: validate here
+	//
 
-	// TODO: update namespace quota here if exists...
+	// ############################################################
+	// FIXME: stopped this because it's not very usefull right now
+	// ############################################################
 
-	if err := c.updateNamespace(app, *tk.Email); err != nil {
-		return err
-	}
+	// // getting app
+	// app, err := c.Get(*app.Name, tk)
+	// if err != nil {
+	// 	if IsUnauthorizedError(err) {
+	// 		return NewUnauthorizedErrorf(`token "%s" is not allowed to update the app "%s". %s`, *tk.Email, *app.Name, err)
+	// 	}
+	// 	return err
+	// }
+	//
+	// // TODO: update quota
+	// // TODO: update hpa
+	// //
+	// //
+	//
+	// // updating deployment
+	// if err := c.k.Deployments().Update(app, "update:app", storage); err != nil {
+	// 	return err
+	// }
+	// if err := c.updateNamespace(app, *tk.Email); err != nil {
+	// 	return err
+	// }
 	return nil
 }
 
@@ -101,7 +120,32 @@ func (c apps) UpdateEnvVars(appName string, operations []*models.PatchAppRequest
 	if err = updateAppEnvVars(app, operations); err != nil {
 		return nil, err
 	}
-	if err := c.Update(app, "env vars", storage, tk); err != nil {
+	// updating deployment
+	if err := c.k.Deployments().Update(app, "update:env vars", storage); err != nil {
+		return nil, err
+	}
+	if err := c.updateNamespace(app, *tk.Email); err != nil {
+		return nil, err
+	}
+	return
+}
+
+func (c apps) UpdateScale(appName string, scale int64, storage helpers.Storage, tk *Token) (app *models.App, err error) {
+	// getting app
+	app, err = c.Get(appName, tk)
+	if err != nil {
+		if IsUnauthorizedError(err) {
+			return nil, NewUnauthorizedErrorf(`token "%s" is not allowed to update scale for the app "%s". %s`, *tk.Email, appName, err)
+		}
+		return nil, err
+	}
+	// updating scale inside the app
+	app.Scale = scale
+	// updating deployment
+	if err := c.k.Deployments().Update(app, "update:scale", storage); err != nil {
+		return nil, err
+	}
+	if err := c.updateNamespace(app, *tk.Email); err != nil {
 		return nil, err
 	}
 	return

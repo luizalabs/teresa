@@ -321,9 +321,8 @@ paths:
           description: Unexpected error
           schema:
             $ref: "#/definitions/Error"
-  /teams/{team_id}/apps/{app_id}:
     put:
-      summary: Update app
+      summary: Update an app
       description: Update app properties, such as number of replicas and other things.
       tags:
         - apps
@@ -332,31 +331,53 @@ paths:
         - api_key: []
         - token_header: []
       parameters:
-        - $ref: "#/parameters/appId"
-        - $ref: "#/parameters/teamId"
+        - $ref: "#/parameters/appName"
         - name: body
           in: body
           required: true
           schema:
-            $ref: "#/definitions/App"
+            $ref: "#/definitions/AppIn"
       responses:
         200:
-          description: App
+          description: Updated version of the app
           schema:
             $ref: "#/definitions/App"
-        401:
-          description: User not authorized
-          schema:
-            $ref: "#/definitions/Unauthorized"
-        403:
-          description: |
-            User does not have the credentials to access this resource
-          schema:
-            $ref: "#/definitions/Unauthorized"
         default:
-          description: Error
+          description: Unexpected error
           schema:
-            $ref: "#/definitions/GenericError"
+            $ref: "#/definitions/Error"
+  /apps/{app_name}/scale:
+    put:
+      summary: Update app scale
+      description: Update app scale size (replicas)
+      tags:
+        - apps
+      operationId: updateAppScale
+      security:
+        - api_key: []
+        - token_header: []
+      parameters:
+        - $ref: "#/parameters/appName"
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              scale:
+                type: integer
+                description: number of PODs running the app
+                default: 1
+                minimum: 1
+      responses:
+        200:
+          description: Updated version of the app
+          schema:
+            $ref: "#/definitions/App"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/Error"
   /teams/{team_id}/apps/{app_id}/deployments:
     get:
       summary: Get app deployments

@@ -11,7 +11,7 @@ import (
 	"github.com/luizalabs/teresa-api/models"
 )
 
-/*UpdateAppOK App
+/*UpdateAppOK Updated version of the app
 
 swagger:response updateAppOK
 */
@@ -48,82 +48,7 @@ func (o *UpdateAppOK) WriteResponse(rw http.ResponseWriter, producer runtime.Pro
 	}
 }
 
-/*UpdateAppUnauthorized User not authorized
-
-swagger:response updateAppUnauthorized
-*/
-type UpdateAppUnauthorized struct {
-
-	// In: body
-	Payload *models.Unauthorized `json:"body,omitempty"`
-}
-
-// NewUpdateAppUnauthorized creates UpdateAppUnauthorized with default headers values
-func NewUpdateAppUnauthorized() *UpdateAppUnauthorized {
-	return &UpdateAppUnauthorized{}
-}
-
-// WithPayload adds the payload to the update app unauthorized response
-func (o *UpdateAppUnauthorized) WithPayload(payload *models.Unauthorized) *UpdateAppUnauthorized {
-	o.Payload = payload
-	return o
-}
-
-// SetPayload sets the payload to the update app unauthorized response
-func (o *UpdateAppUnauthorized) SetPayload(payload *models.Unauthorized) {
-	o.Payload = payload
-}
-
-// WriteResponse to the client
-func (o *UpdateAppUnauthorized) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
-
-	rw.WriteHeader(401)
-	if o.Payload != nil {
-		if err := producer.Produce(rw, o.Payload); err != nil {
-			panic(err) // let the recovery middleware deal with this
-		}
-	}
-}
-
-/*UpdateAppForbidden User does not have the credentials to access this resource
-
-
-swagger:response updateAppForbidden
-*/
-type UpdateAppForbidden struct {
-
-	// In: body
-	Payload *models.Unauthorized `json:"body,omitempty"`
-}
-
-// NewUpdateAppForbidden creates UpdateAppForbidden with default headers values
-func NewUpdateAppForbidden() *UpdateAppForbidden {
-	return &UpdateAppForbidden{}
-}
-
-// WithPayload adds the payload to the update app forbidden response
-func (o *UpdateAppForbidden) WithPayload(payload *models.Unauthorized) *UpdateAppForbidden {
-	o.Payload = payload
-	return o
-}
-
-// SetPayload sets the payload to the update app forbidden response
-func (o *UpdateAppForbidden) SetPayload(payload *models.Unauthorized) {
-	o.Payload = payload
-}
-
-// WriteResponse to the client
-func (o *UpdateAppForbidden) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
-
-	rw.WriteHeader(403)
-	if o.Payload != nil {
-		if err := producer.Produce(rw, o.Payload); err != nil {
-			panic(err) // let the recovery middleware deal with this
-		}
-	}
-}
-
-/*UpdateAppDefault Error
+/*UpdateAppDefault Unexpected error
 
 swagger:response updateAppDefault
 */
@@ -131,7 +56,7 @@ type UpdateAppDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.GenericError `json:"body,omitempty"`
+	Payload *models.Error `json:"body,omitempty"`
 }
 
 // NewUpdateAppDefault creates UpdateAppDefault with default headers values
@@ -157,13 +82,13 @@ func (o *UpdateAppDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the update app default response
-func (o *UpdateAppDefault) WithPayload(payload *models.GenericError) *UpdateAppDefault {
+func (o *UpdateAppDefault) WithPayload(payload *models.Error) *UpdateAppDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the update app default response
-func (o *UpdateAppDefault) SetPayload(payload *models.GenericError) {
+func (o *UpdateAppDefault) SetPayload(payload *models.Error) {
 	o.Payload = payload
 }
 

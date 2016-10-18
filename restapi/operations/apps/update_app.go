@@ -27,9 +27,9 @@ func NewUpdateApp(ctx *middleware.Context, handler UpdateAppHandler) *UpdateApp 
 	return &UpdateApp{Context: ctx, Handler: handler}
 }
 
-/*UpdateApp swagger:route PUT /teams/{team_id}/apps/{app_id} apps updateApp
+/*UpdateApp swagger:route PUT /apps/{app_name} apps updateApp
 
-Update app
+Update an app
 
 Update app properties, such as number of replicas and other things.
 

@@ -27,7 +27,7 @@ func NewCreateDeployment(ctx *middleware.Context, handler CreateDeploymentHandle
 	return &CreateDeployment{Context: ctx, Handler: handler}
 }
 
-/*CreateDeployment swagger:route POST /teams/{team_id}/apps/{app_id}/deployments deployments createDeployment
+/*CreateDeployment swagger:route POST /apps/{app_name}/deployments deployments createDeployment
 
 Create a new deploy
 

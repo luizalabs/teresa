@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"crypto/rsa"
-	log "github.com/Sirupsen/logrus"
 	"io/ioutil"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-openapi/errors"

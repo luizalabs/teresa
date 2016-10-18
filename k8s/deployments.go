@@ -27,7 +27,7 @@ type DeploymentsInterface interface {
 // DeploymentInterface is used to interact with Kubernetes and also to allow mock testing
 type DeploymentInterface interface {
 	Get(appName string) (d *extensions.Deployment, err error)
-	Create(appName, description string, file *runtime.File, storage helpers.Storage, tk *Token, l *log.Entry) (io.ReadCloser, error)
+	Create(appName, description string, file *runtime.File, storage helpers.Storage, tk *Token) (io.ReadCloser, error)
 }
 
 type deployments struct {
@@ -60,9 +60,9 @@ func newDeploy(appName, description string) *deploy {
 }
 
 // Create creates a new deployment for the App
-func (c deployments) Create(appName, description string, file *runtime.File, storage helpers.Storage, tk *Token, l *log.Entry) (io.ReadCloser, error) {
+func (c deployments) Create(appName, description string, file *runtime.File, storage helpers.Storage, tk *Token) (io.ReadCloser, error) {
 	// get app info...
-	app, err := c.k.Apps().Get(appName, tk, l)
+	app, err := c.k.Apps().Get(appName, tk)
 	if err != nil {
 		return nil, err
 	}

@@ -2,10 +2,8 @@ package k8s
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/luizalabs/tapi/helpers"
 	"github.com/luizalabs/tapi/models"
 	"k8s.io/kubernetes/pkg/api"
@@ -21,10 +19,10 @@ type AppsInterface interface {
 
 // AppInterface is used to interact with Kubernetes and also to allow mock testing
 type AppInterface interface {
-	Create(app *models.App, storage helpers.Storage, tk *Token, l *log.Entry) error
-	Update(app *models.App, tk *Token, l *log.Entry) error
-	UpdateEnvVars(appName string, operations []*models.PatchAppRequest, tk *Token, l *log.Entry) (app *models.App, err error)
-	Get(appName string, tk *Token, l *log.Entry) (app *models.App, err error)
+	Create(app *models.App, storage helpers.Storage, tk *Token) error
+	Update(app *models.App, tk *Token) error
+	UpdateEnvVars(appName string, operations []*models.PatchAppRequest, tk *Token) (app *models.App, err error)
+	Get(appName string, tk *Token) (app *models.App, err error)
 }
 
 type apps struct {
@@ -37,93 +35,75 @@ func newApps(c *k8sHelper) *apps {
 
 // Create creates an App inside kubernetes
 // Inside kubernetes, the App is represented as an namespace
-func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token, l *log.Entry) error {
-	l.Debug("creating app")
+func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token) error {
 	// validating input params
-	if err := validateBeforeCreate(app, tk, l); err != nil {
+	if err := validateBeforeCreate(app, tk); err != nil {
 		return err
 	}
 	// check if user can create apps for the team
 	if tk.IsAuthorized(*app.Team) == false {
-		msg := "token not allowed to create apps for this team"
-		l.Info(msg)
-		return NewUnauthorizedError(msg)
+		return NewUnauthorizedError(`token "%s" not allowed to create apps for the team "%s"`, *tk.Email, *app.Team)
 	}
 	app.Creator = &models.User{
 		Email: tk.Email,
 	}
 	// creating namespace
-	if err := c.createNamespace(app, *tk.Email, l); err != nil {
+	if err := c.createNamespace(app, *tk.Email); err != nil {
 		return err
 	}
 	// creating quota (limit ranges) for namespace
-	l.Debug("creating quota (limit range) for namespace")
-	if err := c.createQuota(app, l); err != nil {
+	if err := c.createQuota(app); err != nil {
 		return err
 	}
-	l.Debug("namespace quota created with success for namespace")
 	// creating storage secret. this will be used to store the built App
-	l.Debug("creating storage secret for namespace")
-	if err := c.createStorageSecret(*app.Name, storage, l); err != nil {
+	if err := c.createStorageSecret(*app.Name, storage); err != nil {
 		return err
 	}
-	l.Debug("secret created with success for namespace")
-	l.Info("app created with success")
-
 	return nil
 }
 
-func (c apps) Update(app *models.App, tk *Token, l *log.Entry) error {
-	l.Debug("updating app")
-
+func (c apps) Update(app *models.App, tk *Token) error {
 	// TODO: update the deployment here if exists...
 	// TODO: update namespace quota here if exists...
 
-	if err := c.updateNamespace(app, *tk.Email, l); err != nil {
+	if err := c.updateNamespace(app, *tk.Email); err != nil {
 		return err
 	}
-	l.Info("app updated with success")
 	return nil
 }
 
-func (c apps) UpdateEnvVars(appName string, operations []*models.PatchAppRequest, tk *Token, l *log.Entry) (app *models.App, err error) {
-	l.Debug("updating env vars for App")
+func (c apps) UpdateEnvVars(appName string, operations []*models.PatchAppRequest, tk *Token) (app *models.App, err error) {
 	// getting app
-	app, err = c.Get(appName, tk, l)
+	app, err = c.Get(appName, tk)
 	if err != nil {
 		if IsUnauthorizedError(err) {
-			l.WithError(err).Warn("token is not allowed to update env vars")
+			return nil, NewUnauthorizedErrorf(`token "%s" is not allowed to update env vars for the app "%s". %s`, *tk.Email, appName, err)
 		}
 		return nil, err
 	}
-
 	// applying the operations to App
-	if err = updateAppEnvVars(app, operations, l); err != nil {
+	if err = updateAppEnvVars(app, operations); err != nil {
 		return nil, err
 	}
 	if tk.IsAuthorized(*app.Team) == false {
-		log.Printf(`token "%s" is not allowed to update env vars for the App "%s/%s"`, *tk.Email, *app.Team, *app.Name)
-		return nil, NewUnauthorizedErrorf(`token not allowed to make changes for the App "%s"`, *app.Name)
+		return nil, NewUnauthorizedErrorf(`token "%s" not allowed to make changes for the App "%s"`, *tk.Email, *app.Name)
 	}
-
-	if err := c.Update(app, tk, l); err != nil {
+	if err := c.Update(app, tk); err != nil {
 		return nil, err
 	}
-	l.Info("app env vars updated successfully")
 	return
 }
 
 // Get returns an App by the name
-func (c apps) Get(appName string, tk *Token, l *log.Entry) (app *models.App, err error) {
-	l.Debug("trying to get app")
-	ns, err := c.getNamespace(appName, l)
+func (c apps) Get(appName string, tk *Token) (app *models.App, err error) {
+	ns, err := c.getNamespace(appName)
 	if err != nil {
 		if IsNotFoundError(err) {
 			return nil, NewUnauthorizedErrorf(`app "%s" not found or user not allowed to see it`, appName)
 		}
 		return nil, err
 	}
-	app, err = unmarshalAppFromNamespace(ns, l)
+	app, err = unmarshalAppFromNamespace(ns)
 	if err != nil {
 		return nil, err
 	}
@@ -138,14 +118,12 @@ func (c apps) Get(appName string, tk *Token, l *log.Entry) (app *models.App, err
 }
 
 // createQuota creates an k8s Limit Range for the App (namespace)
-func (c apps) createQuota(app *models.App, l *log.Entry) error {
-	l.Debug("creating namespace quota")
-	quota, err := newQuotaYaml(app, l)
+func (c apps) createQuota(app *models.App) error {
+	quota, err := newQuotaYaml(app)
 	if err != nil {
 		return err
 	}
 	if _, err = c.k.k8sClient.LimitRanges(*app.Name).Create(quota); err != nil {
-		l.WithError(err).Error(`error when creating "quotas" for the namespace`)
 		return err
 	}
 	return nil
@@ -153,49 +131,40 @@ func (c apps) createQuota(app *models.App, l *log.Entry) error {
 
 // createNamespace creates an k8s namespace
 // Inside kubernetes, every app is a k8s namespaces (1:1) with the App information inside
-func (c apps) createNamespace(app *models.App, userEmail string, l *log.Entry) error {
-	l.Debug("creating namespace")
-	nsy := newAppNamespaceYaml(app, userEmail, l)
-	if err := addAppToNamespaceYaml(app, nsy, l); err != nil {
+func (c apps) createNamespace(app *models.App, userEmail string) error {
+	nsy := newAppNamespaceYaml(app, userEmail)
+	if err := addAppToNamespaceYaml(app, nsy); err != nil {
 		return err
 	}
 	if _, err := c.k.k8sClient.Namespaces().Create(nsy); err != nil {
 		if k8s_errors.IsAlreadyExists(err) {
-			msg := fmt.Sprintf(`a namespace with the name "%s" already exists`, *app.Name)
-			l.Info(msg)
-			return NewAlreadyExistsError(msg)
+			return NewAlreadyExistsErrorf(`a namespace with the name "%s" already exists`, *app.Name)
 		}
-		l.WithError(err).Error("error found when creating the namespace")
 		return err
 	}
-	l.Debug("namespace created with success")
 	return nil
 }
 
 // updateNamespace updates App information inside the namespace
-func (c apps) updateNamespace(app *models.App, userEmail string, l *log.Entry) error {
-	l.Debug("updating namespace")
-	ns, err := c.getNamespace(*app.Name, l)
+func (c apps) updateNamespace(app *models.App, userEmail string) error {
+	ns, err := c.getNamespace(*app.Name)
 	if err != nil {
 		return err
 	}
 	ai, err := json.Marshal(app)
 	if err != nil {
-		l.WithError(err).Error("error when marshalling the app")
-		return err
+		return fmt.Errorf(`error when marshalling the app "%s". %s`, *app.Name, err)
 	}
 	ns.Annotations["teresa.io/app"] = string(ai)
 	ns.Annotations["teresa.io/last-user"] = userEmail
 	if _, err := c.k.k8sClient.Namespaces().Update(ns); err != nil {
-		l.WithError(err).Error("error when updating the namespace")
 		return err
 	}
 	return nil
 }
 
 // createStorageSecret creates a K8s Secret that will be used by the Builder and Runner processes
-func (c apps) createStorageSecret(appName string, storage helpers.Storage, l *log.Entry) error {
-	l.Debug("creating storage secret")
+func (c apps) createStorageSecret(appName string, storage helpers.Storage) error {
 	svc := &api.Secret{
 		TypeMeta: unversioned.TypeMeta{
 			Kind:       "Secret",
@@ -210,45 +179,37 @@ func (c apps) createStorageSecret(appName string, storage helpers.Storage, l *lo
 	}
 	_, err := c.k.k8sClient.Secrets(appName).Create(svc)
 	if err != nil {
-		l.WithError(err).Error("error found when creating the storage secret for the namespace")
 		return err
 	}
-	l.Debug("storage secret created with success")
 	return nil
 }
 
 // getNamespace returns a namespace or an error if any
-func (c apps) getNamespace(name string, l *log.Entry) (ns *api.Namespace, err error) {
-	l.Debug("getting namespace from k8s")
+func (c apps) getNamespace(name string) (ns *api.Namespace, err error) {
 	ns, err = c.k.k8sClient.Namespaces().Get(name)
 	if err != nil {
 		if k8s_errors.IsNotFound(err) {
-			msg := "namespace not found"
-			l.Debug(msg)
-			return nil, NewNotFoundError(msg)
+			return nil, NewNotFoundErrorf(`namespace "%s" not found`, name)
 		}
-		l.Error("error when trying to get namespace from k8s")
 		return nil, err
 	}
 	return
 }
 
 // validateBeforeCreate validade all App parameters and return an InputError if any
-func validateBeforeCreate(app *models.App, tk *Token, l *log.Entry) error {
+func validateBeforeCreate(app *models.App, tk *Token) error {
 	// TODO: validate...
 	// - name
 	// - team
 	// - userEmail
 	if app.Limits == nil {
-		l.Debug("quota not specified for the app")
-		return NewInputError("limits where not provided")
+		return NewInputErrorf(`limits where not provided for the app "%s"`, *app.Name)
 	}
 	return nil
 }
 
 // newAppNamespaceYaml is a helper to create k8s namespace (parameters) for an App
-func newAppNamespaceYaml(app *models.App, userEmail string, l *log.Entry) (ns *api.Namespace) {
-	l.Debug("creating namespace params (yaml)")
+func newAppNamespaceYaml(app *models.App, userEmail string) (ns *api.Namespace) {
 	ns = &api.Namespace{
 		TypeMeta: unversioned.TypeMeta{
 			Kind:       "Namespace",
@@ -264,26 +225,22 @@ func newAppNamespaceYaml(app *models.App, userEmail string, l *log.Entry) (ns *a
 			},
 		},
 	}
-	l.Debug("namespace params created with success")
 	return
 }
 
 // addAppToNamespaceYaml marshall the entire App struct and put inside the namesapce Yaml
-func addAppToNamespaceYaml(app *models.App, ns *api.Namespace, l *log.Entry) error {
-	l.Debug("marshalling app to put inside namespace")
+func addAppToNamespaceYaml(app *models.App, ns *api.Namespace) error {
 	ai, err := json.Marshal(app)
 	if err != nil {
-		l.WithError(err).Error("error found when marshalling the app to put inside the namespace annotation.")
 		return err
 	}
 	ns.Annotations["teresa.io/app"] = string(ai)
-	l.Debug("app string inserted to namespace")
 	return nil
 }
 
 // addLimitRangeQuantityToResourceList is a helper to the function parseLimitRangeParams, used to add a limit range
 // to a specific limit range list
-func addLimitRangeQuantityToResourceList(r *api.ResourceList, limitRangeQuantity []*models.LimitRangeQuantity, l *log.Entry) error {
+func addLimitRangeQuantityToResourceList(r *api.ResourceList, limitRangeQuantity []*models.LimitRangeQuantity) error {
 	if limitRangeQuantity == nil {
 		return nil
 	}
@@ -292,8 +249,7 @@ func addLimitRangeQuantityToResourceList(r *api.ResourceList, limitRangeQuantity
 		name := api.ResourceName(*item.Resource)
 		q, err := resource.ParseQuantity(*item.Quantity)
 		if err != nil {
-			l.WithError(err).Errorf(`error when trying to parse limits value "%s:%s".`, *item.Resource, *item.Quantity)
-			return err
+			return fmt.Errorf(`error when trying to parse limits value "%s:%s". %s`, *item.Resource, *item.Quantity, err)
 		}
 		rl[name] = q
 	}
@@ -302,37 +258,33 @@ func addLimitRangeQuantityToResourceList(r *api.ResourceList, limitRangeQuantity
 }
 
 // parseLimitRangeParams is a helper to parse all the limit range types
-func parseLimitRangeParams(limitRangeItem *api.LimitRangeItem, limits *models.AppInLimits, l *log.Entry) error {
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Default, limits.Default, l); err != nil {
+func parseLimitRangeParams(limitRangeItem *api.LimitRangeItem, limits *models.AppInLimits) error {
+	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Default, limits.Default); err != nil {
 		return err
 	}
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.DefaultRequest, limits.DefaultRequest, l); err != nil {
+	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.DefaultRequest, limits.DefaultRequest); err != nil {
 		return err
 	}
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Max, limits.Max, l); err != nil {
+	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Max, limits.Max); err != nil {
 		return err
 	}
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Min, limits.Min, l); err != nil {
+	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Min, limits.Min); err != nil {
 		return err
 	}
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.MaxLimitRequestRatio, limits.LimitRequestRatio, l); err != nil {
+	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.MaxLimitRequestRatio, limits.LimitRequestRatio); err != nil {
 		return err
 	}
 	return nil
 }
 
 // newQuotaYaml is a helper to create an k8s LimitRange based on App Limits
-func newQuotaYaml(app *models.App, l *log.Entry) (lr *api.LimitRange, err error) {
-	l.Debug("create quota for the namespace")
+func newQuotaYaml(app *models.App) (lr *api.LimitRange, err error) {
 	lrItem := api.LimitRangeItem{
 		Type: api.LimitTypeContainer,
 	}
 	// parse limits params to k8s params
-	l.Debug("parse limit ranges...")
-	if err = parseLimitRangeParams(&lrItem, app.Limits, l); err != nil {
-		msg := `found error when parsing app "limits"`
-		l.Error(msg)
-		return nil, NewInputError(msg)
+	if err = parseLimitRangeParams(&lrItem, app.Limits); err != nil {
+		return nil, NewInputErrorf(`found error when parsing "limits" for app "%s". %s`, *app.Name, err)
 	}
 	lr = &api.LimitRange{
 		TypeMeta: unversioned.TypeMeta{
@@ -346,37 +298,31 @@ func newQuotaYaml(app *models.App, l *log.Entry) (lr *api.LimitRange, err error)
 			Limits: []api.LimitRangeItem{lrItem},
 		},
 	}
-	l.Debug("quota created with success for the namespace")
 	return
 }
 
 // unmarshalAppFromNamespace extract and unmarshal the App from the namespace
-func unmarshalAppFromNamespace(ns *api.Namespace, l *log.Entry) (app *models.App, err error) {
+func unmarshalAppFromNamespace(ns *api.Namespace) (app *models.App, err error) {
 	s, ok := ns.GetAnnotations()["teresa.io/app"]
 	if ok == false {
-		msg := fmt.Sprintf(`annotation "teresa.io/app" not found on this provided namespace`)
-		l.WithField("namespace", ns.Name).Error(msg)
-		return nil, errors.New(msg)
+		return nil, fmt.Errorf(`annotation "teresa.io/app" not found inside the namespace "%s"`, ns.Name)
 	}
 	app = &models.App{}
 	err = json.Unmarshal([]byte(s), app)
 	if err != nil {
-		l.WithError(err).WithField("namespace", ns.Name).Error("error when trying to unmarshal the app from namespace.")
-		return nil, err
+		return nil, fmt.Errorf(`error when trying to unmarshal the app from namespace "%s". %s`, ns.Name, err)
 	}
 	return
 }
 
 // checkForProtectedEnvVars check if is there any Operation trying to modify some of the protected env vars
-func checkForProtectedEnvVars(operations []*models.PatchAppRequest, l *log.Entry) error {
+func checkForProtectedEnvVars(operations []*models.PatchAppRequest) error {
 	protectedEnvVars := [...]string{"SLUG_URL", "PORT", "DEIS_DEBUG", "BUILDER_STORAGE"}
 	for _, operation := range operations {
 		for _, operationValue := range operation.Value {
 			for _, pv := range protectedEnvVars {
 				if *operationValue.Key == pv {
-					msg := fmt.Sprintf(`manually changing the env var "%s" isn't allowed`, pv)
-					l.Warn(msg)
-					return NewInputError(msg)
+					return NewInputError(`manually changing the env var "%s" isn't allowed`, pv)
 				}
 			}
 		}
@@ -385,9 +331,8 @@ func checkForProtectedEnvVars(operations []*models.PatchAppRequest, l *log.Entry
 }
 
 // updateAppEnvVars updates App env vars based on the operations
-func updateAppEnvVars(app *models.App, operations []*models.PatchAppRequest, l *log.Entry) error {
-	l.Debug("updating env vars for the app")
-	if err := checkForProtectedEnvVars(operations, l); err != nil {
+func updateAppEnvVars(app *models.App, operations []*models.PatchAppRequest) error {
+	if err := checkForProtectedEnvVars(operations); err != nil {
 		return err
 	}
 	// applying the operations to App
@@ -420,6 +365,5 @@ func updateAppEnvVars(app *models.App, operations []*models.PatchAppRequest, l *
 			}
 		}
 	}
-	l.Debug("env vars updated with success for the app")
 	return nil
 }

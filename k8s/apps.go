@@ -20,8 +20,8 @@ type AppsInterface interface {
 // AppInterface is used to interact with Kubernetes and also to allow mock testing
 type AppInterface interface {
 	Create(app *models.App, storage helpers.Storage, tk *Token) error
-	Update(app *models.App, tk *Token) error
-	UpdateEnvVars(appName string, operations []*models.PatchAppRequest, tk *Token) (app *models.App, err error)
+	Update(app *models.App, description string, storage helpers.Storage, tk *Token) error
+	UpdateEnvVars(appName string, operations []*models.PatchAppRequest, storage helpers.Storage, tk *Token) (app *models.App, err error)
 	Get(appName string, tk *Token) (app *models.App, err error)
 }
 
@@ -70,8 +70,12 @@ func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token) error 
 	return nil
 }
 
-func (c apps) Update(app *models.App, tk *Token) error {
-	// TODO: update the deployment here if exists...
+func (c apps) Update(app *models.App, description string, storage helpers.Storage, tk *Token) error {
+	// updating deployment
+	if err := c.k.Deployments().Update(app, fmt.Sprintf("update:%s", description), storage); err != nil {
+		return err
+	}
+
 	// TODO: update namespace quota here if exists...
 
 	if err := c.updateNamespace(app, *tk.Email); err != nil {
@@ -80,7 +84,7 @@ func (c apps) Update(app *models.App, tk *Token) error {
 	return nil
 }
 
-func (c apps) UpdateEnvVars(appName string, operations []*models.PatchAppRequest, tk *Token) (app *models.App, err error) {
+func (c apps) UpdateEnvVars(appName string, operations []*models.PatchAppRequest, storage helpers.Storage, tk *Token) (app *models.App, err error) {
 	// getting app
 	app, err = c.Get(appName, tk)
 	if err != nil {
@@ -93,10 +97,7 @@ func (c apps) UpdateEnvVars(appName string, operations []*models.PatchAppRequest
 	if err = updateAppEnvVars(app, operations); err != nil {
 		return nil, err
 	}
-	if tk.IsAuthorized(*app.Team) == false {
-		return nil, NewUnauthorizedErrorf(`token "%s" not allowed to make changes for the App "%s"`, *tk.Email, *app.Name)
-	}
-	if err := c.Update(app, tk); err != nil {
+	if err := c.Update(app, "env vars", storage, tk); err != nil {
 		return nil, err
 	}
 	return

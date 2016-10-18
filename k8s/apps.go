@@ -120,8 +120,14 @@ func (c apps) Get(appName string, tk *Token) (app *models.App, err error) {
 	if tk.IsAuthorized(*app.Team) == false {
 		return nil, NewUnauthorizedErrorf(`app "%s" not found or user not allowed to see it`, appName)
 	}
+	// append LB address to app
+	srv, err := c.k.Networks().GetService(appName)
+	if err != nil {
+		return nil, err
+	}
+	app.AddressList = []string{srv.Status.LoadBalancer.Ingress[0].Hostname}
 
-	// TODO: get LB + Deployments here
+	// TODO: get deployments here??
 
 	return
 }

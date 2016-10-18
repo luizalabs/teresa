@@ -101,6 +101,10 @@ func (c apps) UpdateEnvVars(appName string, operations []*models.PatchAppRequest
 	if err = updateAppEnvVars(app, operations, l); err != nil {
 		return nil, err
 	}
+	if tk.IsAuthorized(*app.Team) == false {
+		log.Printf(`token "%s" is not allowed to update env vars for the App "%s/%s"`, *tk.Email, *app.Team, *app.Name)
+		return nil, NewUnauthorizedErrorf(`token not allowed to make changes for the App "%s"`, *app.Name)
+	}
 
 	if err := c.Update(app, tk, l); err != nil {
 		return nil, err
@@ -127,6 +131,9 @@ func (c apps) Get(appName string, tk *Token, l *log.Entry) (app *models.App, err
 	if tk.IsAuthorized(*app.Team) == false {
 		return nil, NewUnauthorizedErrorf(`app "%s" not found or user not allowed to see it`, appName)
 	}
+
+	// TODO: get LB + Deployments here
+
 	return
 }
 

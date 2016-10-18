@@ -15,9 +15,7 @@ type NetworksInterface interface {
 // NetworkInterface is used to interact with Kubernetes and also to allow mock testing
 type NetworkInterface interface {
 	CreateLoadBalancerService(app *models.App) error
-	// Get(appName string) (d *extensions.Deployment, err error)
-	// CreateWelcomeDeployment(app *models.App) error
-	// Create(appName, description string, file *runtime.File, storage helpers.Storage, tk *Token) (io.ReadCloser, error)
+	GetService(appName string) (srv *api.Service, err error)
 }
 
 type networks struct {
@@ -62,5 +60,10 @@ func newService(app *models.App, serviceType api.ServiceType) (srv *api.Service)
 			},
 		},
 	}
+	return
+}
+
+func (c networks) GetService(name string) (srv *api.Service, err error) {
+	srv, err = c.k.k8sClient.Services(name).Get(name)
 	return
 }

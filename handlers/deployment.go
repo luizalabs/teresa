@@ -51,24 +51,26 @@ var CreateDeploymentHandler deployments.CreateDeploymentHandlerFunc = func(param
 	var r middleware.ResponderFunc = func(rw http.ResponseWriter, pr runtime.Producer) {
 		tk := k8s.IToToken(principal)
 
-		l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("reqId", helpers.NewShortUUID())
-		r, err := k8s.Client.Deployments().Create(params.AppName, *params.Description, &params.AppTarball, helpers.FileStorage, tk, l)
+		l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
+		r, err := k8s.Client.Deployments().Create(params.AppName, *params.Description, &params.AppTarball, helpers.FileStorage, tk)
 		if err != nil {
 			// FIXME: improve this... is it possible?
 			var httpErr *GenericError
 			if k8s.IsInputError(err) {
+				l.WithError(err).Warn("error during deploy")
 				httpErr = NewBadRequestError(err)
-			} else if k8s.IsAlreadyExistsError(err) {
-				httpErr = NewConflictError(err)
 			} else if k8s.IsUnauthorizedError(err) {
+				l.WithError(err).Warn("error during deploy")
 				httpErr = NewUnauthorizedError(err)
 			} else {
+				l.WithError(err).Error("error during deploy")
 				httpErr = NewInternalServerError(err)
 			}
 			rw.WriteHeader(int(*httpErr.Payload.Code))
 			rw.Write([]byte(*httpErr.Payload.Message))
 			return
 		}
+		l.Debug("starting the streaming of the build")
 		defer r.Close()
 		// creates a flushed response writer...
 		w := newFlushResponseWriter(rw)

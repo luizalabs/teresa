@@ -37,8 +37,6 @@ var GetAppDetailsHandler apps.GetAppDetailsHandlerFunc = func(params apps.GetApp
 
 	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
 
-	// FIXME: implements a functions GetFull, that will return the App + LB address + Deployments
-
 	app, err := k8s.Client.Apps().Get(params.AppName, tk)
 	if err != nil {
 		if k8s.IsNotFoundError(err) {

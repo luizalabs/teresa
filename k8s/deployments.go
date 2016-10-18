@@ -14,6 +14,7 @@ import (
 	"k8s.io/kubernetes/pkg/api"
 	k8s_errors "k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/api/unversioned"
+	"k8s.io/kubernetes/pkg/apis/autoscaling"
 	"k8s.io/kubernetes/pkg/apis/extensions"
 	"k8s.io/kubernetes/pkg/util/intstr"
 	"k8s.io/kubernetes/pkg/util/wait"
@@ -30,6 +31,7 @@ type DeploymentInterface interface {
 	CreateWelcomeDeployment(app *models.App) error
 	Create(appName, description string, file *runtime.File, storage helpers.Storage, tk *Token) (io.ReadCloser, error)
 	Update(app *models.App, description string, storage helpers.Storage) error
+	CreateAutoScale(app *models.App) error
 }
 
 type deployments struct {
@@ -488,5 +490,37 @@ func (c deployments) Update(app *models.App, description string, storage helpers
 	}
 	slug := d.Annotations["teresa.io/slug"]
 	err = c.updateDeployment(app, slug, description, storage)
+	return err
+}
+
+func newHorizontalPodAutoscaler(app *models.App) (hpa *autoscaling.HorizontalPodAutoscaler) {
+	tcpu := int32(*app.AutoScale.CPUTargetUtilization)
+	minr := int32(app.AutoScale.Min)
+	hpa = &autoscaling.HorizontalPodAutoscaler{
+		TypeMeta: unversioned.TypeMeta{
+			APIVersion: "autoscaling/v1",
+			Kind:       "HorizontalPodAutoscaler",
+		},
+		ObjectMeta: api.ObjectMeta{
+			Name:      *app.Name,
+			Namespace: *app.Name,
+		},
+		Spec: autoscaling.HorizontalPodAutoscalerSpec{
+			ScaleTargetRef: autoscaling.CrossVersionObjectReference{
+				APIVersion: "extensions/v1beta1",
+				Kind:       "Deployment",
+				Name:       *app.Name,
+			},
+			TargetCPUUtilizationPercentage: &tcpu,
+			MaxReplicas:                    int32(app.AutoScale.Max),
+			MinReplicas:                    &minr,
+		},
+	}
+	return
+}
+
+func (c deployments) CreateAutoScale(app *models.App) error {
+	hpa := newHorizontalPodAutoscaler(app)
+	_, err := c.k.k8sClient.HorizontalPodAutoscalers(*app.Name).Create(hpa)
 	return err
 }

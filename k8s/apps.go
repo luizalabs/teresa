@@ -63,6 +63,10 @@ func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token) error 
 	if err := c.k.Deployments().CreateWelcomeDeployment(app); err != nil {
 		return err
 	}
+	// creating horizontal auto scaling
+	if err := c.k.Deployments().CreateAutoScale(app); err != nil {
+		return err
+	}
 	// creating the loadbalancer
 	if err := c.k.Networks().CreateLoadBalancerService(app); err != nil {
 		return err

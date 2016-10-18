@@ -3,11 +3,9 @@ package handlers
 import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/go-openapi/runtime/middleware"
-	strfmt "github.com/go-openapi/strfmt"
 	"github.com/luizalabs/teresa-api/helpers"
 	"github.com/luizalabs/teresa-api/k8s"
 	"github.com/luizalabs/teresa-api/models"
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/restapi/operations/apps"
 )
 
@@ -31,45 +29,6 @@ var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParam
 		return NewInternalServerError(err)
 	}
 	return apps.NewCreateAppCreated().WithPayload(app)
-}
-
-// parseAppFromStorageToResponse receives a storage object and return an response object
-func parseAppFromStorageToResponse(sa *storage.Application) (app *models.App) {
-	scale := int64(sa.Scale)
-	app = &models.App{}
-	app.Name = &sa.Name
-	app.Scale = scale
-
-	app.AddressList = make([]string, len(sa.Addresses))
-	for i, x := range sa.Addresses {
-		app.AddressList[i] = x.Address
-	}
-
-	app.EnvVars = make([]*models.EnvVar, len(sa.EnvVars))
-	for i, x := range sa.EnvVars {
-		k := x.Key
-		v := x.Value
-		e := models.EnvVar{
-			Key:   &k,
-			Value: &v,
-		}
-		app.EnvVars[i] = &e
-	}
-
-	app.DeploymentList = make([]*models.Deployment, len(sa.Deployments))
-	for i, x := range sa.Deployments {
-		id := x.UUID
-		w, _ := strfmt.ParseDateTime(x.CreatedAt.String())
-		d := models.Deployment{
-			UUID: &id,
-			When: w,
-		}
-		if des := x.Description; des != "" {
-			d.Description = &des
-		}
-		app.DeploymentList[i] = &d
-	}
-	return
 }
 
 // GetAppDetailsHandler return app details
@@ -161,7 +120,7 @@ var PartialUpdateAppHandler apps.PartialUpdateAppHandlerFunc = func(params apps.
 	tk := k8s.IToToken(principal)
 	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
 
-	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, params.Body, tk)
+	app, err := k8s.Client.Apps().UpdateEnvVars(params.AppName, params.Body, helpers.FileStorage, tk)
 	if err != nil {
 		if k8s.IsInputError(err) {
 			l.WithError(err).Warn("error during partial update for the app")

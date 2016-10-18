@@ -41,6 +41,10 @@ func (k *k8sHelper) Deployments() DeploymentInterface {
 	return newDeployments(k)
 }
 
+func (k *k8sHelper) Networks() NetworkInterface {
+	return newNetworks(k)
+}
+
 func init() {
 	// Loading kubernetes (k8s) config from env
 	configenv := &k8sConfig{}

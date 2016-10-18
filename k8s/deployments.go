@@ -27,6 +27,7 @@ type DeploymentsInterface interface {
 // DeploymentInterface is used to interact with Kubernetes and also to allow mock testing
 type DeploymentInterface interface {
 	Get(appName string) (d *extensions.Deployment, err error)
+	CreateWelcomeDeployment(app *models.App) error
 	Create(appName, description string, file *runtime.File, storage helpers.Storage, tk *Token) (io.ReadCloser, error)
 }
 
@@ -57,6 +58,12 @@ func newDeploy(appName, description string) *deploy {
 	d.storageOut = fmt.Sprintf("deploys/%s/%s/out", appName, d.uuid)
 	d.slugPath = fmt.Sprintf("%s/slug.tgz", d.storageOut)
 	return d
+}
+
+func (c deployments) CreateWelcomeDeployment(app *models.App) error {
+	d := newWelcomeDeployment(app)
+	_, err := c.k.k8sClient.Deployments(*app.Name).Create(d)
+	return err
 }
 
 // Create creates a new deployment for the App
@@ -309,63 +316,88 @@ func (c deployments) podExitCode(pod *api.Pod) (code *int32, err error) {
 	return &zero, nil
 }
 
-func newDeployment(app *models.App, deploy *deploy, storage helpers.Storage) (d *extensions.Deployment) {
-	// creating runner container
-	c := api.Container{
-		Name:            *app.Name,
+// newContainer is a helper to create a new container
+func newContainer(name, image string) (c *api.Container) {
+	c = &api.Container{
+		Name:            name,
 		ImagePullPolicy: api.PullIfNotPresent,
-		Image:           "luizalabs/slugrunner:git-044f85c",
-		Args:            []string{"start", "web"},
+		Image:           image,
 	}
+	return
+}
+
+// appendContainerEnvVar appends a new env var to a container
+func appendContainerEnvVar(c *api.Container, name, value string) {
+	c.Env = append(c.Env, api.EnvVar{
+		Name:  name,
+		Value: value,
+	})
+}
+
+// appendContainerVolumeMount is a helper to append a volume mount to a container
+func appendContainerVolumeMount(c *api.Container, name, mountPath string, readOnly bool) {
+	c.VolumeMounts = append(c.VolumeMounts, api.VolumeMount{
+		Name:      name,
+		ReadOnly:  readOnly,
+		MountPath: mountPath,
+	})
+	return
+}
+
+func newWelcomeContainer(app *models.App) (c *api.Container) {
+	c = newContainer(*app.Name, "luizalabs/hello-world:0.0.1")
+	appendContainerEnvVar(c, "APP", *app.Name)
+	appendContainerEnvVar(c, "PORT", "5000")
+	return
+}
+
+func newSlugRunnerContainer(app *models.App, slug string, storageType string) (c *api.Container) {
+	// creating runner container
+	c = newContainer(*app.Name, "luizalabs/slugrunner:git-044f85c")
+	c.Args = []string{"start", "web"}
 	// appending env vars...
-	c.Env = []api.EnvVar{
-		api.EnvVar{
-			Name:  "PORT",
-			Value: "5000",
-		},
-		api.EnvVar{
-			Name:  "BUILDER_STORAGE",
-			Value: storage.Type(),
-		},
-		api.EnvVar{
-			Name:  "SLUG_URL",
-			Value: deploy.slugPath,
-		},
-	}
+	// append App name to env var
+	appendContainerEnvVar(c, "APP", *app.Name)
+	appendContainerEnvVar(c, "PORT", "5000")
+	appendContainerEnvVar(c, "BUILDER_STORAGE", storageType)
+	appendContainerEnvVar(c, "SLUG_URL", slug)
 	// appending app env vars
 	for _, e := range app.EnvVars {
-		c.Env = append(c.Env, api.EnvVar{
-			Name:  *e.Key,
-			Value: *e.Value,
-		})
+		appendContainerEnvVar(c, *e.Key, *e.Value)
 	}
 	// appending volume mount
-	c.VolumeMounts = []api.VolumeMount{
-		api.VolumeMount{
-			Name:      "storage-keys",
-			ReadOnly:  true,
-			MountPath: "/var/run/secrets/deis/objectstore/creds",
-		},
-	}
-	// creating PodSpec
-	ps := api.PodSpec{
+	appendContainerVolumeMount(c, "storage-keys", "/var/run/secrets/deis/objectstore/creds", true)
+	return
+}
+
+// newPodSpec creates a new Pod spec
+func newPodSpec(c *api.Container) (ps *api.PodSpec) {
+	ps = &api.PodSpec{
 		RestartPolicy: api.RestartPolicyAlways,
 		Containers: []api.Container{
-			c,
+			*c,
 		},
 	}
-	// appending volume to PodSpec
+	return
+}
+
+// appendPodSpecSecretVolume appends a secret volume source to the pod
+func appendPodSpecSecretVolume(ps *api.PodSpec, volumeName, secretName string) {
 	ps.Volumes = []api.Volume{
 		api.Volume{
-			Name: "storage-keys",
+			Name: volumeName,
 			VolumeSource: api.VolumeSource{
 				Secret: &api.SecretVolumeSource{
-					SecretName: storage.GetK8sSecretName(),
+					SecretName: secretName,
 				},
 			},
 		},
 	}
+	return
+}
 
+// newDeployment creates a new deployment
+func newDeployment(app *models.App, ps *api.PodSpec) (d *extensions.Deployment) {
 	// get rolling update values...
 	var ruMaxSurge, ruMaxUnavailable intstr.IntOrString
 	if v, err := strconv.Atoi(*app.RollingUpdate.MaxUnavailable); err != nil {
@@ -378,8 +410,6 @@ func newDeployment(app *models.App, deploy *deploy, storage helpers.Storage) (d 
 	} else {
 		ruMaxSurge = intstr.FromInt(v)
 	}
-
-	// creating deployment yaml...
 	d = &extensions.Deployment{
 		TypeMeta: unversioned.TypeMeta{
 			APIVersion: "extensions/v1beta1",
@@ -390,9 +420,6 @@ func newDeployment(app *models.App, deploy *deploy, storage helpers.Storage) (d 
 			Namespace: *app.Name,
 			Labels: map[string]string{
 				"run": *app.Name,
-			},
-			Annotations: map[string]string{
-				"kubernetes.io/change-cause": fmt.Sprintf(`deploy_success::%s`, deploy.description),
 			},
 		},
 		Spec: extensions.DeploymentSpec{
@@ -410,15 +437,45 @@ func newDeployment(app *models.App, deploy *deploy, storage helpers.Storage) (d 
 						"run": *app.Name,
 					},
 				},
-				Spec: ps,
+				Spec: *ps,
 			},
 		},
 	}
 	return
 }
 
+// appendDeploymentAnnotation appends an annotation to deployment
+func appendDeploymentAnnotation(d *extensions.Deployment, key, value string) {
+	if d.ObjectMeta.Annotations == nil {
+		d.ObjectMeta.Annotations = make(map[string]string)
+	}
+	d.ObjectMeta.Annotations[key] = value
+}
+
+// newSlugRunnerDeployment creates a new slug runner deployment based on the app info
+func newSlugRunnerDeployment(app *models.App, deploy *deploy, storage helpers.Storage) (d *extensions.Deployment) {
+	// creating slug runner container
+	c := newSlugRunnerContainer(app, deploy.slugPath, storage.Type())
+	// creating PodSpec
+	ps := newPodSpec(c)
+	// appending volume to PodSpec
+	appendPodSpecSecretVolume(ps, "storage-keys", storage.GetK8sSecretName())
+	// creating deployment yaml...
+	d = newDeployment(app, ps)
+	// appending description annotation
+	appendDeploymentAnnotation(d, "kubernetes.io/change-cause", fmt.Sprintf(`deploy_success::%s`, deploy.description))
+	return
+}
+
+func newWelcomeDeployment(app *models.App) (d *extensions.Deployment) {
+	c := newWelcomeContainer(app)
+	ps := newPodSpec(c)
+	d = newDeployment(app, ps)
+	return
+}
+
 func (c deployments) updateDeployment(app *models.App, deploy *deploy, storage helpers.Storage) error {
-	d := newDeployment(app, deploy, storage)
+	d := newSlugRunnerDeployment(app, deploy, storage)
 	_, err := c.k.k8sClient.Deployments(*app.Name).Update(d)
 	return err
 }

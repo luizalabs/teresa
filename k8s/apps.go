@@ -59,6 +59,14 @@ func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token) error 
 	if err := c.createStorageSecret(*app.Name, storage); err != nil {
 		return err
 	}
+	// creating first deployment (welcome project)
+	if err := c.k.Deployments().CreateWelcomeDeployment(app); err != nil {
+		return err
+	}
+	// creating the loadbalancer
+	if err := c.k.Networks().CreateLoadBalancerService(app); err != nil {
+		return err
+	}
 	return nil
 }
 

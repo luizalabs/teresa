@@ -18,11 +18,14 @@ const (
 )
 
 type storageConfig struct {
-	Type      storageType `envconfig:"type"`
-	AwsKey    string      `envconfig:"aws_key"`
-	AwsSecret string      `envconfig:"aws_secret"`
-	AwsRegion string      `envconfig:"aws_region"`
-	AwsBucket string      `envconfig:"aws_bucket"`
+	Type                storageType `envconfig:"type"`
+	AwsKey              string      `envconfig:"aws_key"`
+	AwsSecret           string      `envconfig:"aws_secret"`
+	AwsRegion           string      `envconfig:"aws_region"`
+	AwsBucket           string      `envconfig:"aws_bucket"`
+	AwsEndpoint         string      `envconfig:"aws_endpoint" default=""`
+	AwsDisableSSL       bool        `envconfig:"aws_disable_ssl" default:"false"`
+	AwsS3ForcePathStyle bool        `envconfig:"aws_s3_force_path_style" default:"false"`
 }
 
 // Storage is an interface used to accept more than one type of file storage
@@ -34,11 +37,14 @@ type Storage interface {
 }
 
 type awsS3Storage struct {
-	Client *s3.S3
-	Key    string
-	Secret string
-	Region string
-	Bucket string
+	Client           *s3.S3
+	Key              string
+	Secret           string
+	Region           string
+	Bucket           string
+	Endpoint         string
+	DisableSSL       bool
+	S3ForcePathStyle bool
 }
 
 func (a *awsS3Storage) GetK8sSecretName() string {
@@ -88,15 +94,21 @@ func init() {
 			log.Fatalf("failed to read s3 configuration from environment: %s", err.Error())
 		}
 		st := &awsS3Storage{
-			Key:    conf.AwsKey,
-			Region: conf.AwsRegion,
-			Secret: conf.AwsSecret,
-			Bucket: conf.AwsBucket,
+			Key:              conf.AwsKey,
+			Region:           conf.AwsRegion,
+			Secret:           conf.AwsSecret,
+			Bucket:           conf.AwsBucket,
+			Endpoint:         conf.AwsEndpoint,
+			DisableSSL:       conf.AwsDisableSSL,
+			S3ForcePathStyle: conf.AwsS3ForcePathStyle,
 		}
 
 		st.Client = s3.New(session.New(), &aws.Config{
-			Region:      &st.Region,
-			Credentials: credentials.NewStaticCredentials(st.Key, st.Secret, ""),
+			Credentials:      credentials.NewStaticCredentials(st.Key, st.Secret, ""),
+			Region:           &st.Region,
+			Endpoint:         &st.Endpoint,
+			DisableSSL:       &st.DisableSSL,
+			S3ForcePathStyle: &st.S3ForcePathStyle,
 		})
 
 		FileStorage = st

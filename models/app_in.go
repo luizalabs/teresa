@@ -19,7 +19,7 @@ type AppIn struct {
 
 	/* auto scale
 	 */
-	AutoScale *AppInAutoScale `json:"autoScale,omitempty"`
+	AutoScale *AutoScale `json:"autoScale,omitempty"`
 
 	/* health check
 	 */
@@ -198,100 +198,6 @@ func (m *AppIn) validateTeam(formats strfmt.Registry) error {
 	}
 
 	if err := validate.Pattern("team", "body", string(*m.Team), `^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-/*AppInAutoScale horizontal auto scale params
-
-swagger:model AppInAutoScale
-*/
-type AppInAutoScale struct {
-
-	/* target average CPU utilization (represented as a percentage of requested CPU) over all the pods
-
-	Maximum: 100
-	Minimum: 0
-	*/
-	CPUTargetUtilization *int64 `json:"cpuTargetUtilization,omitempty"`
-
-	/* maximum number of PODs running the app
-
-	Minimum: 1
-	*/
-	Max int64 `json:"max,omitempty"`
-
-	/* minimum number of PODs running the app
-
-	Minimum: 1
-	*/
-	Min int64 `json:"min,omitempty"`
-}
-
-// Validate validates this app in auto scale
-func (m *AppInAutoScale) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateCPUTargetUtilization(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateMax(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateMin(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *AppInAutoScale) validateCPUTargetUtilization(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.CPUTargetUtilization) { // not required
-		return nil
-	}
-
-	if err := validate.MinimumInt("autoScale"+"."+"cpuTargetUtilization", "body", int64(*m.CPUTargetUtilization), 0, false); err != nil {
-		return err
-	}
-
-	if err := validate.MaximumInt("autoScale"+"."+"cpuTargetUtilization", "body", int64(*m.CPUTargetUtilization), 100, false); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *AppInAutoScale) validateMax(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Max) { // not required
-		return nil
-	}
-
-	if err := validate.MinimumInt("autoScale"+"."+"max", "body", int64(m.Max), 1, false); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *AppInAutoScale) validateMin(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Min) { // not required
-		return nil
-	}
-
-	if err := validate.MinimumInt("autoScale"+"."+"min", "body", int64(m.Min), 1, false); err != nil {
 		return err
 	}
 

@@ -52,6 +52,7 @@ var GetAppDetailsHandler apps.GetAppDetailsHandlerFunc = func(params apps.GetApp
 	return apps.NewGetAppDetailsOK().WithPayload(app)
 }
 
+// UpdateAppHandler handler for update app
 var UpdateAppHandler apps.UpdateAppHandlerFunc = func(params apps.UpdateAppParams, principal interface{}) middleware.Responder {
 	// tk := k8s.IToToken(principal)
 
@@ -60,8 +61,8 @@ var UpdateAppHandler apps.UpdateAppHandlerFunc = func(params apps.UpdateAppParam
 	// ############################################################
 
 	// update the app body name to force secure update
-	params.Body.Name = &params.AppName
-	app := &models.App{AppIn: *params.Body}
+	// params.Body.Name = &params.AppName
+	// app := &models.App{AppIn: *params.Body}
 	//
 	// l := log.WithField("app", *app.Name).WithField("team", *app.Team).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
 	//
@@ -74,7 +75,8 @@ var UpdateAppHandler apps.UpdateAppHandlerFunc = func(params apps.UpdateAppParam
 	// 	return NewInternalServerError(err)
 	// }
 	// l.Debug("app updated with success")
-	return apps.NewUpdateAppOK().WithPayload(app)
+	// return apps.NewUpdateAppOK().WithPayload(app)
+	return middleware.NotImplemented("operation apps.UpdateAppHandlerFunc has not yet been implemented")
 }
 
 // GetAppsHandler return apps for a team
@@ -161,6 +163,7 @@ var PartialUpdateAppHandler apps.PartialUpdateAppHandlerFunc = func(params apps.
 	return apps.NewPartialUpdateAppOK().WithPayload(app)
 }
 
+// UpdateAppScaleHandler handler for app scale -XPUT
 var UpdateAppScaleHandler apps.UpdateAppScaleHandlerFunc = func(params apps.UpdateAppScaleParams, principal interface{}) middleware.Responder {
 	tk := k8s.IToToken(principal)
 	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
@@ -182,4 +185,27 @@ var UpdateAppScaleHandler apps.UpdateAppScaleHandlerFunc = func(params apps.Upda
 	}
 	l.Debugf(`app scale updated with success to: %d`, app.Scale)
 	return apps.NewUpdateAppScaleOK().WithPayload(app)
+}
+
+// UpdateAppAutoScaleHandler update app autoscale info
+var UpdateAppAutoScaleHandler apps.UpdateAppAutoScaleHandlerFunc = func(params apps.UpdateAppAutoScaleParams, principal interface{}) middleware.Responder {
+	tk := k8s.IToToken(principal)
+	l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
+	app, err := k8s.Client.Apps().UpdateAutoScale(params.AppName, params.Body, helpers.FileStorage, tk)
+	if err != nil {
+		if k8s.IsInputError(err) {
+			l.WithError(err).Warn("error when updating the app auto scale")
+			return NewBadRequestError(err)
+		} else if k8s.IsNotFoundError(err) {
+			l.WithError(err).Debug("error when updating the app auto scale")
+			return NewNotFoundError(err)
+		} else if k8s.IsUnauthorizedError(err) {
+			l.WithError(err).Warn("error when updating the app auto scale")
+			return NewUnauthorizedError(err)
+		}
+		l.WithError(err).Error("error when updating the app auto scale")
+		return NewInternalServerError(err)
+	}
+	l.Debug(`app auto scale updated with success`)
+	return apps.NewUpdateAppAutoScaleOK().WithPayload(app)
 }

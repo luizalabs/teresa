@@ -23,6 +23,7 @@ type AppInterface interface {
 	Update(app *models.App, storage helpers.Storage, tk *Token) error
 	UpdateEnvVars(appName string, operations []*models.PatchAppRequest, storage helpers.Storage, tk *Token) (app *models.App, err error)
 	UpdateScale(appName string, scale int64, storage helpers.Storage, tk *Token) (app *models.App, err error)
+	UpdateAutoScale(appName string, autoScale *models.AutoScale, storage helpers.Storage, tk *Token) (app *models.App, err error)
 	Get(appName string, tk *Token) (app *models.App, err error)
 }
 
@@ -143,6 +144,26 @@ func (c apps) UpdateScale(appName string, scale int64, storage helpers.Storage, 
 	app.Scale = scale
 	// updating deployment
 	if err := c.k.Deployments().Update(app, "update:scale", storage); err != nil {
+		return nil, err
+	}
+	if err := c.updateNamespace(app, *tk.Email); err != nil {
+		return nil, err
+	}
+	return
+}
+
+func (c apps) UpdateAutoScale(appName string, autoScale *models.AutoScale, storage helpers.Storage, tk *Token) (app *models.App, err error) {
+	// getting app
+	app, err = c.Get(appName, tk)
+	if err != nil {
+		if IsUnauthorizedError(err) {
+			return nil, NewUnauthorizedErrorf(`token "%s" is not allowed to update app "%s" auto scale info. %s`, *tk.Email, appName, err)
+		}
+		return nil, err
+	}
+	// updating app autoScale
+	app.AutoScale = autoScale
+	if err := c.k.Deployments().UpdateAutoScale(app); err != nil {
 		return nil, err
 	}
 	if err := c.updateNamespace(app, *tk.Email); err != nil {

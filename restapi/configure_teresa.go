@@ -104,6 +104,9 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	// update app
 	api.AppsUpdateAppHandler = handlers.UpdateAppHandler
 
+	// update app autoscale info
+	api.AppsUpdateAppAutoScaleHandler = handlers.UpdateAppAutoScaleHandler
+
 	api.AppsUpdateAppScaleHandler = handlers.UpdateAppScaleHandler
 
 	// update a team

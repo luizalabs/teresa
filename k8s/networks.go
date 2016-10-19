@@ -1,6 +1,8 @@
 package k8s
 
 import (
+	log "github.com/Sirupsen/logrus"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/luizalabs/tapi/models"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
@@ -22,12 +24,25 @@ type networks struct {
 	k *k8sHelper
 }
 
+type networksConfig struct {
+	DefaultServiceType string `envconfig:"DEFAULT_SERVICE_TYPE" default:"LoadBalancer"`
+}
+
+var conf networksConfig
+
+var validServiceTypes = []api.ServiceType{
+	api.ServiceTypeLoadBalancer,
+	api.ServiceTypeNodePort,
+	api.ServiceTypeClusterIP,
+}
+
 func newNetworks(c *k8sHelper) *networks {
 	return &networks{k: c}
 }
 
 func (c networks) CreateLoadBalancerService(app *models.App) error {
-	srv := newService(app, api.ServiceTypeLoadBalancer)
+	serviceType := api.ServiceType(conf.DefaultServiceType)
+	srv := newService(app, serviceType)
 	_, err := c.k.k8sClient.Services(*app.Name).Create(srv)
 	return err
 }
@@ -66,4 +81,17 @@ func newService(app *models.App, serviceType api.ServiceType) (srv *api.Service)
 func (c networks) GetService(name string) (srv *api.Service, err error) {
 	srv, err = c.k.k8sClient.Services(name).Get(name)
 	return
+}
+
+func init() {
+	err := envconfig.Process("teresa_network", &conf)
+	if err != nil {
+		log.Fatalf("failed to read the network configuration from environment: %s", err.Error())
+	}
+	for _, v := range validServiceTypes {
+		if v == api.ServiceType(conf.DefaultServiceType) {
+			return
+		}
+	}
+	log.Fatalf("invalid default service type: %s", conf.DefaultServiceType)
 }

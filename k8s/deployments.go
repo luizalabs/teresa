@@ -32,6 +32,7 @@ type DeploymentInterface interface {
 	Create(appName, description string, file *runtime.File, storage helpers.Storage, tk *Token) (io.ReadCloser, error)
 	Update(app *models.App, description string, storage helpers.Storage) error
 	CreateAutoScale(app *models.App) error
+	UpdateAutoScale(app *models.App) error
 }
 
 type deployments struct {
@@ -522,5 +523,11 @@ func newHorizontalPodAutoscaler(app *models.App) (hpa *autoscaling.HorizontalPod
 func (c deployments) CreateAutoScale(app *models.App) error {
 	hpa := newHorizontalPodAutoscaler(app)
 	_, err := c.k.k8sClient.HorizontalPodAutoscalers(*app.Name).Create(hpa)
+	return err
+}
+
+func (c deployments) UpdateAutoScale(app *models.App) error {
+	hpa := newHorizontalPodAutoscaler(app)
+	_, err := c.k.k8sClient.HorizontalPodAutoscalers(*app.Name).Update(hpa)
 	return err
 }

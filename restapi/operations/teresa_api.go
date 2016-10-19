@@ -53,13 +53,13 @@ type TeresaAPI struct {
 	// BinProducer registers a producer for a "application/octet-stream" mime type
 	BinProducer runtime.Producer
 
-	// TokenHeaderAuth registers a function that takes a token and returns a principal
-	// it performs authentication based on an api key Authorization provided in the header
-	TokenHeaderAuth func(string) (interface{}, error)
-
 	// APIKeyAuth registers a function that takes a token and returns a principal
 	// it performs authentication based on an api key token provided in the query
 	APIKeyAuth func(string) (interface{}, error)
+
+	// TokenHeaderAuth registers a function that takes a token and returns a principal
+	// it performs authentication based on an api key Authorization provided in the header
+	TokenHeaderAuth func(string) (interface{}, error)
 
 	// TeamsAddUserToTeamHandler sets the operation handler for the add user to team operation
 	TeamsAddUserToTeamHandler teams.AddUserToTeamHandler
@@ -95,6 +95,8 @@ type TeresaAPI struct {
 	AppsPartialUpdateAppHandler apps.PartialUpdateAppHandler
 	// AppsUpdateAppHandler sets the operation handler for the update app operation
 	AppsUpdateAppHandler apps.UpdateAppHandler
+	// AppsUpdateAppAutoScaleHandler sets the operation handler for the update app auto scale operation
+	AppsUpdateAppAutoScaleHandler apps.UpdateAppAutoScaleHandler
 	// AppsUpdateAppScaleHandler sets the operation handler for the update app scale operation
 	AppsUpdateAppScaleHandler apps.UpdateAppScaleHandler
 	// TeamsUpdateTeamHandler sets the operation handler for the update team operation
@@ -174,12 +176,12 @@ func (o *TeresaAPI) Validate() error {
 		unregistered = append(unregistered, "BinProducer")
 	}
 
-	if o.TokenHeaderAuth == nil {
-		unregistered = append(unregistered, "AuthorizationAuth")
-	}
-
 	if o.APIKeyAuth == nil {
 		unregistered = append(unregistered, "TokenAuth")
+	}
+
+	if o.TokenHeaderAuth == nil {
+		unregistered = append(unregistered, "AuthorizationAuth")
 	}
 
 	if o.TeamsAddUserToTeamHandler == nil {
@@ -250,6 +252,10 @@ func (o *TeresaAPI) Validate() error {
 		unregistered = append(unregistered, "apps.UpdateAppHandler")
 	}
 
+	if o.AppsUpdateAppAutoScaleHandler == nil {
+		unregistered = append(unregistered, "apps.UpdateAppAutoScaleHandler")
+	}
+
 	if o.AppsUpdateAppScaleHandler == nil {
 		unregistered = append(unregistered, "apps.UpdateAppScaleHandler")
 	}
@@ -285,13 +291,13 @@ func (o *TeresaAPI) AuthenticatorsFor(schemes map[string]spec.SecurityScheme) ma
 	for name, scheme := range schemes {
 		switch name {
 
-		case "token_header":
-
-			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.TokenHeaderAuth)
-
 		case "api_key":
 
 			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.APIKeyAuth)
+
+		case "token_header":
+
+			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.TokenHeaderAuth)
 
 		}
 	}
@@ -443,6 +449,11 @@ func (o *TeresaAPI) initHandlerCache() {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)
 	}
 	o.handlers["PUT"]["/apps/{app_name}"] = apps.NewUpdateApp(o.context, o.AppsUpdateAppHandler)
+
+	if o.handlers["PUT"] == nil {
+		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)
+	}
+	o.handlers["PUT"]["/apps/{app_name}/autoScale"] = apps.NewUpdateAppAutoScale(o.context, o.AppsUpdateAppAutoScaleHandler)
 
 	if o.handlers["PUT"] == nil {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)

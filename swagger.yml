@@ -378,6 +378,32 @@ paths:
           description: Unexpected error
           schema:
             $ref: "#/definitions/Error"
+  /apps/{app_name}/autoScale:
+    put:
+      summary: Update app auto scale
+      description: Update app auto scale
+      tags:
+        - apps
+      operationId: updateAppAutoScale
+      security:
+        - api_key: []
+        - token_header: []
+      parameters:
+        - $ref: "#/parameters/appName"
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/AutoScale"
+      responses:
+        200:
+          description: Updated version of the app
+          schema:
+            $ref: "#/definitions/App"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/Error"
   /teams/{team_id}/apps/{app_id}/deployments:
     get:
       summary: Get app deployments
@@ -841,25 +867,7 @@ definitions:
         default: 1
         minimum: 1
       autoScale:
-        type: object
-        description: horizontal auto scale params
-        properties:
-          min:
-            type: integer
-            description: minimum number of PODs running the app
-            default: 1
-            minimum: 1
-          max:
-            type: integer
-            description: maximum number of PODs running the app
-            default: 10
-            minimum: 1
-          cpuTargetUtilization:
-            type: integer
-            description: target average CPU utilization (represented as a percentage of requested CPU) over all the pods
-            default: 80
-            minimum: 0
-            maximum: 100
+        $ref: "#/definitions/AutoScale"
       rollingUpdate:
         type: object
         description: params to use when starting a new deployment
@@ -910,6 +918,26 @@ definitions:
             type: array
             items:
               $ref: "#/definitions/LimitRangeQuantity"
+  AutoScale:
+    type: object
+    description: horizontal auto scale params
+    properties:
+      min:
+        type: integer
+        description: minimum number of PODs running the app
+        default: 1
+        minimum: 1
+      max:
+        type: integer
+        description: maximum number of PODs running the app
+        default: 10
+        minimum: 1
+      cpuTargetUtilization:
+        type: integer
+        description: target average CPU utilization (represented as a percentage of requested CPU) over all the pods
+        default: 80
+        minimum: 0
+        maximum: 100
   HealthCheckProbe:
     type: object
     properties:

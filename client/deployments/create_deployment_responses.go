@@ -31,20 +31,6 @@ func (o *CreateDeploymentReader) ReadResponse(response runtime.ClientResponse, c
 		}
 		return result, nil
 
-	case 401:
-		result := NewCreateDeploymentUnauthorized()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
-	case 403:
-		result := NewCreateDeploymentForbidden()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
 	default:
 		result := NewCreateDeploymentDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -70,69 +56,10 @@ type CreateDeploymentOK struct {
 }
 
 func (o *CreateDeploymentOK) Error() string {
-	return fmt.Sprintf("[POST /teams/{team_id}/apps/{app_id}/deployments][%d] createDeploymentOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[POST /apps/{app_name}/deployments][%d] createDeploymentOK  %+v", 200, o.Payload)
 }
 
 func (o *CreateDeploymentOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewCreateDeploymentUnauthorized creates a CreateDeploymentUnauthorized with default headers values
-func NewCreateDeploymentUnauthorized() *CreateDeploymentUnauthorized {
-	return &CreateDeploymentUnauthorized{}
-}
-
-/*CreateDeploymentUnauthorized handles this case with default header values.
-
-User not authorized
-*/
-type CreateDeploymentUnauthorized struct {
-	Payload *models.Unauthorized
-}
-
-func (o *CreateDeploymentUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /teams/{team_id}/apps/{app_id}/deployments][%d] createDeploymentUnauthorized  %+v", 401, o.Payload)
-}
-
-func (o *CreateDeploymentUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewCreateDeploymentForbidden creates a CreateDeploymentForbidden with default headers values
-func NewCreateDeploymentForbidden() *CreateDeploymentForbidden {
-	return &CreateDeploymentForbidden{}
-}
-
-/*CreateDeploymentForbidden handles this case with default header values.
-
-User does not have the credentials to access this resource
-
-*/
-type CreateDeploymentForbidden struct {
-	Payload *models.Unauthorized
-}
-
-func (o *CreateDeploymentForbidden) Error() string {
-	return fmt.Sprintf("[POST /teams/{team_id}/apps/{app_id}/deployments][%d] createDeploymentForbidden  %+v", 403, o.Payload)
-}
-
-func (o *CreateDeploymentForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -165,7 +92,7 @@ func (o *CreateDeploymentDefault) Code() int {
 }
 
 func (o *CreateDeploymentDefault) Error() string {
-	return fmt.Sprintf("[POST /teams/{team_id}/apps/{app_id}/deployments][%d] createDeployment default  %+v", o._statusCode, o.Payload)
+	return fmt.Sprintf("[POST /apps/{app_name}/deployments][%d] createDeployment default  %+v", o._statusCode, o.Payload)
 }
 
 func (o *CreateDeploymentDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -154,7 +154,7 @@ Error
 type UserLoginDefault struct {
 	_statusCode int
 
-	Payload *models.Error
+	Payload *models.GenericError
 }
 
 // Code gets the status code for the user login default response
@@ -168,7 +168,7 @@ func (o *UserLoginDefault) Error() string {
 
 func (o *UserLoginDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.Error)
+	o.Payload = new(models.GenericError)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

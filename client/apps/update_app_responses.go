@@ -30,20 +30,6 @@ func (o *UpdateAppReader) ReadResponse(response runtime.ClientResponse, consumer
 		}
 		return result, nil
 
-	case 401:
-		result := NewUpdateAppUnauthorized()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
-	case 403:
-		result := NewUpdateAppForbidden()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
 	default:
 		result := NewUpdateAppDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -60,78 +46,19 @@ func NewUpdateAppOK() *UpdateAppOK {
 
 /*UpdateAppOK handles this case with default header values.
 
-App
+Updated version of the app
 */
 type UpdateAppOK struct {
 	Payload *models.App
 }
 
 func (o *UpdateAppOK) Error() string {
-	return fmt.Sprintf("[PUT /teams/{team_id}/apps/{app_id}][%d] updateAppOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[PUT /apps/{app_name}][%d] updateAppOK  %+v", 200, o.Payload)
 }
 
 func (o *UpdateAppOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.App)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewUpdateAppUnauthorized creates a UpdateAppUnauthorized with default headers values
-func NewUpdateAppUnauthorized() *UpdateAppUnauthorized {
-	return &UpdateAppUnauthorized{}
-}
-
-/*UpdateAppUnauthorized handles this case with default header values.
-
-User not authorized
-*/
-type UpdateAppUnauthorized struct {
-	Payload *models.Unauthorized
-}
-
-func (o *UpdateAppUnauthorized) Error() string {
-	return fmt.Sprintf("[PUT /teams/{team_id}/apps/{app_id}][%d] updateAppUnauthorized  %+v", 401, o.Payload)
-}
-
-func (o *UpdateAppUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewUpdateAppForbidden creates a UpdateAppForbidden with default headers values
-func NewUpdateAppForbidden() *UpdateAppForbidden {
-	return &UpdateAppForbidden{}
-}
-
-/*UpdateAppForbidden handles this case with default header values.
-
-User does not have the credentials to access this resource
-
-*/
-type UpdateAppForbidden struct {
-	Payload *models.Unauthorized
-}
-
-func (o *UpdateAppForbidden) Error() string {
-	return fmt.Sprintf("[PUT /teams/{team_id}/apps/{app_id}][%d] updateAppForbidden  %+v", 403, o.Payload)
-}
-
-func (o *UpdateAppForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -150,7 +77,7 @@ func NewUpdateAppDefault(code int) *UpdateAppDefault {
 
 /*UpdateAppDefault handles this case with default header values.
 
-Error
+Unexpected error
 */
 type UpdateAppDefault struct {
 	_statusCode int
@@ -164,7 +91,7 @@ func (o *UpdateAppDefault) Code() int {
 }
 
 func (o *UpdateAppDefault) Error() string {
-	return fmt.Sprintf("[PUT /teams/{team_id}/apps/{app_id}][%d] updateApp default  %+v", o._statusCode, o.Payload)
+	return fmt.Sprintf("[PUT /apps/{app_name}][%d] updateApp default  %+v", o._statusCode, o.Payload)
 }
 
 func (o *UpdateAppDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

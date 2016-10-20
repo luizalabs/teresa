@@ -11,34 +11,32 @@ import (
 	cr "github.com/go-openapi/runtime/client"
 
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/luizalabs/teresa-api/models"
 )
 
-// NewUpdateAppParams creates a new UpdateAppParams object
+// NewUpdateAppScaleParams creates a new UpdateAppScaleParams object
 // with the default values initialized.
-func NewUpdateAppParams() *UpdateAppParams {
+func NewUpdateAppScaleParams() *UpdateAppScaleParams {
 	var ()
-	return &UpdateAppParams{
+	return &UpdateAppScaleParams{
 
 		timeout: cr.DefaultTimeout,
 	}
 }
 
-// NewUpdateAppParamsWithTimeout creates a new UpdateAppParams object
+// NewUpdateAppScaleParamsWithTimeout creates a new UpdateAppScaleParams object
 // with the default values initialized, and the ability to set a timeout on a request
-func NewUpdateAppParamsWithTimeout(timeout time.Duration) *UpdateAppParams {
+func NewUpdateAppScaleParamsWithTimeout(timeout time.Duration) *UpdateAppScaleParams {
 	var ()
-	return &UpdateAppParams{
+	return &UpdateAppScaleParams{
 
 		timeout: timeout,
 	}
 }
 
-/*UpdateAppParams contains all the parameters to send to the API endpoint
-for the update app operation typically these are written to a http.Request
+/*UpdateAppScaleParams contains all the parameters to send to the API endpoint
+for the update app scale operation typically these are written to a http.Request
 */
-type UpdateAppParams struct {
+type UpdateAppScaleParams struct {
 
 	/*AppName
 	  App name
@@ -46,25 +44,25 @@ type UpdateAppParams struct {
 	*/
 	AppName string
 	/*Body*/
-	Body *models.AppIn
+	Body UpdateAppScaleBody
 
 	timeout time.Duration
 }
 
-// WithAppName adds the appName to the update app params
-func (o *UpdateAppParams) WithAppName(appName string) *UpdateAppParams {
+// WithAppName adds the appName to the update app scale params
+func (o *UpdateAppScaleParams) WithAppName(appName string) *UpdateAppScaleParams {
 	o.AppName = appName
 	return o
 }
 
-// WithBody adds the body to the update app params
-func (o *UpdateAppParams) WithBody(body *models.AppIn) *UpdateAppParams {
+// WithBody adds the body to the update app scale params
+func (o *UpdateAppScaleParams) WithBody(body UpdateAppScaleBody) *UpdateAppScaleParams {
 	o.Body = body
 	return o
 }
 
 // WriteToRequest writes these params to a swagger request
-func (o *UpdateAppParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
+func (o *UpdateAppScaleParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
 	r.SetTimeout(o.timeout)
 	var res []error
@@ -72,10 +70,6 @@ func (o *UpdateAppParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Reg
 	// path param app_name
 	if err := r.SetPathParam("app_name", o.AppName); err != nil {
 		return err
-	}
-
-	if o.Body == nil {
-		o.Body = new(models.AppIn)
 	}
 
 	if err := r.SetBodyParam(o.Body); err != nil {

@@ -208,44 +208,7 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/GenericError"
-  /teams/{team_id}/apps:
-    get:
-      summary: Get team apps
-      description: Get team apps
-      tags:
-        - apps
-      operationId: getApps
-      security:
-        - api_key: []
-        - token_header: []
-      parameters:
-        - $ref: "#/parameters/teamId"
-        - $ref: "#/parameters/since"
-        - $ref: "#/parameters/limit"
-      responses:
-        200:
-          description: Apps
-          schema:
-            allOf:
-              - $ref: "#/definitions/Pagination"
-              - properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: "#/definitions/App"
-        401:
-          description: User not authorized
-          schema:
-            $ref: "#/definitions/Unauthorized"
-        403:
-          description: |
-            User does not have the credentials to access this resource
-          schema:
-            $ref: "#/definitions/Unauthorized"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/GenericError"
+
   /apps:
     post:
       summary: Create an app
@@ -267,6 +230,26 @@ paths:
           description: Newly created app
           schema:
             $ref: "#/definitions/App"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+    get:
+      summary: Get a list of apps
+      description: Get a list of apps
+      tags:
+        - apps
+      operationId: getApps
+      security:
+        - api_key: []
+        - token_header: []
+      responses:
+        200:
+          description: list of apps
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/App"
         default:
           description: Unexpected error
           schema:

@@ -10,6 +10,8 @@ import (
 	k8s_errors "k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/api/resource"
 	"k8s.io/kubernetes/pkg/api/unversioned"
+	"k8s.io/kubernetes/pkg/labels"
+	"k8s.io/kubernetes/pkg/util/sets"
 )
 
 // AppsInterface is used to allow mock testing
@@ -25,6 +27,7 @@ type AppInterface interface {
 	UpdateScale(appName string, scale int64, storage helpers.Storage, tk *Token) (app *models.App, err error)
 	UpdateAutoScale(appName string, autoScale *models.AutoScale, storage helpers.Storage, tk *Token) (app *models.App, err error)
 	Get(appName string, tk *Token) (app *models.App, err error)
+	List(tk *Token) (app []*models.App, err error)
 }
 
 type apps struct {
@@ -189,16 +192,23 @@ func (c apps) Get(appName string, tk *Token) (app *models.App, err error) {
 	if tk.IsAuthorized(*app.Team) == false {
 		return nil, NewUnauthorizedErrorf(`app "%s" not found or user not allowed to see it`, appName)
 	}
-	// append LB address to app
-	srv, err := c.k.Networks().GetService(appName)
+	lb, err := c.getLoadBalancer(appName)
 	if err != nil {
 		return nil, err
 	}
-	app.AddressList = []string{srv.Status.LoadBalancer.Ingress[0].Hostname}
+	app.AddressList = []string{*lb}
 
 	// TODO: get deployments here??
 
 	return
+}
+
+func (c apps) getLoadBalancer(appName string) (lb *string, err error) {
+	srv, err := c.k.Networks().GetService(appName)
+	if err != nil {
+		return nil, err
+	}
+	return &srv.Status.LoadBalancer.Ingress[0].Hostname, nil
 }
 
 // createQuota creates an k8s Limit Range for the App (namespace)
@@ -401,7 +411,7 @@ func unmarshalAppFromNamespace(ns *api.Namespace) (app *models.App, err error) {
 
 // checkForProtectedEnvVars check if is there any Operation trying to modify some of the protected env vars
 func checkForProtectedEnvVars(operations []*models.PatchAppRequest) error {
-	protectedEnvVars := [...]string{"SLUG_URL", "PORT", "DEIS_DEBUG", "BUILDER_STORAGE"}
+	protectedEnvVars := [...]string{"SLUG_URL", "PORT", "DEIS_DEBUG", "BUILDER_STORAGE", "APP"}
 	for _, operation := range operations {
 		for _, operationValue := range operation.Value {
 			for _, pv := range protectedEnvVars {
@@ -450,4 +460,40 @@ func updateAppEnvVars(app *models.App, operations []*models.PatchAppRequest) err
 		}
 	}
 	return nil
+}
+
+func (c apps) List(tk *Token) (apps []*models.App, err error) {
+	// list of teams from token
+	s := sets.String{}
+	for _, t := range tk.Teams {
+		s.Insert(*t.Name)
+	}
+	// create label filter
+	r, err := labels.NewRequirement("teresa.io/team", labels.InOperator, s)
+	if err != nil {
+		return nil, err
+	}
+	selector := labels.NewSelector().Add(*r)
+	list, err := c.k.k8sClient.Namespaces().List(api.ListOptions{LabelSelector: selector})
+	if err != nil {
+		// return err directly... there is no NotFoundError here
+		return nil, err
+	}
+	if len(list.Items) == 0 {
+		return nil, NewNotFoundErrorf(`no apps found for the token "%s"`, *tk.Email)
+	}
+	apps = []*models.App{}
+	for _, ns := range list.Items {
+		app, err := unmarshalAppFromNamespace(&ns)
+		if err != nil {
+			return nil, err
+		}
+		lb, err := c.getLoadBalancer(*app.Name)
+		if err != nil {
+			return nil, err
+		}
+		app.AddressList = []string{*lb}
+		apps = append(apps, app)
+	}
+	return
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/swag"
 
 	strfmt "github.com/go-openapi/strfmt"
 
@@ -42,25 +41,14 @@ for the create app operation typically these are written to a http.Request
 type CreateAppParams struct {
 
 	/*Body*/
-	Body *models.App
-	/*TeamID
-	  Team ID
-
-	*/
-	TeamID int64
+	Body *models.AppIn
 
 	timeout time.Duration
 }
 
 // WithBody adds the body to the create app params
-func (o *CreateAppParams) WithBody(body *models.App) *CreateAppParams {
+func (o *CreateAppParams) WithBody(body *models.AppIn) *CreateAppParams {
 	o.Body = body
-	return o
-}
-
-// WithTeamID adds the teamID to the create app params
-func (o *CreateAppParams) WithTeamID(teamID int64) *CreateAppParams {
-	o.TeamID = teamID
 	return o
 }
 
@@ -71,15 +59,10 @@ func (o *CreateAppParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Reg
 	var res []error
 
 	if o.Body == nil {
-		o.Body = new(models.App)
+		o.Body = new(models.AppIn)
 	}
 
 	if err := r.SetBodyParam(o.Body); err != nil {
-		return err
-	}
-
-	// path param team_id
-	if err := r.SetPathParam("team_id", swag.FormatInt64(o.TeamID)); err != nil {
 		return err
 	}
 

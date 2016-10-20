@@ -9,7 +9,6 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/swag"
 
 	strfmt "github.com/go-openapi/strfmt"
 )
@@ -39,29 +38,18 @@ for the get app details operation typically these are written to a http.Request
 */
 type GetAppDetailsParams struct {
 
-	/*AppID
-	  App ID
+	/*AppName
+	  App name
 
 	*/
-	AppID int64
-	/*TeamID
-	  Team ID
-
-	*/
-	TeamID int64
+	AppName string
 
 	timeout time.Duration
 }
 
-// WithAppID adds the appID to the get app details params
-func (o *GetAppDetailsParams) WithAppID(appID int64) *GetAppDetailsParams {
-	o.AppID = appID
-	return o
-}
-
-// WithTeamID adds the teamID to the get app details params
-func (o *GetAppDetailsParams) WithTeamID(teamID int64) *GetAppDetailsParams {
-	o.TeamID = teamID
+// WithAppName adds the appName to the get app details params
+func (o *GetAppDetailsParams) WithAppName(appName string) *GetAppDetailsParams {
+	o.AppName = appName
 	return o
 }
 
@@ -71,13 +59,8 @@ func (o *GetAppDetailsParams) WriteToRequest(r runtime.ClientRequest, reg strfmt
 	r.SetTimeout(o.timeout)
 	var res []error
 
-	// path param app_id
-	if err := r.SetPathParam("app_id", swag.FormatInt64(o.AppID)); err != nil {
-		return err
-	}
-
-	// path param team_id
-	if err := r.SetPathParam("team_id", swag.FormatInt64(o.TeamID)); err != nil {
+	// path param app_name
+	if err := r.SetPathParam("app_name", o.AppName); err != nil {
 		return err
 	}
 

@@ -30,20 +30,6 @@ func (o *GetAppDetailsReader) ReadResponse(response runtime.ClientResponse, cons
 		}
 		return result, nil
 
-	case 401:
-		result := NewGetAppDetailsUnauthorized()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
-	case 403:
-		result := NewGetAppDetailsForbidden()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
 	default:
 		result := NewGetAppDetailsDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -67,71 +53,12 @@ type GetAppDetailsOK struct {
 }
 
 func (o *GetAppDetailsOK) Error() string {
-	return fmt.Sprintf("[GET /teams/{team_id}/apps/{app_id}][%d] getAppDetailsOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[GET /apps/{app_name}][%d] getAppDetailsOK  %+v", 200, o.Payload)
 }
 
 func (o *GetAppDetailsOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.App)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewGetAppDetailsUnauthorized creates a GetAppDetailsUnauthorized with default headers values
-func NewGetAppDetailsUnauthorized() *GetAppDetailsUnauthorized {
-	return &GetAppDetailsUnauthorized{}
-}
-
-/*GetAppDetailsUnauthorized handles this case with default header values.
-
-User not authorized
-*/
-type GetAppDetailsUnauthorized struct {
-	Payload *models.Unauthorized
-}
-
-func (o *GetAppDetailsUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /teams/{team_id}/apps/{app_id}][%d] getAppDetailsUnauthorized  %+v", 401, o.Payload)
-}
-
-func (o *GetAppDetailsUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewGetAppDetailsForbidden creates a GetAppDetailsForbidden with default headers values
-func NewGetAppDetailsForbidden() *GetAppDetailsForbidden {
-	return &GetAppDetailsForbidden{}
-}
-
-/*GetAppDetailsForbidden handles this case with default header values.
-
-User does not have the credentials to access this resource
-
-*/
-type GetAppDetailsForbidden struct {
-	Payload *models.Unauthorized
-}
-
-func (o *GetAppDetailsForbidden) Error() string {
-	return fmt.Sprintf("[GET /teams/{team_id}/apps/{app_id}][%d] getAppDetailsForbidden  %+v", 403, o.Payload)
-}
-
-func (o *GetAppDetailsForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -164,7 +91,7 @@ func (o *GetAppDetailsDefault) Code() int {
 }
 
 func (o *GetAppDetailsDefault) Error() string {
-	return fmt.Sprintf("[GET /teams/{team_id}/apps/{app_id}][%d] getAppDetails default  %+v", o._statusCode, o.Payload)
+	return fmt.Sprintf("[GET /apps/{app_name}][%d] getAppDetails default  %+v", o._statusCode, o.Payload)
 }
 
 func (o *GetAppDetailsDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

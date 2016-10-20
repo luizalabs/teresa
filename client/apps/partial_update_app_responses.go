@@ -30,20 +30,6 @@ func (o *PartialUpdateAppReader) ReadResponse(response runtime.ClientResponse, c
 		}
 		return result, nil
 
-	case 401:
-		result := NewPartialUpdateAppUnauthorized()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
-	case 403:
-		result := NewPartialUpdateAppForbidden()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
 	default:
 		result := NewPartialUpdateAppDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -67,71 +53,12 @@ type PartialUpdateAppOK struct {
 }
 
 func (o *PartialUpdateAppOK) Error() string {
-	return fmt.Sprintf("[PATCH /teams/{team_id}/apps/{app_id}][%d] partialUpdateAppOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[PATCH /apps/{app_name}][%d] partialUpdateAppOK  %+v", 200, o.Payload)
 }
 
 func (o *PartialUpdateAppOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.App)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewPartialUpdateAppUnauthorized creates a PartialUpdateAppUnauthorized with default headers values
-func NewPartialUpdateAppUnauthorized() *PartialUpdateAppUnauthorized {
-	return &PartialUpdateAppUnauthorized{}
-}
-
-/*PartialUpdateAppUnauthorized handles this case with default header values.
-
-User not authorized
-*/
-type PartialUpdateAppUnauthorized struct {
-	Payload *models.Unauthorized
-}
-
-func (o *PartialUpdateAppUnauthorized) Error() string {
-	return fmt.Sprintf("[PATCH /teams/{team_id}/apps/{app_id}][%d] partialUpdateAppUnauthorized  %+v", 401, o.Payload)
-}
-
-func (o *PartialUpdateAppUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewPartialUpdateAppForbidden creates a PartialUpdateAppForbidden with default headers values
-func NewPartialUpdateAppForbidden() *PartialUpdateAppForbidden {
-	return &PartialUpdateAppForbidden{}
-}
-
-/*PartialUpdateAppForbidden handles this case with default header values.
-
-User does not have the credentials to access this resource
-
-*/
-type PartialUpdateAppForbidden struct {
-	Payload *models.Unauthorized
-}
-
-func (o *PartialUpdateAppForbidden) Error() string {
-	return fmt.Sprintf("[PATCH /teams/{team_id}/apps/{app_id}][%d] partialUpdateAppForbidden  %+v", 403, o.Payload)
-}
-
-func (o *PartialUpdateAppForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -150,7 +77,7 @@ func NewPartialUpdateAppDefault(code int) *PartialUpdateAppDefault {
 
 /*PartialUpdateAppDefault handles this case with default header values.
 
-Error
+Unexpected error
 */
 type PartialUpdateAppDefault struct {
 	_statusCode int
@@ -164,7 +91,7 @@ func (o *PartialUpdateAppDefault) Code() int {
 }
 
 func (o *PartialUpdateAppDefault) Error() string {
-	return fmt.Sprintf("[PATCH /teams/{team_id}/apps/{app_id}][%d] partialUpdateApp default  %+v", o._statusCode, o.Payload)
+	return fmt.Sprintf("[PATCH /apps/{app_name}][%d] partialUpdateApp default  %+v", o._statusCode, o.Payload)
 }
 
 func (o *PartialUpdateAppDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

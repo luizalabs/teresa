@@ -11,14 +11,14 @@ import (
 	"github.com/luizalabs/teresa-api/models"
 )
 
-/*GetAppsOK Apps
+/*GetAppsOK list of apps
 
 swagger:response getAppsOK
 */
 type GetAppsOK struct {
 
 	// In: body
-	Payload GetAppsOKBodyBody `json:"body,omitempty"`
+	Payload []*models.App `json:"body,omitempty"`
 }
 
 // NewGetAppsOK creates GetAppsOK with default headers values
@@ -27,13 +27,13 @@ func NewGetAppsOK() *GetAppsOK {
 }
 
 // WithPayload adds the payload to the get apps o k response
-func (o *GetAppsOK) WithPayload(payload GetAppsOKBodyBody) *GetAppsOK {
+func (o *GetAppsOK) WithPayload(payload []*models.App) *GetAppsOK {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get apps o k response
-func (o *GetAppsOK) SetPayload(payload GetAppsOKBodyBody) {
+func (o *GetAppsOK) SetPayload(payload []*models.App) {
 	o.Payload = payload
 }
 
@@ -47,82 +47,7 @@ func (o *GetAppsOK) WriteResponse(rw http.ResponseWriter, producer runtime.Produ
 
 }
 
-/*GetAppsUnauthorized User not authorized
-
-swagger:response getAppsUnauthorized
-*/
-type GetAppsUnauthorized struct {
-
-	// In: body
-	Payload *models.Unauthorized `json:"body,omitempty"`
-}
-
-// NewGetAppsUnauthorized creates GetAppsUnauthorized with default headers values
-func NewGetAppsUnauthorized() *GetAppsUnauthorized {
-	return &GetAppsUnauthorized{}
-}
-
-// WithPayload adds the payload to the get apps unauthorized response
-func (o *GetAppsUnauthorized) WithPayload(payload *models.Unauthorized) *GetAppsUnauthorized {
-	o.Payload = payload
-	return o
-}
-
-// SetPayload sets the payload to the get apps unauthorized response
-func (o *GetAppsUnauthorized) SetPayload(payload *models.Unauthorized) {
-	o.Payload = payload
-}
-
-// WriteResponse to the client
-func (o *GetAppsUnauthorized) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
-
-	rw.WriteHeader(401)
-	if o.Payload != nil {
-		if err := producer.Produce(rw, o.Payload); err != nil {
-			panic(err) // let the recovery middleware deal with this
-		}
-	}
-}
-
-/*GetAppsForbidden User does not have the credentials to access this resource
-
-
-swagger:response getAppsForbidden
-*/
-type GetAppsForbidden struct {
-
-	// In: body
-	Payload *models.Unauthorized `json:"body,omitempty"`
-}
-
-// NewGetAppsForbidden creates GetAppsForbidden with default headers values
-func NewGetAppsForbidden() *GetAppsForbidden {
-	return &GetAppsForbidden{}
-}
-
-// WithPayload adds the payload to the get apps forbidden response
-func (o *GetAppsForbidden) WithPayload(payload *models.Unauthorized) *GetAppsForbidden {
-	o.Payload = payload
-	return o
-}
-
-// SetPayload sets the payload to the get apps forbidden response
-func (o *GetAppsForbidden) SetPayload(payload *models.Unauthorized) {
-	o.Payload = payload
-}
-
-// WriteResponse to the client
-func (o *GetAppsForbidden) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
-
-	rw.WriteHeader(403)
-	if o.Payload != nil {
-		if err := producer.Produce(rw, o.Payload); err != nil {
-			panic(err) // let the recovery middleware deal with this
-		}
-	}
-}
-
-/*GetAppsDefault Error
+/*GetAppsDefault Unexpected error
 
 swagger:response getAppsDefault
 */
@@ -130,7 +55,7 @@ type GetAppsDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.GenericError `json:"body,omitempty"`
+	Payload *models.Error `json:"body,omitempty"`
 }
 
 // NewGetAppsDefault creates GetAppsDefault with default headers values
@@ -156,13 +81,13 @@ func (o *GetAppsDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the get apps default response
-func (o *GetAppsDefault) WithPayload(payload *models.GenericError) *GetAppsDefault {
+func (o *GetAppsDefault) WithPayload(payload *models.Error) *GetAppsDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get apps default response
-func (o *GetAppsDefault) SetPayload(payload *models.GenericError) {
+func (o *GetAppsDefault) SetPayload(payload *models.Error) {
 	o.Payload = payload
 }
 

@@ -7,25 +7,14 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/errors"
-	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/go-openapi/swag"
-
-	strfmt "github.com/go-openapi/strfmt"
 )
 
 // NewGetAppsParams creates a new GetAppsParams object
 // with the default values initialized.
 func NewGetAppsParams() GetAppsParams {
-	var (
-		limitDefault = int64(20)
-		sinceDefault = int64(0)
-	)
-	return GetAppsParams{
-		Limit: &limitDefault,
-
-		Since: &sinceDefault,
-	}
+	var ()
+	return GetAppsParams{}
 }
 
 // GetAppsParams contains all the bound params for the get apps operation
@@ -36,22 +25,6 @@ type GetAppsParams struct {
 
 	// HTTP Request Object
 	HTTPRequest *http.Request
-
-	/*Limit
-	  In: query
-	  Default: 20
-	*/
-	Limit *int64
-	/*Offset
-	  In: query
-	  Default: 0
-	*/
-	Since *int64
-	/*Team ID
-	  Required: true
-	  In: path
-	*/
-	TeamID int64
 }
 
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
@@ -60,80 +33,8 @@ func (o *GetAppsParams) BindRequest(r *http.Request, route *middleware.MatchedRo
 	var res []error
 	o.HTTPRequest = r
 
-	qs := runtime.Values(r.URL.Query())
-
-	qLimit, qhkLimit, _ := qs.GetOK("limit")
-	if err := o.bindLimit(qLimit, qhkLimit, route.Formats); err != nil {
-		res = append(res, err)
-	}
-
-	qSince, qhkSince, _ := qs.GetOK("since")
-	if err := o.bindSince(qSince, qhkSince, route.Formats); err != nil {
-		res = append(res, err)
-	}
-
-	rTeamID, rhkTeamID, _ := route.Params.GetOK("team_id")
-	if err := o.bindTeamID(rTeamID, rhkTeamID, route.Formats); err != nil {
-		res = append(res, err)
-	}
-
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-func (o *GetAppsParams) bindLimit(rawData []string, hasKey bool, formats strfmt.Registry) error {
-	var raw string
-	if len(rawData) > 0 {
-		raw = rawData[len(rawData)-1]
-	}
-	if raw == "" { // empty values pass all other validations
-		var limitDefault int64 = int64(20)
-		o.Limit = &limitDefault
-		return nil
-	}
-
-	value, err := swag.ConvertInt64(raw)
-	if err != nil {
-		return errors.InvalidType("limit", "query", "int64", raw)
-	}
-	o.Limit = &value
-
-	return nil
-}
-
-func (o *GetAppsParams) bindSince(rawData []string, hasKey bool, formats strfmt.Registry) error {
-	var raw string
-	if len(rawData) > 0 {
-		raw = rawData[len(rawData)-1]
-	}
-	if raw == "" { // empty values pass all other validations
-		var sinceDefault int64 = int64(0)
-		o.Since = &sinceDefault
-		return nil
-	}
-
-	value, err := swag.ConvertInt64(raw)
-	if err != nil {
-		return errors.InvalidType("since", "query", "int64", raw)
-	}
-	o.Since = &value
-
-	return nil
-}
-
-func (o *GetAppsParams) bindTeamID(rawData []string, hasKey bool, formats strfmt.Registry) error {
-	var raw string
-	if len(rawData) > 0 {
-		raw = rawData[len(rawData)-1]
-	}
-
-	value, err := swag.ConvertInt64(raw)
-	if err != nil {
-		return errors.InvalidType("team_id", "path", "int64", raw)
-	}
-	o.TeamID = value
-
 	return nil
 }

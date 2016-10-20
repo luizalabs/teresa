@@ -9,7 +9,6 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/swag"
 
 	strfmt "github.com/go-openapi/strfmt"
 )
@@ -17,13 +16,8 @@ import (
 // NewGetAppsParams creates a new GetAppsParams object
 // with the default values initialized.
 func NewGetAppsParams() *GetAppsParams {
-	var (
-		limitDefault = int64(20)
-		sinceDefault = int64(0)
-	)
+
 	return &GetAppsParams{
-		Limit: &limitDefault,
-		Since: &sinceDefault,
 
 		timeout: cr.DefaultTimeout,
 	}
@@ -32,13 +26,8 @@ func NewGetAppsParams() *GetAppsParams {
 // NewGetAppsParamsWithTimeout creates a new GetAppsParams object
 // with the default values initialized, and the ability to set a timeout on a request
 func NewGetAppsParamsWithTimeout(timeout time.Duration) *GetAppsParams {
-	var (
-		limitDefault int64 = int64(20)
-		sinceDefault int64 = int64(0)
-	)
+
 	return &GetAppsParams{
-		Limit: &limitDefault,
-		Since: &sinceDefault,
 
 		timeout: timeout,
 	}
@@ -48,42 +37,7 @@ func NewGetAppsParamsWithTimeout(timeout time.Duration) *GetAppsParams {
 for the get apps operation typically these are written to a http.Request
 */
 type GetAppsParams struct {
-
-	/*Limit
-	  Limit
-
-	*/
-	Limit *int64
-	/*Since
-	  Offset
-
-	*/
-	Since *int64
-	/*TeamID
-	  Team ID
-
-	*/
-	TeamID int64
-
 	timeout time.Duration
-}
-
-// WithLimit adds the limit to the get apps params
-func (o *GetAppsParams) WithLimit(limit *int64) *GetAppsParams {
-	o.Limit = limit
-	return o
-}
-
-// WithSince adds the since to the get apps params
-func (o *GetAppsParams) WithSince(since *int64) *GetAppsParams {
-	o.Since = since
-	return o
-}
-
-// WithTeamID adds the teamID to the get apps params
-func (o *GetAppsParams) WithTeamID(teamID int64) *GetAppsParams {
-	o.TeamID = teamID
-	return o
 }
 
 // WriteToRequest writes these params to a swagger request
@@ -91,43 +45,6 @@ func (o *GetAppsParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Regis
 
 	r.SetTimeout(o.timeout)
 	var res []error
-
-	if o.Limit != nil {
-
-		// query param limit
-		var qrLimit int64
-		if o.Limit != nil {
-			qrLimit = *o.Limit
-		}
-		qLimit := swag.FormatInt64(qrLimit)
-		if qLimit != "" {
-			if err := r.SetQueryParam("limit", qLimit); err != nil {
-				return err
-			}
-		}
-
-	}
-
-	if o.Since != nil {
-
-		// query param since
-		var qrSince int64
-		if o.Since != nil {
-			qrSince = *o.Since
-		}
-		qSince := swag.FormatInt64(qrSince)
-		if qSince != "" {
-			if err := r.SetQueryParam("since", qSince); err != nil {
-				return err
-			}
-		}
-
-	}
-
-	// path param team_id
-	if err := r.SetPathParam("team_id", swag.FormatInt64(o.TeamID)); err != nil {
-		return err
-	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)

@@ -7,10 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
-	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 
 	strfmt "github.com/go-openapi/strfmt"
 
@@ -33,20 +30,6 @@ func (o *GetAppsReader) ReadResponse(response runtime.ClientResponse, consumer r
 		}
 		return result, nil
 
-	case 401:
-		result := NewGetAppsUnauthorized()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
-	case 403:
-		result := NewGetAppsForbidden()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
 	default:
 		result := NewGetAppsDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -63,79 +46,20 @@ func NewGetAppsOK() *GetAppsOK {
 
 /*GetAppsOK handles this case with default header values.
 
-Apps
+list of apps
 */
 type GetAppsOK struct {
-	Payload GetAppsOKBodyBody
+	Payload []*models.App
 }
 
 func (o *GetAppsOK) Error() string {
-	return fmt.Sprintf("[GET /teams/{team_id}/apps][%d] getAppsOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[GET /apps][%d] getAppsOK  %+v", 200, o.Payload)
 }
 
 func (o *GetAppsOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	// response payload
 	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewGetAppsUnauthorized creates a GetAppsUnauthorized with default headers values
-func NewGetAppsUnauthorized() *GetAppsUnauthorized {
-	return &GetAppsUnauthorized{}
-}
-
-/*GetAppsUnauthorized handles this case with default header values.
-
-User not authorized
-*/
-type GetAppsUnauthorized struct {
-	Payload *models.Unauthorized
-}
-
-func (o *GetAppsUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /teams/{team_id}/apps][%d] getAppsUnauthorized  %+v", 401, o.Payload)
-}
-
-func (o *GetAppsUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewGetAppsForbidden creates a GetAppsForbidden with default headers values
-func NewGetAppsForbidden() *GetAppsForbidden {
-	return &GetAppsForbidden{}
-}
-
-/*GetAppsForbidden handles this case with default header values.
-
-User does not have the credentials to access this resource
-
-*/
-type GetAppsForbidden struct {
-	Payload *models.Unauthorized
-}
-
-func (o *GetAppsForbidden) Error() string {
-	return fmt.Sprintf("[GET /teams/{team_id}/apps][%d] getAppsForbidden  %+v", 403, o.Payload)
-}
-
-func (o *GetAppsForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
 	}
 
@@ -151,7 +75,7 @@ func NewGetAppsDefault(code int) *GetAppsDefault {
 
 /*GetAppsDefault handles this case with default header values.
 
-Error
+Unexpected error
 */
 type GetAppsDefault struct {
 	_statusCode int
@@ -165,7 +89,7 @@ func (o *GetAppsDefault) Code() int {
 }
 
 func (o *GetAppsDefault) Error() string {
-	return fmt.Sprintf("[GET /teams/{team_id}/apps][%d] getApps default  %+v", o._statusCode, o.Payload)
+	return fmt.Sprintf("[GET /apps][%d] getApps default  %+v", o._statusCode, o.Payload)
 }
 
 func (o *GetAppsDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -175,62 +99,6 @@ func (o *GetAppsDefault) readResponse(response runtime.ClientResponse, consumer 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
-	}
-
-	return nil
-}
-
-/*GetAppsOKBodyBody get apps o k body body
-
-swagger:model GetAppsOKBodyBody
-*/
-type GetAppsOKBodyBody struct {
-	models.Pagination
-
-	/* items
-
-	Required: true
-	*/
-	Items []*models.App `json:"items"`
-}
-
-// Validate validates this get apps o k body body
-func (o *GetAppsOKBodyBody) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := o.Pagination.Validate(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := o.validateItems(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (o *GetAppsOKBodyBody) validateItems(formats strfmt.Registry) error {
-
-	if err := validate.Required("getAppsOK"+"."+"items", "body", o.Items); err != nil {
-		return err
-	}
-
-	for i := 0; i < len(o.Items); i++ {
-
-		if swag.IsZero(o.Items[i]) { // not required
-			continue
-		}
-
-		if o.Items[i] != nil {
-
-			if err := o.Items[i].Validate(formats); err != nil {
-				return err
-			}
-		}
-
 	}
 
 	return nil

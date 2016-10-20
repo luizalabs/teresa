@@ -15,30 +15,30 @@ import (
 	"github.com/luizalabs/tapi/models"
 )
 
-// NewUpdateAppParams creates a new UpdateAppParams object
+// NewUpdateAppAutoScaleParams creates a new UpdateAppAutoScaleParams object
 // with the default values initialized.
-func NewUpdateAppParams() *UpdateAppParams {
+func NewUpdateAppAutoScaleParams() *UpdateAppAutoScaleParams {
 	var ()
-	return &UpdateAppParams{
+	return &UpdateAppAutoScaleParams{
 
 		timeout: cr.DefaultTimeout,
 	}
 }
 
-// NewUpdateAppParamsWithTimeout creates a new UpdateAppParams object
+// NewUpdateAppAutoScaleParamsWithTimeout creates a new UpdateAppAutoScaleParams object
 // with the default values initialized, and the ability to set a timeout on a request
-func NewUpdateAppParamsWithTimeout(timeout time.Duration) *UpdateAppParams {
+func NewUpdateAppAutoScaleParamsWithTimeout(timeout time.Duration) *UpdateAppAutoScaleParams {
 	var ()
-	return &UpdateAppParams{
+	return &UpdateAppAutoScaleParams{
 
 		timeout: timeout,
 	}
 }
 
-/*UpdateAppParams contains all the parameters to send to the API endpoint
-for the update app operation typically these are written to a http.Request
+/*UpdateAppAutoScaleParams contains all the parameters to send to the API endpoint
+for the update app auto scale operation typically these are written to a http.Request
 */
-type UpdateAppParams struct {
+type UpdateAppAutoScaleParams struct {
 
 	/*AppName
 	  App name
@@ -46,25 +46,25 @@ type UpdateAppParams struct {
 	*/
 	AppName string
 	/*Body*/
-	Body *models.AppIn
+	Body *models.AutoScale
 
 	timeout time.Duration
 }
 
-// WithAppName adds the appName to the update app params
-func (o *UpdateAppParams) WithAppName(appName string) *UpdateAppParams {
+// WithAppName adds the appName to the update app auto scale params
+func (o *UpdateAppAutoScaleParams) WithAppName(appName string) *UpdateAppAutoScaleParams {
 	o.AppName = appName
 	return o
 }
 
-// WithBody adds the body to the update app params
-func (o *UpdateAppParams) WithBody(body *models.AppIn) *UpdateAppParams {
+// WithBody adds the body to the update app auto scale params
+func (o *UpdateAppAutoScaleParams) WithBody(body *models.AutoScale) *UpdateAppAutoScaleParams {
 	o.Body = body
 	return o
 }
 
 // WriteToRequest writes these params to a swagger request
-func (o *UpdateAppParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
+func (o *UpdateAppAutoScaleParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
 	r.SetTimeout(o.timeout)
 	var res []error
@@ -75,7 +75,7 @@ func (o *UpdateAppParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Reg
 	}
 
 	if o.Body == nil {
-		o.Body = new(models.AppIn)
+		o.Body = new(models.AutoScale)
 	}
 
 	if err := r.SetBodyParam(o.Body); err != nil {

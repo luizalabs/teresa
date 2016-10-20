@@ -9,7 +9,6 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/swag"
 
 	strfmt "github.com/go-openapi/strfmt"
 
@@ -41,25 +40,20 @@ for the partial update app operation typically these are written to a http.Reque
 */
 type PartialUpdateAppParams struct {
 
-	/*AppID
-	  App ID
+	/*AppName
+	  App name
 
 	*/
-	AppID int64
+	AppName string
 	/*Body*/
 	Body []*models.PatchAppRequest
-	/*TeamID
-	  Team ID
-
-	*/
-	TeamID int64
 
 	timeout time.Duration
 }
 
-// WithAppID adds the appID to the partial update app params
-func (o *PartialUpdateAppParams) WithAppID(appID int64) *PartialUpdateAppParams {
-	o.AppID = appID
+// WithAppName adds the appName to the partial update app params
+func (o *PartialUpdateAppParams) WithAppName(appName string) *PartialUpdateAppParams {
+	o.AppName = appName
 	return o
 }
 
@@ -69,29 +63,18 @@ func (o *PartialUpdateAppParams) WithBody(body []*models.PatchAppRequest) *Parti
 	return o
 }
 
-// WithTeamID adds the teamID to the partial update app params
-func (o *PartialUpdateAppParams) WithTeamID(teamID int64) *PartialUpdateAppParams {
-	o.TeamID = teamID
-	return o
-}
-
 // WriteToRequest writes these params to a swagger request
 func (o *PartialUpdateAppParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
 	r.SetTimeout(o.timeout)
 	var res []error
 
-	// path param app_id
-	if err := r.SetPathParam("app_id", swag.FormatInt64(o.AppID)); err != nil {
+	// path param app_name
+	if err := r.SetPathParam("app_name", o.AppName); err != nil {
 		return err
 	}
 
 	if err := r.SetBodyParam(o.Body); err != nil {
-		return err
-	}
-
-	// path param team_id
-	if err := r.SetPathParam("team_id", swag.FormatInt64(o.TeamID)); err != nil {
 		return err
 	}
 

@@ -10,7 +10,6 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/swag"
 
 	strfmt "github.com/go-openapi/strfmt"
 )
@@ -42,18 +41,13 @@ type CreateDeploymentParams struct {
 
 	/*AppTarball*/
 	AppTarball os.File
-	/*AppID
-	  App ID
+	/*AppName
+	  App name
 
 	*/
-	AppID int64
+	AppName string
 	/*Description*/
 	Description *string
-	/*TeamID
-	  Team ID
-
-	*/
-	TeamID int64
 
 	timeout time.Duration
 }
@@ -64,21 +58,15 @@ func (o *CreateDeploymentParams) WithAppTarball(appTarball os.File) *CreateDeplo
 	return o
 }
 
-// WithAppID adds the appID to the create deployment params
-func (o *CreateDeploymentParams) WithAppID(appID int64) *CreateDeploymentParams {
-	o.AppID = appID
+// WithAppName adds the appName to the create deployment params
+func (o *CreateDeploymentParams) WithAppName(appName string) *CreateDeploymentParams {
+	o.AppName = appName
 	return o
 }
 
 // WithDescription adds the description to the create deployment params
 func (o *CreateDeploymentParams) WithDescription(description *string) *CreateDeploymentParams {
 	o.Description = description
-	return o
-}
-
-// WithTeamID adds the teamID to the create deployment params
-func (o *CreateDeploymentParams) WithTeamID(teamID int64) *CreateDeploymentParams {
-	o.TeamID = teamID
 	return o
 }
 
@@ -93,8 +81,8 @@ func (o *CreateDeploymentParams) WriteToRequest(r runtime.ClientRequest, reg str
 		return err
 	}
 
-	// path param app_id
-	if err := r.SetPathParam("app_id", swag.FormatInt64(o.AppID)); err != nil {
+	// path param app_name
+	if err := r.SetPathParam("app_name", o.AppName); err != nil {
 		return err
 	}
 
@@ -112,11 +100,6 @@ func (o *CreateDeploymentParams) WriteToRequest(r runtime.ClientRequest, reg str
 			}
 		}
 
-	}
-
-	// path param team_id
-	if err := r.SetPathParam("team_id", swag.FormatInt64(o.TeamID)); err != nil {
-		return err
 	}
 
 	if len(res) > 0 {

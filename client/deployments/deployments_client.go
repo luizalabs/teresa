@@ -38,7 +38,7 @@ func (a *Client) CreateDeployment(params *CreateDeploymentParams, authInfo runti
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "createDeployment",
 		Method:             "POST",
-		PathPattern:        "/teams/{team_id}/apps/{app_id}/deployments",
+		PathPattern:        "/apps/{app_name}/deployments",
 		ProducesMediaTypes: []string{"application/octet-stream"},
 		ConsumesMediaTypes: []string{"multipart/form-data"},
 		Schemes:            []string{"http"},

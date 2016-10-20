@@ -155,7 +155,7 @@ Error
 type GetTeamDetailDefault struct {
 	_statusCode int
 
-	Payload *models.Error
+	Payload *models.GenericError
 }
 
 // Code gets the status code for the get team detail default response
@@ -169,7 +169,7 @@ func (o *GetTeamDetailDefault) Error() string {
 
 func (o *GetTeamDetailDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.Error)
+	o.Payload = new(models.GenericError)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

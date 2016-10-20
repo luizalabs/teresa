@@ -74,7 +74,7 @@ Error
 type DeleteTeamDefault struct {
 	_statusCode int
 
-	Payload *models.Error
+	Payload *models.GenericError
 }
 
 // Code gets the status code for the delete team default response
@@ -88,7 +88,7 @@ func (o *DeleteTeamDefault) Error() string {
 
 func (o *DeleteTeamDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.Error)
+	o.Payload = new(models.GenericError)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

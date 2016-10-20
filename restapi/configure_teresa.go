@@ -10,7 +10,6 @@ import (
 	middleware "github.com/go-openapi/runtime/middleware"
 	"github.com/luizalabs/tapi/handlers"
 	"github.com/luizalabs/tapi/restapi/operations"
-	"github.com/luizalabs/tapi/restapi/operations/apps"
 	"github.com/luizalabs/tapi/restapi/operations/auth"
 	"github.com/luizalabs/tapi/restapi/operations/deployments"
 	"github.com/luizalabs/tapi/restapi/operations/teams"
@@ -75,9 +74,9 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	// app details
 	api.AppsGetAppDetailsHandler = handlers.GetAppDetailsHandler
 
-	api.AppsGetAppsHandler = apps.GetAppsHandlerFunc(func(params apps.GetAppsParams, principal interface{}) middleware.Responder {
-		return handlers.GetAppsHandler(params, principal)
-	})
+	// list apps
+	api.AppsGetAppsHandler = handlers.GetAppsHandler
+
 	api.UsersGetCurrentUserHandler = users.GetCurrentUserHandlerFunc(func(params users.GetCurrentUserParams, principal interface{}) middleware.Responder {
 		return handlers.GetCurrentUserHandler(principal)
 	})

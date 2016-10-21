@@ -25,48 +25,24 @@ paths:
   /teams:
     get:
       summary: Get teams
-      description: Find and filter teams
+      description: Get a list of teams
       tags:
         - teams
       operationId: getTeams
       security:
         - api_key: []
         - token_header: []
-      parameters:
-        - $ref: "#/parameters/since"
-        - $ref: "#/parameters/limit"
       responses:
         200:
-          description: Get teams
+          description: list of teams
           schema:
-            allOf:
-              - $ref: "#/definitions/Pagination"
-              - properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: "#/definitions/Team"
-        400:
-          description: User sent a bad request
-          schema:
-            $ref: "#/definitions/BadRequest"
-        401:
-          description: User not authorized
-          schema:
-            $ref: "#/definitions/Unauthorized"
-        403:
-          description: |
-            User does not have the credentials to access this resource
-          schema:
-            $ref: "#/definitions/Unauthorized"
-        404:
-          description: Resource not found
-          schema:
-            $ref: "#/definitions/NotFound"
+            type: array
+            items:
+              $ref: "#/definitions/Team"
         default:
-          description: User not authorized
+          description: Unexpected error
           schema:
-            $ref: "#/definitions/Unauthorized"
+            $ref: "#/definitions/Error"
     post:
       summary: Create teams
       description: Create a team.

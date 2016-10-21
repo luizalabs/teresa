@@ -6,12 +6,7 @@ package teams
 import (
 	"net/http"
 
-	"github.com/go-openapi/errors"
 	middleware "github.com/go-openapi/runtime/middleware"
-	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
-	"github.com/luizalabs/teresa-api/models"
 )
 
 // GetTeamsHandlerFunc turns a function with the right signature into a get teams handler
@@ -36,7 +31,7 @@ func NewGetTeams(ctx *middleware.Context, handler GetTeamsHandler) *GetTeams {
 
 Get teams
 
-Find and filter teams
+Get a list of teams
 
 */
 type GetTeams struct {
@@ -67,60 +62,4 @@ func (o *GetTeams) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	o.Context.Respond(rw, r, route.Produces, route, res)
 
-}
-
-/*GetTeamsOKBodyBody get teams o k body body
-
-swagger:model GetTeamsOKBodyBody
-*/
-type GetTeamsOKBodyBody struct {
-	models.Pagination
-
-	/* items
-
-	Required: true
-	*/
-	Items []*models.Team `json:"items"`
-}
-
-// Validate validates this get teams o k body body
-func (o *GetTeamsOKBodyBody) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := o.Pagination.Validate(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := o.validateItems(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (o *GetTeamsOKBodyBody) validateItems(formats strfmt.Registry) error {
-
-	if err := validate.Required("getTeamsOK"+"."+"items", "body", o.Items); err != nil {
-		return err
-	}
-
-	for i := 0; i < len(o.Items); i++ {
-
-		if swag.IsZero(o.Items[i]) { // not required
-			continue
-		}
-
-		if o.Items[i] != nil {
-
-			if err := o.Items[i].Validate(formats); err != nil {
-				return err
-			}
-		}
-
-	}
-
-	return nil
 }

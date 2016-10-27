@@ -7,10 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
-	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 
 	strfmt "github.com/go-openapi/strfmt"
 
@@ -33,34 +30,6 @@ func (o *GetTeamsReader) ReadResponse(response runtime.ClientResponse, consumer 
 		}
 		return result, nil
 
-	case 400:
-		result := NewGetTeamsBadRequest()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
-	case 401:
-		result := NewGetTeamsUnauthorized()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
-	case 403:
-		result := NewGetTeamsForbidden()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
-	case 404:
-		result := NewGetTeamsNotFound()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
 	default:
 		result := NewGetTeamsDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -77,10 +46,10 @@ func NewGetTeamsOK() *GetTeamsOK {
 
 /*GetTeamsOK handles this case with default header values.
 
-Get teams
+list of teams
 */
 type GetTeamsOK struct {
-	Payload GetTeamsOKBodyBody
+	Payload []*models.Team
 }
 
 func (o *GetTeamsOK) Error() string {
@@ -97,123 +66,6 @@ func (o *GetTeamsOK) readResponse(response runtime.ClientResponse, consumer runt
 	return nil
 }
 
-// NewGetTeamsBadRequest creates a GetTeamsBadRequest with default headers values
-func NewGetTeamsBadRequest() *GetTeamsBadRequest {
-	return &GetTeamsBadRequest{}
-}
-
-/*GetTeamsBadRequest handles this case with default header values.
-
-User sent a bad request
-*/
-type GetTeamsBadRequest struct {
-	Payload *models.BadRequest
-}
-
-func (o *GetTeamsBadRequest) Error() string {
-	return fmt.Sprintf("[GET /teams][%d] getTeamsBadRequest  %+v", 400, o.Payload)
-}
-
-func (o *GetTeamsBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.BadRequest)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewGetTeamsUnauthorized creates a GetTeamsUnauthorized with default headers values
-func NewGetTeamsUnauthorized() *GetTeamsUnauthorized {
-	return &GetTeamsUnauthorized{}
-}
-
-/*GetTeamsUnauthorized handles this case with default header values.
-
-User not authorized
-*/
-type GetTeamsUnauthorized struct {
-	Payload *models.Unauthorized
-}
-
-func (o *GetTeamsUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /teams][%d] getTeamsUnauthorized  %+v", 401, o.Payload)
-}
-
-func (o *GetTeamsUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewGetTeamsForbidden creates a GetTeamsForbidden with default headers values
-func NewGetTeamsForbidden() *GetTeamsForbidden {
-	return &GetTeamsForbidden{}
-}
-
-/*GetTeamsForbidden handles this case with default header values.
-
-User does not have the credentials to access this resource
-
-*/
-type GetTeamsForbidden struct {
-	Payload *models.Unauthorized
-}
-
-func (o *GetTeamsForbidden) Error() string {
-	return fmt.Sprintf("[GET /teams][%d] getTeamsForbidden  %+v", 403, o.Payload)
-}
-
-func (o *GetTeamsForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewGetTeamsNotFound creates a GetTeamsNotFound with default headers values
-func NewGetTeamsNotFound() *GetTeamsNotFound {
-	return &GetTeamsNotFound{}
-}
-
-/*GetTeamsNotFound handles this case with default header values.
-
-Resource not found
-*/
-type GetTeamsNotFound struct {
-	Payload *models.NotFound
-}
-
-func (o *GetTeamsNotFound) Error() string {
-	return fmt.Sprintf("[GET /teams][%d] getTeamsNotFound  %+v", 404, o.Payload)
-}
-
-func (o *GetTeamsNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.NotFound)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
 // NewGetTeamsDefault creates a GetTeamsDefault with default headers values
 func NewGetTeamsDefault(code int) *GetTeamsDefault {
 	return &GetTeamsDefault{
@@ -223,12 +75,12 @@ func NewGetTeamsDefault(code int) *GetTeamsDefault {
 
 /*GetTeamsDefault handles this case with default header values.
 
-User not authorized
+Unexpected error
 */
 type GetTeamsDefault struct {
 	_statusCode int
 
-	Payload *models.Unauthorized
+	Payload *models.Error
 }
 
 // Code gets the status code for the get teams default response
@@ -242,67 +94,11 @@ func (o *GetTeamsDefault) Error() string {
 
 func (o *GetTeamsDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.Unauthorized)
+	o.Payload = new(models.Error)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
-	}
-
-	return nil
-}
-
-/*GetTeamsOKBodyBody get teams o k body body
-
-swagger:model GetTeamsOKBodyBody
-*/
-type GetTeamsOKBodyBody struct {
-	models.Pagination
-
-	/* items
-
-	Required: true
-	*/
-	Items []*models.Team `json:"items"`
-}
-
-// Validate validates this get teams o k body body
-func (o *GetTeamsOKBodyBody) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := o.Pagination.Validate(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := o.validateItems(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (o *GetTeamsOKBodyBody) validateItems(formats strfmt.Registry) error {
-
-	if err := validate.Required("getTeamsOK"+"."+"items", "body", o.Items); err != nil {
-		return err
-	}
-
-	for i := 0; i < len(o.Items); i++ {
-
-		if swag.IsZero(o.Items[i]) { // not required
-			continue
-		}
-
-		if o.Items[i] != nil {
-
-			if err := o.Items[i].Validate(formats); err != nil {
-				return err
-			}
-		}
-
 	}
 
 	return nil

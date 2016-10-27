@@ -179,10 +179,11 @@ func (c apps) UpdateAutoScale(appName string, autoScale *models.AutoScale, stora
 func (c apps) Get(appName string, tk *Token) (app *models.App, err error) {
 	ns, err := c.getNamespace(appName)
 	if err != nil {
-		if IsNotFoundError(err) {
-			return nil, NewUnauthorizedErrorf(`app "%s" not found or user not allowed to see it`, appName)
-		}
 		return nil, err
+		// if IsNotFoundError(err) {
+		// 	return nil, NewUnauthorizedErrorf(`app "%s" not found or user not allowed to see it`, appName)
+		// }
+		// return nil, err
 	}
 	app, err = unmarshalAppFromNamespace(ns)
 	if err != nil {

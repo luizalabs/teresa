@@ -1119,4 +1119,10 @@ definitions:
         description: |
           reason of the error if any.
           always represented as an enum in pascal case
-        example: UserNotMemberOfTeam
+        enum:
+        - BadRequest
+        - Unauthorized
+        - Forbidden
+        - NotFound
+        - Conflict
+        - InternalServerError

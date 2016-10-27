@@ -4,7 +4,10 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
+
 	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/swag"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/validate"
@@ -49,6 +52,11 @@ func (m *Error) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateReason(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
@@ -67,6 +75,39 @@ func (m *Error) validateCode(formats strfmt.Registry) error {
 func (m *Error) validateMessage(formats strfmt.Registry) error {
 
 	if err := validate.Required("message", "body", m.Message); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var errorTypeReasonPropEnum []interface{}
+
+// prop value enum
+func (m *Error) validateReasonEnum(path, location string, value string) error {
+	if errorTypeReasonPropEnum == nil {
+		var res []string
+		if err := json.Unmarshal([]byte(`["BadRequest","Unauthorized","Forbidden","NotFound","Conflict","InternalServerError"]`), &res); err != nil {
+			return err
+		}
+		for _, v := range res {
+			errorTypeReasonPropEnum = append(errorTypeReasonPropEnum, v)
+		}
+	}
+	if err := validate.Enum(path, location, value, errorTypeReasonPropEnum); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Error) validateReason(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Reason) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateReasonEnum("reason", "body", m.Reason); err != nil {
 		return err
 	}
 

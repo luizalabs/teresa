@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/luizalabs/tapi/helpers"
@@ -193,11 +194,9 @@ func (c apps) Get(appName string, tk *Token) (app *models.App, err error) {
 	if tk.IsAuthorized(*app.Team) == false {
 		return nil, NewUnauthorizedErrorf(`app "%s" not found or user not allowed to see it`, appName)
 	}
-	lb, err := c.getLoadBalancer(appName)
-	if err != nil {
-		return nil, err
+	if lb, errLb := c.getLoadBalancer(appName); errLb == nil {
+		app.AddressList = []string{*lb}
 	}
-	app.AddressList = []string{*lb}
 
 	// TODO: get deployments here??
 
@@ -208,6 +207,9 @@ func (c apps) getLoadBalancer(appName string) (lb *string, err error) {
 	srv, err := c.k.Networks().GetService(appName)
 	if err != nil {
 		return nil, err
+	}
+	if len(srv.Status.LoadBalancer.Ingress) == 0 {
+		return nil, errors.New("Load balancer address not found")
 	}
 	return &srv.Status.LoadBalancer.Ingress[0].Hostname, nil
 }
@@ -489,11 +491,9 @@ func (c apps) List(tk *Token) (apps []*models.App, err error) {
 		if err != nil {
 			return nil, err
 		}
-		lb, err := c.getLoadBalancer(*app.Name)
-		if err != nil {
-			return nil, err
+		if lb, errLb := c.getLoadBalancer(*app.Name); errLb == nil {
+			app.AddressList = []string{*lb}
 		}
-		app.AddressList = []string{*lb}
 		apps = append(apps, app)
 	}
 	return

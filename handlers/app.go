@@ -24,6 +24,9 @@ var CreateAppHandler apps.CreateAppHandlerFunc = func(params apps.CreateAppParam
 		} else if k8s.IsAlreadyExistsError(err) {
 			l.WithError(err).Debug("error when creating app")
 			return NewConflictError("app already exists")
+		} else if k8s.IsUnauthorizedError(err) {
+			l.WithError(err).Debug("error when creating app")
+			return NewUnauthorizedError("team doesn't exists or user cant see this team")
 		}
 		l.WithError(err).Error("error when creating app")
 		return NewInternalServerError(err)

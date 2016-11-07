@@ -51,8 +51,13 @@ var CreateDeploymentHandler deployments.CreateDeploymentHandlerFunc = func(param
 	var r middleware.ResponderFunc = func(rw http.ResponseWriter, pr runtime.Producer) {
 		tk := k8s.IToToken(principal)
 
+		var description string
+		if params.Description != nil {
+			description = *params.Description
+		}
+
 		l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
-		r, err := k8s.Client.Deployments().Create(params.AppName, *params.Description, &params.AppTarball, helpers.FileStorage, tk)
+		r, err := k8s.Client.Deployments().Create(params.AppName, description, &params.AppTarball, helpers.FileStorage, tk)
 		if err != nil {
 			// FIXME: improve this... is it possible?
 			var httpErr *GenericError

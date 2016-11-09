@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/luizalabs/tapi",
+	"ImportPath": "github.com/luizalabs/teresa-api",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v62",
 	"Packages": [

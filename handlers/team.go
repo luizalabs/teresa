@@ -6,9 +6,9 @@ import (
 
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
-	"github.com/luizalabs/tapi/models"
-	"github.com/luizalabs/tapi/models/storage"
-	"github.com/luizalabs/tapi/restapi/operations/teams"
+	"github.com/luizalabs/teresa-api/models"
+	"github.com/luizalabs/teresa-api/models/storage"
+	"github.com/luizalabs/teresa-api/restapi/operations/teams"
 )
 
 // CreateTeamHandler ...

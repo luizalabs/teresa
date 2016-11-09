@@ -11,7 +11,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
-	"github.com/luizalabs/tapi/models"
+	"github.com/luizalabs/teresa-api/models"
 )
 
 // GetAppsHandlerFunc turns a function with the right signature into a get apps handler

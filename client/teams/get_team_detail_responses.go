@@ -11,7 +11,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/luizalabs/tapi/models"
+	"github.com/luizalabs/teresa-api/models"
 )
 
 // GetTeamDetailReader is a Reader for the GetTeamDetail structure.

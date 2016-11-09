@@ -9,9 +9,9 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/luizalabs/tapi/models"
-	"github.com/luizalabs/tapi/models/storage"
-	"github.com/luizalabs/tapi/restapi/operations/auth"
+	"github.com/luizalabs/teresa-api/models"
+	"github.com/luizalabs/teresa-api/models/storage"
+	"github.com/luizalabs/teresa-api/restapi/operations/auth"
 )
 
 // location of the files used for signing and verification

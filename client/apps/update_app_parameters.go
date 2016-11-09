@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/luizalabs/tapi/models"
+	"github.com/luizalabs/teresa-api/models"
 )
 
 // NewUpdateAppParams creates a new UpdateAppParams object

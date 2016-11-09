@@ -14,7 +14,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/luizalabs/tapi/models"
+	"github.com/luizalabs/teresa-api/models"
 )
 
 // GetAppsReader is a Reader for the GetApps structure.

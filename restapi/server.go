@@ -14,7 +14,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 	graceful "github.com/tylerb/graceful"
 
-	"github.com/luizalabs/tapi/restapi/operations"
+	"github.com/luizalabs/teresa-api/restapi/operations"
 )
 
 const (

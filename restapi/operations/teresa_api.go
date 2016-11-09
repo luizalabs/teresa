@@ -16,11 +16,11 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.com/luizalabs/tapi/restapi/operations/apps"
-	"github.com/luizalabs/tapi/restapi/operations/auth"
-	"github.com/luizalabs/tapi/restapi/operations/deployments"
-	"github.com/luizalabs/tapi/restapi/operations/teams"
-	"github.com/luizalabs/tapi/restapi/operations/users"
+	"github.com/luizalabs/teresa-api/restapi/operations/apps"
+	"github.com/luizalabs/teresa-api/restapi/operations/auth"
+	"github.com/luizalabs/teresa-api/restapi/operations/deployments"
+	"github.com/luizalabs/teresa-api/restapi/operations/teams"
+	"github.com/luizalabs/teresa-api/restapi/operations/users"
 )
 
 // NewTeresaAPI creates a new Teresa instance

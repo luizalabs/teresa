@@ -1,8 +1,8 @@
 FROM golang:1.6
 
-RUN mkdir -p /go/src/github.com/luizalabs/tapi
-WORKDIR /go/src/github.com/luizalabs/tapi
-COPY . /go/src/github.com/luizalabs/tapi
+RUN mkdir -p /go/src/github.com/luizalabs/teresa-api
+WORKDIR /go/src/github.com/luizalabs/teresa-api
+COPY . /go/src/github.com/luizalabs/teresa-api
 
 RUN go get github.com/tools/godep
 RUN godep go install ./cmd/teresa-server/...

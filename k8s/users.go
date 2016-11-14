@@ -5,8 +5,8 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-openapi/strfmt"
-	"github.com/luizalabs/tapi/models"
-	"github.com/luizalabs/tapi/models/storage"
+	"github.com/luizalabs/teresa-api/models"
+	"github.com/luizalabs/teresa-api/models/storage"
 )
 
 // UsersInterface is used to allow mock testing

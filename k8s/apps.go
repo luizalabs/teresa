@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/luizalabs/tapi/helpers"
-	"github.com/luizalabs/tapi/models"
+	"github.com/luizalabs/teresa-api/helpers"
+	"github.com/luizalabs/teresa-api/models"
 	"k8s.io/kubernetes/pkg/api"
 	k8s_errors "k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/api/resource"

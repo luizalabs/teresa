@@ -1,7 +1,7 @@
 package k8s
 
 import (
-	"github.com/luizalabs/tapi/models"
+	"github.com/luizalabs/teresa-api/models"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/util/intstr"

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/runtime"
-	"github.com/luizalabs/tapi/models"
+	"github.com/luizalabs/teresa-api/models"
 )
 
 // Reason is used to keep the reasons to attach with the error

@@ -8,8 +8,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/go-openapi/runtime"
-	"github.com/luizalabs/tapi/helpers"
-	"github.com/luizalabs/tapi/models"
+	"github.com/luizalabs/teresa-api/helpers"
+	"github.com/luizalabs/teresa-api/models"
 	"github.com/pborman/uuid"
 	"k8s.io/kubernetes/pkg/api"
 	k8s_errors "k8s.io/kubernetes/pkg/api/errors"

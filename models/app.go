@@ -35,6 +35,10 @@ type App struct {
 	/* env vars
 	 */
 	EnvVars []*EnvVar `json:"envVars,omitempty"`
+
+	/* status
+	 */
+	Status *Status `json:"status,omitempty"`
 }
 
 // Validate validates this app
@@ -58,6 +62,10 @@ func (m *App) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateEnvVars(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateStatus(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -123,6 +131,18 @@ func (m *App) validateEnvVars(formats strfmt.Registry) error {
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *App) validateStatus(formats strfmt.Registry) error {
+
+	if m.Status != nil {
+
+		if err := m.Status.Validate(formats); err != nil {
+			return err
+		}
 	}
 
 	return nil

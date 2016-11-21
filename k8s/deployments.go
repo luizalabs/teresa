@@ -164,7 +164,7 @@ func (c deployments) buildApp(app *models.App, deploy *deploy, storage helpers.S
 		return err
 	}
 	// stream output log from the builder POD
-	s, err := c.streamPodOutput(pod)
+	s, err := streamPodOutput(c.k, pod, nil)
 	if err != nil {
 		return err
 	}
@@ -306,17 +306,6 @@ func (c deployments) waitPodEnd(pod *api.Pod, checkInterval, timeout time.Durati
 		}
 		return false, nil
 	})
-}
-
-// streamPodOutput returns a io.ReadCloser with the output log from the POD.
-func (c deployments) streamPodOutput(pod *api.Pod) (stream io.ReadCloser, err error) {
-	req := c.k.k8sClient.Pods(pod.Namespace).GetLogs(pod.Name, &api.PodLogOptions{
-		Follow: true,
-	})
-	if stream, err = req.Stream(); err != nil {
-		return nil, fmt.Errorf(`error when trying to stream logs from builder POD "%s/%s". Err: %s`, pod.Namespace, pod.Name, err)
-	}
-	return
 }
 
 func (c deployments) podExitCode(pod *api.Pod) (code *int32, err error) {

@@ -94,7 +94,7 @@ func (c deployments) Create(appName, description string, file *runtime.File, sto
 		lcu := lc.WithField("storage", storage.Type()).WithField("storageIn", deploy.storageIn)
 		lcu.Debug("uploading app archive to storage...")
 		fmt.Fprintln(w, "uploading app archive to storage...")
-		if err := storage.UploadFile(deploy.storageIn, file); err != nil {
+		if err := storage.UploadFile(deploy.storageIn, file.Data); err != nil {
 			lcu.WithError(err).Error("error found when upload app archive to storage")
 			fmt.Fprintln(w, "error found when upload app archive to storage")
 			return

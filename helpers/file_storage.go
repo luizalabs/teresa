@@ -1,13 +1,14 @@
 package helpers
 
 import (
+	"io"
+
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/go-openapi/runtime"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -23,7 +24,7 @@ type storageConfig struct {
 	AwsSecret           string      `envconfig:"aws_secret"`
 	AwsRegion           string      `envconfig:"aws_region"`
 	AwsBucket           string      `envconfig:"aws_bucket"`
-	AwsEndpoint         string      `envconfig:"aws_endpoint" default=""`
+	AwsEndpoint         string      `envconfig:"aws_endpoint" default:""`
 	AwsDisableSSL       bool        `envconfig:"aws_disable_ssl" default:"false"`
 	AwsS3ForcePathStyle bool        `envconfig:"aws_s3_force_path_style" default:"false"`
 }
@@ -32,7 +33,7 @@ type storageConfig struct {
 type Storage interface {
 	GetK8sSecretName() string
 	GetAccessData() map[string][]byte
-	UploadFile(path string, file *runtime.File) error
+	UploadFile(path string, file io.ReadSeeker) error
 	Type() string
 }
 
@@ -60,11 +61,10 @@ func (a *awsS3Storage) GetAccessData() map[string][]byte {
 	}
 }
 
-func (a *awsS3Storage) UploadFile(path string, file *runtime.File) error {
-	defer file.Data.Close()
+func (a *awsS3Storage) UploadFile(path string, file io.ReadSeeker) error {
 	po := &s3.PutObjectInput{
 		Bucket: &a.Bucket,
-		Body:   file.Data,
+		Body:   file,
 		Key:    &path,
 	}
 	if _, err := a.Client.PutObject(po); err != nil {

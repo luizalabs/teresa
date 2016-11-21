@@ -789,6 +789,18 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Team"
+  Status:
+    type: object
+    required:
+      - cpu
+      - pods
+    properties:
+      cpu:
+        type: integer
+        format: int32
+      pods:
+        type: integer
+        format: int32
   AppIn:
     type: object
     description: Application data
@@ -981,6 +993,8 @@ definitions:
           type: array
           items:
             $ref: "#/definitions/EnvVar"
+        status:
+          $ref: "#/definitions/Status"
   PatchAppRequest: # for now, only this two https://tools.ietf.org/html/rfc6902 || http://jsonpatch.com/
     type: object
     description: used to create a patch update to an app

@@ -11,6 +11,7 @@ import (
 	k8s_errors "k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/api/resource"
 	"k8s.io/kubernetes/pkg/api/unversioned"
+	"k8s.io/kubernetes/pkg/apis/autoscaling"
 	"k8s.io/kubernetes/pkg/labels"
 	"k8s.io/kubernetes/pkg/util/sets"
 )
@@ -197,9 +198,12 @@ func (c apps) Get(appName string, tk *Token) (app *models.App, err error) {
 	if lb, errLb := c.getLoadBalancer(appName); errLb == nil {
 		app.AddressList = []string{*lb}
 	}
-
-	// TODO: get deployments here??
-
+	hpa, err := c.k.k8sClient.Autoscaling().HorizontalPodAutoscalers(appName).Get(appName)
+	if err != nil {
+		return nil, err
+	}
+	app.AutoScale = newAutoScaleFromHpa(hpa)
+	app.Status = newStatusFromHpa(hpa)
 	return
 }
 
@@ -497,4 +501,28 @@ func (c apps) List(tk *Token) (apps []*models.App, err error) {
 		apps = append(apps, app)
 	}
 	return
+}
+
+func newStatusFromHpa(hpa *autoscaling.HorizontalPodAutoscaler) *models.Status {
+	return &models.Status{
+		CPU:  hpa.Status.CurrentCPUUtilizationPercentage,
+		Pods: &hpa.Status.CurrentReplicas,
+	}
+}
+
+func newAutoScaleFromHpa(hpa *autoscaling.HorizontalPodAutoscaler) *models.AutoScale {
+	var cpu *int64
+	var min int64
+	if hpa.Spec.TargetCPUUtilizationPercentage != nil {
+		value := int64(*hpa.Spec.TargetCPUUtilizationPercentage)
+		cpu = &value
+	}
+	if hpa.Spec.MinReplicas != nil {
+		min = int64(*hpa.Spec.MinReplicas)
+	}
+	return &models.AutoScale{
+		CPUTargetUtilization: cpu,
+		Min:                  min,
+		Max:                  int64(hpa.Spec.MaxReplicas),
+	}
 }

@@ -75,7 +75,7 @@ func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token) error 
 		return err
 	}
 	// creating the loadbalancer
-	if err := c.k.Networks().CreateLoadBalancerService(app); err != nil {
+	if err := c.k.Networks().CreateService(app); err != nil {
 		return err
 	}
 	return nil

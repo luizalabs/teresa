@@ -189,6 +189,9 @@ var GetAppLogsHandler apps.GetAppLogsHandlerFunc = func(params apps.GetAppLogsPa
 			} else if k8s.IsUnauthorizedError(err) {
 				l.WithError(err).Warn("error requesting logs")
 				httpErr = NewUnauthorizedError(err)
+			} else if k8s.IsNotFoundError(err) {
+				l.WithError(err).Warn("error requesting logs")
+				httpErr = NewNotFoundError(err)
 			} else {
 				l.WithError(err).Warn("error requesting logs")
 				httpErr = NewInternalServerError(err)

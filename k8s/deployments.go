@@ -1,10 +1,15 @@
 package k8s
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"strconv"
 	"time"
+
+	"gopkg.in/yaml.v2"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/go-openapi/runtime"
@@ -90,10 +95,20 @@ func (c deployments) Create(appName, description string, file *runtime.File, sto
 	r, w := io.Pipe()
 	go func() {
 		defer w.Close()
+
+		// parsing teresa.yaml and updating app
+		if err := parsingTeresaYaml(app, file.Data); err != nil {
+			lc.WithError(err).Error("error parsing teresa.yaml")
+			fmt.Fprintln(w, "error when searching and parsing teresa.yaml")
+			return
+		}
+
 		// upload file to storage
 		lcu := lc.WithField("storage", storage.Type()).WithField("storageIn", deploy.storageIn)
 		lcu.Debug("uploading app archive to storage...")
 		fmt.Fprintln(w, "uploading app archive to storage...")
+		// moving to the start of the file
+		file.Data.Seek(0, 0)
 		if err := storage.UploadFile(deploy.storageIn, file.Data); err != nil {
 			lcu.WithError(err).Error("error found when upload app archive to storage")
 			fmt.Fprintln(w, "error found when upload app archive to storage")
@@ -370,6 +385,41 @@ func newSlugRunnerContainer(app *models.App, slug string, storageType string) (c
 	}
 	// appending volume mount
 	appendContainerVolumeMount(c, "storage-keys", "/var/run/secrets/deis/objectstore/creds", true)
+
+	// healthcheck
+	if app.HealthCheck != nil {
+		if app.HealthCheck.Liveness != nil {
+			c.LivenessProbe = &api.Probe{
+				InitialDelaySeconds: int32(app.HealthCheck.Liveness.InitialDelaySeconds),
+				TimeoutSeconds:      int32(app.HealthCheck.Liveness.TimeoutSeconds),
+				PeriodSeconds:       int32(app.HealthCheck.Liveness.PeriodSeconds),
+				FailureThreshold:    int32(app.HealthCheck.Liveness.FailureThreshold),
+				SuccessThreshold:    int32(app.HealthCheck.Liveness.SuccessThreshold),
+				Handler: api.Handler{
+					HTTPGet: &api.HTTPGetAction{
+						Port: intstr.FromInt(5000),
+						Path: app.HealthCheck.Liveness.Path,
+					},
+				},
+			}
+		}
+		if app.HealthCheck.Readiness != nil {
+			c.ReadinessProbe = &api.Probe{
+				InitialDelaySeconds: int32(app.HealthCheck.Readiness.InitialDelaySeconds),
+				TimeoutSeconds:      int32(app.HealthCheck.Readiness.TimeoutSeconds),
+				PeriodSeconds:       int32(app.HealthCheck.Readiness.PeriodSeconds),
+				FailureThreshold:    int32(app.HealthCheck.Readiness.FailureThreshold),
+				SuccessThreshold:    int32(app.HealthCheck.Readiness.SuccessThreshold),
+				Handler: api.Handler{
+					HTTPGet: &api.HTTPGetAction{
+						Port: intstr.FromInt(5000),
+						Path: app.HealthCheck.Readiness.Path,
+					},
+				},
+			}
+		}
+	}
+
 	return
 }
 
@@ -530,4 +580,105 @@ func (c deployments) UpdateAutoScale(app *models.App) error {
 	hpa := newHorizontalPodAutoscaler(app)
 	_, err := c.k.k8sClient.HorizontalPodAutoscalers(*app.Name).Update(hpa)
 	return err
+}
+
+type HealthCheckProbe struct {
+	FailureThreshold   int32  `yaml:"failureThreshold"`
+	InitialDelaySecond int32  `yaml:"initialDelaySeconds"`
+	PeriodSeconds      int32  `yaml:"periodSeconds"`
+	SuccessThreshold   int32  `yaml:"successThreshold"`
+	TimeoutSeconds     int32  `yaml:"timeoutSeconds"`
+	Path               string `yaml:"path"`
+}
+
+type TeresaYaml struct {
+	HealthCheck *struct {
+		Liveness  *HealthCheckProbe
+		Readiness *HealthCheckProbe
+	} `yaml:"healthCheck,omitempty"`
+	RollingUpdate *struct {
+		MaxSurge       *string `yaml:"maxSurge,omitempty"`
+		MaxUnavailable *string `yaml:"maxUnavailable,omitempty"`
+	} `yaml:"rollingUpdate,omitempty"`
+}
+
+func getAppConfigFromTarball(tarFile io.ReadSeeker) (*TeresaYaml, error) {
+	gReader, err := gzip.NewReader(tarFile)
+	if err != nil {
+		return nil, err
+	}
+	defer gReader.Close()
+	tarReader := tar.NewReader(gReader)
+	for {
+		hdr, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		if hdr.Name != "teresa.yaml" {
+			continue
+		}
+		// teresa.yaml found...
+		b, err := ioutil.ReadAll(tarReader)
+		if err != nil {
+			return nil, err
+		}
+		teresaYaml := &TeresaYaml{}
+		if err = yaml.Unmarshal(b, teresaYaml); err != nil {
+			return nil, err
+		}
+		return teresaYaml, nil
+	}
+	return nil, nil
+}
+
+func parsingTeresaYaml(app *models.App, appTarball io.ReadSeeker) error {
+	// parsing teresa.yaml...
+	tyaml, err := getAppConfigFromTarball(appTarball)
+	if err != nil {
+		return fmt.Errorf("error found when trying to read and parse teresa.yaml inside app tarball. %s", err)
+	}
+	// updating app info using the configs specified the teresa.yaml
+	if tyaml != nil {
+		if tyaml.RollingUpdate == nil { // defaults for rolling update...
+			mu := "10%"
+			app.RollingUpdate = &models.AppInRollingUpdate{
+				MaxSurge:       &mu,
+				MaxUnavailable: &mu,
+			}
+		} else {
+			if tyaml.RollingUpdate.MaxSurge != nil {
+				app.RollingUpdate.MaxSurge = tyaml.RollingUpdate.MaxSurge
+			}
+			if tyaml.RollingUpdate.MaxUnavailable != nil {
+				app.RollingUpdate.MaxUnavailable = tyaml.RollingUpdate.MaxUnavailable
+			}
+		}
+		if tyaml.HealthCheck != nil {
+			app.HealthCheck = &models.AppInHealthCheck{}
+			if tyaml.HealthCheck.Liveness != nil {
+				app.HealthCheck.Liveness = &models.HealthCheckProbe{
+					Path:                tyaml.HealthCheck.Liveness.Path,
+					PeriodSeconds:       int64(tyaml.HealthCheck.Liveness.PeriodSeconds),
+					SuccessThreshold:    int64(tyaml.HealthCheck.Liveness.SuccessThreshold),
+					InitialDelaySeconds: int64(tyaml.HealthCheck.Liveness.InitialDelaySecond),
+					FailureThreshold:    int64(tyaml.HealthCheck.Liveness.FailureThreshold),
+					TimeoutSeconds:      int64(tyaml.HealthCheck.Liveness.TimeoutSeconds),
+				}
+			}
+			if tyaml.HealthCheck.Readiness != nil {
+				app.HealthCheck.Readiness = &models.HealthCheckProbe{
+					Path:                tyaml.HealthCheck.Readiness.Path,
+					PeriodSeconds:       int64(tyaml.HealthCheck.Readiness.PeriodSeconds),
+					SuccessThreshold:    int64(tyaml.HealthCheck.Readiness.SuccessThreshold),
+					InitialDelaySeconds: int64(tyaml.HealthCheck.Readiness.InitialDelaySecond),
+					FailureThreshold:    int64(tyaml.HealthCheck.Readiness.FailureThreshold),
+					TimeoutSeconds:      int64(tyaml.HealthCheck.Readiness.TimeoutSeconds),
+				}
+			}
+		}
+	}
+	return nil
 }

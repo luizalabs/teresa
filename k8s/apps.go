@@ -1,12 +1,16 @@
 package k8s
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"sync"
 
 	"github.com/luizalabs/teresa-api/helpers"
 	"github.com/luizalabs/teresa-api/models"
+	"io"
 	"k8s.io/kubernetes/pkg/api"
 	k8s_errors "k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/api/resource"
@@ -30,10 +34,16 @@ type AppInterface interface {
 	UpdateAutoScale(appName string, autoScale *models.AutoScale, storage helpers.Storage, tk *Token) (app *models.App, err error)
 	Get(appName string, tk *Token) (app *models.App, err error)
 	List(tk *Token) (app []*models.App, err error)
+	GetLogs(appName string, tk *Token, opts *api.PodLogOptions) (io.ReadCloser, error)
 }
 
 type apps struct {
 	k *k8sHelper
+}
+
+type podListLogger struct {
+	podList *api.PodList
+	r       io.ReadCloser
 }
 
 func newApps(c *k8sHelper) *apps {
@@ -525,4 +535,74 @@ func newAutoScaleFromHpa(hpa *autoscaling.HorizontalPodAutoscaler) *models.AutoS
 		Min:                  min,
 		Max:                  int64(hpa.Spec.MaxReplicas),
 	}
+}
+
+func streamPodOutput(k *k8sHelper, pod *api.Pod, opts *api.PodLogOptions) (stream io.ReadCloser, err error) {
+	req := k.k8sClient.Pods(pod.Namespace).GetLogs(pod.Name, opts)
+	if stream, err = req.Stream(); err != nil {
+		return nil, fmt.Errorf(`error when trying to stream logs from builder POD "%s/%s". Err: %s`, pod.Namespace, pod.Name, err)
+	}
+	return
+}
+
+func (c apps) newPodListLogger(podList *api.PodList, opts *api.PodLogOptions) io.ReadCloser {
+	var wg sync.WaitGroup
+	wg.Add(len(podList.Items))
+	r, w := io.Pipe()
+	for _, pod := range podList.Items {
+		go func() {
+			defer wg.Done()
+			rc, err := streamPodOutput(c.k, &pod, opts)
+			if err != nil {
+				log.Errorf("reading logs %s", err)
+				return
+			}
+			scanner := bufio.NewScanner(rc)
+			for scanner.Scan() {
+				fmt.Fprintln(w, scanner.Text())
+			}
+			if err := scanner.Err(); err != nil {
+				log.Errorf("reading logs %s", err)
+			}
+		}()
+	}
+	// Avoid possible leakage
+	if !opts.Follow {
+		go func() {
+			wg.Wait()
+			w.Close()
+		}()
+	}
+	return &podListLogger{
+		podList: podList,
+		r:       r,
+	}
+}
+
+func (c apps) GetLogs(appName string, tk *Token, opts *api.PodLogOptions) (rc io.ReadCloser, err error) {
+	ns, err := c.getNamespace(appName)
+	if err != nil {
+		return nil, err
+	}
+	app, err := unmarshalAppFromNamespace(ns)
+	if err != nil {
+		return nil, err
+	}
+	if tk.IsAuthorized(*app.Team) == false {
+		return nil, NewUnauthorizedErrorf(`app "%s" not found or user not allowed to see it`, appName)
+	}
+	podList, err := c.k.k8sClient.Pods(appName).List(api.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	rc = c.newPodListLogger(podList, opts)
+	return
+}
+
+func (pl podListLogger) Read(p []byte) (n int, err error) {
+	return pl.r.Read(p)
+}
+
+func (pl podListLogger) Close() error {
+	return pl.r.Close()
 }

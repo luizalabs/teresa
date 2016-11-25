@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"sync"
+
+	log "github.com/Sirupsen/logrus"
+
+	"io"
 
 	"github.com/luizalabs/teresa-api/helpers"
 	"github.com/luizalabs/teresa-api/models"
-	"io"
 	"k8s.io/kubernetes/pkg/api"
 	k8s_errors "k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/api/resource"
@@ -550,9 +552,10 @@ func (c apps) newPodListLogger(podList *api.PodList, opts *api.PodLogOptions) io
 	wg.Add(len(podList.Items))
 	r, w := io.Pipe()
 	for _, pod := range podList.Items {
+		p := &pod
 		go func() {
 			defer wg.Done()
-			rc, err := streamPodOutput(c.k, &pod, opts)
+			rc, err := streamPodOutput(c.k, p, opts)
 			if err != nil {
 				log.Errorf("reading logs %s", err)
 				return

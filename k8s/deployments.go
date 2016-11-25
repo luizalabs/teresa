@@ -163,8 +163,11 @@ func (c deployments) buildApp(app *models.App, deploy *deploy, storage helpers.S
 	if err = c.waitPodStart(pod, 1*time.Second, 2*time.Minute); err != nil {
 		return err
 	}
+	opts := &api.PodLogOptions{
+		Follow: true,
+	}
 	// stream output log from the builder POD
-	s, err := streamPodOutput(c.k, pod, nil)
+	s, err := streamPodOutput(c.k, pod, opts)
 	if err != nil {
 		return err
 	}

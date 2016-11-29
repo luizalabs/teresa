@@ -468,7 +468,6 @@ func newDeployment(app *models.App, ps *api.PodSpec) (d *extensions.Deployment) 
 			},
 		},
 		Spec: extensions.DeploymentSpec{
-			Replicas: int32(app.Scale),
 			Strategy: extensions.DeploymentStrategy{
 				Type: extensions.RollingUpdateDeploymentStrategyType,
 				RollingUpdate: &extensions.RollingUpdateDeployment{

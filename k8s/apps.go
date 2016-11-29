@@ -1,7 +1,6 @@
 package k8s
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -46,6 +45,7 @@ type apps struct {
 type podListLogger struct {
 	podList *api.PodList
 	r       io.ReadCloser
+	w       io.WriteCloser
 }
 
 func newApps(c *k8sHelper) *apps {
@@ -549,24 +549,22 @@ func streamPodOutput(k *k8sHelper, pod *api.Pod, opts *api.PodLogOptions) (strea
 
 func (c apps) newPodListLogger(podList *api.PodList, opts *api.PodLogOptions) io.ReadCloser {
 	var wg sync.WaitGroup
-	wg.Add(len(podList.Items))
 	r, w := io.Pipe()
 	for _, pod := range podList.Items {
-		p := &pod
+		tmp := pod
+		if tmp.Status.Phase != api.PodRunning {
+			continue
+		}
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			rc, err := streamPodOutput(c.k, p, opts)
+			rc, err := streamPodOutput(c.k, &tmp, opts)
 			if err != nil {
-				log.Errorf("reading logs %s", err)
+				log.Errorf("streaming logs from pod %s with options %+v: %s", tmp.Name, opts, err)
 				return
 			}
-			scanner := bufio.NewScanner(rc)
-			for scanner.Scan() {
-				fmt.Fprintln(w, scanner.Text())
-			}
-			if err := scanner.Err(); err != nil {
-				log.Errorf("reading logs %s", err)
-			}
+			defer rc.Close()
+			io.Copy(w, rc)
 		}()
 	}
 	// Avoid possible leakage
@@ -579,6 +577,7 @@ func (c apps) newPodListLogger(podList *api.PodList, opts *api.PodLogOptions) io
 	return &podListLogger{
 		podList: podList,
 		r:       r,
+		w:       w,
 	}
 }
 
@@ -607,5 +606,6 @@ func (pl podListLogger) Read(p []byte) (n int, err error) {
 }
 
 func (pl podListLogger) Close() error {
+	pl.w.Close()
 	return pl.r.Close()
 }

@@ -455,6 +455,10 @@ func newDeployment(app *models.App, ps *api.PodSpec) (d *extensions.Deployment) 
 	} else {
 		ruMaxSurge = intstr.FromInt(v)
 	}
+	replicas := int32(app.Scale)
+	if app.Status != nil && app.Status.Pods != nil {
+		replicas = *app.Status.Pods
+	}
 	d = &extensions.Deployment{
 		TypeMeta: unversioned.TypeMeta{
 			APIVersion: "extensions/v1beta1",
@@ -468,6 +472,7 @@ func newDeployment(app *models.App, ps *api.PodSpec) (d *extensions.Deployment) 
 			},
 		},
 		Spec: extensions.DeploymentSpec{
+			Replicas: replicas,
 			Strategy: extensions.DeploymentStrategy{
 				Type: extensions.RollingUpdateDeploymentStrategyType,
 				RollingUpdate: &extensions.RollingUpdateDeployment{

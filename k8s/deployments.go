@@ -213,7 +213,7 @@ func newBuilderPod(app *models.App, deploy *deploy, storage helpers.Storage) *ap
 	c := api.Container{
 		Name:            name,
 		ImagePullPolicy: api.PullIfNotPresent,
-		Image:           "luizalabs/slugbuilder:git-923c9f8",
+		Image:           slugBuilderImage,
 		Env: []api.EnvVar{
 			api.EnvVar{
 				Name:  "TAR_PATH",
@@ -377,7 +377,7 @@ func newWelcomeContainer(app *models.App) (c *api.Container) {
 
 func newSlugRunnerContainer(app *models.App, slug string, storageType string) (c *api.Container) {
 	// creating runner container
-	c = newContainer(*app.Name, "luizalabs/slugrunner:git-044f85c")
+	c = newContainer(*app.Name, slugRunnerImage)
 	c.Args = []string{"start", "web"}
 	// appending env vars...
 	// append App name to env var

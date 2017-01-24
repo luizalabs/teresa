@@ -13,6 +13,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/go-openapi/runtime"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/luizalabs/teresa-api/helpers"
 	"github.com/luizalabs/teresa-api/models"
 	"github.com/pborman/uuid"
@@ -55,6 +56,19 @@ type deploy struct {
 	storageIn   string
 	storageOut  string
 	slugPath    string
+}
+
+type DeploymentConfig struct {
+	RevisionHistoryLimit int32 `envconfig:"revision_history_limit" default:"5"`
+}
+
+var deploymentConfig DeploymentConfig
+
+func init() {
+	err := envconfig.Process("teresadeploy", &deploymentConfig)
+	if err != nil {
+		log.Panicf("Failed to read deployment configuration from environment: %s", err.Error())
+	}
 }
 
 func newDeploy(appName, description string) *deploy {
@@ -488,6 +502,7 @@ func newDeployment(app *models.App, ps *api.PodSpec) (d *extensions.Deployment) 
 				},
 				Spec: *ps,
 			},
+			RevisionHistoryLimit: &deploymentConfig.RevisionHistoryLimit,
 		},
 	}
 	return

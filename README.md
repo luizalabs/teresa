@@ -75,7 +75,7 @@ spec:
           - name: TERESAK8S_PASSWORD
             value: KUBERNETES_API_PASSWORD
           - name: TERESAK8S_INSECURE
-            value: true
+            value: "true"
           - name: TERESAFILESTORAGE_TYPE
             value: s3
           - name: TERESAFILESTORAGE_AWS_KEY
@@ -86,6 +86,8 @@ spec:
             value: AWS_REGION
           - name: TERESAFILESTORAGE_AWS_BUCKET
             value: S3_BUCKET
+          - name: TERESADEPLOY_REVISION_HISTORY_LIMIT
+            value: "5"
 ```
 
 ## CLI

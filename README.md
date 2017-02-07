@@ -39,9 +39,8 @@ To generate a bcrypt hashed password:
 
 First create and push a docker image:
 
-    $ make build
-    $ docker tag image_id login/teresa:latest
-    $ docker push login/teresa:latest
+    $ docker build -t <your-login>/teresa:latest .
+    $ docker push <your-login>/teresa:latest
 
 Create a deployment and expose it as a service:
 

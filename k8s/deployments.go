@@ -637,42 +637,43 @@ func parsingTeresaYaml(app *models.App, appTarball io.ReadSeeker) error {
 		return fmt.Errorf("error found when trying to read and parse teresa.yaml inside app tarball. %s", err)
 	}
 	// updating app info using the configs specified the teresa.yaml
-	if tyaml != nil {
-		if tyaml.RollingUpdate == nil { // defaults for rolling update...
-			mu := "10%"
-			app.RollingUpdate = &models.AppInRollingUpdate{
-				MaxSurge:       &mu,
-				MaxUnavailable: &mu,
-			}
-		} else {
-			if tyaml.RollingUpdate.MaxSurge != nil {
-				app.RollingUpdate.MaxSurge = tyaml.RollingUpdate.MaxSurge
-			}
-			if tyaml.RollingUpdate.MaxUnavailable != nil {
-				app.RollingUpdate.MaxUnavailable = tyaml.RollingUpdate.MaxUnavailable
+	if tyaml == nil {
+		return nil
+	}
+	if tyaml.RollingUpdate == nil { // defaults for rolling update...
+		mu := "10%"
+		app.RollingUpdate = &models.AppInRollingUpdate{
+			MaxSurge:       &mu,
+			MaxUnavailable: &mu,
+		}
+	} else {
+		if tyaml.RollingUpdate.MaxSurge != nil {
+			app.RollingUpdate.MaxSurge = tyaml.RollingUpdate.MaxSurge
+		}
+		if tyaml.RollingUpdate.MaxUnavailable != nil {
+			app.RollingUpdate.MaxUnavailable = tyaml.RollingUpdate.MaxUnavailable
+		}
+	}
+	if tyaml.HealthCheck != nil {
+		app.HealthCheck = &models.AppInHealthCheck{}
+		if tyaml.HealthCheck.Liveness != nil {
+			app.HealthCheck.Liveness = &models.HealthCheckProbe{
+				Path:                tyaml.HealthCheck.Liveness.Path,
+				PeriodSeconds:       int64(tyaml.HealthCheck.Liveness.PeriodSeconds),
+				SuccessThreshold:    int64(tyaml.HealthCheck.Liveness.SuccessThreshold),
+				InitialDelaySeconds: int64(tyaml.HealthCheck.Liveness.InitialDelaySecond),
+				FailureThreshold:    int64(tyaml.HealthCheck.Liveness.FailureThreshold),
+				TimeoutSeconds:      int64(tyaml.HealthCheck.Liveness.TimeoutSeconds),
 			}
 		}
-		if tyaml.HealthCheck != nil {
-			app.HealthCheck = &models.AppInHealthCheck{}
-			if tyaml.HealthCheck.Liveness != nil {
-				app.HealthCheck.Liveness = &models.HealthCheckProbe{
-					Path:                tyaml.HealthCheck.Liveness.Path,
-					PeriodSeconds:       int64(tyaml.HealthCheck.Liveness.PeriodSeconds),
-					SuccessThreshold:    int64(tyaml.HealthCheck.Liveness.SuccessThreshold),
-					InitialDelaySeconds: int64(tyaml.HealthCheck.Liveness.InitialDelaySecond),
-					FailureThreshold:    int64(tyaml.HealthCheck.Liveness.FailureThreshold),
-					TimeoutSeconds:      int64(tyaml.HealthCheck.Liveness.TimeoutSeconds),
-				}
-			}
-			if tyaml.HealthCheck.Readiness != nil {
-				app.HealthCheck.Readiness = &models.HealthCheckProbe{
-					Path:                tyaml.HealthCheck.Readiness.Path,
-					PeriodSeconds:       int64(tyaml.HealthCheck.Readiness.PeriodSeconds),
-					SuccessThreshold:    int64(tyaml.HealthCheck.Readiness.SuccessThreshold),
-					InitialDelaySeconds: int64(tyaml.HealthCheck.Readiness.InitialDelaySecond),
-					FailureThreshold:    int64(tyaml.HealthCheck.Readiness.FailureThreshold),
-					TimeoutSeconds:      int64(tyaml.HealthCheck.Readiness.TimeoutSeconds),
-				}
+		if tyaml.HealthCheck.Readiness != nil {
+			app.HealthCheck.Readiness = &models.HealthCheckProbe{
+				Path:                tyaml.HealthCheck.Readiness.Path,
+				PeriodSeconds:       int64(tyaml.HealthCheck.Readiness.PeriodSeconds),
+				SuccessThreshold:    int64(tyaml.HealthCheck.Readiness.SuccessThreshold),
+				InitialDelaySeconds: int64(tyaml.HealthCheck.Readiness.InitialDelaySecond),
+				FailureThreshold:    int64(tyaml.HealthCheck.Readiness.FailureThreshold),
+				TimeoutSeconds:      int64(tyaml.HealthCheck.Readiness.TimeoutSeconds),
 			}
 		}
 	}

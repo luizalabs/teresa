@@ -94,34 +94,6 @@ func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token) error 
 }
 
 func (c apps) Update(app *models.App, storage helpers.Storage, tk *Token) error {
-	// TODO: validate here
-	//
-
-	// ############################################################
-	// FIXME: stopped this because it's not very usefull right now
-	// ############################################################
-
-	// // getting app
-	// app, err := c.Get(*app.Name, tk)
-	// if err != nil {
-	// 	if IsUnauthorizedError(err) {
-	// 		return NewUnauthorizedErrorf(`token "%s" is not allowed to update the app "%s". %s`, *tk.Email, *app.Name, err)
-	// 	}
-	// 	return err
-	// }
-	//
-	// // TODO: update quota
-	// // TODO: update hpa
-	// //
-	// //
-	//
-	// // updating deployment
-	// if err := c.k.Deployments().Update(app, "update:app", storage); err != nil {
-	// 	return err
-	// }
-	// if err := c.updateNamespace(app, *tk.Email); err != nil {
-	// 	return err
-	// }
 	return nil
 }
 
@@ -316,7 +288,7 @@ func validateBeforeCreate(app *models.App, tk *Token) error {
 	// - team
 	// - userEmail
 	if app.Limits == nil {
-		return NewInputErrorf(`limits where not provided for the app "%s"`, *app.Name)
+		return NewInputErrorf(`limits were not provided for the app "%s"`, *app.Name)
 	}
 	return nil
 }

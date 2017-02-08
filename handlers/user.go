@@ -72,44 +72,7 @@ func GetUserDetailsHandler(params users.GetUserDetailsParams, principal interfac
 
 // GetCurrentUserHandler ...
 func GetCurrentUserHandler(principal interface{}) middleware.Responder {
-	// tk := k8s.IToToken(principal)
-	// su := storage.User{}
-	// su.ID = tc.UserID
-	//
-	// if storage.DB.Preload("Teams").Preload("Teams.Apps").First(&su).RecordNotFound() {
-	// 	fmt.Printf("No user with ID [%d] found\n", tc.UserID)
-	// 	return users.NewGetCurrentUserNotFound()
-	// }
-	//
-	// u := models.User{
-	// 	ID:    int64(su.ID),
-	// 	Email: &su.Email,
-	// 	Name:  &su.Name,
-	// }
-	// // team
-	// u.Teams = make([]*models.Team, len(su.Teams))
-	// for i, st := range su.Teams {
-	// 	name := st.Name
-	// 	t := models.Team{
-	// 		ID:    int64(st.ID),
-	// 		Name:  &name,
-	// 		Email: strfmt.Email(st.Email),
-	// 		URL:   st.URL,
-	// 	}
-	// 	// apps
-	// 	t.Apps = make([]*models.App, len(st.Apps))
-	// 	for i, sa := range st.Apps {
-	// 		scale := int64(sa.Scale)
-	// 		name := sa.Name
-	// 		a := models.App{}
-	// 		a.Name = &name
-	// 		a.Scale = scale
-	// 		t.Apps[i] = &a
-	// 	}
-	// 	u.Teams[i] = &t
-	// }
 	r := users.NewGetCurrentUserOK()
-	// r.SetPayload(&u)
 	return r
 }
 

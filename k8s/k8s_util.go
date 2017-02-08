@@ -285,15 +285,6 @@ func BuildLoadBalancerService(name, namespace, selector string) *api.Service {
 			},
 			// Ports: servicePorts,
 		},
-		// Status: api.ServiceStatus{
-		// 	LoadBalancer: api.LoadBalancerStatus{
-		// 		Ingress: []api.LoadBalancerIngress{
-		// 			api.LoadBalancerIngress{
-		// 				Hostname: "adasdasdasdasd",
-		// 			},
-		// 		},
-		// 	},
-		// },
 	}
 	return &s
 }

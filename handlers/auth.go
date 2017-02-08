@@ -98,7 +98,7 @@ func TokenAuthHandler(t string) (interface{}, error) {
 
 		err := k8s.Client.Users().LoadUserToToken(tc, l)
 		if err != nil {
-			l.WithError(err).Error("error when trying to load user information to append to token")
+			l.WithError(err).Error("error loading user data to append to token")
 			return nil, errors.Unauthenticated("Invalid credentials")
 		}
 		return tc, nil

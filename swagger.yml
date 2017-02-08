@@ -631,29 +631,6 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/GenericError"
-  /users/me:
-    get:
-      summary: Get logged user info
-      description: Get info on user of current session, if any
-      tags:
-        - users
-      operationId: getCurrentUser
-      security:
-        - api_key: []
-        - token_header: []
-      responses:
-        200:
-          description: User info
-          schema:
-            $ref: "#/definitions/User"
-        404:
-          description: Resource not found
-          schema:
-            $ref: "#/definitions/NotFound"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/GenericError"
   /login:
     post:
       summary: Log the user

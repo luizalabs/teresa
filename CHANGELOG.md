@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - update README to use an api to generate password instead of a python script
 - remove dead code
+- remove users/me endpoint
 
 ## [0.2.0]
 ### Changed

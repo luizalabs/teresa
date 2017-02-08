@@ -79,34 +79,6 @@ func (a *Client) DeleteUser(params *DeleteUserParams, authInfo runtime.ClientAut
 }
 
 /*
-GetCurrentUser gets logged user info
-
-Get info on user of current session, if any
-*/
-func (a *Client) GetCurrentUser(params *GetCurrentUserParams, authInfo runtime.ClientAuthInfoWriter) (*GetCurrentUserOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetCurrentUserParams()
-	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "getCurrentUser",
-		Method:             "GET",
-		PathPattern:        "/users/me",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetCurrentUserReader{formats: a.formats},
-		AuthInfo:           authInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetCurrentUserOK), nil
-}
-
-/*
 GetUserDetails gets user details
 
 Get user details

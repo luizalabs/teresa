@@ -27,7 +27,7 @@ func NewCreateApp(ctx *middleware.Context, handler CreateAppHandler) *CreateApp 
 	return &CreateApp{Context: ctx, Handler: handler}
 }
 
-/*CreateApp swagger:route POST /teams/{team_id}/apps apps createApp
+/*CreateApp swagger:route POST /apps apps createApp
 
 Create an app
 

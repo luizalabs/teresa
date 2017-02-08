@@ -9,7 +9,6 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/swag"
 
 	strfmt "github.com/go-openapi/strfmt"
 
@@ -41,37 +40,26 @@ for the update app operation typically these are written to a http.Request
 */
 type UpdateAppParams struct {
 
-	/*AppID
-	  App ID
+	/*AppName
+	  App name
 
 	*/
-	AppID int64
+	AppName string
 	/*Body*/
-	Body *models.App
-	/*TeamID
-	  Team ID
-
-	*/
-	TeamID int64
+	Body *models.AppIn
 
 	timeout time.Duration
 }
 
-// WithAppID adds the appID to the update app params
-func (o *UpdateAppParams) WithAppID(appID int64) *UpdateAppParams {
-	o.AppID = appID
+// WithAppName adds the appName to the update app params
+func (o *UpdateAppParams) WithAppName(appName string) *UpdateAppParams {
+	o.AppName = appName
 	return o
 }
 
 // WithBody adds the body to the update app params
-func (o *UpdateAppParams) WithBody(body *models.App) *UpdateAppParams {
+func (o *UpdateAppParams) WithBody(body *models.AppIn) *UpdateAppParams {
 	o.Body = body
-	return o
-}
-
-// WithTeamID adds the teamID to the update app params
-func (o *UpdateAppParams) WithTeamID(teamID int64) *UpdateAppParams {
-	o.TeamID = teamID
 	return o
 }
 
@@ -81,21 +69,16 @@ func (o *UpdateAppParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Reg
 	r.SetTimeout(o.timeout)
 	var res []error
 
-	// path param app_id
-	if err := r.SetPathParam("app_id", swag.FormatInt64(o.AppID)); err != nil {
+	// path param app_name
+	if err := r.SetPathParam("app_name", o.AppName); err != nil {
 		return err
 	}
 
 	if o.Body == nil {
-		o.Body = new(models.App)
+		o.Body = new(models.AppIn)
 	}
 
 	if err := r.SetBodyParam(o.Body); err != nil {
-		return err
-	}
-
-	// path param team_id
-	if err := r.SetPathParam("team_id", swag.FormatInt64(o.TeamID)); err != nil {
 		return err
 	}
 

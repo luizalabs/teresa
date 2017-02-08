@@ -6,12 +6,7 @@ package apps
 import (
 	"net/http"
 
-	"github.com/go-openapi/errors"
 	middleware "github.com/go-openapi/runtime/middleware"
-	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
-	"github.com/luizalabs/teresa-api/models"
 )
 
 // GetAppsHandlerFunc turns a function with the right signature into a get apps handler
@@ -32,11 +27,11 @@ func NewGetApps(ctx *middleware.Context, handler GetAppsHandler) *GetApps {
 	return &GetApps{Context: ctx, Handler: handler}
 }
 
-/*GetApps swagger:route GET /teams/{team_id}/apps apps getApps
+/*GetApps swagger:route GET /apps apps getApps
 
-Get team apps
+Get a list of apps
 
-Get team apps
+Get a list of apps
 
 */
 type GetApps struct {
@@ -67,60 +62,4 @@ func (o *GetApps) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	o.Context.Respond(rw, r, route.Produces, route, res)
 
-}
-
-/*GetAppsOKBodyBody get apps o k body body
-
-swagger:model GetAppsOKBodyBody
-*/
-type GetAppsOKBodyBody struct {
-	models.Pagination
-
-	/* items
-
-	Required: true
-	*/
-	Items []*models.App `json:"items"`
-}
-
-// Validate validates this get apps o k body body
-func (o *GetAppsOKBodyBody) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := o.Pagination.Validate(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := o.validateItems(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (o *GetAppsOKBodyBody) validateItems(formats strfmt.Registry) error {
-
-	if err := validate.Required("getAppsOK"+"."+"items", "body", o.Items); err != nil {
-		return err
-	}
-
-	for i := 0; i < len(o.Items); i++ {
-
-		if swag.IsZero(o.Items[i]) { // not required
-			continue
-		}
-
-		if o.Items[i] != nil {
-
-			if err := o.Items[i].Validate(formats); err != nil {
-				return err
-			}
-		}
-
-	}
-
-	return nil
 }

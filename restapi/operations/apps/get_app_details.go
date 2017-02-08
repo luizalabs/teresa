@@ -27,7 +27,7 @@ func NewGetAppDetails(ctx *middleware.Context, handler GetAppDetailsHandler) *Ge
 	return &GetAppDetails{Context: ctx, Handler: handler}
 }
 
-/*GetAppDetails swagger:route GET /teams/{team_id}/apps/{app_id} apps getAppDetails
+/*GetAppDetails swagger:route GET /apps/{app_name} apps getAppDetails
 
 Get app details
 

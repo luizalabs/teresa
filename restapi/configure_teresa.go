@@ -4,17 +4,17 @@ import (
 	"crypto/tls"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
 	errors "github.com/go-openapi/errors"
 	runtime "github.com/go-openapi/runtime"
 	middleware "github.com/go-openapi/runtime/middleware"
-
 	"github.com/luizalabs/teresa-api/handlers"
 	"github.com/luizalabs/teresa-api/restapi/operations"
-	"github.com/luizalabs/teresa-api/restapi/operations/apps"
 	"github.com/luizalabs/teresa-api/restapi/operations/auth"
 	"github.com/luizalabs/teresa-api/restapi/operations/deployments"
 	"github.com/luizalabs/teresa-api/restapi/operations/teams"
 	"github.com/luizalabs/teresa-api/restapi/operations/users"
+	"github.com/x-cray/logrus-prefixed-formatter"
 )
 
 // This file is safe to edit. Once it exists it will not be overwritten
@@ -23,15 +23,16 @@ func configureFlags(api *operations.TeresaAPI) {
 	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }
 }
 
+func init() {
+	log.SetLevel(log.DebugLevel)
+	log.SetFormatter(new(prefixed.TextFormatter))
+}
+
 func configureAPI(api *operations.TeresaAPI) http.Handler {
 	// configure the api here
 	api.ServeError = errors.ServeError
 
-	// Set your custom logger if needed. Default one is log.Printf
-	// Expected interface func(string, ...interface{})
-	//
-	// Example:
-	// s.api.Logger = log.Printf
+	api.Logger = log.Infof
 
 	api.MultipartformConsumer = runtime.DiscardConsumer
 
@@ -46,9 +47,8 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.TokenHeaderAuth = handlers.TokenAuthHandler
 
 	// create an app
-	api.AppsCreateAppHandler = apps.CreateAppHandlerFunc(func(params apps.CreateAppParams, principal interface{}) middleware.Responder {
-		return handlers.CreateAppHandler(params, principal)
-	})
+	api.AppsCreateAppHandler = handlers.CreateAppHandler
+
 	// create deployment
 	api.DeploymentsCreateDeploymentHandler = handlers.CreateDeploymentHandler
 
@@ -71,12 +71,15 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.TeamsDeleteTeamHandler = teams.DeleteTeamHandlerFunc(func(params teams.DeleteTeamParams, principal interface{}) middleware.Responder {
 		return handlers.DeleteTeamHandler(params, principal)
 	})
-	api.AppsGetAppDetailsHandler = apps.GetAppDetailsHandlerFunc(func(params apps.GetAppDetailsParams, principal interface{}) middleware.Responder {
-		return handlers.GetAppDetailsHandler(params, principal)
-	})
-	api.AppsGetAppsHandler = apps.GetAppsHandlerFunc(func(params apps.GetAppsParams, principal interface{}) middleware.Responder {
-		return handlers.GetAppsHandler(params, principal)
-	})
+	// app details
+	api.AppsGetAppDetailsHandler = handlers.GetAppDetailsHandler
+
+	// app logs
+	api.AppsGetAppLogsHandler = handlers.GetAppLogsHandler
+
+	// list apps
+	api.AppsGetAppsHandler = handlers.GetAppsHandler
+
 	api.UsersGetCurrentUserHandler = users.GetCurrentUserHandlerFunc(func(params users.GetCurrentUserParams, principal interface{}) middleware.Responder {
 		return handlers.GetCurrentUserHandler(principal)
 	})
@@ -98,12 +101,16 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 		return middleware.NotImplemented("operation users.GetUsers has not yet been implemented")
 	})
 	// partial update app... update envVars
-	api.AppsPartialUpdateAppHandler = apps.PartialUpdateAppHandlerFunc(func(params apps.PartialUpdateAppParams, principal interface{}) middleware.Responder {
-		return handlers.PartialUpdateAppHandler(params, principal)
-	})
-	api.AppsUpdateAppHandler = apps.UpdateAppHandlerFunc(func(params apps.UpdateAppParams, principal interface{}) middleware.Responder {
-		return middleware.NotImplemented("operation apps.UpdateApp has not yet been implemented")
-	})
+	api.AppsPartialUpdateAppHandler = handlers.PartialUpdateAppHandler
+
+	// update app
+	api.AppsUpdateAppHandler = handlers.UpdateAppHandler
+
+	// update app autoscale info
+	api.AppsUpdateAppAutoScaleHandler = handlers.UpdateAppAutoScaleHandler
+
+	api.AppsUpdateAppScaleHandler = handlers.UpdateAppScaleHandler
+
 	// update a team
 	api.TeamsUpdateTeamHandler = teams.UpdateTeamHandlerFunc(func(params teams.UpdateTeamParams, principal interface{}) middleware.Responder {
 		return handlers.UpdateTeamHandler(params, principal)

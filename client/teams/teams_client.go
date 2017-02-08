@@ -135,7 +135,7 @@ func (a *Client) GetTeamDetail(params *GetTeamDetailParams, authInfo runtime.Cli
 /*
 GetTeams gets teams
 
-Find and filter teams
+Get a list of teams
 */
 func (a *Client) GetTeams(params *GetTeamsParams, authInfo runtime.ClientAuthInfoWriter) (*GetTeamsOK, error) {
 	// TODO: Validate the params before sending

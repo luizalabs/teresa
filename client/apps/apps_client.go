@@ -4,6 +4,8 @@ package apps
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"io"
+
 	"github.com/go-openapi/runtime"
 
 	strfmt "github.com/go-openapi/strfmt"
@@ -36,7 +38,7 @@ func (a *Client) CreateApp(params *CreateAppParams, authInfo runtime.ClientAuthI
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "createApp",
 		Method:             "POST",
-		PathPattern:        "/teams/{team_id}/apps",
+		PathPattern:        "/apps",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http"},
@@ -64,7 +66,7 @@ func (a *Client) GetAppDetails(params *GetAppDetailsParams, authInfo runtime.Cli
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "getAppDetails",
 		Method:             "GET",
-		PathPattern:        "/teams/{team_id}/apps/{app_id}",
+		PathPattern:        "/apps/{app_name}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http"},
@@ -79,9 +81,37 @@ func (a *Client) GetAppDetails(params *GetAppDetailsParams, authInfo runtime.Cli
 }
 
 /*
-GetApps gets team apps
+GetAppLogs gets app logs
 
-Get team apps
+Get app logs
+*/
+func (a *Client) GetAppLogs(params *GetAppLogsParams, authInfo runtime.ClientAuthInfoWriter, writer io.Writer) (*GetAppLogsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAppLogsParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "getAppLogs",
+		Method:             "GET",
+		PathPattern:        "/apps/{app_name}/logs",
+		ProducesMediaTypes: []string{"application/octet-stream"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetAppLogsReader{formats: a.formats, writer: writer},
+		AuthInfo:           authInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*GetAppLogsOK), nil
+}
+
+/*
+GetApps gets a list of apps
+
+Get a list of apps
 */
 func (a *Client) GetApps(params *GetAppsParams, authInfo runtime.ClientAuthInfoWriter) (*GetAppsOK, error) {
 	// TODO: Validate the params before sending
@@ -92,7 +122,7 @@ func (a *Client) GetApps(params *GetAppsParams, authInfo runtime.ClientAuthInfoW
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "getApps",
 		Method:             "GET",
-		PathPattern:        "/teams/{team_id}/apps",
+		PathPattern:        "/apps",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http"},
@@ -120,7 +150,7 @@ func (a *Client) PartialUpdateApp(params *PartialUpdateAppParams, authInfo runti
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "partialUpdateApp",
 		Method:             "PATCH",
-		PathPattern:        "/teams/{team_id}/apps/{app_id}",
+		PathPattern:        "/apps/{app_name}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http"},
@@ -135,7 +165,7 @@ func (a *Client) PartialUpdateApp(params *PartialUpdateAppParams, authInfo runti
 }
 
 /*
-UpdateApp updates app
+UpdateApp updates an app
 
 Update app properties, such as number of replicas and other things.
 */
@@ -148,7 +178,7 @@ func (a *Client) UpdateApp(params *UpdateAppParams, authInfo runtime.ClientAuthI
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "updateApp",
 		Method:             "PUT",
-		PathPattern:        "/teams/{team_id}/apps/{app_id}",
+		PathPattern:        "/apps/{app_name}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http"},
@@ -160,6 +190,62 @@ func (a *Client) UpdateApp(params *UpdateAppParams, authInfo runtime.ClientAuthI
 		return nil, err
 	}
 	return result.(*UpdateAppOK), nil
+}
+
+/*
+UpdateAppAutoScale updates app auto scale
+
+Update app auto scale
+*/
+func (a *Client) UpdateAppAutoScale(params *UpdateAppAutoScaleParams, authInfo runtime.ClientAuthInfoWriter) (*UpdateAppAutoScaleOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewUpdateAppAutoScaleParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "updateAppAutoScale",
+		Method:             "PUT",
+		PathPattern:        "/apps/{app_name}/autoScale",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &UpdateAppAutoScaleReader{formats: a.formats},
+		AuthInfo:           authInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*UpdateAppAutoScaleOK), nil
+}
+
+/*
+UpdateAppScale updates app scale
+
+Update app scale size (replicas)
+*/
+func (a *Client) UpdateAppScale(params *UpdateAppScaleParams, authInfo runtime.ClientAuthInfoWriter) (*UpdateAppScaleOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewUpdateAppScaleParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "updateAppScale",
+		Method:             "PUT",
+		PathPattern:        "/apps/{app_name}/scale",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &UpdateAppScaleReader{formats: a.formats},
+		AuthInfo:           authInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*UpdateAppScaleOK), nil
 }
 
 // SetTransport changes the transport on the client

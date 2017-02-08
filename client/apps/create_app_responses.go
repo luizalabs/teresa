@@ -30,20 +30,6 @@ func (o *CreateAppReader) ReadResponse(response runtime.ClientResponse, consumer
 		}
 		return result, nil
 
-	case 401:
-		result := NewCreateAppUnauthorized()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
-	case 403:
-		result := NewCreateAppForbidden()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-
 	default:
 		result := NewCreateAppDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -67,71 +53,12 @@ type CreateAppCreated struct {
 }
 
 func (o *CreateAppCreated) Error() string {
-	return fmt.Sprintf("[POST /teams/{team_id}/apps][%d] createAppCreated  %+v", 201, o.Payload)
+	return fmt.Sprintf("[POST /apps][%d] createAppCreated  %+v", 201, o.Payload)
 }
 
 func (o *CreateAppCreated) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.App)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewCreateAppUnauthorized creates a CreateAppUnauthorized with default headers values
-func NewCreateAppUnauthorized() *CreateAppUnauthorized {
-	return &CreateAppUnauthorized{}
-}
-
-/*CreateAppUnauthorized handles this case with default header values.
-
-User not authorized
-*/
-type CreateAppUnauthorized struct {
-	Payload *models.Unauthorized
-}
-
-func (o *CreateAppUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /teams/{team_id}/apps][%d] createAppUnauthorized  %+v", 401, o.Payload)
-}
-
-func (o *CreateAppUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewCreateAppForbidden creates a CreateAppForbidden with default headers values
-func NewCreateAppForbidden() *CreateAppForbidden {
-	return &CreateAppForbidden{}
-}
-
-/*CreateAppForbidden handles this case with default header values.
-
-User does not have the credentials to access this resource
-
-*/
-type CreateAppForbidden struct {
-	Payload *models.Unauthorized
-}
-
-func (o *CreateAppForbidden) Error() string {
-	return fmt.Sprintf("[POST /teams/{team_id}/apps][%d] createAppForbidden  %+v", 403, o.Payload)
-}
-
-func (o *CreateAppForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Unauthorized)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -150,7 +77,7 @@ func NewCreateAppDefault(code int) *CreateAppDefault {
 
 /*CreateAppDefault handles this case with default header values.
 
-Error
+Unexpected error
 */
 type CreateAppDefault struct {
 	_statusCode int
@@ -164,7 +91,7 @@ func (o *CreateAppDefault) Code() int {
 }
 
 func (o *CreateAppDefault) Error() string {
-	return fmt.Sprintf("[POST /teams/{team_id}/apps][%d] createApp default  %+v", o._statusCode, o.Payload)
+	return fmt.Sprintf("[POST /apps][%d] createApp default  %+v", o._statusCode, o.Payload)
 }
 
 func (o *CreateAppDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

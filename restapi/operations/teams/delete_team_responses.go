@@ -37,7 +37,7 @@ type DeleteTeamDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.Error `json:"body,omitempty"`
+	Payload *models.GenericError `json:"body,omitempty"`
 }
 
 // NewDeleteTeamDefault creates DeleteTeamDefault with default headers values
@@ -63,13 +63,13 @@ func (o *DeleteTeamDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the delete team default response
-func (o *DeleteTeamDefault) WithPayload(payload *models.Error) *DeleteTeamDefault {
+func (o *DeleteTeamDefault) WithPayload(payload *models.GenericError) *DeleteTeamDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the delete team default response
-func (o *DeleteTeamDefault) SetPayload(payload *models.Error) {
+func (o *DeleteTeamDefault) SetPayload(payload *models.GenericError) {
 	o.Payload = payload
 }
 

@@ -56,7 +56,7 @@ type UpdateTeamDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.Error `json:"body,omitempty"`
+	Payload *models.GenericError `json:"body,omitempty"`
 }
 
 // NewUpdateTeamDefault creates UpdateTeamDefault with default headers values
@@ -82,13 +82,13 @@ func (o *UpdateTeamDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the update team default response
-func (o *UpdateTeamDefault) WithPayload(payload *models.Error) *UpdateTeamDefault {
+func (o *UpdateTeamDefault) WithPayload(payload *models.GenericError) *UpdateTeamDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the update team default response
-func (o *UpdateTeamDefault) SetPayload(payload *models.Error) {
+func (o *UpdateTeamDefault) SetPayload(payload *models.GenericError) {
 	o.Payload = payload
 }
 

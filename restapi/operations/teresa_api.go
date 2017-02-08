@@ -77,6 +77,8 @@ type TeresaAPI struct {
 	UsersDeleteUserHandler users.DeleteUserHandler
 	// AppsGetAppDetailsHandler sets the operation handler for the get app details operation
 	AppsGetAppDetailsHandler apps.GetAppDetailsHandler
+	// AppsGetAppLogsHandler sets the operation handler for the get app logs operation
+	AppsGetAppLogsHandler apps.GetAppLogsHandler
 	// AppsGetAppsHandler sets the operation handler for the get apps operation
 	AppsGetAppsHandler apps.GetAppsHandler
 	// UsersGetCurrentUserHandler sets the operation handler for the get current user operation
@@ -95,6 +97,10 @@ type TeresaAPI struct {
 	AppsPartialUpdateAppHandler apps.PartialUpdateAppHandler
 	// AppsUpdateAppHandler sets the operation handler for the update app operation
 	AppsUpdateAppHandler apps.UpdateAppHandler
+	// AppsUpdateAppAutoScaleHandler sets the operation handler for the update app auto scale operation
+	AppsUpdateAppAutoScaleHandler apps.UpdateAppAutoScaleHandler
+	// AppsUpdateAppScaleHandler sets the operation handler for the update app scale operation
+	AppsUpdateAppScaleHandler apps.UpdateAppScaleHandler
 	// TeamsUpdateTeamHandler sets the operation handler for the update team operation
 	TeamsUpdateTeamHandler teams.UpdateTeamHandler
 	// UsersUpdateUserHandler sets the operation handler for the update user operation
@@ -212,6 +218,10 @@ func (o *TeresaAPI) Validate() error {
 		unregistered = append(unregistered, "apps.GetAppDetailsHandler")
 	}
 
+	if o.AppsGetAppLogsHandler == nil {
+		unregistered = append(unregistered, "apps.GetAppLogsHandler")
+	}
+
 	if o.AppsGetAppsHandler == nil {
 		unregistered = append(unregistered, "apps.GetAppsHandler")
 	}
@@ -246,6 +256,14 @@ func (o *TeresaAPI) Validate() error {
 
 	if o.AppsUpdateAppHandler == nil {
 		unregistered = append(unregistered, "apps.UpdateAppHandler")
+	}
+
+	if o.AppsUpdateAppAutoScaleHandler == nil {
+		unregistered = append(unregistered, "apps.UpdateAppAutoScaleHandler")
+	}
+
+	if o.AppsUpdateAppScaleHandler == nil {
+		unregistered = append(unregistered, "apps.UpdateAppScaleHandler")
 	}
 
 	if o.TeamsUpdateTeamHandler == nil {
@@ -361,12 +379,12 @@ func (o *TeresaAPI) initHandlerCache() {
 	if o.handlers["POST"] == nil {
 		o.handlers[strings.ToUpper("POST")] = make(map[string]http.Handler)
 	}
-	o.handlers["POST"]["/teams/{team_id}/apps"] = apps.NewCreateApp(o.context, o.AppsCreateAppHandler)
+	o.handlers["POST"]["/apps"] = apps.NewCreateApp(o.context, o.AppsCreateAppHandler)
 
 	if o.handlers["POST"] == nil {
 		o.handlers[strings.ToUpper("POST")] = make(map[string]http.Handler)
 	}
-	o.handlers["POST"]["/teams/{team_id}/apps/{app_id}/deployments"] = deployments.NewCreateDeployment(o.context, o.DeploymentsCreateDeploymentHandler)
+	o.handlers["POST"]["/apps/{app_name}/deployments"] = deployments.NewCreateDeployment(o.context, o.DeploymentsCreateDeploymentHandler)
 
 	if o.handlers["POST"] == nil {
 		o.handlers[strings.ToUpper("POST")] = make(map[string]http.Handler)
@@ -391,12 +409,17 @@ func (o *TeresaAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/teams/{team_id}/apps/{app_id}"] = apps.NewGetAppDetails(o.context, o.AppsGetAppDetailsHandler)
+	o.handlers["GET"]["/apps/{app_name}"] = apps.NewGetAppDetails(o.context, o.AppsGetAppDetailsHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/teams/{team_id}/apps"] = apps.NewGetApps(o.context, o.AppsGetAppsHandler)
+	o.handlers["GET"]["/apps/{app_name}/logs"] = apps.NewGetAppLogs(o.context, o.AppsGetAppLogsHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/apps"] = apps.NewGetApps(o.context, o.AppsGetAppsHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
@@ -431,12 +454,22 @@ func (o *TeresaAPI) initHandlerCache() {
 	if o.handlers["PATCH"] == nil {
 		o.handlers[strings.ToUpper("PATCH")] = make(map[string]http.Handler)
 	}
-	o.handlers["PATCH"]["/teams/{team_id}/apps/{app_id}"] = apps.NewPartialUpdateApp(o.context, o.AppsPartialUpdateAppHandler)
+	o.handlers["PATCH"]["/apps/{app_name}"] = apps.NewPartialUpdateApp(o.context, o.AppsPartialUpdateAppHandler)
 
 	if o.handlers["PUT"] == nil {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)
 	}
-	o.handlers["PUT"]["/teams/{team_id}/apps/{app_id}"] = apps.NewUpdateApp(o.context, o.AppsUpdateAppHandler)
+	o.handlers["PUT"]["/apps/{app_name}"] = apps.NewUpdateApp(o.context, o.AppsUpdateAppHandler)
+
+	if o.handlers["PUT"] == nil {
+		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)
+	}
+	o.handlers["PUT"]["/apps/{app_name}/autoScale"] = apps.NewUpdateAppAutoScale(o.context, o.AppsUpdateAppAutoScaleHandler)
+
+	if o.handlers["PUT"] == nil {
+		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)
+	}
+	o.handlers["PUT"]["/apps/{app_name}/scale"] = apps.NewUpdateAppScale(o.context, o.AppsUpdateAppScaleHandler)
 
 	if o.handlers["PUT"] == nil {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)

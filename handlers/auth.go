@@ -3,12 +3,14 @@ package handlers
 import (
 	"crypto/rsa"
 	"io/ioutil"
-	"log"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/luizalabs/teresa-api/k8s"
 	"github.com/luizalabs/teresa-api/models"
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/restapi/operations/auth"
@@ -50,7 +52,7 @@ func fatal(err error) {
 func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	su := storage.User{}
 	if storage.DB.Where(&storage.User{Email: params.Body.Email.String()}).First(&su).RecordNotFound() {
-		log.Printf("Login unauthorized for user: [%s]\n", params.Body.Email)
+		log.WithField("user", params.Body.Email).Info("unauthorized")
 		return auth.NewUserLoginUnauthorized()
 	}
 	p := params.Body.Password.String()
@@ -58,21 +60,15 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	if err != nil {
 		return auth.NewUserLoginUnauthorized()
 	}
-
 	jwtClaims := jwt.MapClaims{
-		"userId": su.ID,
-		"email":  su.Email,
-		"exp":    time.Now().Add(time.Hour * 24 * 14).Unix(),
+		"email": su.Email,
+		"exp":   time.Now().Add(time.Hour * 24 * 14).Unix(),
 	}
-	if su.IsAdmin {
-		jwtClaims["isAdmin"] = true
-	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwtClaims)
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString(signKey)
 	if err != nil {
-		log.Printf("Failed to sign jwt token, err: %s\n", err)
+		log.WithError(err).Error("failed to sign jwt token")
 		return auth.NewUserLoginDefault(500)
 	}
 	r := auth.NewUserLoginOK()
@@ -81,17 +77,9 @@ func LoginHandler(params auth.UserLoginParams) middleware.Responder {
 	return r
 }
 
-// Token foo bar
-type Token struct {
-	UserID  uint   `json:"userId"`
-	Email   string `json:"email"`
-	IsAdmin bool   `json:"isAdmin"`
-	jwt.StandardClaims
-}
-
 // TokenAuthHandler try and validate the jwt token
 func TokenAuthHandler(t string) (interface{}, error) {
-	token, err := jwt.ParseWithClaims(t, &Token{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(t, &k8s.Token{}, func(token *jwt.Token) (interface{}, error) {
 		return verifyKey, nil
 	})
 
@@ -99,26 +87,34 @@ func TokenAuthHandler(t string) (interface{}, error) {
 	switch err.(type) {
 	case nil: // no error
 		if !token.Valid { // but may still be invalid
-			log.Printf("JWT token validation - invalid token received: %+v\n", token)
+			log.WithField("tokenObj", token).Warn("invalid JWT token received")
 			return nil, errors.Unauthenticated("Invalid credentials")
 		}
 		// see stdout and watch for the CustomUserInfo, nicely unmarshalled
-		log.Printf("JWT token validation - granting access with token: %+v", token)
-		tc, _ := token.Claims.(*Token)
+		log.WithField("tokenObj", token).Debug("granting access for token")
+		tc, _ := token.Claims.(*k8s.Token)
+
+		l := log.WithField("token", *tc.Email)
+
+		err := k8s.Client.Users().LoadUserToToken(tc, l)
+		if err != nil {
+			l.WithError(err).Error("error loading user data to append to token")
+			return nil, errors.Unauthenticated("Invalid credentials")
+		}
 		return tc, nil
 	case *jwt.ValidationError: // something was wrong during the validation
 		vErr := err.(*jwt.ValidationError)
 
 		switch vErr.Errors {
 		case jwt.ValidationErrorExpired:
-			log.Printf("JWT token validation - token expired: %+v\n", token)
+			log.WithError(vErr).WithField("tokenObj", token).Debug("token JWT expired")
 			return nil, errors.Unauthenticated("Invalid credentials")
 		default:
-			log.Printf("JWT token validation - ValidationError error on token: %+v\n", token)
+			log.WithError(vErr).WithField("tokenObj", token).Debug("ValidationError error on token")
 			return nil, errors.Unauthenticated("Invalid credentials")
 		}
 	default: // something else went wrong
-		log.Printf("JWT token validation - parse error: %v\n", err)
+		log.WithError(err).WithField("tokenObj", token).Debug("JWT token parse error")
 		return nil, errors.Unauthenticated("Invalid credentials")
 	}
 }

@@ -56,7 +56,7 @@ type AddUserToTeamDefault struct {
 	_statusCode int
 
 	// In: body
-	Payload *models.Error `json:"body,omitempty"`
+	Payload *models.GenericError `json:"body,omitempty"`
 }
 
 // NewAddUserToTeamDefault creates AddUserToTeamDefault with default headers values
@@ -82,13 +82,13 @@ func (o *AddUserToTeamDefault) SetStatusCode(code int) {
 }
 
 // WithPayload adds the payload to the add user to team default response
-func (o *AddUserToTeamDefault) WithPayload(payload *models.Error) *AddUserToTeamDefault {
+func (o *AddUserToTeamDefault) WithPayload(payload *models.GenericError) *AddUserToTeamDefault {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the add user to team default response
-func (o *AddUserToTeamDefault) SetPayload(payload *models.Error) {
+func (o *AddUserToTeamDefault) SetPayload(payload *models.GenericError) {
 	o.Payload = payload
 }
 

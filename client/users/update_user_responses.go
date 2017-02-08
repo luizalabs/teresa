@@ -191,7 +191,7 @@ Error
 type UpdateUserDefault struct {
 	_statusCode int
 
-	Payload *models.Error
+	Payload *models.GenericError
 }
 
 // Code gets the status code for the update user default response
@@ -205,7 +205,7 @@ func (o *UpdateUserDefault) Error() string {
 
 func (o *UpdateUserDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.Error)
+	o.Payload = new(models.GenericError)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

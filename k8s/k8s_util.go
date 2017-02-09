@@ -17,7 +17,7 @@ import (
 
 const (
 	slugBuilderName  = "deis-slugbuilder"
-	slugBuilderImage = "deis/slugbuilder:v2.4.8"
+	slugBuilderImage = "deis/slugbuilder:v2.4.9"
 	slugRunnerImage  = "deis/slugrunner:v2.2.4"
 	tarPath          = "TAR_PATH"
 	putPath          = "PUT_PATH"

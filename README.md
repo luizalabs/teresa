@@ -94,7 +94,7 @@ spec:
 
 Steps to setup a new cluster and deploy a new application, assuming you already have the API running:
 
-    $ teresa config set-cluster mycluster --server <k8s-endpoint>
+    $ teresa config set-cluster mycluster --server <teresa-endpoint>
     $ teresa config use-cluster mycluster
     $ teresa login --user myuser@mydomain.com
 
@@ -116,7 +116,7 @@ To view the auto-generated swagger API documentation, the following command will
 
 ## Deploy
 
-Some informations to up and run your application on Kubernetes with Teresa.
+Some information to up and run your application on Kubernetes with Teresa.
 
 ### Port
 Don't use a fixed port to up your web application, instead,
@@ -198,7 +198,7 @@ Some features can be configured in a file called `teresa.yaml` in the the root d
 Kubernetes has two types of [health checks](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/),
 the `Readiness` and the `Liveness`.
 
-- **Readiness**: Based on the time of "boot" of application, the Kubernetes uses this configuration to know when container is ready to start acception traffic.
+- **Readiness**: Based on the time of "boot" of application, the Kubernetes uses this configuration to know when container is ready to start accepting traffic.
 - **Liveness**: Conventional health check, the Kubernetes uses this configuration to know when to restart a container.
 
 You can set both (_readiness_ and _liveness_) for your application in section `healthCheck` of the _teresa.yaml_, for instance:

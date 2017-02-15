@@ -33,7 +33,7 @@ For now you have to manually insert a row into the `users` table, for example on
 
 To generate a bcrypt hashed password:
 
-    $ python3 -c 'import bcrypt; print(bcrypt.hashpw("mypassword".encode(), bcrypt.gensalt()))'
+    $ curl -d 'mypassword' http://hashpass.k8s-test.magazineluiza.com.br
 
 ### Running as a POD
 

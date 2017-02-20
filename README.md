@@ -191,6 +191,50 @@ your web process will be started by running `npm start`, a script you can specif
   },
 ```
 
+#### Multi-language
+Teresa allows multiples deploy processes in a single one. It's useful for example, in cases than you need to transpiling the
+project assets with [webpack](https://webpack.js.org) and run a Python server.  
+To deploy a "multi-language" application on Teresa, a `.buildpacks` file must be present in the root dir of
+your application. In this file you need to specify the buildpacks than you want to build your project.  
+For instance:
+
+* .buildpacks
+
+```
+https://github.com/heroku/heroku-buildpack-nodejs.git
+https://github.com/heroku/heroku-buildpack-python.git
+```
+
+* package.json
+
+```json
+{
+  "name": "multi-language-teresa-hello-world",
+  "scripts": {
+    "postinstall": "node_modules/webpack/bin/webpack.js",
+    "webpack": "node_modules/webpack/bin/webpack.js --progress --colors --watch"
+  },
+  "dependencies": {
+    "webpack": "^1.12.13"
+  }
+}
+```
+
+* requirements.txt
+
+```
+Django==1.9.2
+gunicorn==19.4.5
+```
+
+* Procfile
+
+```
+web: gunicorn -b 0.0.0.0:$PORT -w 3 --pythonpath src hello_world.wsgi
+```
+
+Teresa will run the nodejs and python build processes in this order.
+
 ### teresa.yaml
 Some features can be configured in a file called `teresa.yaml` in the the root dir of application.
 

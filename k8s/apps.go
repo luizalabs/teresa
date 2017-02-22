@@ -191,7 +191,7 @@ func (c apps) Get(appName string, tk *Token) (app *models.App, err error) {
 	return
 }
 
-func (c apps) getLoadBalancer(appName string) (lb *string, err error) {
+func (c apps) getLoadBalancer(appName string) (*string, error) {
 	srv, err := c.k.Networks().GetService(appName)
 	if err != nil {
 		return nil, err
@@ -199,7 +199,11 @@ func (c apps) getLoadBalancer(appName string) (lb *string, err error) {
 	if len(srv.Status.LoadBalancer.Ingress) == 0 {
 		return nil, errors.New("Load balancer address not found")
 	}
-	return &srv.Status.LoadBalancer.Ingress[0].Hostname, nil
+	lb := srv.Status.LoadBalancer.Ingress[0].Hostname
+	if lb == "" {
+		lb = srv.Status.LoadBalancer.Ingress[0].IP
+	}
+	return &lb, nil
 }
 
 // createQuota creates an k8s Limit Range for the App (namespace)

@@ -2,8 +2,8 @@ package k8s
 
 const (
 	slugBuilderName  = "deis-slugbuilder"
-	slugBuilderImage = "luizalabs/slugbuilder:git-923c9f8"
-	slugRunnerImage  = "luizalabs/slugrunner:git-044f85c"
+	slugBuilderImage = "teresak8s/slugbuilder:v2.4.9"
+	slugRunnerImage  = "teresak8s/slugrunner:v2.2.4"
 	tarPath          = "TAR_PATH"
 	putPath          = "PUT_PATH"
 	debugKey         = "DEIS_DEBUG"

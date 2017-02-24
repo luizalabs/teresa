@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Changed
+- Upgrade slugbuilder and slugrunner
+
 ## [0.2.1] - 2017-03-14
 ### Added
 - use `TERESADB_DATABASE` variable to define location of `teresa.sqlite`

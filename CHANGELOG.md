@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [NEXT_RELEASE]
+### Added
+- use `TERESADB_DATABASE` variable to define location of `teresa.sqlite`
+
 ### Changed
 - update README to use an api to generate password instead of a python script
 - remove dead code

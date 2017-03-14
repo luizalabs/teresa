@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Changed
+- update README to use an api to generate password instead of a python script
+
+## [0.2.0]
+### Changed
+- big breaking changing version
+
 ## [0.1.1] - 2016-08-12
 ### Added
 - command `add team-user`

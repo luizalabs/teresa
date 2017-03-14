@@ -120,6 +120,9 @@ func init() {
 	} else {
 		dialect = "sqlite3"
 		uri = "teresa.sqlite"
+		if db := conf.Database; db != "" {
+			uri = db
+		}
 	}
 	log.Printf("Using %s to connect to %s", dialect, uri)
 

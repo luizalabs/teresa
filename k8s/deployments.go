@@ -378,7 +378,11 @@ func newWelcomeContainer(app *models.App) (c *api.Container) {
 func newSlugRunnerContainer(app *models.App, slug string, storageType string) (c *api.Container) {
 	// creating runner container
 	c = newContainer(*app.Name, slugRunnerImage)
-	c.Args = []string{"start", "web"}
+	processType := processTypeWeb
+	if app.ProcessType != nil {
+		processType = *app.ProcessType
+	}
+	c.Args = []string{"start", processType}
 	// appending env vars...
 	// append App name to env var
 	appendContainerEnvVar(c, "APP", *app.Name)

@@ -21,6 +21,10 @@ import (
 	"k8s.io/kubernetes/pkg/util/sets"
 )
 
+const (
+	processTypeWeb = "web"
+)
+
 // AppsInterface is used to allow mock testing
 type AppsInterface interface {
 	Apps() AppInterface
@@ -66,6 +70,8 @@ func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token) error 
 	app.Creator = &models.User{
 		Email: tk.Email,
 	}
+	// go-swagger can't set defaults on creation
+	c.setDefaultProcessType(app)
 	// creating namespace
 	if err := c.createNamespace(app, *tk.Email); err != nil {
 		return err
@@ -86,7 +92,22 @@ func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token) error 
 	if err := c.k.Deployments().CreateAutoScale(app); err != nil {
 		return err
 	}
-	// creating the loadbalancer
+	// Creating the service
+	return c.createOrSkipService(app)
+}
+
+func (c apps) setDefaultProcessType(app *models.App) {
+	if app.ProcessType != nil {
+		return
+	}
+	copy := processTypeWeb
+	app.ProcessType = &copy
+}
+
+func (c apps) createOrSkipService(app *models.App) error {
+	if *app.ProcessType != processTypeWeb {
+		return nil
+	}
 	if err := c.k.Networks().CreateService(app); err != nil {
 		return err
 	}

@@ -36,6 +36,12 @@ type AppIn struct {
 	*/
 	Name *string `json:"name"`
 
+	/* app process type
+
+	Pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+	*/
+	ProcessType *string `json:"processType,omitempty"`
+
 	/* rolling update
 	 */
 	RollingUpdate *AppInRollingUpdate `json:"rollingUpdate,omitempty"`
@@ -76,6 +82,11 @@ func (m *AppIn) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateName(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateProcessType(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -156,6 +167,19 @@ func (m *AppIn) validateName(formats strfmt.Registry) error {
 	}
 
 	if err := validate.Pattern("name", "body", string(*m.Name), `^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *AppIn) validateProcessType(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.ProcessType) { // not required
+		return nil
+	}
+
+	if err := validate.Pattern("processType", "body", string(*m.ProcessType), `^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`); err != nil {
 		return err
 	}
 

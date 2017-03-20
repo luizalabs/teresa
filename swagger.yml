@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: The Teresa PaaS API
   title: Teresa API
-  version: 0.2.2
+  version: 0.2.3
 host: localhost:8080
 consumes:
 - application/json
@@ -848,6 +848,11 @@ definitions:
               check if the app is fully working.
               containers of the app will be removed from service endpoints if the check fails
             $ref: "#/definitions/HealthCheckProbe"
+      processType:
+        type: string
+        description: app process type
+        pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+        default: web
       scale:
         type: integer
         description: number of PODs running the app

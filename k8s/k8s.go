@@ -47,6 +47,10 @@ func (k *k8sHelper) Networks() NetworkInterface {
 	return newNetworks(k)
 }
 
+func (k *k8sHelper) Secrets() SecretInterface {
+	return newSecrets(k)
+}
+
 var pkgConfig k8sConfig
 
 func init() {

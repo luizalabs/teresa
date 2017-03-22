@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"crypto/rsa"
-	"io/ioutil"
+	std_errors "errors"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -18,24 +18,40 @@ import (
 
 // location of the files used for signing and verification
 const (
-	privKeyPath = "keys/teresa.rsa"     // openssl genrsa -out teresa.rsa keysize
-	pubKeyPath  = "keys/teresa.rsa.pub" // openssl rsa -in teresa.rsa -pubout > teresa.rsa.pub
+	privKeyName = "teresa.rsa"     // openssl genrsa -out teresa.rsa keysize
+	pubKeyName  = "teresa.rsa.pub" // openssl rsa -in teresa.rsa -pubout > teresa.rsa.pub
+	secretName  = "teresa-keys"
+	namespace   = "kube-paas"
 )
 
 var (
 	verifyKey *rsa.PublicKey
 	signKey   *rsa.PrivateKey
+
+	ErrMissingKey = std_errors.New("Missing key")
 )
+
+func getKeyBytes(keyName string) ([]byte, error) {
+	s, err := k8s.Client.Secrets().Get(namespace, secretName)
+	if err != nil {
+		return nil, err
+	}
+	data, ok := s.Data[keyName]
+	if !ok {
+		return nil, ErrMissingKey
+	}
+	return data, nil
+}
 
 // read the key files before starting http handlers
 func init() {
-	signBytes, err := ioutil.ReadFile(privKeyPath)
+	signBytes, err := getKeyBytes(privKeyName)
 	fatal(err)
 
 	signKey, err = jwt.ParseRSAPrivateKeyFromPEM(signBytes)
 	fatal(err)
 
-	verifyBytes, err := ioutil.ReadFile(pubKeyPath)
+	verifyBytes, err := getKeyBytes(pubKeyName)
 	fatal(err)
 
 	verifyKey, err = jwt.ParseRSAPublicKeyFromPEM(verifyBytes)

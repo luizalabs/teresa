@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - Support for non-web process types
 
+### Changed
+- Location of slugbuilder and slugrunner images
+
 ## [0.2.2] - 2017-03-16
 ### Changed
 - Upgrade slugbuilder and slugrunner

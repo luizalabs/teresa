@@ -5,12 +5,13 @@
 package envconfig
 
 import (
+	"encoding"
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -24,83 +25,164 @@ type ParseError struct {
 	FieldName string
 	TypeName  string
 	Value     string
+	Err       error
 }
 
-// A Decoder is a type that knows how to de-serialize environment variables
-// into itself.
+// Decoder has the same semantics as Setter, but takes higher precedence.
+// It is provided for historical compatibility.
 type Decoder interface {
 	Decode(value string) error
 }
 
+// Setter is implemented by types can self-deserialize values.
+// Any type that implements flag.Value also implements Setter.
+type Setter interface {
+	Set(value string) error
+}
+
 func (e *ParseError) Error() string {
-	return fmt.Sprintf("envconfig.Process: assigning %[1]s to %[2]s: converting '%[3]s' to type %[4]s", e.KeyName, e.FieldName, e.Value, e.TypeName)
+	return fmt.Sprintf("envconfig.Process: assigning %[1]s to %[2]s: converting '%[3]s' to type %[4]s. details: %[5]s", e.KeyName, e.FieldName, e.Value, e.TypeName, e.Err)
+}
+
+// varInfo maintains information about the configuration variable
+type varInfo struct {
+	Name  string
+	Alt   string
+	Key   string
+	Field reflect.Value
+	Tags  reflect.StructTag
+}
+
+// GatherInfo gathers information about the specified struct
+func gatherInfo(prefix string, spec interface{}) ([]varInfo, error) {
+	expr := regexp.MustCompile("([^A-Z]+|[A-Z][^A-Z]+|[A-Z]+)")
+	s := reflect.ValueOf(spec)
+
+	if s.Kind() != reflect.Ptr {
+		return nil, ErrInvalidSpecification
+	}
+	s = s.Elem()
+	if s.Kind() != reflect.Struct {
+		return nil, ErrInvalidSpecification
+	}
+	typeOfSpec := s.Type()
+
+	// over allocate an info array, we will extend if needed later
+	infos := make([]varInfo, 0, s.NumField())
+	for i := 0; i < s.NumField(); i++ {
+		f := s.Field(i)
+		ftype := typeOfSpec.Field(i)
+		if !f.CanSet() || isTrue(ftype.Tag.Get("ignored")) {
+			continue
+		}
+
+		for f.Kind() == reflect.Ptr {
+			if f.IsNil() {
+				if f.Type().Elem().Kind() != reflect.Struct {
+					// nil pointer to a non-struct: leave it alone
+					break
+				}
+				// nil pointer to struct: create a zero instance
+				f.Set(reflect.New(f.Type().Elem()))
+			}
+			f = f.Elem()
+		}
+
+		// Capture information about the config variable
+		info := varInfo{
+			Name:  ftype.Name,
+			Field: f,
+			Tags:  ftype.Tag,
+			Alt:   strings.ToUpper(ftype.Tag.Get("envconfig")),
+		}
+
+		// Default to the field name as the env var name (will be upcased)
+		info.Key = info.Name
+
+		// Best effort to un-pick camel casing as separate words
+		if isTrue(ftype.Tag.Get("split_words")) {
+			words := expr.FindAllStringSubmatch(ftype.Name, -1)
+			if len(words) > 0 {
+				var name []string
+				for _, words := range words {
+					name = append(name, words[0])
+				}
+
+				info.Key = strings.Join(name, "_")
+			}
+		}
+		if info.Alt != "" {
+			info.Key = info.Alt
+		}
+		if prefix != "" {
+			info.Key = fmt.Sprintf("%s_%s", prefix, info.Key)
+		}
+		info.Key = strings.ToUpper(info.Key)
+		infos = append(infos, info)
+
+		if f.Kind() == reflect.Struct {
+			// honor Decode if present
+			if decoderFrom(f) == nil && setterFrom(f) == nil && textUnmarshaler(f) == nil {
+				innerPrefix := prefix
+				if !ftype.Anonymous {
+					innerPrefix = info.Key
+				}
+
+				embeddedPtr := f.Addr().Interface()
+				embeddedInfos, err := gatherInfo(innerPrefix, embeddedPtr)
+				if err != nil {
+					return nil, err
+				}
+				infos = append(infos[:len(infos)-1], embeddedInfos...)
+
+				continue
+			}
+		}
+	}
+	return infos, nil
 }
 
 // Process populates the specified struct based on environment variables
 func Process(prefix string, spec interface{}) error {
-	s := reflect.ValueOf(spec)
+	infos, err := gatherInfo(prefix, spec)
 
-	if s.Kind() != reflect.Ptr {
-		return ErrInvalidSpecification
-	}
-	s = s.Elem()
-	if s.Kind() != reflect.Struct {
-		return ErrInvalidSpecification
-	}
-	typeOfSpec := s.Type()
-	for i := 0; i < s.NumField(); i++ {
-		f := s.Field(i)
-		if !f.CanSet() || typeOfSpec.Field(i).Tag.Get("ignored") == "true" {
-			continue
-		}
+	for _, info := range infos {
 
-		if typeOfSpec.Field(i).Anonymous && f.Kind() == reflect.Struct {
-			embeddedPtr := f.Addr().Interface()
-			if err := Process(prefix, embeddedPtr); err != nil {
-				return err
-			}
-			f.Set(reflect.ValueOf(embeddedPtr).Elem())
-		}
-
-		alt := typeOfSpec.Field(i).Tag.Get("envconfig")
-		fieldName := typeOfSpec.Field(i).Name
-		if alt != "" {
-			fieldName = alt
-		}
-		key := strings.ToUpper(fmt.Sprintf("%s_%s", prefix, fieldName))
 		// `os.Getenv` cannot differentiate between an explicitly set empty value
 		// and an unset value. `os.LookupEnv` is preferred to `syscall.Getenv`,
-		// but it is only available in go1.5 or newer.
-		value, ok := syscall.Getenv(key)
-		if !ok && alt != "" {
-			key := strings.ToUpper(fieldName)
-			value, ok = syscall.Getenv(key)
+		// but it is only available in go1.5 or newer. We're using Go build tags
+		// here to use os.LookupEnv for >=go1.5
+		value, ok := lookupEnv(info.Key)
+		if !ok && info.Alt != "" {
+			value, ok = lookupEnv(info.Alt)
 		}
 
-		def := typeOfSpec.Field(i).Tag.Get("default")
+		def := info.Tags.Get("default")
 		if def != "" && !ok {
 			value = def
 		}
 
-		req := typeOfSpec.Field(i).Tag.Get("required")
+		req := info.Tags.Get("required")
 		if !ok && def == "" {
-			if req == "true" {
-				return fmt.Errorf("required key %s missing value", key)
+			if isTrue(req) {
+				return fmt.Errorf("required key %s missing value", info.Key)
 			}
 			continue
 		}
 
-		err := processField(value, f)
+		err := processField(value, info.Field)
 		if err != nil {
 			return &ParseError{
-				KeyName:   key,
-				FieldName: fieldName,
-				TypeName:  f.Type().String(),
+				KeyName:   info.Key,
+				FieldName: info.Name,
+				TypeName:  info.Field.Type().String(),
 				Value:     value,
+				Err:       err,
 			}
 		}
 	}
-	return nil
+
+	return err
 }
 
 // MustProcess is the same as Process but panics if an error occurs
@@ -116,6 +198,15 @@ func processField(value string, field reflect.Value) error {
 	decoder := decoderFrom(field)
 	if decoder != nil {
 		return decoder.Decode(value)
+	}
+	// look for Set method if Decode not defined
+	setter := setterFrom(field)
+	if setter != nil {
+		return setter.Set(value)
+	}
+
+	if t := textUnmarshaler(field); t != nil {
+		return t.UnmarshalText([]byte(value))
 	}
 
 	if typ.Kind() == reflect.Ptr {
@@ -174,28 +265,60 @@ func processField(value string, field reflect.Value) error {
 			}
 		}
 		field.Set(sl)
+	case reflect.Map:
+		pairs := strings.Split(value, ",")
+		mp := reflect.MakeMap(typ)
+		for _, pair := range pairs {
+			kvpair := strings.Split(pair, ":")
+			if len(kvpair) != 2 {
+				return fmt.Errorf("invalid map item: %q", pair)
+			}
+			k := reflect.New(typ.Key()).Elem()
+			err := processField(kvpair[0], k)
+			if err != nil {
+				return err
+			}
+			v := reflect.New(typ.Elem()).Elem()
+			err = processField(kvpair[1], v)
+			if err != nil {
+				return err
+			}
+			mp.SetMapIndex(k, v)
+		}
+		field.Set(mp)
 	}
 
 	return nil
 }
 
-func decoderFrom(field reflect.Value) Decoder {
-	if field.CanInterface() {
-		dec, ok := field.Interface().(Decoder)
-		if ok {
-			return dec
-		}
+func interfaceFrom(field reflect.Value, fn func(interface{}, *bool)) {
+	// it may be impossible for a struct field to fail this check
+	if !field.CanInterface() {
+		return
 	}
-
-	// also check if pointer-to-type implements Decoder,
-	// and we can get a pointer to our field
-	if field.CanAddr() {
-		field = field.Addr()
-		dec, ok := field.Interface().(Decoder)
-		if ok {
-			return dec
-		}
+	var ok bool
+	fn(field.Interface(), &ok)
+	if !ok && field.CanAddr() {
+		fn(field.Addr().Interface(), &ok)
 	}
+}
 
-	return nil
+func decoderFrom(field reflect.Value) (d Decoder) {
+	interfaceFrom(field, func(v interface{}, ok *bool) { d, *ok = v.(Decoder) })
+	return d
+}
+
+func setterFrom(field reflect.Value) (s Setter) {
+	interfaceFrom(field, func(v interface{}, ok *bool) { s, *ok = v.(Setter) })
+	return s
+}
+
+func textUnmarshaler(field reflect.Value) (t encoding.TextUnmarshaler) {
+	interfaceFrom(field, func(v interface{}, ok *bool) { t, *ok = v.(encoding.TextUnmarshaler) })
+	return t
+}
+
+func isTrue(s string) bool {
+	b, _ := strconv.ParseBool(s)
+	return b
 }

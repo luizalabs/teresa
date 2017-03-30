@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/luizalabs/teresa-api",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v62",
+	"GodepVersion": "v75",
 	"Packages": [
 		"./..."
 	],
@@ -367,8 +367,8 @@
 		},
 		{
 			"ImportPath": "github.com/kelseyhightower/envconfig",
-			"Comment": "1.1.0-17-g91921eb",
-			"Rev": "91921eb4cf999321cdbeebdba5a03555800d493b"
+			"Comment": "v1.3.0-3-g8bf4bbf",
+			"Rev": "8bf4bbfc795e2c7c8a5ea47b707453ed019e2ad4"
 		},
 		{
 			"ImportPath": "github.com/mailru/easyjson/buffer",

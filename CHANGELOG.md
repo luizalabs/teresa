@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Location of slugbuilder and slugrunner images
 - Read keys from k8s secrets
+- Increase deploy timeouts and make them configurable
 
 ## [0.2.2] - 2017-03-16
 ### Changed

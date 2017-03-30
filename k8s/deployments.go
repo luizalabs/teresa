@@ -59,7 +59,9 @@ type deploy struct {
 }
 
 type DeploymentConfig struct {
-	RevisionHistoryLimit int32 `envconfig:"revision_history_limit" default:"5"`
+	FinishTimeout        time.Duration `split_words:"true" default:"30m"`
+	RevisionHistoryLimit int32         `split_words:"true" default:"5"`
+	StartTimeout         time.Duration `split_words:"true" default:"10m"`
 }
 
 var deploymentConfig DeploymentConfig
@@ -166,15 +168,14 @@ func (c deployments) Get(appName string) (d *extensions.Deployment, err error) {
 
 // buildApp creates a builder POD to build the App, waits the POD to be completed
 func (c deployments) buildApp(app *models.App, deploy *deploy, storage helpers.Storage, w io.Writer) error {
-	// TODO: fix times for wait start and wait end
-
 	// creating builder POD
 	pod, err := c.createBuilderPod(app, deploy, storage)
 	if err != nil {
 		return err
 	}
 	// wainting POD to start the builder proccess
-	if err = c.waitPodStart(pod, 1*time.Second, 2*time.Minute); err != nil {
+	err = c.waitPodStart(pod, 1*time.Second, deploymentConfig.StartTimeout)
+	if err != nil {
 		return err
 	}
 	opts := &api.PodLogOptions{
@@ -188,7 +189,8 @@ func (c deployments) buildApp(app *models.App, deploy *deploy, storage helpers.S
 	defer s.Close()
 	io.Copy(w, s)
 	// wait POD finish
-	if err = c.waitPodEnd(pod, 1*time.Second, 2*time.Minute); err != nil {
+	err = c.waitPodEnd(pod, 1*time.Second, deploymentConfig.FinishTimeout)
+	if err != nil {
 		return err
 	}
 	// get POD exit code.

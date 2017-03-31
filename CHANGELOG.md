@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Support for non-web process types
 
 #### Fixed
-- Get currente namespace name from environment variable instead of a constant
+- Get current namespace name from environment variable instead of a constant
 
 ### Changed
 - Location of slugbuilder and slugrunner images

@@ -59,7 +59,7 @@ func init() {
 	fatal(err)
 
 	if namespace == "" {
-		fatal(std_errors.New("define 'NAMESPACE' envrironment variable with Downward API"))
+		fatal(std_errors.New("define 'NAMESPACE' environment variable with Downward API"))
 	}
 }
 

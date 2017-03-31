@@ -42,9 +42,15 @@ First create and push a docker image:
     $ docker build -t <your-login>/teresa:latest .
     $ docker push <your-login>/teresa:latest
 
-Create a deployment and expose it as a service:
+Create rsa keys and secrets for token signing:
 
+    $ openssl genrsa -out teresa.rsa
+    $ openssl rsa -in teresa.rsa -pubout > teresa.rsa.pub
     $ kubectl create namespace teresa
+    $ kubectl create secret generic teresa-keys --from-file=./teresa.rsa --from-file=./teresa.rsa.pub -n teresa
+
+At last create a deployment and expose it as a service:
+
     $ kubectl create -n teresa -f teresa.yml
     $ kubectl expose deployment teresa -n teresa --type=LoadBalancer --port=80 --target-port=8080
 
@@ -88,7 +94,13 @@ spec:
             value: S3_BUCKET
           - name: TERESADEPLOY_REVISION_HISTORY_LIMIT
             value: "5"
+          - name: TERESADEPLOY_START_TIMEOUT
+            value: 10m
+          - name: TERESADEPLOY_FINISH_TIMEOUT
+            value: 30m
 ```
+
+The TERESADEPLOY environment variables are optional.
 
 ## View API Documentation
 

@@ -98,6 +98,10 @@ spec:
             value: 10m
           - name: TERESADEPLOY_FINISH_TIMEOUT
             value: 30m
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
 ```
 
 The TERESADEPLOY environment variables are optional.

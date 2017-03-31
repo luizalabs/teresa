@@ -3,6 +3,7 @@ package handlers
 import (
 	"crypto/rsa"
 	std_errors "errors"
+	"os"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -21,13 +22,13 @@ const (
 	privKeyName = "teresa.rsa"     // openssl genrsa -out teresa.rsa keysize
 	pubKeyName  = "teresa.rsa.pub" // openssl rsa -in teresa.rsa -pubout > teresa.rsa.pub
 	secretName  = "teresa-keys"
-	namespace   = "kube-paas"
 )
 
 var (
 	verifyKey *rsa.PublicKey
 	signKey   *rsa.PrivateKey
 
+	namespace     = os.Getenv("NAMESPACE")
 	ErrMissingKey = std_errors.New("Missing key")
 )
 
@@ -56,6 +57,10 @@ func init() {
 
 	verifyKey, err = jwt.ParseRSAPublicKeyFromPEM(verifyBytes)
 	fatal(err)
+
+	if namespace == "" {
+		fatal(std_errors.New("define 'NAMESPACE' environment variable with Downward API"))
+	}
 }
 
 func fatal(err error) {

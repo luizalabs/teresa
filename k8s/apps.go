@@ -64,7 +64,7 @@ func (c apps) Create(app *models.App, storage helpers.Storage, tk *Token) error 
 		return err
 	}
 	// check if user can create apps for the team
-	if tk.IsAuthorized(*app.Team) == false {
+	if !tk.IsAuthorized(*app.Team) {
 		return NewUnauthorizedError(`token "%s" not allowed to create apps for the team "%s"`, *tk.Email, *app.Team)
 	}
 	app.Creator = &models.User{
@@ -197,7 +197,7 @@ func (c apps) Get(appName string, tk *Token) (app *models.App, err error) {
 		return nil, err
 	}
 	// check if the user is authorized to get this App
-	if tk.IsAuthorized(*app.Team) == false {
+	if !tk.IsAuthorized(*app.Team) {
 		return nil, NewUnauthorizedErrorf(`app "%s" not found or user not allowed to see it`, appName)
 	}
 	if lb, errLb := c.getLoadBalancer(appName); errLb == nil {
@@ -233,10 +233,8 @@ func (c apps) createQuota(app *models.App) error {
 	if err != nil {
 		return err
 	}
-	if _, err = c.k.k8sClient.LimitRanges(*app.Name).Create(quota); err != nil {
-		return err
-	}
-	return nil
+	_, err = c.k.k8sClient.LimitRanges(*app.Name).Create(quota)
+	return err
 }
 
 // createNamespace creates an k8s namespace
@@ -348,54 +346,23 @@ func addAppToNamespaceYaml(app *models.App, ns *api.Namespace) error {
 	return nil
 }
 
-// addLimitRangeQuantityToResourceList is a helper to the function parseLimitRangeParams, used to add a limit range
-// to a specific limit range list
-func addLimitRangeQuantityToResourceList(r *api.ResourceList, limitRangeQuantity []*models.LimitRangeQuantity) error {
-	if limitRangeQuantity == nil {
-		return nil
-	}
-	rl := api.ResourceList{}
-	for _, item := range limitRangeQuantity {
-		name := api.ResourceName(*item.Resource)
-		q, err := resource.ParseQuantity(*item.Quantity)
-		if err != nil {
-			return fmt.Errorf(`error when trying to parse limits value "%s:%s". %s`, *item.Resource, *item.Quantity, err)
-		}
-		rl[name] = q
-	}
-	*r = rl
-	return nil
-}
-
-// parseLimitRangeParams is a helper to parse all the limit range types
-func parseLimitRangeParams(limitRangeItem *api.LimitRangeItem, limits *models.AppInLimits) error {
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Default, limits.Default); err != nil {
-		return err
-	}
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.DefaultRequest, limits.DefaultRequest); err != nil {
-		return err
-	}
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Max, limits.Max); err != nil {
-		return err
-	}
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.Min, limits.Min); err != nil {
-		return err
-	}
-	if err := addLimitRangeQuantityToResourceList(&limitRangeItem.MaxLimitRequestRatio, limits.LimitRequestRatio); err != nil {
-		return err
-	}
-	return nil
-}
-
 // newQuotaYaml is a helper to create an k8s LimitRange based on App Limits
 func newQuotaYaml(app *models.App) (lr *api.LimitRange, err error) {
-	lrItem := api.LimitRangeItem{
+
+	defaultCPU, _ := resource.ParseQuantity("500m")
+	defaultCPURequest, _ := resource.ParseQuantity("200m")
+	defaultMemory, _ := resource.ParseQuantity("512Mi")
+
+	limits := api.LimitRangeItem{
 		Type: api.LimitTypeContainer,
+		Default: api.ResourceList{
+			api.ResourceCPU:    defaultCPU,
+			api.ResourceMemory: defaultMemory},
+		DefaultRequest: api.ResourceList{
+			api.ResourceCPU:    defaultCPURequest,
+			api.ResourceMemory: defaultMemory},
 	}
-	// parse limits params to k8s params
-	if err = parseLimitRangeParams(&lrItem, app.Limits); err != nil {
-		return nil, NewInputErrorf(`found error when parsing "limits" for app "%s". %s`, *app.Name, err)
-	}
+
 	lr = &api.LimitRange{
 		TypeMeta: unversioned.TypeMeta{
 			Kind:       "LimitRange",
@@ -405,7 +372,7 @@ func newQuotaYaml(app *models.App) (lr *api.LimitRange, err error) {
 			Name: "limits",
 		},
 		Spec: api.LimitRangeSpec{
-			Limits: []api.LimitRangeItem{lrItem},
+			Limits: []api.LimitRangeItem{limits},
 		},
 	}
 	return
@@ -414,7 +381,7 @@ func newQuotaYaml(app *models.App) (lr *api.LimitRange, err error) {
 // unmarshalAppFromNamespace extract and unmarshal the App from the namespace
 func unmarshalAppFromNamespace(ns *api.Namespace) (app *models.App, err error) {
 	s, ok := ns.GetAnnotations()["teresa.io/app"]
-	if ok == false {
+	if !ok {
 		return nil, fmt.Errorf(`annotation "teresa.io/app" not found inside the namespace "%s"`, ns.Name)
 	}
 	app = &models.App{}
@@ -459,7 +426,7 @@ func updateAppEnvVars(app *models.App, operations []*models.PatchAppRequest) err
 					}
 				}
 				// env var not found on App, register this new one
-				if evarFound == false {
+				if !evarFound {
 					app.EnvVars = append(app.EnvVars, &models.EnvVar{
 						Key:   operationValue.Key,
 						Value: &operationValue.Value,
@@ -587,7 +554,7 @@ func (c apps) GetLogs(appName string, tk *Token, opts *api.PodLogOptions) (rc io
 	if err != nil {
 		return nil, err
 	}
-	if tk.IsAuthorized(*app.Team) == false {
+	if !tk.IsAuthorized(*app.Team) {
 		return nil, NewUnauthorizedErrorf(`app "%s" not found or user not allowed to see it`, appName)
 	}
 	podList, err := c.k.k8sClient.Pods(appName).List(api.ListOptions{})

@@ -149,7 +149,7 @@ func (s *Server) Serve() (err error) {
 	if s.hasScheme(schemeHTTP) {
 		httpServer := &graceful.Server{Server: new(http.Server)}
 		httpServer.SetKeepAlivesEnabled(true)
-		httpServer.TCPKeepAlive = 3 * time.Minute
+		httpServer.TCPKeepAlive = 30 * time.Second
 		httpServer.Handler = s.handler
 
 		wg.Add(1)
@@ -166,7 +166,7 @@ func (s *Server) Serve() (err error) {
 	if s.hasScheme(schemeHTTPS) {
 		httpsServer := &graceful.Server{Server: new(http.Server)}
 		httpsServer.SetKeepAlivesEnabled(true)
-		httpsServer.TCPKeepAlive = 3 * time.Minute
+		httpsServer.TCPKeepAlive = 30 * time.Second
 		httpsServer.Handler = s.handler
 
 		httpsServer.TLSConfig = new(tls.Config)

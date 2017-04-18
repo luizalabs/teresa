@@ -85,3 +85,6 @@ validate:
 
 swagger-docs:
 	go run docs/webserver.go swagger.yml
+
+build-client:
+	@go build -o teresa cmd/client/main.go

@@ -2,11 +2,15 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Added Changed
+- Merge `teresa-cli` inside of `teresa-api` repo
+
 ## [0.3.0] - 2017-04-07
 ### Added
 - Support for non-web process types
 
-#### Fixed
+### Fixed
 - Get current namespace name from environment variable instead of a constant
 
 ### Changed

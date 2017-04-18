@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Changed
+- KeepAlive time from 3 minutes to 30 seconds
+
 ## [0.3.0] - 2017-04-07
 ### Added
 - Support for non-web process types

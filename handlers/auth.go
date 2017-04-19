@@ -46,6 +46,10 @@ func getKeyBytes(keyName string) ([]byte, error) {
 
 // read the key files before starting http handlers
 func init() {
+	if namespace == "" {
+		fatal(std_errors.New("define 'NAMESPACE' environment variable with Downward API"))
+	}
+
 	signBytes, err := getKeyBytes(privKeyName)
 	fatal(err)
 
@@ -57,10 +61,6 @@ func init() {
 
 	verifyKey, err = jwt.ParseRSAPublicKeyFromPEM(verifyBytes)
 	fatal(err)
-
-	if namespace == "" {
-		fatal(std_errors.New("define 'NAMESPACE' environment variable with Downward API"))
-	}
 }
 
 func fatal(err error) {

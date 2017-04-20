@@ -26,6 +26,10 @@ import (
 	"k8s.io/kubernetes/pkg/util/wait"
 )
 
+const (
+	keepAliveMessage = "\u200B" // Zero width space
+)
+
 // DeploymentsInterface is used to allow mock testing
 type DeploymentsInterface interface {
 	Deployments() DeploymentInterface
@@ -59,6 +63,7 @@ type deploy struct {
 }
 
 type DeploymentConfig struct {
+	KeepaliveTimeout     time.Duration `split_words:"true" default:"30s"`
 	FinishTimeout        time.Duration `split_words:"true" default:"30m"`
 	RevisionHistoryLimit int32         `split_words:"true" default:"5"`
 	StartTimeout         time.Duration `split_words:"true" default:"10m"`
@@ -90,6 +95,53 @@ func (c deployments) CreateWelcomeDeployment(app *models.App) error {
 	return err
 }
 
+func (c deployments) create(
+	w io.WriteCloser,
+	app *models.App,
+	file *runtime.File,
+	deploy *deploy,
+	storage helpers.Storage,
+	done chan<- struct{},
+) {
+	defer close(done)
+	// create log context with uuid and app name
+	lc := log.WithField("app", app.Name).WithField("deployUUID", deploy.uuid)
+	lc.Info("starting deploy...")
+	// upload file to storage
+	lcu := lc.WithField("storage", storage.Type()).WithField("storageIn", deploy.storageIn)
+	lcu.Debug("uploading app archive to storage...")
+	fmt.Fprintln(w, "uploading app archive to storage...")
+	// moving to the start of the file
+	file.Data.Seek(0, 0)
+	if err := storage.UploadFile(deploy.storageIn, file.Data); err != nil {
+		lcu.WithError(err).Error("error found when upload app archive to storage")
+		fmt.Fprintln(w, "error found when upload app archive to storage")
+		return
+	}
+	lcu.Debug("upload done with success")
+	fmt.Fprintln(w, "upload done with success")
+	lcu = nil
+	// building app...
+	lc.Debug("building app...")
+	fmt.Fprintln(w, "building app...")
+	if err := c.buildApp(app, deploy, storage, w); err != nil {
+		lc.WithError(err).Warn("error during build proccess")
+		fmt.Fprintln(w, "error during build proccess")
+		return
+	}
+	lc.Debug("build step done without errors")
+	fmt.Fprintln(w, "build step done without errors")
+	// updating deployment
+	lc.Debug("updating deployment for rolling update...")
+	fmt.Fprintln(w, "rolling update...")
+	if err := c.updateDeployment(app, deploy.slugPath, deploy.description, storage); err != nil {
+		lc.WithError(err).Error("error updating deployment")
+		fmt.Fprintln(w, "error when doing rolling update")
+		return
+	}
+	fmt.Fprintln(w, "deploy finished with success")
+}
+
 // Create creates a new deployment for the App
 func (c deployments) Create(appName, description string, file *runtime.File, storage helpers.Storage, tk *Token) (io.ReadCloser, error) {
 	// get app info...
@@ -98,60 +150,35 @@ func (c deployments) Create(appName, description string, file *runtime.File, sto
 		return nil, err
 	}
 	// check token...
-	if tk.IsAuthorized(*app.Team) == false {
+	if !tk.IsAuthorized(*app.Team) {
 		msg := "token not allowed to do a deployment"
 		return nil, NewUnauthorizedError(msg)
 	}
 	// creating deployment params
 	deploy := newDeploy(appName, description)
-	// create log context with uuid and app name
-	lc := log.WithField("app", appName).WithField("deployUUID", deploy.uuid)
-	lc.Info("starting deploy...")
+	lc := log.WithField("app", app.Name).WithField("deployUUID", deploy.uuid)
+	// parsing teresa.yaml and updating app
+	if err := parseTeresaYaml(app, file.Data); err != nil {
+		lc.WithError(err).Error("error parsing teresa.yaml")
+		return nil, err
+	}
 	// streaming actions...
 	r, w := io.Pipe()
+	done := make(chan struct{})
+	go c.create(w, app, file, deploy, storage, done)
 	go func() {
-		defer w.Close()
-
-		// parsing teresa.yaml and updating app
-		if err := parsingTeresaYaml(app, file.Data); err != nil {
-			lc.WithError(err).Error("error parsing teresa.yaml")
-			fmt.Fprintln(w, "error when searching and parsing teresa.yaml")
-			return
+		defer func() {
+			w.Close()
+			file.Data.Close()
+		}()
+		for {
+			select {
+			case <-time.After(deploymentConfig.KeepaliveTimeout):
+				fmt.Fprint(w, keepAliveMessage)
+			case <-done:
+				return
+			}
 		}
-
-		// upload file to storage
-		lcu := lc.WithField("storage", storage.Type()).WithField("storageIn", deploy.storageIn)
-		lcu.Debug("uploading app archive to storage...")
-		fmt.Fprintln(w, "uploading app archive to storage...")
-		// moving to the start of the file
-		file.Data.Seek(0, 0)
-		if err := storage.UploadFile(deploy.storageIn, file.Data); err != nil {
-			lcu.WithError(err).Error("error found when upload app archive to storage")
-			fmt.Fprintln(w, "error found when upload app archive to storage")
-			return
-		}
-		lcu.Debug("upload done with success")
-		fmt.Fprintln(w, "upload done with success")
-		lcu = nil
-		// building app...
-		lc.Debug("building app...")
-		fmt.Fprintln(w, "building app...")
-		if err := c.buildApp(app, deploy, storage, w); err != nil {
-			lc.WithError(err).Warn("error during build proccess")
-			fmt.Fprintln(w, "error during build proccess")
-			return
-		}
-		lc.Debug("build step done without errors")
-		fmt.Fprintln(w, "build step done without errors")
-		// updating deployment
-		lc.Debug("updating deployment for rolling update...")
-		fmt.Fprintln(w, "rolling update...")
-		if err := c.updateDeployment(app, deploy.slugPath, deploy.description, storage); err != nil {
-			lc.WithError(err).Error("error updating deployment")
-			fmt.Fprintln(w, "error when doing rolling update")
-			return
-		}
-		fmt.Fprintln(w, "deploy finished with success")
 	}()
 	return r, nil
 }
@@ -647,7 +674,7 @@ func getAppConfigFromTarball(tarFile io.ReadSeeker) (*TeresaYaml, error) {
 	return nil, nil
 }
 
-func parsingTeresaYaml(app *models.App, appTarball io.ReadSeeker) error {
+func parseTeresaYaml(app *models.App, appTarball io.ReadSeeker) error {
 	// parsing teresa.yaml...
 	tyaml, err := getAppConfigFromTarball(appTarball)
 	if err != nil {

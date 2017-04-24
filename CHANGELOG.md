@@ -8,11 +8,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   network connection in use (as required by the idle timeout of the aws classic
   elb for instance)
 
+### Changed
+- Merge `teresa-cli` and `teresa-api`
+
 ## [0.3.0] - 2017-04-07
 ### Added
 - Support for non-web process types
 
-#### Fixed
+### Fixed
 - Get current namespace name from environment variable instead of a constant
 
 ### Changed

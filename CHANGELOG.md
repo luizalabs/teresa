@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [NEXT_RELEASE]
+## [0.3.1] - 2017-04-24
 ### Fixed
 - Fix deploy timeouts by sending a few bytes at a constant time interval to the
   network connection in use (as required by the idle timeout of the aws classic

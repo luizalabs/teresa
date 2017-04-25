@@ -141,9 +141,8 @@ func getIgnorePatterns(source string) ([]string, error) {
 	if _, err := os.Stat(fPath); err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
-		} else {
-			return nil, err
 		}
+		return nil, err
 	}
 
 	file, err := os.Open(fPath)

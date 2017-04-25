@@ -74,7 +74,7 @@ func Execute() {
 		// from here below, try to print some usefull information for the user...
 		// check if the error is a net error
 		if _, ok := err.(net.Error); ok {
-			fmt.Println("Faield to connect to server, or server is down!!!")
+			fmt.Println("Failed to connect to server, or server is down!!!")
 			os.Exit(1)
 		}
 		os.Exit(1)

@@ -55,7 +55,7 @@ The app name must follow this rules:
 		scaleMin, _ := cmd.Flags().GetInt64("scale-min")
 		cpu, _ := cmd.Flags().GetString("cpu")
 		memory, _ := cmd.Flags().GetString("memory")
-		maxCpu, _ := cmd.Flags().GetString("max-cpu")
+		maxCPU, _ := cmd.Flags().GetString("max-cpu")
 		maxMemory, _ := cmd.Flags().GetString("max-memory")
 		processType, _ := cmd.Flags().GetString("process-type")
 		if team == "" {
@@ -80,7 +80,7 @@ The app name must follow this rules:
 			Default: []*models.LimitRangeQuantity{
 				&models.LimitRangeQuantity{
 					Resource: &cpuString,
-					Quantity: &maxCpu,
+					Quantity: &maxCPU,
 				},
 				&models.LimitRangeQuantity{
 					Resource: &memString,

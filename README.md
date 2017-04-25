@@ -2,7 +2,7 @@
 
 Teresa is an extremely simple platform as a service that runs on top of [Kubernetes](https://github.com/kubernetes/kubernetes).  
 The API needs a database backend and access to Amazon S3 for storage.  
-To have a full Teresa setup you'll need the API running as a POD and the [CLI](https://github.com/luizalabs/teresa-cli).  
+To have a full Teresa setup you'll need the API running as a POD and the CLI.
 
 ## API
 
@@ -113,6 +113,10 @@ To view the auto-generated swagger API documentation, the following command will
     $ make swagger-docs
 
 ## CLI
+
+Build the CLI:
+
+    $ make build-client
 
 Steps to setup a new cluster and deploy a new application, assuming you already have the API running:
 

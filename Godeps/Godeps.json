@@ -433,16 +433,6 @@
 			"Rev": "2788f0dbd16903de03cb8186e5c7d97b69ad387b"
 		},
 		{
-			"ImportPath": "github.com/luizalabs/teresa-cli/cmd",
-			"Comment": "v0.3.2",
-			"Rev": "3ac9825723f9d0934c2834d07fbcfbceb10f44d3"
-		},
-		{
-			"ImportPath": "github.com/luizalabs/teresa-cli/tar",
-			"Comment": "v0.3.2",
-			"Rev": "3ac9825723f9d0934c2834d07fbcfbceb10f44d3"
-		},
-		{
 			"ImportPath": "github.com/magiconair/properties",
 			"Comment": "v1.7.0",
 			"Rev": "c265cfa48dda6474e208715ca93e987829f572f8"

@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/luizalabs/teresa-cli/tar"
+	"github.com/luizalabs/teresa-api/cmd/client/tar"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 )

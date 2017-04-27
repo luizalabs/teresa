@@ -184,8 +184,8 @@ func addFiles(source string, tar tar.Writer, ignorePatterns []string) error {
 		if info.IsDir() {
 			return nil
 		}
-
-		filename := strings.Replace(path, fmt.Sprintf("%s/", source), "", 1)
+		basePath := fmt.Sprintf("%s%c", source, filepath.Separator)
+		filename := strings.Replace(path, basePath, "", 1)
 		return tar.AddFile(path, filename)
 	})
 }

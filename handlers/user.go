@@ -16,7 +16,7 @@ import (
 func CreateUserHandler(params users.CreateUserParams, principal interface{}) middleware.Responder {
 	tk := k8s.IToToken(principal)
 	// need to have admin permissions to do this action
-	if *tk.IsAdmin == false {
+	if !*tk.IsAdmin {
 		log.Printf("User [%s] doesn't have permission to create a user", *tk.Email)
 		return users.NewCreateUserUnauthorized()
 	}

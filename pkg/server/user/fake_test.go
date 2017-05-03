@@ -30,3 +30,25 @@ func TestFakeOperationsBadLogin(t *testing.T) {
 		t.Errorf("expected ErrPermissionDenied, got %s", err)
 	}
 }
+
+func TestFakeOperationsGetUser(t *testing.T) {
+	fake := NewFakeOperations()
+
+	expectedEmail := "teresa@luizalabs.com"
+	fake.(*FakeOperations).Storage[expectedEmail] = "foo"
+
+	u, err := fake.GetUser(expectedEmail)
+	if err != nil {
+		t.Fatal("error on get user: ", err)
+	}
+	if u.Email != expectedEmail {
+		t.Errorf("expected %s, got %s", expectedEmail, u.Email)
+	}
+}
+
+func TestFakeOperationsGetUserNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	if _, err := fake.GetUser("gopher@luizalabs.com"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %s", err)
+	}
+}

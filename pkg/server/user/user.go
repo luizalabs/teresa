@@ -11,6 +11,7 @@ import (
 
 type Operations interface {
 	Login(email, password string) (string, error)
+	GetUser(email string) (*storage.User, error)
 }
 
 type DatabaseOperations struct {
@@ -19,12 +20,12 @@ type DatabaseOperations struct {
 }
 
 func (dbu *DatabaseOperations) Login(email, password string) (string, error) {
-	u := new(storage.User)
-	if dbu.DB.Where(&storage.User{Email: email}).First(u).RecordNotFound() {
-		log.WithField("user", email).Info("unauthorized")
+	u, err := dbu.GetUser(email)
+	if err != nil {
+		log.WithField("user", email).Info("Not Found")
 		return "", auth.ErrPermissionDenied
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); err != nil {
 		log.Printf("Authentication failed for user [%s]\n", email)
 		return "", auth.ErrPermissionDenied
 	}
@@ -36,6 +37,14 @@ func (dbu *DatabaseOperations) Login(email, password string) (string, error) {
 		return "", auth.ErrPermissionDenied
 	}
 	return token, nil
+}
+
+func (dbu *DatabaseOperations) GetUser(email string) (*storage.User, error) {
+	u := new(storage.User)
+	if dbu.DB.Where(&storage.User{Email: email}).First(u).RecordNotFound() {
+		return nil, ErrNotFound
+	}
+	return u, nil
 }
 
 func NewDatabaseOperations(db *gorm.DB, a auth.Auth) Operations {

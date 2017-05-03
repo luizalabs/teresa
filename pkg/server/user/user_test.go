@@ -62,3 +62,39 @@ func TestDatabaseOperationsBadLogin(t *testing.T) {
 		t.Errorf("expected ErrPermissionDenied, got %s", err)
 	}
 }
+
+func TestDatabaseOperationsGetUser(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error on open in memory databaser ", err)
+	}
+	defer db.Close()
+
+	dbu := NewDatabaseOperations(db, auth.NewFake())
+
+	expectedEmail := "teresa@luizalabs.com"
+	if err = createFakeUser(db, expectedEmail, ""); err != nil {
+		t.Fatal("error on create fake user: ", err)
+	}
+
+	u, err := dbu.GetUser(expectedEmail)
+	if err != nil {
+		t.Fatal("error on GetUser: ", err)
+	}
+	if u.Email != expectedEmail {
+		t.Errorf("expected get user with e-mail %s, got %s", expectedEmail, u.Email)
+	}
+}
+
+func TestDatabaseOperationsGetUserNotFound(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error on open in memory databaser ", err)
+	}
+	defer db.Close()
+
+	dbu := NewDatabaseOperations(db, auth.NewFake())
+	if _, err := dbu.GetUser("gopher@luizalabs.com"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %s", err)
+	}
+}

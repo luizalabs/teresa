@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jinzhu/gorm"
+	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
 	"github.com/luizalabs/teresa-api/pkg/server/user"
 
@@ -26,34 +27,37 @@ type Options struct {
 type Server struct {
 	listener   net.Listener
 	grpcServer *grpc.Server
-	auth       auth.Auth
 }
 
-func unaryInterceptor(a auth.Auth) grpc.UnaryServerInterceptor {
+func unaryInterceptor(a auth.Auth, uOps user.Operations) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if strings.HasSuffix(info.FullMethod, "Login") {
 			return handler(ctx, req)
 		}
 
-		email, err := authorize(ctx, a)
+		user, err := authorize(ctx, a, uOps)
 		if err != nil {
 			return nil, err
 		}
 
-		ctx = context.WithValue(ctx, "email", email)
+		ctx = context.WithValue(ctx, "user", user)
 		return handler(ctx, req)
 	}
 }
 
-func authorize(ctx context.Context, a auth.Auth) (string, error) {
+func authorize(ctx context.Context, a auth.Auth, uOps user.Operations) (*storage.User, error) {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
-		return "", auth.ErrPermissionDenied
+		return nil, auth.ErrPermissionDenied
 	}
 	if len(md["token"]) < 1 || md["token"][0] == "" {
-		return "", auth.ErrPermissionDenied
+		return nil, auth.ErrPermissionDenied
 	}
-	return a.ValidateToken(md["token"][0])
+	email, err := a.ValidateToken(md["token"][0])
+	if err != nil {
+		return nil, err
+	}
+	return uOps.GetUser(email)
 }
 
 func (s *Server) Run() error {
@@ -71,13 +75,14 @@ func New(opt Options) (*Server, error) {
 		return nil, err
 	}
 
+	uOps := user.NewDatabaseOperations(opt.DB, opt.Auth)
 	s := grpc.NewServer(
 		grpc.Creds(creds),
-		grpc.UnaryInterceptor(unaryInterceptor(opt.Auth)),
+		grpc.UnaryInterceptor(unaryInterceptor(opt.Auth, uOps)),
 	)
 
-	us := user.NewService(user.NewDatabaseOperations(opt.DB, opt.Auth))
+	us := user.NewService(uOps)
 	us.RegisterService(s)
 
-	return &Server{listener: l, grpcServer: s, auth: opt.Auth}, nil
+	return &Server{listener: l, grpcServer: s}, nil
 }

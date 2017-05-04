@@ -11,6 +11,8 @@ It is generated from these files:
 It has these top-level messages:
 	LoginRequest
 	LoginResponse
+	SetPasswordRequest
+	Empty
 */
 package user
 
@@ -74,9 +76,35 @@ func (m *LoginResponse) GetToken() string {
 	return ""
 }
 
+type SetPasswordRequest struct {
+	Password string `protobuf:"bytes,1,opt,name=password" json:"password,omitempty"`
+}
+
+func (m *SetPasswordRequest) Reset()                    { *m = SetPasswordRequest{} }
+func (m *SetPasswordRequest) String() string            { return proto.CompactTextString(m) }
+func (*SetPasswordRequest) ProtoMessage()               {}
+func (*SetPasswordRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *SetPasswordRequest) GetPassword() string {
+	if m != nil {
+		return m.Password
+	}
+	return ""
+}
+
+type Empty struct {
+}
+
+func (m *Empty) Reset()                    { *m = Empty{} }
+func (m *Empty) String() string            { return proto.CompactTextString(m) }
+func (*Empty) ProtoMessage()               {}
+func (*Empty) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
 func init() {
 	proto.RegisterType((*LoginRequest)(nil), "user.LoginRequest")
 	proto.RegisterType((*LoginResponse)(nil), "user.LoginResponse")
+	proto.RegisterType((*SetPasswordRequest)(nil), "user.SetPasswordRequest")
+	proto.RegisterType((*Empty)(nil), "user.Empty")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -91,6 +119,7 @@ const _ = grpc.SupportPackageIsVersion4
 
 type UserClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	SetPassword(ctx context.Context, in *SetPasswordRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type userClient struct {
@@ -110,10 +139,20 @@ func (c *userClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.C
 	return out, nil
 }
 
+func (c *userClient) SetPassword(ctx context.Context, in *SetPasswordRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := grpc.Invoke(ctx, "/user.User/SetPassword", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for User service
 
 type UserServer interface {
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	SetPassword(context.Context, *SetPasswordRequest) (*Empty, error)
 }
 
 func RegisterUserServer(s *grpc.Server, srv UserServer) {
@@ -138,6 +177,24 @@ func _User_Login_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
+func _User_SetPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetPasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).SetPassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/SetPassword",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).SetPassword(ctx, req.(*SetPasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _User_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "user.User",
 	HandlerType: (*UserServer)(nil),
@@ -145,6 +202,10 @@ var _User_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _User_Login_Handler,
+		},
+		{
+			MethodName: "SetPassword",
+			Handler:    _User_SetPassword_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -154,15 +215,18 @@ var _User_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("pkg/protobuf/user.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 157 bytes of a gzipped FileDescriptorProto
+	// 201 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x2f, 0xc8, 0x4e, 0xd7,
 	0x2f, 0x28, 0xca, 0x2f, 0xc9, 0x4f, 0x2a, 0x4d, 0xd3, 0x2f, 0x2d, 0x4e, 0x2d, 0xd2, 0x03, 0xf3,
 	0x84, 0x58, 0x40, 0x6c, 0x25, 0x07, 0x2e, 0x1e, 0x9f, 0xfc, 0xf4, 0xcc, 0xbc, 0xa0, 0xd4, 0xc2,
 	0xd2, 0xd4, 0xe2, 0x12, 0x21, 0x11, 0x2e, 0xd6, 0xd4, 0xdc, 0xc4, 0xcc, 0x1c, 0x09, 0x46, 0x05,
 	0x46, 0x0d, 0xce, 0x20, 0x08, 0x47, 0x48, 0x8a, 0x8b, 0xa3, 0x20, 0xb1, 0xb8, 0xb8, 0x3c, 0xbf,
 	0x28, 0x45, 0x82, 0x09, 0x2c, 0x01, 0xe7, 0x2b, 0xa9, 0x72, 0xf1, 0x42, 0x4d, 0x28, 0x2e, 0xc8,
-	0xcf, 0x2b, 0x4e, 0x05, 0x19, 0x51, 0x92, 0x9f, 0x9d, 0x9a, 0x07, 0x33, 0x02, 0xcc, 0x31, 0xb2,
-	0xe0, 0x62, 0x09, 0x2d, 0x4e, 0x2d, 0x12, 0x32, 0xe0, 0x62, 0x05, 0x2b, 0x17, 0x12, 0xd2, 0x03,
-	0x3b, 0x06, 0xd9, 0x76, 0x29, 0x61, 0x14, 0x31, 0x88, 0x79, 0x49, 0x6c, 0x60, 0xf7, 0x1a, 0x03,
-	0x02, 0x00, 0x00, 0xff, 0xff, 0xb8, 0x15, 0xe8, 0x2a, 0xca, 0x00, 0x00, 0x00,
+	0xcf, 0x2b, 0x4e, 0x05, 0x19, 0x51, 0x92, 0x9f, 0x9d, 0x9a, 0x07, 0x33, 0x02, 0xcc, 0x51, 0x32,
+	0xe0, 0x12, 0x0a, 0x4e, 0x2d, 0x09, 0x80, 0xea, 0x82, 0x59, 0x87, 0x6c, 0x30, 0x23, 0x9a, 0xc1,
+	0xec, 0x5c, 0xac, 0xae, 0xb9, 0x05, 0x25, 0x95, 0x46, 0x79, 0x5c, 0x2c, 0xa1, 0xc5, 0xa9, 0x45,
+	0x42, 0x06, 0x5c, 0xac, 0x60, 0x9b, 0x84, 0x84, 0xf4, 0xc0, 0xfe, 0x40, 0x76, 0xb8, 0x94, 0x30,
+	0x8a, 0x18, 0xd4, 0x29, 0x26, 0x5c, 0xdc, 0x48, 0x96, 0x0a, 0x49, 0x40, 0xd4, 0x60, 0xba, 0x43,
+	0x8a, 0x1b, 0x22, 0x03, 0xb6, 0x2f, 0x89, 0x0d, 0x1c, 0x40, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff,
+	0xff, 0x1f, 0xc1, 0xea, 0x4e, 0x3b, 0x01, 0x00, 0x00,
 }

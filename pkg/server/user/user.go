@@ -12,6 +12,7 @@ import (
 type Operations interface {
 	Login(email, password string) (string, error)
 	GetUser(email string) (*storage.User, error)
+	SetPassword(email, newPassword string) error
 }
 
 type DatabaseOperations struct {
@@ -45,6 +46,19 @@ func (dbu *DatabaseOperations) GetUser(email string) (*storage.User, error) {
 		return nil, ErrNotFound
 	}
 	return u, nil
+}
+
+func (dbu *DatabaseOperations) SetPassword(email, newPassword string) error {
+	u, err := dbu.GetUser(email)
+	if err != nil {
+		return err
+	}
+	pass, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	u.Password = string(pass)
+	return dbu.DB.Save(u).Error
 }
 
 func NewDatabaseOperations(db *gorm.DB, a auth.Auth) Operations {

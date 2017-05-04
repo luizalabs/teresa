@@ -98,3 +98,39 @@ func TestDatabaseOperationsGetUserNotFound(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %s", err)
 	}
 }
+
+func TestDatabaseOperationsSetPassword(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error on open in memory databaser ", err)
+	}
+	defer db.Close()
+
+	dbu := NewDatabaseOperations(db, auth.NewFake())
+
+	expectedEmail := "teresa@luizalabs.com"
+	expectedPassword := "secret"
+	if err = createFakeUser(db, expectedEmail, "123456"); err != nil {
+		t.Fatal("error on create fake user: ", err)
+	}
+
+	if err = dbu.SetPassword(expectedEmail, expectedPassword); err != nil {
+		t.Fatal("error trying to set a new password: ", err)
+	}
+	if _, err = dbu.Login(expectedEmail, expectedPassword); err != nil {
+		t.Error("error trying to make login with new password: ", err)
+	}
+}
+
+func TestDatabaseOperationsSetPasswordForInvalidUser(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error on open in memory databaser ", err)
+	}
+	defer db.Close()
+
+	dbu := NewDatabaseOperations(db, auth.NewFake())
+	if err := dbu.SetPassword("gopher@luizalabs.com", "123"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}

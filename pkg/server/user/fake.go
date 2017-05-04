@@ -33,6 +33,17 @@ func (f *FakeOperations) GetUser(email string) (*storage.User, error) {
 	return &storage.User{Email: email, Password: pass}, nil
 }
 
+func (f *FakeOperations) SetPassword(email, newPassword string) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if _, ok := f.Storage[email]; !ok {
+		return ErrNotFound
+	}
+	f.Storage[email] = newPassword
+	return nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

@@ -6,7 +6,6 @@ import (
 
 	context "golang.org/x/net/context"
 
-	"github.com/howeyc/gopass"
 	"github.com/luizalabs/teresa-api/cmd/client/connection"
 	"github.com/luizalabs/teresa-api/pkg/client"
 	"github.com/spf13/cobra"
@@ -34,14 +33,12 @@ func login(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	fmt.Print("Password: ")
-	p, err := gopass.GetPasswdMasked()
+	p, err := client.GetMaskedPassword()
 	if err != nil {
-		if err != gopass.ErrInterrupted {
-			fmt.Fprintln(os.Stderr, "Error trying to get the user password: ", err)
-		}
+		fmt.Fprintln(os.Stderr, "Error trying to get the user password: ", err)
 		return
 	}
+
 	conn, err := connection.New(cfgFile)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
@@ -50,7 +47,7 @@ func login(cmd *cobra.Command, args []string) {
 	defer conn.Close()
 
 	cli := userpb.NewUserClient(conn)
-	res, err := cli.Login(context.Background(), &userpb.LoginRequest{Email: userName, Password: string(p)})
+	res, err := cli.Login(context.Background(), &userpb.LoginRequest{Email: userName, Password: p})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error trying to login in cluster: ", err)
 		return

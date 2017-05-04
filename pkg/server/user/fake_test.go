@@ -52,3 +52,28 @@ func TestFakeOperationsGetUserNotFound(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %s", err)
 	}
 }
+
+func TestFakeOperationsSetPassword(t *testing.T) {
+	fake := NewFakeOperations()
+
+	expectedEmail := "teresa@luizalabs.com"
+	expectedPassword := "123456"
+	fake.(*FakeOperations).Storage[expectedEmail] = "gopher"
+
+	err := fake.SetPassword(expectedEmail, expectedPassword)
+	if err != nil {
+		t.Fatal("error trying to change user password: ", err)
+	}
+	currentPassword := fake.(*FakeOperations).Storage[expectedEmail]
+	if currentPassword != expectedPassword {
+		t.Errorf("expected %s, got %s", expectedPassword, currentPassword)
+	}
+}
+
+func TestFakeOperationsSetPasswordUserNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+
+	if err := fake.SetPassword("gopher@luizalabs.com", "123"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}

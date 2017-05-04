@@ -15,7 +15,7 @@ func TestFakeOperationsLogin(t *testing.T) {
 
 	token, err := fake.Login(expectedEmail, expectedPassword)
 	if err != nil {
-		t.Fatal("Error on perform Login in FakeUserOperations: ", err)
+		t.Fatal("Error on perform Login in FakeOperations: ", err)
 	}
 	expectedToken := "good token"
 	if token != expectedToken {

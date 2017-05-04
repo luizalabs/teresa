@@ -28,7 +28,7 @@ func createFakeUser(db *gorm.DB, email, password string) error {
 func TestDatabaseOperationsLogin(t *testing.T) {
 	db, err := gorm.Open("sqlite3", ":memory:")
 	if err != nil {
-		t.Fatal("error on open in memory databaser ", err)
+		t.Fatal("error on open in memory database ", err)
 	}
 	defer db.Close()
 
@@ -52,7 +52,7 @@ func TestDatabaseOperationsLogin(t *testing.T) {
 func TestDatabaseOperationsBadLogin(t *testing.T) {
 	db, err := gorm.Open("sqlite3", ":memory:")
 	if err != nil {
-		t.Fatal("error on open in memory databaser ", err)
+		t.Fatal("error on open in memory database ", err)
 	}
 	defer db.Close()
 
@@ -66,7 +66,7 @@ func TestDatabaseOperationsBadLogin(t *testing.T) {
 func TestDatabaseOperationsGetUser(t *testing.T) {
 	db, err := gorm.Open("sqlite3", ":memory:")
 	if err != nil {
-		t.Fatal("error on open in memory databaser ", err)
+		t.Fatal("error on open in memory database ", err)
 	}
 	defer db.Close()
 
@@ -89,7 +89,7 @@ func TestDatabaseOperationsGetUser(t *testing.T) {
 func TestDatabaseOperationsGetUserNotFound(t *testing.T) {
 	db, err := gorm.Open("sqlite3", ":memory:")
 	if err != nil {
-		t.Fatal("error on open in memory databaser ", err)
+		t.Fatal("error on open in memory database ", err)
 	}
 	defer db.Close()
 
@@ -102,7 +102,7 @@ func TestDatabaseOperationsGetUserNotFound(t *testing.T) {
 func TestDatabaseOperationsSetPassword(t *testing.T) {
 	db, err := gorm.Open("sqlite3", ":memory:")
 	if err != nil {
-		t.Fatal("error on open in memory databaser ", err)
+		t.Fatal("error on open in memory database ", err)
 	}
 	defer db.Close()
 
@@ -125,7 +125,7 @@ func TestDatabaseOperationsSetPassword(t *testing.T) {
 func TestDatabaseOperationsSetPasswordForInvalidUser(t *testing.T) {
 	db, err := gorm.Open("sqlite3", ":memory:")
 	if err != nil {
-		t.Fatal("error on open in memory databaser ", err)
+		t.Fatal("error on open in memory database ", err)
 	}
 	defer db.Close()
 

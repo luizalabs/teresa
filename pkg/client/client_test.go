@@ -16,7 +16,7 @@ func TestGetRequestMetadaReturnToken(t *testing.T) {
 	}
 	token, ok := metadata["token"]
 	if !ok {
-		t.Fatal("doen't returns token key")
+		t.Fatal("doesn't returns token key")
 	}
 	if token != expectedToken {
 		t.Errorf("expected %s, got %s", expectedToken, token)

@@ -5,6 +5,7 @@ import (
 
 	"testing"
 
+	"github.com/luizalabs/teresa-api/models/storage"
 	userpb "github.com/luizalabs/teresa-api/pkg/protobuf"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
 )
@@ -38,5 +39,23 @@ func TestUserLoginFail(t *testing.T) {
 	)
 	if err != auth.ErrPermissionDenied {
 		t.Error("expected ErrPermisionDenied, got ", err)
+	}
+}
+
+func TestSetPasswordSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+
+	expectedEmail := "teresa@luizalabs.com"
+	expectedPassword := "123456"
+	fake.(*FakeOperations).Storage[expectedEmail] = "gopher"
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: expectedEmail})
+	_, err := s.SetPassword(
+		ctx,
+		&userpb.SetPasswordRequest{Password: expectedPassword},
+	)
+	if err != nil {
+		t.Error("Got error on make SetPassword: ", err)
 	}
 }

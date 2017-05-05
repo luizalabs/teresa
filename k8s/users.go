@@ -49,10 +49,11 @@ func (c users) getWithTeams(userEmail string, l *log.Entry) (user *models.User, 
 	user.IsAdmin = &su.IsAdmin
 	user.Name = &su.Name
 	for _, st := range su.Teams {
+		copy := st
 		t := &models.Team{}
-		t.Name = &st.Name
-		t.URL = st.URL
-		t.Email = strfmt.Email(st.Email)
+		t.Name = &copy.Name
+		t.URL = copy.URL
+		t.Email = strfmt.Email(copy.Email)
 		t.IAmMember = true
 		user.Teams = append(user.Teams, t)
 	}

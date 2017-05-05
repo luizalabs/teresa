@@ -5,6 +5,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Fixed
 - Finish the merge with `teresa-cli` by removing all references to the old repo
+- Multi team tokens. Before this fix a user would get access only to apps
+  from one of its teams.
 
 ## [0.3.1] - 2017-04-24
 ### Fixed

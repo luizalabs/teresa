@@ -2,11 +2,19 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/go-openapi/strfmt"
+	context "golang.org/x/net/context"
+
 	"github.com/howeyc/gopass"
+	"github.com/luizalabs/teresa-api/cmd/client/connection"
+	"github.com/luizalabs/teresa-api/pkg/client"
 	"github.com/spf13/cobra"
+
+	userpb "github.com/luizalabs/teresa-api/pkg/protobuf"
 )
+
+var userName string
 
 var loginCmd = &cobra.Command{
 	Use:   "login",
@@ -17,34 +25,44 @@ eg.:
 
 	$ teresa login --user user@mydomain.com
 	`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if userNameFlag == "" {
-			Usage(cmd)
-			return
-		}
-		fmt.Printf("Password: ")
-		p, err := gopass.GetPasswdMasked()
-		if err != nil {
-			if err != gopass.ErrInterrupted {
-				log.WithError(err).Error("Error trying to get the user password")
-			}
-			return
-		}
+	Run: login,
+}
 
-		tc := NewTeresa()
-		token, err := tc.Login(strfmt.Email(userNameFlag), strfmt.Password(p))
-		if err != nil {
-			log.Fatalf("Failed to login: %s\n", err)
+func login(cmd *cobra.Command, args []string) {
+	if userName == "" {
+		cmd.Usage()
+		return
+	}
+
+	fmt.Print("Password: ")
+	p, err := gopass.GetPasswdMasked()
+	if err != nil {
+		if err != gopass.ErrInterrupted {
+			fmt.Fprintln(os.Stderr, "Error trying to get the user password: ", err)
 		}
-		log.Infof("Login OK")
-		log.Debugf("Auth token: %s\n", token)
-		if err := SetAuthToken(token); err != nil {
-			log.Fatalf("Failed to update the auth token: %s\n", err)
-		}
-	},
+		return
+	}
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
+		return
+	}
+	defer conn.Close()
+
+	cli := userpb.NewUserClient(conn)
+	res, err := cli.Login(context.Background(), &userpb.LoginRequest{Email: userName, Password: string(p)})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error trying to login in cluster: ", err)
+		return
+	}
+	fmt.Println("Login OK")
+
+	if err = client.SaveToken(cfgFile, res.Token); err != nil {
+		fmt.Fprintln(os.Stderr, "Error trying to save token in configuration file: ", err)
+	}
 }
 
 func init() {
-	loginCmd.Flags().StringVar(&userNameFlag, "user", "", "username to login with")
+	loginCmd.Flags().StringVar(&userName, "user", "", "username to login with")
 	RootCmd.AddCommand(loginCmd)
 }

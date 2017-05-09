@@ -1,0 +1,8 @@
+clusters:
+  cluster-a:
+    server: https://teresa-a.com
+    token: auth-token-cluster-a
+  cluster-b:
+    server: https://teresa-b.com
+    token: auth-token-cluster-b
+current_cluster: cluster-b

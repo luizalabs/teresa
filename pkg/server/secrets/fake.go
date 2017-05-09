@@ -19,7 +19,7 @@ func (f *Fake) PublicKey() (*rsa.PublicKey, error) {
 }
 
 func NewFake() (Secrets, error) {
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	key, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		return nil, err
 	}

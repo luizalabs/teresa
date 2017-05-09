@@ -17,10 +17,10 @@ func (t *tokenAuth) GetRequestMetadata(context.Context, ...string) (map[string]s
 	return map[string]string{"token": t.token}, nil
 }
 
-func (*tokenAuth) RequireTransportSecurity() bool { return false }
+func (*tokenAuth) RequireTransportSecurity() bool { return true }
 
 func New(cfg ClusterConfig) (*grpc.ClientConn, error) {
-	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	tlsConfig := new(tls.Config)
 	creds := credentials.NewTLS(tlsConfig)
 	return grpc.Dial(
 		cfg.Server,

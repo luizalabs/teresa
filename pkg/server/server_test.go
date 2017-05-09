@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	privateKey, _ = rsa.GenerateKey(rand.Reader, 2048)
+	privateKey, _ = rsa.GenerateKey(rand.Reader, 1024)
 	publicKey     = &privateKey.PublicKey
 	authenticator = auth.New(privateKey, publicKey)
 )

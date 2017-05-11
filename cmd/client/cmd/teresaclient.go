@@ -14,7 +14,6 @@ import (
 	"github.com/go-openapi/strfmt"
 	apiclient "github.com/luizalabs/teresa-api/client"
 	"github.com/luizalabs/teresa-api/client/apps"
-	"github.com/luizalabs/teresa-api/client/auth"
 	"github.com/luizalabs/teresa-api/client/deployments"
 	"github.com/luizalabs/teresa-api/client/teams"
 	"github.com/luizalabs/teresa-api/client/users"
@@ -84,18 +83,6 @@ func NewTeresa() TeresaClient {
 		tc.apiKeyAuthFunc = httptransport.APIKeyAuth("Authorization", "header", cluster.Token)
 	}
 	return tc
-}
-
-// Login login the user
-func (tc TeresaClient) Login(email strfmt.Email, password strfmt.Password) (token string, err error) {
-	params := auth.NewUserLoginParams()
-	params.WithBody(&models.Login{Email: &email, Password: &password})
-
-	r, err := tc.teresa.Auth.UserLogin(params)
-	if err != nil {
-		return "", err
-	}
-	return r.Payload.Token, nil
 }
 
 // CreateTeam Creates a team

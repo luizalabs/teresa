@@ -10,7 +10,6 @@ import (
 	middleware "github.com/go-openapi/runtime/middleware"
 	"github.com/luizalabs/teresa-api/handlers"
 	"github.com/luizalabs/teresa-api/restapi/operations"
-	"github.com/luizalabs/teresa-api/restapi/operations/auth"
 	"github.com/luizalabs/teresa-api/restapi/operations/deployments"
 	"github.com/luizalabs/teresa-api/restapi/operations/teams"
 	"github.com/luizalabs/teresa-api/restapi/operations/users"
@@ -114,10 +113,6 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	})
 	api.UsersUpdateUserHandler = users.UpdateUserHandlerFunc(func(params users.UpdateUserParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation users.UpdateUser has not yet been implemented")
-	})
-	// login handler
-	api.AuthUserLoginHandler = auth.UserLoginHandlerFunc(func(params auth.UserLoginParams) middleware.Responder {
-		return handlers.LoginHandler(params)
 	})
 
 	api.ServerShutdown = func() {}

@@ -631,36 +631,6 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/GenericError"
-  /login:
-    post:
-      summary: Log the user
-      description: User login
-      tags:
-        - auth
-      operationId: userLogin
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: "#/definitions/Login"
-      responses:
-        200:
-          description: Login token
-          schema:
-            $ref: "#/definitions/LoginToken"
-        401:
-          description: Unauthorized
-          schema:
-            $ref: "#/definitions/Forbidden"
-        403:
-          description: Forbidden
-          schema:
-            $ref: "#/definitions/Forbidden"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/GenericError"
   /swagger:
     x-swagger-pipe: swagger_raw
 parameters:

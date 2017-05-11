@@ -10,7 +10,6 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/luizalabs/teresa-api/client/apps"
-	"github.com/luizalabs/teresa-api/client/auth"
 	"github.com/luizalabs/teresa-api/client/deployments"
 	"github.com/luizalabs/teresa-api/client/teams"
 	"github.com/luizalabs/teresa-api/client/users"
@@ -35,8 +34,6 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *Teresa {
 
 	cli.Apps = apps.New(transport, formats)
 
-	cli.Auth = auth.New(transport, formats)
-
 	cli.Deployments = deployments.New(transport, formats)
 
 	cli.Teams = teams.New(transport, formats)
@@ -49,8 +46,6 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *Teresa {
 // Teresa is a client for teresa
 type Teresa struct {
 	Apps *apps.Client
-
-	Auth *auth.Client
 
 	Deployments *deployments.Client
 
@@ -66,8 +61,6 @@ func (c *Teresa) SetTransport(transport runtime.ClientTransport) {
 	c.Transport = transport
 
 	c.Apps.SetTransport(transport)
-
-	c.Auth.SetTransport(transport)
 
 	c.Deployments.SetTransport(transport)
 

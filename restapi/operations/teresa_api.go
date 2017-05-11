@@ -17,7 +17,6 @@ import (
 	"github.com/go-openapi/swag"
 
 	"github.com/luizalabs/teresa-api/restapi/operations/apps"
-	"github.com/luizalabs/teresa-api/restapi/operations/auth"
 	"github.com/luizalabs/teresa-api/restapi/operations/deployments"
 	"github.com/luizalabs/teresa-api/restapi/operations/teams"
 	"github.com/luizalabs/teresa-api/restapi/operations/users"
@@ -103,8 +102,6 @@ type TeresaAPI struct {
 	TeamsUpdateTeamHandler teams.UpdateTeamHandler
 	// UsersUpdateUserHandler sets the operation handler for the update user operation
 	UsersUpdateUserHandler users.UpdateUserHandler
-	// AuthUserLoginHandler sets the operation handler for the user login operation
-	AuthUserLoginHandler auth.UserLoginHandler
 
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
@@ -266,10 +263,6 @@ func (o *TeresaAPI) Validate() error {
 
 	if o.UsersUpdateUserHandler == nil {
 		unregistered = append(unregistered, "users.UpdateUserHandler")
-	}
-
-	if o.AuthUserLoginHandler == nil {
-		unregistered = append(unregistered, "auth.UserLoginHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -469,11 +462,6 @@ func (o *TeresaAPI) initHandlerCache() {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)
 	}
 	o.handlers["PUT"]["/users/{user_id}"] = users.NewUpdateUser(o.context, o.UsersUpdateUserHandler)
-
-	if o.handlers["POST"] == nil {
-		o.handlers[strings.ToUpper("POST")] = make(map[string]http.Handler)
-	}
-	o.handlers["POST"]["/login"] = auth.NewUserLogin(o.context, o.AuthUserLoginHandler)
 
 }
 

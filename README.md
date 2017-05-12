@@ -4,6 +4,8 @@ Teresa is an extremely simple platform as a service that runs on top of [Kuberne
 The API needs a database backend and access to Amazon S3 for storage.  
 To have a full Teresa setup you'll need the API running as a POD and the CLI.
 
+**Note**: the master branch is a development branch (unstable). Use the [**latest stable release**](https://github.com/luizalabs/teresa-api/releases/latest).
+
 ## API
 
 ### Database Backends

@@ -31,15 +31,25 @@ func runServer(cmd *cobra.Command, args []string) {
 		log.Fatal("Error on connect to Database: ", err)
 	}
 
-	a, err := getAuth()
+	sec, err := getSecrets()
 	if err != nil {
-		log.Fatal("Error on get auth information", err)
+		log.Fatal("Error on get secrects information ", err)
 	}
 
+	a, err := getAuth(sec)
+	if err != nil {
+		log.Fatal("Error on get auth information ", err)
+	}
+
+	tlsCert, err := sec.TLSCertificate()
+	if err != nil {
+		log.Fatal("Error on get TLS cert ", err)
+	}
 	s, err := server.New(server.Options{
-		Port: port,
-		Auth: a,
-		DB:   db})
+		Port:    port,
+		Auth:    a,
+		DB:      db,
+		TLSCert: tlsCert})
 	if err != nil {
 		log.Fatal("Error on create Server: ", err)
 	}
@@ -48,11 +58,15 @@ func runServer(cmd *cobra.Command, args []string) {
 	log.Print(s.Run())
 }
 
-func getAuth() (auth.Auth, error) {
-	s, err := secrets.NewK8SSecrets()
-	if err != nil {
+func getSecrets() (secrets.Secrets, error) {
+	conf := new(secrets.FileSystemSecretsConfig)
+	if err := envconfig.Process("teresasecrets", conf); err != nil {
 		return nil, err
 	}
+	return secrets.NewFileSystemSecrets(*conf)
+}
+
+func getAuth(s secrets.Secrets) (auth.Auth, error) {
 	private, err := s.PrivateKey()
 	if err != nil {
 		return nil, err

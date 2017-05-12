@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
 	"strings"
@@ -19,8 +20,7 @@ import (
 
 type Options struct {
 	Port    string
-	TLSCert string
-	TLSKey  string
+	TLSCert *tls.Certificate
 	Auth    auth.Auth
 	DB      *gorm.DB
 }
@@ -71,10 +71,7 @@ func New(opt Options) (*Server, error) {
 		return nil, err
 	}
 
-	creds, err := credentials.NewServerTLSFromFile(opt.TLSCert, opt.TLSKey)
-	if err != nil {
-		return nil, err
-	}
+	creds := credentials.NewServerTLSFromCert(opt.TLSCert)
 
 	uOps := user.NewDatabaseOperations(opt.DB, opt.Auth)
 	s := grpc.NewServer(

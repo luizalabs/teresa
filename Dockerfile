@@ -4,8 +4,7 @@ RUN mkdir -p /go/src/github.com/luizalabs/teresa-api
 WORKDIR /go/src/github.com/luizalabs/teresa-api
 COPY . /go/src/github.com/luizalabs/teresa-api
 
-RUN go get github.com/tools/godep
-RUN godep go install ./cmd/teresa-server/...
+RUN go build -i -o teresa ./cmd/server/main.go
 
 ENV TERESAK8S_HOST $TERESAK8S_HOST
 ENV TERESAK8S_USERNAME $TERESAK8S_USERNAME
@@ -17,5 +16,5 @@ ENV TERESAFILESTORAGE_AWS_SECRET $TERESAFILESTORAGE_AWS_SECRET
 ENV TERESAFILESTORAGE_AWS_REGION $TERESAFILESTORAGE_AWS_REGION
 ENV TERESAFILESTORAGE_AWS_BUCKET $TERESAFILESTORAGE_AWS_BUCKET
 
-CMD ["teresa-server", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["./teresa", "--port", "8080"]
 EXPOSE 8080

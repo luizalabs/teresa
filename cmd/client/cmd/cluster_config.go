@@ -56,11 +56,6 @@ func setCluster(name string, server string, current bool, f string) error {
 		return errors.New("Name, server and filename must be provided")
 	}
 
-	// try and parse the server url upfront
-	if _, err := ParseServerURL(server); err != nil {
-		return err
-	}
-
 	c, err := readOrCreateConfigFile(f)
 	if err != nil {
 		return err

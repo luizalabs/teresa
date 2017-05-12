@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net"
 	"strings"
 
@@ -65,7 +66,7 @@ func (s *Server) Run() error {
 }
 
 func New(opt Options) (*Server, error) {
-	l, err := net.Listen("tcp", opt.Port)
+	l, err := net.Listen("tcp", fmt.Sprintf(":%s", opt.Port))
 	if err != nil {
 		return nil, err
 	}

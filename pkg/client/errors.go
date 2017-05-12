@@ -9,6 +9,8 @@ func GetErrorMsg(err error) string {
 	switch grpc.Code(err) {
 	case codes.PermissionDenied:
 		return "Permission Denied"
+	case codes.Unavailable:
+		return "Server Unavailable"
 	}
 	return err.Error()
 }

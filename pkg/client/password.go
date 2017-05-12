@@ -6,11 +6,12 @@ import (
 	"github.com/howeyc/gopass"
 )
 
-func GetMaskedPassword() (string, error) {
-	fmt.Print("Password: ")
+func GetMaskedPassword(prompt string) (string, error) {
+	fmt.Print(prompt)
 	p, err := gopass.GetPasswdMasked()
 	if err != nil && err != gopass.ErrInterrupted {
 		return "", err
 	}
+	fmt.Print("\r")
 	return string(p), nil
 }

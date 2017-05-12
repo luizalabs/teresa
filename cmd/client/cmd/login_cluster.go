@@ -33,7 +33,7 @@ func login(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	p, err := client.GetMaskedPassword()
+	p, err := client.GetMaskedPassword("Password: ")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error trying to get the user password: ", err)
 		return
@@ -49,7 +49,7 @@ func login(cmd *cobra.Command, args []string) {
 	cli := userpb.NewUserClient(conn)
 	res, err := cli.Login(context.Background(), &userpb.LoginRequest{Email: userName, Password: p})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error trying to login in cluster: ", err)
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
 		return
 	}
 	fmt.Println("Login OK")

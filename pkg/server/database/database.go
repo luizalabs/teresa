@@ -30,7 +30,7 @@ func New(conf Config) (*gorm.DB, error) {
 		uri = conf.Database
 	}
 
-	log.Printf("Using %s to connect to %s", dialect, uri)
+	log.Printf("Using %s to connect to %s", dialect, conf.Database)
 	db, err := gorm.Open(dialect, uri)
 	if err != nil {
 		return nil, err

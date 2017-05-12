@@ -65,7 +65,7 @@ var setUserPasswordCmd = &cobra.Command{
 }
 
 func setPassword(cmd *cobra.Command, args []string) {
-	p, err := client.GetMaskedPassword()
+	p, err := client.GetMaskedPassword("New Password: ")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error trying to get the user password: ", err)
 	}
@@ -78,7 +78,7 @@ func setPassword(cmd *cobra.Command, args []string) {
 
 	cli := userpb.NewUserClient(conn)
 	if _, err := cli.SetPassword(context.Background(), &userpb.SetPasswordRequest{Password: p}); err != nil {
-		fmt.Fprintln(os.Stderr, "Error trying to set new password: ", err)
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
 		return
 	}
 	fmt.Println("Password updated")

@@ -10,6 +10,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/luizalabs/teresa-api/cmd/client/tar"
+	"github.com/luizalabs/teresa-api/pkg/client"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 )
@@ -71,6 +72,17 @@ var deployCmd = &cobra.Command{
 		}
 		return nil
 	},
+}
+
+func getCurrentClusterName() (string, error) {
+	cfg, err := client.ReadConfigFile(cfgFile)
+	if err != nil {
+		return "", err
+	}
+	if cfg.CurrentCluster == "" {
+		return "", client.ErrInvalidConfigFile
+	}
+	return cfg.CurrentCluster, nil
 }
 
 // // Writer to be used on deployment, as Write() is very specific and

@@ -17,7 +17,7 @@ type Config struct {
 }
 
 func New(conf Config) (*gorm.DB, error) {
-	dialect := "sqlite"
+	dialect := "sqlite3"
 	uri := "teresa.sqlite"
 	if conf.Hostname != "" {
 		dialect = "mysql"

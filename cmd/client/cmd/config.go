@@ -1,15 +1,17 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 
+	"github.com/luizalabs/teresa-api/pkg/client"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"gopkg.in/yaml.v2"
+)
+
+var (
+	serverFlag  string
+	currentFlag bool
 )
 
 // configCmd represents the config command
@@ -33,163 +35,118 @@ another via: teresa config use-cluster another-cluster.
 	`,
 }
 
+// returns the config file
+var viewConfigCmd = &cobra.Command{
+	Use:   "view",
+	Short: "view the config file",
+	Long: `View the config file.
+
+eg.:
+
+	$ teresa config view
+	`,
+	Run: viewConfigFile,
+}
+
+var setClusterCmd = &cobra.Command{
+	Use:   "set-cluster name",
+	Short: "sets a cluster entry in the config file",
+	Long: `Add or update a cluster entry.
+
+eg.:
+
+	$ teresa config set-cluster aws_staging --server https://staging.mydomain.com
+	`,
+	Run: setCluster,
+}
+
+var useClusterCmd = &cobra.Command{
+	Use:   "use-cluster name",
+	Short: "sets a cluster as the current in the config file",
+	Long: `Set a cluster as in-use, so every action will be sent to it.
+
+eg.:
+
+	$ teresa config use-cluster aws_staging
+	`,
+	Run: useCluster,
+}
+
 func init() {
 	RootCmd.AddCommand(configCmd)
+
+	configCmd.AddCommand(viewConfigCmd)
+
+	setClusterCmd.Flags().StringVarP(&serverFlag, "server", "s", "", "URI of the server")
+	setClusterCmd.Flags().BoolVar(&currentFlag, "current", false, "Set this server to future use")
+	configCmd.AddCommand(setClusterCmd)
+
+	configCmd.AddCommand(useClusterCmd)
 }
 
-type clusterConfig struct {
-	Server string `yaml:"server"`
-	Token  string `yaml:"token"`
-}
-
-type configFile struct {
-	Version        string                   `yaml:"version"`
-	Clusters       map[string]clusterConfig `yaml:"clusters"`
-	CurrentCluster string                   `yaml:"current_cluster"`
-}
-
-// GetAuthToken is a convenience function to return the jwt token for
-// the currently selected cluster.
-func GetAuthToken() string {
-	cfg, err := readConfigFile(cfgFile)
-	if err != nil {
-		log.Fatal(err)
+func useCluster(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		cmd.Usage()
+		return
 	}
-	n, err := getCurrentClusterName()
+	name := args[0]
+	c, err := client.ReadConfigFile(cfgFile)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, "Cannot read the config file, are you create it with `teresa set-cluster` command?")
+		return
 	}
-	cluster := cfg.Clusters[n]
-	return cluster.Token
+	if _, ok := c.Clusters[name]; !ok {
+		fmt.Fprintf(os.Stderr, "Cluster `%s` not configured yet\n", name)
+		return
+	}
+	c.CurrentCluster = name
+	if err = client.SaveConfigFile(cfgFile, c); err != nil {
+		fmt.Fprintln(os.Stderr, "Erro trying to save config file:", err)
+	}
 }
 
-// SetAuthToken Persists the jwt auth token on the config file, overwriting
-// the old value, if any
-func SetAuthToken(token string) (err error) {
-	cfg, err := readConfigFile(cfgFile)
-	if err != nil {
-		log.Fatal(err)
+// setCluster add a new server to the config file
+func setCluster(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		cmd.Usage()
+		return
 	}
-	n, err := getCurrentClusterName()
-	if err != nil {
-		log.Fatal(err)
+	if serverFlag == "" {
+		fmt.Fprintln(os.Stderr, "Server URI not provided")
+		return
 	}
-	cluster := cfg.Clusters[n]
-	cluster.Token = token
-	cfg.Clusters[n] = cluster
-	err = writeConfigFile(cfgFile, cfg)
-	return
+	name := args[0]
+
+	c, err := client.ReadConfigFile(cfgFile)
+	if err != nil {
+		c = &client.Config{
+			Clusters:       make(map[string]client.ClusterConfig),
+			CurrentCluster: name,
+		}
+	}
+
+	c.Clusters[name] = client.ClusterConfig{Server: serverFlag}
+	if currentFlag {
+		c.CurrentCluster = name
+	}
+
+	if err = client.SaveConfigFile(cfgFile, c); err != nil {
+		fmt.Fprintln(os.Stderr, "Erro trying to save config file:", err)
+	}
 }
 
-// read the config file from disk
-func readConfigFile(f string) (*configFile, error) {
-	y, err := ioutil.ReadFile(f)
+func viewConfigFile(cmd *cobra.Command, args []string) {
+	y, err := ioutil.ReadFile(cfgFile)
 	if err != nil {
-		if os.IsNotExist(err) {
-			log.WithError(err).WithField("fileName", f).Debug("File not found when trying to read the config file")
+		if _, ok := err.(*os.PathError); ok {
+			fmt.Fprintf(
+				os.Stderr,
+				"Config file not found on `%s` use command `teresa config set-cluster` to create the config file\n",
+				cfgFile)
 		} else {
-			log.WithError(err).Error("Error loading the config file")
+			fmt.Fprintln(os.Stderr, "Error trying to read config file: ", err)
 		}
-		return nil, err
-	}
-	conf := new(configFile)
-	if err = yaml.Unmarshal(y, conf); err != nil {
-		log.WithError(err).WithField("cfgFile", f).Error("Error trying to unmarshal the config file")
-		return nil, err
-	}
-	if conf.Clusters == nil {
-		conf.Clusters = make(map[string]clusterConfig)
-	}
-	return conf, nil
-}
-
-// return the config file loaded from disk or creates a new one (empty with the base needs)
-func readOrCreateConfigFile(f string) (*configFile, error) {
-	if c, err := readConfigFile(cfgFile); err == nil || !os.IsNotExist(err) {
-		return c, err
-	}
-
-	// set defaults
-	log.Debug("Config file not found... creating the base one")
-	conf := configFile{Version: version, Clusters: make(map[string]clusterConfig)}
-	return &conf, nil
-}
-
-// parse the config object to yaml (byte array pointer)
-func marshalConfigFile(c *configFile) (b *[]byte, err error) {
-	z, err := yaml.Marshal(&c)
-	if err != nil {
-		log.WithError(err).WithField("config", c).Error("Error marshaling the config file")
-		return nil, err
-	}
-	return &z, nil
-}
-
-// write the config file to disk in yaml format
-func writeConfigFile(f string, c *configFile) error {
-	// TODO: implement validate before writing
-	log.WithField("fileName", f).WithField("config", *c).Debug("Marshaling the config file to save")
-	b, err := marshalConfigFile(c)
-	if err != nil {
-		return err
-	}
-	// get config basepath
-	p := filepath.Dir(f)
-	d, err := os.Stat(p)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			log.WithError(err).WithField("directory", p).Error("Failed to check if the directory exists")
-			return err
-		}
-		log.WithField("directory", p).Debug("Config basepath not found... creating")
-		if err = os.MkdirAll(p, 0755); err != nil {
-			log.WithError(err).WithField("directory", p).Error("Failed to create the directory")
-			return err
-		}
-	} else if !d.IsDir() {
-		log.WithField("directory", p).Error("Path exists, but isn't a directory")
-		return errors.New("Path exists, but isn't a directory")
-	}
-	if err = ioutil.WriteFile(f, *b, 0600); err != nil {
-		log.WithError(err).Error("Error while writing the config file to disk")
-	}
-	return nil
-}
-
-// get the name of the current cluster in the config file
-func getCurrentClusterName() (n string, err error) {
-	n = viper.GetString("current_cluster")
-	if n == "" {
-		log.Debug("Cluster not set yet")
-		err = newSysError("Set a cluster to use before continue")
-	}
-	return
-}
-
-// return the current cluster
-func getCurrentCluster() (c *clusterConfig, err error) {
-	n, err := getCurrentClusterName()
-	if err != nil {
 		return
 	}
-	k := fmt.Sprintf("clusters.%s", n)
-	if err := viper.UnmarshalKey(k, &c); err != nil {
-		log.WithError(err).Fatal("Erro trying to unmarshal the current cluster")
-		return nil, errors.New("Erro trying to unmarshal the current cluster")
-	}
-	return
-}
-
-// return the config file yaml
-func getConfigFileYaml(f string) (y string, err error) {
-	c, err := readOrCreateConfigFile(f)
-	if err != nil {
-		return
-	}
-	b, err := marshalConfigFile(c)
-	if err != nil {
-		return
-	}
-	y = string((*b)[:])
-	return
+	fmt.Println(string(y))
 }

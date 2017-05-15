@@ -4,8 +4,6 @@ package cmd
 var (
 	cfgFile          string
 	debugFlag        bool
-	serverFlag       string
-	currentFlag      bool
 	teamIDFlag       int64
 	teamNameFlag     string
 	teamEmailFlag    string

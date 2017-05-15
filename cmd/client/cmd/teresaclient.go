@@ -18,6 +18,7 @@ import (
 	"github.com/luizalabs/teresa-api/client/teams"
 	"github.com/luizalabs/teresa-api/client/users"
 	"github.com/luizalabs/teresa-api/models"
+	cli "github.com/luizalabs/teresa-api/pkg/client"
 	_ "github.com/prometheus/common/log" // still needed?
 )
 
@@ -55,15 +56,10 @@ func ParseServerURL(s string) (TeresaServer, error) {
 
 // NewTeresa foo bar
 func NewTeresa() TeresaClient {
-	cfg, err := readConfigFile(cfgFile)
+	cluster, err := cli.GetConfig(cfgFile)
 	if err != nil {
 		log.Fatalf("Failed to read config file, err: %+v\n", err)
 	}
-	n, err := getCurrentClusterName()
-	if err != nil {
-		log.Fatalf("Failed to get current cluster name, err: %+v\n", err)
-	}
-	cluster := cfg.Clusters[n]
 	suffix := "/v1"
 
 	tc := TeresaClient{teresa: apiclient.Default}

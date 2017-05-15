@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package team;
+
+service Team {
+    rpc Create(CreateRequest) returns (Empty);
+}
+
+message CreateRequest {
+    string name = 1;
+    string email = 2;
+    string url = 3;
+}
+
+message Empty {}

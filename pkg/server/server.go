@@ -11,6 +11,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/team"
 	"github.com/luizalabs/teresa-api/pkg/server/user"
 
 	"google.golang.org/grpc"
@@ -81,6 +82,10 @@ func New(opt Options) (*Server, error) {
 
 	us := user.NewService(uOps)
 	us.RegisterService(s)
+
+	tOps := team.NewDatabaseOperations(opt.DB)
+	t := team.NewService(tOps)
+	t.RegisterService(s)
 
 	return &Server{listener: l, grpcServer: s}, nil
 }

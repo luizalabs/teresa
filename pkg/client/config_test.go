@@ -16,7 +16,7 @@ func TestReadConfigFileForInvalidFiles(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		_, err := readConfigFile(filepath.Join("testdata", tc.file))
+		_, err := ReadConfigFile(filepath.Join("testdata", tc.file))
 		if err != ErrInvalidConfigFile {
 			t.Errorf("(%s) expected ErrInvalidConfigFile, got %v", tc.file, err)
 		}
@@ -24,7 +24,7 @@ func TestReadConfigFileForInvalidFiles(t *testing.T) {
 }
 
 func TestReadConfigFileForBlankFile(t *testing.T) {
-	c, err := readConfigFile(filepath.Join("testdata", "blankConfigFile.yaml"))
+	c, err := ReadConfigFile(filepath.Join("testdata", "blankConfigFile.yaml"))
 	if err != nil {
 		t.Fatal("error on read a blank configuration file: ", err)
 	}
@@ -34,7 +34,7 @@ func TestReadConfigFileForBlankFile(t *testing.T) {
 }
 
 func TestReadConfigFileForValidFile(t *testing.T) {
-	c, err := readConfigFile(filepath.Join("testdata", "validConfigFile.yaml"))
+	c, err := ReadConfigFile(filepath.Join("testdata", "validConfigFile.yaml"))
 	if err != nil {
 		t.Fatal("error on read a valid configuration file: ", err)
 	}

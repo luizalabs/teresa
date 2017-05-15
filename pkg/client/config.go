@@ -37,7 +37,7 @@ func init() {
 }
 
 func SaveToken(cfgFile, token string) error {
-	cfg, err := readConfigFile(cfgFile)
+	cfg, err := ReadConfigFile(cfgFile)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func SaveConfigFile(path string, cfg *Config) error {
 }
 
 func GetConfig(cfgFile string) (*ClusterConfig, error) {
-	cfg, err := readConfigFile(cfgFile)
+	cfg, err := ReadConfigFile(cfgFile)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func GetConfig(cfgFile string) (*ClusterConfig, error) {
 	return &currentClusterConfig, nil
 }
 
-func readConfigFile(cfgFile string) (*Config, error) {
+func ReadConfigFile(cfgFile string) (*Config, error) {
 	y, err := ioutil.ReadFile(cfgFile)
 	if err != nil {
 		return nil, ErrInvalidConfigFile

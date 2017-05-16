@@ -42,18 +42,8 @@ Note that the user's password must be at least 8 characters long. eg.:
 var deleteUserCmd = &cobra.Command{
 	Use:   "user",
 	Short: "Delete an user",
-	Long: `Delete an user.
-	`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if userIDFlag == 0 {
-			Usage(cmd)
-			return
-		}
-		if err := NewTeresa().DeleteUser(userIDFlag); err != nil {
-			Fatalf(cmd, "Failed to delete user, err: %s\n", err)
-		}
-		log.Infof("User deleted.")
-	},
+	Long:  `Delete an user.`,
+	Run:   deleteUser,
 }
 
 // set password for an user
@@ -84,6 +74,30 @@ func setPassword(cmd *cobra.Command, args []string) {
 	fmt.Println("Password updated")
 }
 
+func deleteUser(cmd *cobra.Command, args []string) {
+	if userEmailFlag == "" {
+		Usage(cmd)
+		return
+	}
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
+		return
+	}
+	defer conn.Close()
+
+	cli := userpb.NewUserClient(conn)
+	_, err = cli.Delete(
+		context.Background(),
+		&userpb.DeleteRequest{Email: userEmailFlag},
+	)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+	fmt.Println("User deleted")
+}
+
 func init() {
 	createCmd.AddCommand(userCmd)
 	userCmd.Flags().StringVar(&userNameFlag, "name", "", "user name [required]")
@@ -92,7 +106,7 @@ func init() {
 	userCmd.Flags().BoolVar(&isAdminFlag, "admin", false, "admin")
 
 	deleteCmd.AddCommand(deleteUserCmd)
-	deleteUserCmd.Flags().Int64Var(&userIDFlag, "id", 0, "user ID [required]")
+	deleteUserCmd.Flags().StringVar(&userEmailFlag, "email", "", "user email [required]")
 
 	RootCmd.AddCommand(setUserPasswordCmd)
 }

@@ -59,3 +59,44 @@ func TestSetPasswordSuccess(t *testing.T) {
 		t.Error("Got error on make SetPassword: ", err)
 	}
 }
+
+func TestDeleteSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+
+	admin := &storage.User{
+		Email:   "admin@luizalabs.com",
+		IsAdmin: true,
+	}
+	email := "teresa@luizalabs.com"
+	fake.(*FakeOperations).Storage[email] = "gopher"
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", admin)
+	_, err := s.Delete(
+		ctx,
+		&userpb.DeleteRequest{Email: email},
+	)
+	if err != nil {
+		t.Error("Got error on Delete: ", err)
+	}
+}
+
+func TestDeletePermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+
+	fakeAdmin := &storage.User{
+		Email: "admin@luizalabs.com",
+	}
+	email := "teresa@luizalabs.com"
+	fake.(*FakeOperations).Storage[email] = "gopher"
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", fakeAdmin)
+	_, err := s.Delete(
+		ctx,
+		&userpb.DeleteRequest{Email: email},
+	)
+	if err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %s", err)
+	}
+}

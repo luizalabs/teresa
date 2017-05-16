@@ -77,3 +77,26 @@ func TestFakeOperationsSetPasswordUserNotFound(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
+
+func TestFakeOperationsDelete(t *testing.T) {
+	fake := NewFakeOperations()
+
+	email := "teresa@luizalabs.com"
+	fake.(*FakeOperations).Storage[email] = "gopher"
+
+	if err := fake.Delete(email); err != nil {
+		t.Fatal("Error performing delete in FakeOperations: ", err)
+	}
+	_, ok := fake.(*FakeOperations).Storage[email]
+	if ok {
+		t.Errorf("expected false for key %s, got true", email)
+	}
+}
+
+func TestFakeOperationsDeleteUserNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+
+	if err := fake.Delete("gopher@luizalabs.com"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}

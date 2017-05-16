@@ -134,3 +134,36 @@ func TestDatabaseOperationsSetPasswordForInvalidUser(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
+
+func TestDatabaseOperationsDelete(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error opening in memory database ", err)
+	}
+	defer db.Close()
+
+	dbu := NewDatabaseOperations(db, auth.NewFake())
+	email := "teresa@luizalabs.com"
+	if err := createFakeUser(db, email, "123456"); err != nil {
+		t.Fatal("error creating fake user: ", err)
+	}
+	if err := dbu.Delete(email); err != nil {
+		t.Fatal("error deleting user: ", err)
+	}
+	if _, err := dbu.GetUser(email); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %s", err)
+	}
+}
+
+func TestDatabaseOperationsDeleteUserNotFound(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error opening in memory database ", err)
+	}
+	defer db.Close()
+
+	dbu := NewDatabaseOperations(db, auth.NewFake())
+	if err := dbu.Delete("gopher@luizalabs.com"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %s", err)
+	}
+}

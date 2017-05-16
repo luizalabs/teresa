@@ -13,6 +13,7 @@ type Operations interface {
 	Login(email, password string) (string, error)
 	GetUser(email string) (*storage.User, error)
 	SetPassword(email, newPassword string) error
+	Delete(email string) error
 }
 
 type DatabaseOperations struct {
@@ -59,6 +60,14 @@ func (dbu *DatabaseOperations) SetPassword(email, newPassword string) error {
 	}
 	u.Password = string(pass)
 	return dbu.DB.Save(u).Error
+}
+
+func (dbu *DatabaseOperations) Delete(email string) error {
+	u, err := dbu.GetUser(email)
+	if err != nil {
+		return err
+	}
+	return dbu.DB.Delete(u).Error
 }
 
 func NewDatabaseOperations(db *gorm.DB, a auth.Auth) Operations {

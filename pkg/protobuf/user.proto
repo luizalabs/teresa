@@ -5,6 +5,7 @@ package user;
 service User {
     rpc Login(LoginRequest) returns (LoginResponse);
     rpc SetPassword(SetPasswordRequest) returns (Empty);
+    rpc Delete(DeleteRequest) returns (Empty);
 }
 
 message LoginRequest {
@@ -18,6 +19,10 @@ message LoginResponse {
 
 message SetPasswordRequest {
     string password = 1;
+}
+
+message DeleteRequest {
+    string email = 1;
 }
 
 message Empty {}

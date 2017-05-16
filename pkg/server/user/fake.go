@@ -44,6 +44,17 @@ func (f *FakeOperations) SetPassword(email, newPassword string) error {
 	return nil
 }
 
+func (f *FakeOperations) Delete(email string) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if _, ok := f.Storage[email]; !ok {
+		return ErrNotFound
+	}
+	delete(f.Storage, email)
+	return nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

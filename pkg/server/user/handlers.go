@@ -29,6 +29,17 @@ func (s *Service) SetPassword(ctx context.Context, request *userpb.SetPasswordRe
 	return &userpb.Empty{}, nil
 }
 
+func (s *Service) Delete(ctx context.Context, request *userpb.DeleteRequest) (*userpb.Empty, error) {
+	u := ctx.Value("user").(*storage.User)
+	if !u.IsAdmin {
+		return nil, auth.ErrPermissionDenied
+	}
+	if err := s.ops.Delete(request.Email); err != nil {
+		return nil, err
+	}
+	return &userpb.Empty{}, nil
+}
+
 func (s *Service) RegisterService(grpcServer *grpc.Server) {
 	userpb.RegisterUserServer(grpcServer, s)
 }

@@ -165,14 +165,6 @@ func (tc TeresaClient) CreateUser(name, email, password string, isAdmin bool) (u
 	return r.Payload, nil
 }
 
-// DeleteUser Delete an user
-func (tc TeresaClient) DeleteUser(ID int64) error {
-	params := users.NewDeleteUserParams()
-	params.UserID = ID
-	_, err := tc.teresa.Users.DeleteUser(params, tc.apiKeyAuthFunc)
-	return err
-}
-
 // GetTeams returns a list with my teams
 func (tc TeresaClient) GetTeams() (teamsList []*models.Team, err error) {
 	params := teams.NewGetTeamsParams()

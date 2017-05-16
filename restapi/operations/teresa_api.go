@@ -42,23 +42,23 @@ type TeresaAPI struct {
 	formats         strfmt.Registry
 	defaultConsumes string
 	defaultProduces string
-	// JSONConsumer registers a consumer for a "application/json" mime type
-	JSONConsumer runtime.Consumer
 	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
 	MultipartformConsumer runtime.Consumer
+	// JSONConsumer registers a consumer for a "application/json" mime type
+	JSONConsumer runtime.Consumer
 
 	// BinProducer registers a producer for a "application/octet-stream" mime type
 	BinProducer runtime.Producer
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
 
-	// TokenHeaderAuth registers a function that takes a token and returns a principal
-	// it performs authentication based on an api key Authorization provided in the header
-	TokenHeaderAuth func(string) (interface{}, error)
-
 	// APIKeyAuth registers a function that takes a token and returns a principal
 	// it performs authentication based on an api key token provided in the query
 	APIKeyAuth func(string) (interface{}, error)
+
+	// TokenHeaderAuth registers a function that takes a token and returns a principal
+	// it performs authentication based on an api key Authorization provided in the header
+	TokenHeaderAuth func(string) (interface{}, error)
 
 	// TeamsAddUserToTeamHandler sets the operation handler for the add user to team operation
 	TeamsAddUserToTeamHandler teams.AddUserToTeamHandler
@@ -72,8 +72,6 @@ type TeresaAPI struct {
 	UsersCreateUserHandler users.CreateUserHandler
 	// TeamsDeleteTeamHandler sets the operation handler for the delete team operation
 	TeamsDeleteTeamHandler teams.DeleteTeamHandler
-	// UsersDeleteUserHandler sets the operation handler for the delete user operation
-	UsersDeleteUserHandler users.DeleteUserHandler
 	// AppsGetAppDetailsHandler sets the operation handler for the get app details operation
 	AppsGetAppDetailsHandler apps.GetAppDetailsHandler
 	// AppsGetAppLogsHandler sets the operation handler for the get app logs operation
@@ -157,12 +155,12 @@ func (o *TeresaAPI) RegisterFormat(name string, format strfmt.Format, validator 
 func (o *TeresaAPI) Validate() error {
 	var unregistered []string
 
-	if o.JSONConsumer == nil {
-		unregistered = append(unregistered, "JSONConsumer")
-	}
-
 	if o.MultipartformConsumer == nil {
 		unregistered = append(unregistered, "MultipartformConsumer")
+	}
+
+	if o.JSONConsumer == nil {
+		unregistered = append(unregistered, "JSONConsumer")
 	}
 
 	if o.BinProducer == nil {
@@ -173,12 +171,12 @@ func (o *TeresaAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
-	if o.TokenHeaderAuth == nil {
-		unregistered = append(unregistered, "AuthorizationAuth")
-	}
-
 	if o.APIKeyAuth == nil {
 		unregistered = append(unregistered, "TokenAuth")
+	}
+
+	if o.TokenHeaderAuth == nil {
+		unregistered = append(unregistered, "AuthorizationAuth")
 	}
 
 	if o.TeamsAddUserToTeamHandler == nil {
@@ -203,10 +201,6 @@ func (o *TeresaAPI) Validate() error {
 
 	if o.TeamsDeleteTeamHandler == nil {
 		unregistered = append(unregistered, "teams.DeleteTeamHandler")
-	}
-
-	if o.UsersDeleteUserHandler == nil {
-		unregistered = append(unregistered, "users.DeleteUserHandler")
 	}
 
 	if o.AppsGetAppDetailsHandler == nil {
@@ -284,13 +278,13 @@ func (o *TeresaAPI) AuthenticatorsFor(schemes map[string]spec.SecurityScheme) ma
 	for name, scheme := range schemes {
 		switch name {
 
-		case "token_header":
-
-			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.TokenHeaderAuth)
-
 		case "api_key":
 
 			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.APIKeyAuth)
+
+		case "token_header":
+
+			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.TokenHeaderAuth)
 
 		}
 	}
@@ -305,11 +299,11 @@ func (o *TeresaAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consume
 	for _, mt := range mediaTypes {
 		switch mt {
 
-		case "application/json":
-			result["application/json"] = o.JSONConsumer
-
 		case "multipart/form-data":
 			result["multipart/form-data"] = o.MultipartformConsumer
+
+		case "application/json":
+			result["application/json"] = o.JSONConsumer
 
 		}
 	}
@@ -387,11 +381,6 @@ func (o *TeresaAPI) initHandlerCache() {
 		o.handlers[strings.ToUpper("DELETE")] = make(map[string]http.Handler)
 	}
 	o.handlers["DELETE"]["/teams/{team_id}"] = teams.NewDeleteTeam(o.context, o.TeamsDeleteTeamHandler)
-
-	if o.handlers["DELETE"] == nil {
-		o.handlers[strings.ToUpper("DELETE")] = make(map[string]http.Handler)
-	}
-	o.handlers["DELETE"]["/users/{user_id}"] = users.NewDeleteUser(o.context, o.UsersDeleteUserHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)

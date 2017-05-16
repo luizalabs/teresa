@@ -580,24 +580,6 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/GenericError"
-    delete:
-      summary: Delete user
-      description: Delete user
-      tags:
-        - users
-      operationId: deleteUser
-      security:
-        - api_key: []
-        - token_header: []
-      parameters:
-        - $ref: "#/parameters/userId"
-      responses:
-        204:
-          description: No content
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/GenericError"
     put:
       summary: Update user
       description: Update user details

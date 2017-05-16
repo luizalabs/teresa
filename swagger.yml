@@ -43,43 +43,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: "#/definitions/Error"
-    post:
-      summary: Create teams
-      description: Create a team.
-      tags:
-        - teams
-      operationId: createTeam
-      security:
-        - api_key: []
-        - token_header: []
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: "#/definitions/Team"
-      responses:
-        201:
-          description: Newly created team
-          schema:
-            $ref: "#/definitions/Team"
-        400:
-          description: User sent a bad request
-          schema:
-            $ref: "#/definitions/BadRequest"
-        401:
-          description: User not authorized
-          schema:
-            $ref: "#/definitions/Unauthorized"
-        403:
-          description: |
-            User does not have the credentials to access this resource
-          schema:
-            $ref: "#/definitions/Unauthorized"
-        default:
-          description: User not authorized
-          schema:
-            $ref: "#/definitions/Unauthorized"
   /teams/{team_id}:
     get:
       summary: Get team details

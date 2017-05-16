@@ -11,36 +11,6 @@ import (
 	"github.com/luizalabs/teresa-api/restapi/operations/teams"
 )
 
-// CreateTeamHandler ...
-func CreateTeamHandler(params teams.CreateTeamParams, principal interface{}) middleware.Responder {
-	tk := k8s.IToToken(principal)
-	// need to have admin permissions to do this action
-	if *tk.IsAdmin == false {
-		log.Printf("User [%s] doesn't have permission to create a team", *tk.Email)
-		return teams.NewCreateTeamUnauthorized()
-	}
-
-	t := models.Team{
-		Name:  params.Body.Name,
-		Email: params.Body.Email,
-		URL:   params.Body.URL,
-	}
-	st := storage.Team{
-		Name:  *params.Body.Name,
-		Email: params.Body.Email.String(),
-		URL:   params.Body.URL,
-	}
-
-	if err := storage.DB.Create(&st).Error; err != nil {
-		log.Printf("CreateTeamHandler failed: %s\n", err)
-		return teams.NewCreateTeamDefault(422)
-	}
-	t.ID = int64(st.ID)
-	r := teams.NewCreateTeamCreated()
-	r.SetPayload(&t)
-	return r
-}
-
 // GetTeamDetailsHandler ...
 func GetTeamDetailsHandler(params teams.GetTeamDetailParams, principal interface{}) middleware.Responder {
 	// st := storage.Team{}

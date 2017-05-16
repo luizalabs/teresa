@@ -42,15 +42,15 @@ type TeresaAPI struct {
 	formats         strfmt.Registry
 	defaultConsumes string
 	defaultProduces string
-	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
-	MultipartformConsumer runtime.Consumer
 	// JSONConsumer registers a consumer for a "application/json" mime type
 	JSONConsumer runtime.Consumer
+	// MultipartformConsumer registers a consumer for a "multipart/form-data" mime type
+	MultipartformConsumer runtime.Consumer
 
-	// BinProducer registers a producer for a "application/octet-stream" mime type
-	BinProducer runtime.Producer
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
+	// BinProducer registers a producer for a "application/octet-stream" mime type
+	BinProducer runtime.Producer
 
 	// APIKeyAuth registers a function that takes a token and returns a principal
 	// it performs authentication based on an api key token provided in the query
@@ -66,8 +66,6 @@ type TeresaAPI struct {
 	AppsCreateAppHandler apps.CreateAppHandler
 	// DeploymentsCreateDeploymentHandler sets the operation handler for the create deployment operation
 	DeploymentsCreateDeploymentHandler deployments.CreateDeploymentHandler
-	// TeamsCreateTeamHandler sets the operation handler for the create team operation
-	TeamsCreateTeamHandler teams.CreateTeamHandler
 	// UsersCreateUserHandler sets the operation handler for the create user operation
 	UsersCreateUserHandler users.CreateUserHandler
 	// TeamsDeleteTeamHandler sets the operation handler for the delete team operation
@@ -155,20 +153,20 @@ func (o *TeresaAPI) RegisterFormat(name string, format strfmt.Format, validator 
 func (o *TeresaAPI) Validate() error {
 	var unregistered []string
 
-	if o.MultipartformConsumer == nil {
-		unregistered = append(unregistered, "MultipartformConsumer")
-	}
-
 	if o.JSONConsumer == nil {
 		unregistered = append(unregistered, "JSONConsumer")
 	}
 
-	if o.BinProducer == nil {
-		unregistered = append(unregistered, "BinProducer")
+	if o.MultipartformConsumer == nil {
+		unregistered = append(unregistered, "MultipartformConsumer")
 	}
 
 	if o.JSONProducer == nil {
 		unregistered = append(unregistered, "JSONProducer")
+	}
+
+	if o.BinProducer == nil {
+		unregistered = append(unregistered, "BinProducer")
 	}
 
 	if o.APIKeyAuth == nil {
@@ -189,10 +187,6 @@ func (o *TeresaAPI) Validate() error {
 
 	if o.DeploymentsCreateDeploymentHandler == nil {
 		unregistered = append(unregistered, "deployments.CreateDeploymentHandler")
-	}
-
-	if o.TeamsCreateTeamHandler == nil {
-		unregistered = append(unregistered, "teams.CreateTeamHandler")
 	}
 
 	if o.UsersCreateUserHandler == nil {
@@ -299,11 +293,11 @@ func (o *TeresaAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consume
 	for _, mt := range mediaTypes {
 		switch mt {
 
-		case "multipart/form-data":
-			result["multipart/form-data"] = o.MultipartformConsumer
-
 		case "application/json":
 			result["application/json"] = o.JSONConsumer
+
+		case "multipart/form-data":
+			result["multipart/form-data"] = o.MultipartformConsumer
 
 		}
 	}
@@ -318,11 +312,11 @@ func (o *TeresaAPI) ProducersFor(mediaTypes []string) map[string]runtime.Produce
 	for _, mt := range mediaTypes {
 		switch mt {
 
-		case "application/octet-stream":
-			result["application/octet-stream"] = o.BinProducer
-
 		case "application/json":
 			result["application/json"] = o.JSONProducer
+
+		case "application/octet-stream":
+			result["application/octet-stream"] = o.BinProducer
 
 		}
 	}
@@ -366,11 +360,6 @@ func (o *TeresaAPI) initHandlerCache() {
 		o.handlers[strings.ToUpper("POST")] = make(map[string]http.Handler)
 	}
 	o.handlers["POST"]["/apps/{app_name}/deployments"] = deployments.NewCreateDeployment(o.context, o.DeploymentsCreateDeploymentHandler)
-
-	if o.handlers["POST"] == nil {
-		o.handlers[strings.ToUpper("POST")] = make(map[string]http.Handler)
-	}
-	o.handlers["POST"]["/teams"] = teams.NewCreateTeam(o.context, o.TeamsCreateTeamHandler)
 
 	if o.handlers["POST"] == nil {
 		o.handlers[strings.ToUpper("POST")] = make(map[string]http.Handler)

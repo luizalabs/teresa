@@ -49,34 +49,6 @@ func (a *Client) AddUserToTeam(params *AddUserToTeamParams, authInfo runtime.Cli
 }
 
 /*
-CreateTeam creates teams
-
-Create a team.
-*/
-func (a *Client) CreateTeam(params *CreateTeamParams, authInfo runtime.ClientAuthInfoWriter) (*CreateTeamCreated, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewCreateTeamParams()
-	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "createTeam",
-		Method:             "POST",
-		PathPattern:        "/teams",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &CreateTeamReader{formats: a.formats},
-		AuthInfo:           authInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*CreateTeamCreated), nil
-}
-
-/*
 DeleteTeam deletes team
 
 Delete team

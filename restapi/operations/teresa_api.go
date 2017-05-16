@@ -51,6 +51,13 @@ type TeresaAPI struct {
 	JSONProducer runtime.Producer
 	// BinProducer registers a producer for a "application/octet-stream" mime type
 	BinProducer runtime.Producer
+<<<<<<< HEAD
+=======
+
+	// TokenHeaderAuth registers a function that takes a token and returns a principal
+	// it performs authentication based on an api key Authorization provided in the header
+	TokenHeaderAuth func(string) (interface{}, error)
+>>>>>>> remove old `team create` go-swagger stuff
 
 	// APIKeyAuth registers a function that takes a token and returns a principal
 	// it performs authentication based on an api key token provided in the query
@@ -167,6 +174,13 @@ func (o *TeresaAPI) Validate() error {
 
 	if o.BinProducer == nil {
 		unregistered = append(unregistered, "BinProducer")
+<<<<<<< HEAD
+=======
+	}
+
+	if o.TokenHeaderAuth == nil {
+		unregistered = append(unregistered, "AuthorizationAuth")
+>>>>>>> remove old `team create` go-swagger stuff
 	}
 
 	if o.APIKeyAuth == nil {

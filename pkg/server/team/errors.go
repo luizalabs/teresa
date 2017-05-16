@@ -1,5 +1,8 @@
 package team
 
-import "errors"
+import (
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
 
-var ErrTeamAlreadyExists = errors.New("Team already exists")
+var ErrTeamAlreadyExists = status.Errorf(codes.AlreadyExists, "Team already exists")

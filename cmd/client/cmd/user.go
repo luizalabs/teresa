@@ -75,8 +75,9 @@ func setPassword(cmd *cobra.Command, args []string) {
 }
 
 func deleteUser(cmd *cobra.Command, args []string) {
-	if userEmailFlag == "" {
-		Usage(cmd)
+	email, _ := cmd.Flags().GetString("email")
+	if email == "" {
+		cmd.Usage()
 		return
 	}
 	conn, err := connection.New(cfgFile)
@@ -89,7 +90,7 @@ func deleteUser(cmd *cobra.Command, args []string) {
 	cli := userpb.NewUserClient(conn)
 	_, err = cli.Delete(
 		context.Background(),
-		&userpb.DeleteRequest{Email: userEmailFlag},
+		&userpb.DeleteRequest{Email: email},
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
@@ -106,7 +107,7 @@ func init() {
 	userCmd.Flags().BoolVar(&isAdminFlag, "admin", false, "admin")
 
 	deleteCmd.AddCommand(deleteUserCmd)
-	deleteUserCmd.Flags().StringVar(&userEmailFlag, "email", "", "user email [required]")
+	deleteUserCmd.Flags().String("email", "", "user email [required]")
 
 	RootCmd.AddCommand(setUserPasswordCmd)
 }

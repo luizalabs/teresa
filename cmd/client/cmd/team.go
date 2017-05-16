@@ -2,9 +2,16 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
+	context "golang.org/x/net/context"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+
+	"github.com/luizalabs/teresa-api/cmd/client/connection"
+	"github.com/luizalabs/teresa-api/pkg/client"
+	teampb "github.com/luizalabs/teresa-api/pkg/protobuf/team"
 )
 
 var teamCmd = &cobra.Command{
@@ -43,21 +50,7 @@ var teamCreateCmd = &cobra.Command{
 	Short:   "Create a team",
 	Long:    "Create a team that can have many applications",
 	Example: "$ teresa team create foo --email foo@foodomain.com --url http://site.foodomain.com",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			return newUsageError("You should provide the name of the team in order to continue")
-		}
-		name := args[0]
-		email, _ := cmd.Flags().GetString("email")
-		site, _ := cmd.Flags().GetString("site")
-		tc := NewTeresa()
-		_, err := tc.CreateTeam(name, email, site)
-		if err != nil {
-			return err
-		}
-		fmt.Println("Team created with success")
-		return nil
-	},
+	Run:     createTeam,
 }
 
 //
@@ -121,4 +114,29 @@ func init() {
 	teamAddUserCmd.Flags().String("user", "", "user email")
 	teamAddUserCmd.Flags().String("team", "", "team name")
 
+}
+
+func createTeam(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		cmd.Usage()
+		return
+	}
+	name := args[0]
+	email, _ := cmd.Flags().GetString("email")
+	url, _ := cmd.Flags().GetString("url")
+
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Erro connecting to server:", err)
+		return
+	}
+	defer conn.Close()
+
+	cli := teampb.NewTeamClient(conn)
+	req := &teampb.CreateRequest{Name: name, Email: email, Url: url}
+	if _, err := cli.Create(context.Background(), req); err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+	fmt.Println("Team created with success")
 }

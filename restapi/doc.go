@@ -7,7 +7,7 @@ The Teresa PaaS API
       http
     Host: localhost:8080
     BasePath: /v1
-    Version: 0.3.1
+    Version: 0.3.2
 
     Consumes:
     - application/json
@@ -16,9 +16,9 @@ The Teresa PaaS API
 
 
     Produces:
-    - application/octet-stream
-
     - application/json
+
+    - application/octet-stream
 
 
 swagger:meta

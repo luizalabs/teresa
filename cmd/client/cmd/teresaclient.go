@@ -81,18 +81,6 @@ func NewTeresa() TeresaClient {
 	return tc
 }
 
-// CreateTeam Creates a team
-func (tc TeresaClient) CreateTeam(name, email, URL string) (*models.Team, error) {
-	params := teams.NewCreateTeamParams()
-	e := strfmt.Email(email)
-	params.WithBody(&models.Team{Name: &name, Email: e, URL: URL})
-	r, err := tc.teresa.Teams.CreateTeam(params, tc.apiKeyAuthFunc)
-	if err != nil {
-		return nil, err
-	}
-	return r.Payload, nil
-}
-
 // DeleteTeam Deletes a team
 func (tc TeresaClient) DeleteTeam(ID int64) error {
 	params := teams.NewDeleteTeamParams()

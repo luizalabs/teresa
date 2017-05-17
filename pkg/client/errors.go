@@ -11,6 +11,8 @@ func GetErrorMsg(err error) string {
 		return "Permission Denied"
 	case codes.Unavailable:
 		return "Server Unavailable"
+	case codes.AlreadyExists:
+		return "Resource Already Exists"
 	}
 	return err.Error()
 }

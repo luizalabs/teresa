@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/luizalabs/teresa-api/models/storage"
+	"github.com/luizalabs/teresa-api/pkg/server/user"
 )
 
 func TestFakeOperationsCreate(t *testing.T) {
@@ -41,5 +42,58 @@ func TestFakeOperationsCreateTeamAlreadyExists(t *testing.T) {
 
 	if err := fake.Create(teamName, "", ""); err != ErrTeamAlreadyExists {
 		t.Errorf("expected ErrTeamAlreadyExists, got %v", err)
+	}
+}
+
+func TestFakeOperationsAddUser(t *testing.T) {
+	fake := NewFakeOperations()
+
+	expectedEmail := "gopher"
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedEmail] = ""
+
+	expectedTeam := "teresa"
+	if err := fake.Create(expectedTeam, "", ""); err != nil {
+		t.Fatal("error trying to create a fake team:", err)
+	}
+
+	if err := fake.AddUser(expectedTeam, expectedEmail); err != nil {
+		t.Errorf("error trying on add user to a team: %v", err)
+	}
+}
+
+func TestFakeOperationsAddUserTeamNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+
+	if err := fake.AddUser("teresa", "gopher"); err != ErrNotFound {
+		t.Errorf("expected error ErrNotFound, got %v", err)
+	}
+}
+
+func TestFakeOperationsAddUserUserNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+
+	expectedTeam := "teresa"
+	if err := fake.Create(expectedTeam, "", ""); err != nil {
+		t.Fatal("error trying to create a fake team:", err)
+	}
+
+	if err := fake.AddUser(expectedTeam, "gopher"); err != user.ErrNotFound {
+		t.Errorf("expected error ErrNotFound, got %v", err)
+	}
+}
+
+func TestFakeOperationsAddUserUserAlreadyInTeam(t *testing.T) {
+	fake := NewFakeOperations()
+
+	expectedEmail := "gopher"
+	expectedName := "teresa"
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedEmail] = ""
+	fake.(*FakeOperations).Storage[expectedName] = &storage.Team{
+		Name:  expectedName,
+		Users: []storage.User{storage.User{Email: expectedEmail}},
+	}
+
+	if err := fake.AddUser(expectedName, expectedEmail); err != ErrUserAlreadyInTeam {
+		t.Errorf("expected error ErrUserAlreadyInTeam, got %v", err)
 	}
 }

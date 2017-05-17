@@ -7,6 +7,7 @@ import (
 
 type Operations interface {
 	Create(name, email, url string) error
+	AddUser(name, email string) error
 }
 
 type DatabaseOperations struct {
@@ -23,6 +24,10 @@ func (dbt *DatabaseOperations) Create(name, email, url string) error {
 	t.Email = email
 	t.URL = url
 	return dbt.DB.Save(t).Error
+}
+
+func (dbt *DatabaseOperations) AddUser(name, email string) error {
+	return nil
 }
 
 func NewDatabaseOperations(db *gorm.DB) Operations {

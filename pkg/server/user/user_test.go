@@ -167,3 +167,69 @@ func TestDatabaseOperationsDeleteUserNotFound(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %s", err)
 	}
 }
+
+func TestDatabaseOperationsCreate(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error opening in memory database ", err)
+	}
+	defer db.Close()
+
+	dbu := NewDatabaseOperations(db, auth.NewFake())
+	name := "teresa"
+	email := "teresa@luizalabs.com"
+	pass := "test1234"
+	if err := dbu.Create(name, email, pass, true); err != nil {
+		t.Fatal("error creating user: ", err)
+	}
+	user, err := dbu.GetUser(email)
+	if err != nil {
+		t.Fatal("error fetching user: ", err)
+	}
+	if user.Name != name {
+		t.Errorf("expected %s, got %s", name, user.Name)
+	}
+	if user.Email != email {
+		t.Errorf("expected %s, got %s", email, user.Email)
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(pass))
+	if err != nil {
+		t.Fatal("error checking password: ", err)
+	}
+	if !user.IsAdmin {
+		t.Fatal("expected true, got false")
+	}
+}
+
+func TestDatabaseOperationsCreateUserAlreadyExists(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error opening in memory database ", err)
+	}
+	defer db.Close()
+
+	dbu := NewDatabaseOperations(db, auth.NewFake())
+	email := "teresa@luizalabs.com"
+
+	if err := createFakeUser(db, email, "123456"); err != nil {
+		t.Fatal("error creating fake user: ", err)
+	}
+	if err := dbu.Create("gopher", email, "", false); err != ErrUserAlreadyExists {
+		t.Errorf("expected ErrUserAlreadyExists, got %v", err)
+	}
+}
+
+func TestDatabaseOperationsCreateUserInvalidPassword(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error opening in memory database ", err)
+	}
+	defer db.Close()
+
+	dbu := NewDatabaseOperations(db, auth.NewFake())
+	email := "teresa@luizalabs.com"
+
+	if err := dbu.Create("gopher", email, "test", false); err != ErrInvalidPassword {
+		t.Errorf("expected ErrInvalidPassword, got %v", err)
+	}
+}

@@ -40,6 +40,23 @@ func (s *Service) Delete(ctx context.Context, request *userpb.DeleteRequest) (*u
 	return &userpb.Empty{}, nil
 }
 
+func (s *Service) Create(ctx context.Context, request *userpb.CreateRequest) (*userpb.Empty, error) {
+	u := ctx.Value("user").(*storage.User)
+	if !u.IsAdmin {
+		return nil, auth.ErrPermissionDenied
+	}
+	err := s.ops.Create(
+		request.Name,
+		request.Email,
+		request.Password,
+		request.Admin,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &userpb.Empty{}, nil
+}
+
 func (s *Service) RegisterService(grpcServer *grpc.Server) {
 	userpb.RegisterUserServer(grpcServer, s)
 }

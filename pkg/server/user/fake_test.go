@@ -113,3 +113,44 @@ func TestFakeOperationsDeleteUserNotFound(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
+
+func TestFakeOperationsCreate(t *testing.T) {
+	fake := NewFakeOperations()
+
+	expectedEmail := "teresa@luizalabs.com"
+	expectedName := "teresa"
+	expectedPass := "test1234"
+
+	err := fake.Create(expectedName, expectedEmail, expectedPass, false)
+	if err != nil {
+		t.Fatal("Error creating user in FakeOperations: ", err)
+	}
+
+	fakeUser := fake.(*FakeOperations).Storage[expectedEmail]
+	if fakeUser == nil {
+		t.Fatal("expected a valid user, got nil")
+	}
+	if fakeUser.Name != expectedName {
+		t.Errorf("expected %s, got %s", expectedName, fakeUser.Name)
+	}
+	if fakeUser.Email != expectedEmail {
+		t.Errorf("expected %s, got %s", expectedEmail, fakeUser.Email)
+	}
+	if fakeUser.Password != expectedPass {
+		t.Errorf("expected %s, got %s", expectedPass, fakeUser.Password)
+	}
+	if fakeUser.IsAdmin {
+		t.Fatal("expected false, got true")
+	}
+}
+
+func TestFakeOperationsCreateErrUserAlreadyExists(t *testing.T) {
+	fake := NewFakeOperations()
+
+	email := "teresa@luizalabs.com"
+	fake.(*FakeOperations).Storage[email] = &storage.User{Email: email}
+
+	if err := fake.Create("", email, "", false); err != ErrUserAlreadyExists {
+		t.Errorf("expected ErrUserAlreadyExists, got %v", err)
+	}
+}

@@ -9,11 +9,16 @@ import (
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
 )
 
+const (
+	minPassLength = 8
+)
+
 type Operations interface {
 	Login(email, password string) (string, error)
 	GetUser(email string) (*storage.User, error)
 	SetPassword(email, newPassword string) error
 	Delete(email string) error
+	Create(name, email, pass string, admin bool) error
 }
 
 type DatabaseOperations struct {
@@ -68,6 +73,25 @@ func (dbu *DatabaseOperations) Delete(email string) error {
 		return err
 	}
 	return dbu.DB.Delete(u).Error
+}
+
+func (dbu *DatabaseOperations) Create(name, email, pass string, admin bool) error {
+	u := new(storage.User)
+	if !dbu.DB.Where(&storage.User{Email: email}).First(u).RecordNotFound() {
+		return ErrUserAlreadyExists
+	}
+	if len(pass) < minPassLength {
+		return ErrInvalidPassword
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	u.Name = name
+	u.Email = email
+	u.Password = string(hash)
+	u.IsAdmin = admin
+	return dbu.DB.Save(u).Error
 }
 
 func NewDatabaseOperations(db *gorm.DB, a auth.Auth) Operations {

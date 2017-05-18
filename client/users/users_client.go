@@ -23,34 +23,6 @@ type Client struct {
 }
 
 /*
-CreateUser creates user
-
-Create a user.
-*/
-func (a *Client) CreateUser(params *CreateUserParams, authInfo runtime.ClientAuthInfoWriter) (*CreateUserCreated, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewCreateUserParams()
-	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "createUser",
-		Method:             "POST",
-		PathPattern:        "/users",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &CreateUserReader{formats: a.formats},
-		AuthInfo:           authInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*CreateUserCreated), nil
-}
-
-/*
 GetUserDetails gets user details
 
 Get user details

@@ -116,38 +116,6 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/GenericError"
-  /teams/{team_name}/users:
-    post:
-      summary: Add user to team
-      tags:
-        - teams
-      operationId: addUserToTeam
-      security:
-        - api_key: []
-        - token_header: []
-      parameters:
-        - $ref: "#/parameters/teamName"
-        - name: user
-          in: body
-          schema:
-            type: object
-            required:
-            - email
-            properties:
-              email:
-                type: string
-                format: email
-                minLength: 1
-      responses:
-        200:
-          description: Team details
-          schema:
-            $ref: "#/definitions/Team"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/GenericError"
-
   /apps:
     post:
       summary: Create an app

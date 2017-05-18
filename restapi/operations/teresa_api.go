@@ -47,21 +47,19 @@ type TeresaAPI struct {
 	// JSONConsumer registers a consumer for a "application/json" mime type
 	JSONConsumer runtime.Consumer
 
-	// BinProducer registers a producer for a "application/octet-stream" mime type
-	BinProducer runtime.Producer
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
-
-	// TokenHeaderAuth registers a function that takes a token and returns a principal
-	// it performs authentication based on an api key Authorization provided in the header
-	TokenHeaderAuth func(string) (interface{}, error)
+	// BinProducer registers a producer for a "application/octet-stream" mime type
+	BinProducer runtime.Producer
 
 	// APIKeyAuth registers a function that takes a token and returns a principal
 	// it performs authentication based on an api key token provided in the query
 	APIKeyAuth func(string) (interface{}, error)
 
-	// TeamsAddUserToTeamHandler sets the operation handler for the add user to team operation
-	TeamsAddUserToTeamHandler teams.AddUserToTeamHandler
+	// TokenHeaderAuth registers a function that takes a token and returns a principal
+	// it performs authentication based on an api key Authorization provided in the header
+	TokenHeaderAuth func(string) (interface{}, error)
+
 	// AppsCreateAppHandler sets the operation handler for the create app operation
 	AppsCreateAppHandler apps.CreateAppHandler
 	// DeploymentsCreateDeploymentHandler sets the operation handler for the create deployment operation
@@ -159,24 +157,20 @@ func (o *TeresaAPI) Validate() error {
 		unregistered = append(unregistered, "JSONConsumer")
 	}
 
-	if o.BinProducer == nil {
-		unregistered = append(unregistered, "BinProducer")
-	}
-
 	if o.JSONProducer == nil {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
-	if o.TokenHeaderAuth == nil {
-		unregistered = append(unregistered, "AuthorizationAuth")
+	if o.BinProducer == nil {
+		unregistered = append(unregistered, "BinProducer")
 	}
 
 	if o.APIKeyAuth == nil {
 		unregistered = append(unregistered, "TokenAuth")
 	}
 
-	if o.TeamsAddUserToTeamHandler == nil {
-		unregistered = append(unregistered, "teams.AddUserToTeamHandler")
+	if o.TokenHeaderAuth == nil {
+		unregistered = append(unregistered, "AuthorizationAuth")
 	}
 
 	if o.AppsCreateAppHandler == nil {
@@ -266,13 +260,13 @@ func (o *TeresaAPI) AuthenticatorsFor(schemes map[string]spec.SecurityScheme) ma
 	for name, scheme := range schemes {
 		switch name {
 
-		case "token_header":
-
-			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.TokenHeaderAuth)
-
 		case "api_key":
 
 			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.APIKeyAuth)
+
+		case "token_header":
+
+			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.TokenHeaderAuth)
 
 		}
 	}
@@ -306,11 +300,11 @@ func (o *TeresaAPI) ProducersFor(mediaTypes []string) map[string]runtime.Produce
 	for _, mt := range mediaTypes {
 		switch mt {
 
-		case "application/octet-stream":
-			result["application/octet-stream"] = o.BinProducer
-
 		case "application/json":
 			result["application/json"] = o.JSONProducer
+
+		case "application/octet-stream":
+			result["application/octet-stream"] = o.BinProducer
 
 		}
 	}
@@ -339,11 +333,6 @@ func (o *TeresaAPI) initHandlerCache() {
 	if o.handlers == nil {
 		o.handlers = make(map[string]map[string]http.Handler)
 	}
-
-	if o.handlers["POST"] == nil {
-		o.handlers[strings.ToUpper("POST")] = make(map[string]http.Handler)
-	}
-	o.handlers["POST"]["/teams/{team_name}/users"] = teams.NewAddUserToTeam(o.context, o.TeamsAddUserToTeamHandler)
 
 	if o.handlers["POST"] == nil {
 		o.handlers[strings.ToUpper("POST")] = make(map[string]http.Handler)

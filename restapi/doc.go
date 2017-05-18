@@ -16,9 +16,9 @@ The Teresa PaaS API
 
 
     Produces:
-    - application/octet-stream
-
     - application/json
+
+    - application/octet-stream
 
 
 swagger:meta

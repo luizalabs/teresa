@@ -11,7 +11,6 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/client"
 	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/strfmt"
 	apiclient "github.com/luizalabs/teresa-api/client"
 	"github.com/luizalabs/teresa-api/client/apps"
 	"github.com/luizalabs/teresa-api/client/deployments"
@@ -171,19 +170,5 @@ func (tc TeresaClient) PartialUpdateApp(appName string, operations []*models.Pat
 		return nil, err
 	}
 
-	return r.Payload, nil
-}
-
-// AddUserToTeam adds a user (by email) to a team.
-// if the user is already part of the team, returns error
-func (tc TeresaClient) AddUserToTeam(teamName, userEmail string) (team *models.Team, err error) {
-	p := teams.NewAddUserToTeamParams()
-	p.TeamName = teamName
-	email := strfmt.Email(userEmail)
-	p.User.Email = &email
-	r, err := tc.teresa.Teams.AddUserToTeam(p, tc.apiKeyAuthFunc)
-	if err != nil {
-		return nil, err
-	}
 	return r.Payload, nil
 }

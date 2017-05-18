@@ -7,6 +7,7 @@ import (
 
 	teampb "github.com/luizalabs/teresa-api/pkg/protobuf/team"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/user"
 
 	"github.com/luizalabs/teresa-api/models/storage"
 )
@@ -53,5 +54,91 @@ func TestTeamCreateTeamAlreadyExists(t *testing.T) {
 
 	if _, err := s.Create(ctx, &teampb.CreateRequest{Name: expectedName}); err != ErrTeamAlreadyExists {
 		t.Errorf("expected ErrTeamAlreadyExists, got %v", err)
+	}
+}
+
+func TestTeamAddUserSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+
+	expectedName := "teresa"
+	expectedEmail := "gopher@luizalabs.com"
+	fake.(*FakeOperations).Storage[expectedName] = &storage.Team{Name: expectedName}
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedEmail] = ""
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: "gopher", IsAdmin: true})
+
+	req := &teampb.AddUserRequest{Name: expectedName, Email: expectedEmail}
+	if _, err := s.AddUser(ctx, req); err != nil {
+		t.Fatal("Got error on make AddUser: ", err)
+	}
+
+	teamWithUser := fake.(*FakeOperations).Storage[expectedName]
+	if len(teamWithUser.Users) == 0 {
+		t.Fatal("AddUser dont add user for a team")
+	}
+
+	for _, u := range teamWithUser.Users {
+		if u.Email == expectedEmail {
+			return
+		}
+	}
+	t.Errorf("AddUser dont add user for a team")
+}
+
+func TestTeamAddUserNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	s := NewService(fake)
+
+	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: "gopher", IsAdmin: true})
+	req := &teampb.AddUserRequest{Name: "teresa", Email: "gopher"}
+	if _, err := s.AddUser(ctx, req); err != ErrNotFound {
+		t.Errorf("expected error ErrNotFound, got %v", err)
+	}
+}
+
+func TestTeamAddUserUserNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+
+	expectedName := "teresa"
+	fake.(*FakeOperations).Storage[expectedName] = &storage.Team{Name: expectedName}
+	s := NewService(fake)
+
+	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: "gopher", IsAdmin: true})
+	req := &teampb.AddUserRequest{Name: "teresa", Email: "gopher"}
+	if _, err := s.AddUser(ctx, req); err != user.ErrNotFound {
+		t.Errorf("expected error ErrNotFound, got %v", err)
+	}
+}
+
+func TestTeamAddUserUserAlreadyInTeam(t *testing.T) {
+	fake := NewFakeOperations()
+
+	expectedName := "teresa"
+	expectedEmail := "gopher"
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedEmail] = ""
+	fake.(*FakeOperations).Storage[expectedName] = &storage.Team{
+		Name:  expectedName,
+		Users: []storage.User{storage.User{Email: expectedEmail}},
+	}
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: "gopher", IsAdmin: true})
+	req := &teampb.AddUserRequest{Name: expectedName, Email: expectedEmail}
+
+	if _, err := s.AddUser(ctx, req); err != ErrUserAlreadyInTeam {
+		t.Errorf("expected error ErrUserAlreadyInTeam, got %v", err)
+	}
+}
+
+func TestTeamAddUserErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &storage.User{IsAdmin: false})
+	req := &teampb.AddUserRequest{Name: "teresa", Email: "gopher"}
+
+	if _, err := s.AddUser(ctx, req); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }

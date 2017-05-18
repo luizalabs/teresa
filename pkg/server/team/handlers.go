@@ -24,6 +24,17 @@ func (s *Service) Create(ctx context.Context, request *teampb.CreateRequest) (*t
 	return &teampb.Empty{}, nil
 }
 
+func (s *Service) AddUser(ctx context.Context, request *teampb.AddUserRequest) (*teampb.Empty, error) {
+	u := ctx.Value("user").(*storage.User)
+	if !u.IsAdmin {
+		return nil, auth.ErrPermissionDenied
+	}
+	if err := s.ops.AddUser(request.Name, request.Email); err != nil {
+		return nil, err
+	}
+	return &teampb.Empty{}, nil
+}
+
 func (s *Service) RegisterService(grpcServer *grpc.Server) {
 	teampb.RegisterTeamServer(grpcServer, s)
 }

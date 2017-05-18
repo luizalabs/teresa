@@ -10,6 +10,7 @@ It is generated from these files:
 
 It has these top-level messages:
 	CreateRequest
+	AddUserRequest
 	Empty
 */
 package team
@@ -66,16 +67,41 @@ func (m *CreateRequest) GetUrl() string {
 	return ""
 }
 
+type AddUserRequest struct {
+	Name  string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Email string `protobuf:"bytes,2,opt,name=email" json:"email,omitempty"`
+}
+
+func (m *AddUserRequest) Reset()                    { *m = AddUserRequest{} }
+func (m *AddUserRequest) String() string            { return proto.CompactTextString(m) }
+func (*AddUserRequest) ProtoMessage()               {}
+func (*AddUserRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *AddUserRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *AddUserRequest) GetEmail() string {
+	if m != nil {
+		return m.Email
+	}
+	return ""
+}
+
 type Empty struct {
 }
 
 func (m *Empty) Reset()                    { *m = Empty{} }
 func (m *Empty) String() string            { return proto.CompactTextString(m) }
 func (*Empty) ProtoMessage()               {}
-func (*Empty) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*Empty) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
 func init() {
 	proto.RegisterType((*CreateRequest)(nil), "team.CreateRequest")
+	proto.RegisterType((*AddUserRequest)(nil), "team.AddUserRequest")
 	proto.RegisterType((*Empty)(nil), "team.Empty")
 }
 
@@ -91,6 +117,7 @@ const _ = grpc.SupportPackageIsVersion4
 
 type TeamClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*Empty, error)
+	AddUser(ctx context.Context, in *AddUserRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type teamClient struct {
@@ -110,10 +137,20 @@ func (c *teamClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc
 	return out, nil
 }
 
+func (c *teamClient) AddUser(ctx context.Context, in *AddUserRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := grpc.Invoke(ctx, "/team.Team/AddUser", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for Team service
 
 type TeamServer interface {
 	Create(context.Context, *CreateRequest) (*Empty, error)
+	AddUser(context.Context, *AddUserRequest) (*Empty, error)
 }
 
 func RegisterTeamServer(s *grpc.Server, srv TeamServer) {
@@ -138,6 +175,24 @@ func _Team_Create_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Team_AddUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamServer).AddUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/team.Team/AddUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamServer).AddUser(ctx, req.(*AddUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Team_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "team.Team",
 	HandlerType: (*TeamServer)(nil),
@@ -145,6 +200,10 @@ var _Team_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Create",
 			Handler:    _Team_Create_Handler,
+		},
+		{
+			MethodName: "AddUser",
+			Handler:    _Team_AddUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -154,15 +213,17 @@ var _Team_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("pkg/protobuf/team/team.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 154 bytes of a gzipped FileDescriptorProto
+	// 182 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x29, 0xc8, 0x4e, 0xd7,
 	0x2f, 0x28, 0xca, 0x2f, 0xc9, 0x4f, 0x2a, 0x4d, 0xd3, 0x2f, 0x49, 0x4d, 0xcc, 0x05, 0x13, 0x7a,
 	0x60, 0x21, 0x21, 0x16, 0x10, 0x5b, 0xc9, 0x9b, 0x8b, 0xd7, 0xb9, 0x28, 0x35, 0xb1, 0x24, 0x35,
 	0x28, 0xb5, 0xb0, 0x34, 0xb5, 0xb8, 0x44, 0x48, 0x88, 0x8b, 0x25, 0x2f, 0x31, 0x37, 0x55, 0x82,
 	0x51, 0x81, 0x51, 0x83, 0x33, 0x08, 0xcc, 0x16, 0x12, 0xe1, 0x62, 0x4d, 0xcd, 0x4d, 0xcc, 0xcc,
 	0x91, 0x60, 0x02, 0x0b, 0x42, 0x38, 0x42, 0x02, 0x5c, 0xcc, 0xa5, 0x45, 0x39, 0x12, 0xcc, 0x60,
-	0x31, 0x10, 0x53, 0x89, 0x9d, 0x8b, 0xd5, 0x35, 0xb7, 0xa0, 0xa4, 0xd2, 0xc8, 0x88, 0x8b, 0x25,
-	0x24, 0x35, 0x31, 0x57, 0x48, 0x8b, 0x8b, 0x0d, 0x62, 0xba, 0x90, 0xb0, 0x1e, 0xd8, 0x6a, 0x14,
-	0xbb, 0xa4, 0xb8, 0x21, 0x82, 0x60, 0x3d, 0x49, 0x6c, 0x60, 0x67, 0x19, 0x03, 0x02, 0x00, 0x00,
-	0xff, 0xff, 0x35, 0xde, 0x45, 0xe1, 0xb6, 0x00, 0x00, 0x00,
+	0x31, 0x10, 0x53, 0xc9, 0x8a, 0x8b, 0xcf, 0x31, 0x25, 0x25, 0xb4, 0x38, 0xb5, 0x88, 0x64, 0xd3,
+	0x94, 0xd8, 0xb9, 0x58, 0x5d, 0x73, 0x0b, 0x4a, 0x2a, 0x8d, 0x12, 0xb8, 0x58, 0x42, 0x52, 0x13,
+	0x73, 0x85, 0xb4, 0xb8, 0xd8, 0x20, 0x2e, 0x13, 0x12, 0xd6, 0x03, 0x3b, 0x1b, 0xc5, 0x9d, 0x52,
+	0xdc, 0x10, 0x41, 0xb0, 0x1e, 0x21, 0x1d, 0x2e, 0x76, 0xa8, 0xc5, 0x42, 0x22, 0x10, 0x71, 0x54,
+	0x77, 0xa0, 0xa8, 0x4e, 0x62, 0x03, 0x07, 0x80, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0xe5, 0xd8,
+	0x1a, 0x20, 0x20, 0x01, 0x00, 0x00,
 }

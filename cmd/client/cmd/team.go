@@ -79,26 +79,10 @@ var teamAddUserCmd = &cobra.Command{
 
 You can add a new user as a member of a team with:
 
-  $ teresa team add-user --email john.doe@foodomain.com --team foo
+  $ teresa team add-user --user john.doe@foodomain.com --team foo
 
 You need to create a user before use this command.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		team, _ := cmd.Flags().GetString("team")
-		user, _ := cmd.Flags().GetString("user")
-		if team == "" || user == "" {
-			return newUsageError("Team and User is required in order to continue")
-		}
-		tc := NewTeresa()
-		_, err := tc.AddUserToTeam(team, user)
-		if err != nil {
-			if isUnprocessableEntity(err) {
-				return newCmdError("Team or user doesn't exist, or the user is already member of the team")
-			}
-			return err
-		}
-		fmt.Printf("User %s is now member of the team %s\n", color.CyanString(user), color.CyanString(team))
-		return nil
-	},
+	Run: teamAddUser,
 }
 
 func init() {
@@ -139,4 +123,28 @@ func createTeam(cmd *cobra.Command, args []string) {
 		return
 	}
 	fmt.Println("Team created with success")
+}
+
+func teamAddUser(cmd *cobra.Command, args []string) {
+	team, _ := cmd.Flags().GetString("team")
+	user, _ := cmd.Flags().GetString("user")
+	if team == "" || user == "" {
+		cmd.Usage()
+		return
+	}
+
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Erro connecting to server:", err)
+		return
+	}
+	defer conn.Close()
+
+	cli := teampb.NewTeamClient(conn)
+	req := &teampb.AddUserRequest{Name: team, Email: user}
+	if _, err := cli.AddUser(context.Background(), req); err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+	fmt.Printf("User %s is now member of the team %s\n", color.CyanString(user), color.CyanString(team))
 }

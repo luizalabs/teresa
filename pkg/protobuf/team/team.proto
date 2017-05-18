@@ -4,12 +4,18 @@ package team;
 
 service Team {
     rpc Create(CreateRequest) returns (Empty);
+    rpc AddUser(AddUserRequest) returns (Empty);
 }
 
 message CreateRequest {
     string name = 1;
     string email = 2;
     string url = 3;
+}
+
+message AddUserRequest {
+    string name = 1;
+    string email = 2;
 }
 
 message Empty {}

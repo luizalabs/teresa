@@ -1,4 +1,5 @@
 # Teresa
+[![Build Status](https://travis-ci.org/luizalabs/teresa-api.svg)](https://travis-ci.org/luizalabs/teresa-api)
 
 Teresa is an extremely simple platform as a service that runs on top of [Kubernetes](https://github.com/kubernetes/kubernetes).  
 The API needs a database backend and access to Amazon S3 for storage.  

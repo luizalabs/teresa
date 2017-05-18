@@ -24,18 +24,7 @@ Note that the user's password must be at least 8 characters long. eg.:
 
 	$ teresa create user --email user@mydomain.com --name john --password foobarfoo
 	`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if userNameFlag == "" || userEmailFlag == "" || userPasswordFlag == "" {
-			Usage(cmd)
-			return
-		}
-		tc := NewTeresa()
-		user, err := tc.CreateUser(userNameFlag, userEmailFlag, userPasswordFlag, isAdminFlag)
-		if err != nil {
-			log.Fatalf("Failed to create user: %s", err)
-		}
-		log.Infof("User created. Name: %s Email: %s\n", *user.Name, *user.Email)
-	},
+	Run: createUser,
 }
 
 // delete user
@@ -99,12 +88,45 @@ func deleteUser(cmd *cobra.Command, args []string) {
 	fmt.Println("User deleted")
 }
 
+func createUser(cmd *cobra.Command, args []string) {
+	name, _ := cmd.Flags().GetString("name")
+	email, _ := cmd.Flags().GetString("email")
+	pass, _ := cmd.Flags().GetString("password")
+	admin, _ := cmd.Flags().GetBool("admin")
+	if email == "" || name == "" || pass == "" {
+		cmd.Usage()
+		return
+	}
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
+		return
+	}
+	defer conn.Close()
+
+	cli := userpb.NewUserClient(conn)
+	_, err = cli.Create(
+		context.Background(),
+		&userpb.CreateRequest{
+			Name:     name,
+			Email:    email,
+			Password: pass,
+			Admin:    admin,
+		},
+	)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+	fmt.Println("User created")
+}
+
 func init() {
 	createCmd.AddCommand(userCmd)
-	userCmd.Flags().StringVar(&userNameFlag, "name", "", "user name [required]")
-	userCmd.Flags().StringVar(&userEmailFlag, "email", "", "user email [required]")
-	userCmd.Flags().StringVar(&userPasswordFlag, "password", "", "user password [required]")
-	userCmd.Flags().BoolVar(&isAdminFlag, "admin", false, "admin")
+	userCmd.Flags().String("name", "", "user name [required]")
+	userCmd.Flags().String("email", "", "user email [required]")
+	userCmd.Flags().String("password", "", "user password [required]")
+	userCmd.Flags().Bool("admin", false, "admin privileges")
 
 	deleteCmd.AddCommand(deleteUserCmd)
 	deleteUserCmd.Flags().String("email", "", "user email [required]")

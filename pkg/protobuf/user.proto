@@ -6,6 +6,7 @@ service User {
     rpc Login(LoginRequest) returns (LoginResponse);
     rpc SetPassword(SetPasswordRequest) returns (Empty);
     rpc Delete(DeleteRequest) returns (Empty);
+    rpc Create(CreateRequest) returns (Empty);
 }
 
 message LoginRequest {
@@ -23,6 +24,13 @@ message SetPasswordRequest {
 
 message DeleteRequest {
     string email = 1;
+}
+
+message CreateRequest {
+    string name = 1;
+    string email = 2;
+    string password = 3;
+    bool admin = 4;
 }
 
 message Empty {}

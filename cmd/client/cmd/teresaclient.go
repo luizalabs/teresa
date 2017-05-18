@@ -16,7 +16,6 @@ import (
 	"github.com/luizalabs/teresa-api/client/apps"
 	"github.com/luizalabs/teresa-api/client/deployments"
 	"github.com/luizalabs/teresa-api/client/teams"
-	"github.com/luizalabs/teresa-api/client/users"
 	"github.com/luizalabs/teresa-api/models"
 	cli "github.com/luizalabs/teresa-api/pkg/client"
 	_ "github.com/prometheus/common/log" // still needed?
@@ -139,18 +138,6 @@ func (tc TeresaClient) GetAppDetail(teamID, appID int64) (app *models.App, err e
 	// }
 	// return r.Payload, nil
 	return
-}
-
-// CreateUser Create an user
-func (tc TeresaClient) CreateUser(name, email, password string, isAdmin bool) (user *models.User, err error) {
-	params := users.NewCreateUserParams()
-	params.WithBody(&models.User{Email: &email, Name: &name, Password: &password, IsAdmin: &isAdmin})
-
-	r, err := tc.teresa.Users.CreateUser(params, tc.apiKeyAuthFunc)
-	if err != nil {
-		return nil, err
-	}
-	return r.Payload, nil
 }
 
 // GetTeams returns a list with my teams

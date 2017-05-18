@@ -1,20 +1,12 @@
 package team
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/jinzhu/gorm"
 	"github.com/luizalabs/teresa-api/models/storage"
+	"github.com/luizalabs/teresa-api/pkg/server/user"
 )
-
-func getTeam(db *gorm.DB, name string) (*storage.Team, error) {
-	t := new(storage.Team)
-	if db.Where(&storage.Team{Name: name}).First(t).RecordNotFound() {
-		return nil, errors.New("Team not found")
-	}
-	return t, nil
-}
 
 func createFakeTeam(db *gorm.DB, name, email, url string) error {
 	t := &storage.Team{
@@ -31,7 +23,7 @@ func TestDatabaseOperationsCreate(t *testing.T) {
 	}
 	defer db.Close()
 
-	dbt := NewDatabaseOperations(db)
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
 
 	expectedEmail := "teresa@luizalabs.com"
 	expectedName := "teresa"
@@ -41,7 +33,7 @@ func TestDatabaseOperationsCreate(t *testing.T) {
 		t.Fatal("error trying to create a team", err)
 	}
 
-	newTeam, err := getTeam(db, expectedName)
+	newTeam, err := dbt.(*DatabaseOperations).getTeam(expectedName)
 	if err != nil {
 		t.Fatal("error on get team:", err)
 	}
@@ -64,7 +56,7 @@ func TestDatabaseOperationsCreateTeamAlreadyExists(t *testing.T) {
 	}
 	defer db.Close()
 
-	dbt := NewDatabaseOperations(db)
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
 
 	teamName := "teresa"
 	if err := createFakeTeam(db, teamName, "", ""); err != nil {
@@ -73,5 +65,86 @@ func TestDatabaseOperationsCreateTeamAlreadyExists(t *testing.T) {
 
 	if err = dbt.Create(teamName, "", ""); err != ErrTeamAlreadyExists {
 		t.Errorf("expected ErrTeamAlreadyExists, got %v", err)
+	}
+}
+
+func TestDatabaseOperationsAddUser(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error on open in memory database ", err)
+	}
+	db.AutoMigrate(&storage.User{})
+	defer db.Close()
+
+	expectedEmail := "gopher"
+
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedEmail] = ""
+
+	expectedTeam := "teresa"
+	if err := dbt.Create(expectedTeam, "", ""); err != nil {
+		t.Fatal("error on create a team:", err)
+	}
+
+	if err := dbt.AddUser(expectedTeam, expectedEmail); err != nil {
+		t.Errorf("error trying on add user to a team: %v", err)
+	}
+}
+
+func TestDatabaseOperationsAddUserTeamNotFound(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error on open in memory database ", err)
+	}
+	defer db.Close()
+
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+	if err := dbt.AddUser("teresa", "gopher"); err != ErrNotFound {
+		t.Errorf("expected error ErrNotFound, got %v", err)
+	}
+}
+
+func TestDatabaseOperationsAddUserUserNotFound(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error on open in memory database ", err)
+	}
+	db.AutoMigrate(&storage.User{})
+	defer db.Close()
+
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+
+	expectedTeam := "teresa"
+	if err := dbt.Create(expectedTeam, "", ""); err != nil {
+		t.Fatal("error on create a team:", err)
+	}
+
+	if err := dbt.AddUser(expectedTeam, "gopher"); err != user.ErrNotFound {
+		t.Errorf("expected error ErrNotFound, got %v", err)
+	}
+}
+
+func TestDatabaseOperationsAddUserUserAlreadyInTeam(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error on open in memory database ", err)
+	}
+	db.AutoMigrate(&storage.User{})
+	defer db.Close()
+
+	expectedEmail := "gopher"
+
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedEmail] = ""
+
+	expectedTeam := "teresa"
+	if err := dbt.Create(expectedTeam, "", ""); err != nil {
+		t.Fatal("error on create a team:", err)
+	}
+
+	for _, expectedErr := range []error{nil, ErrUserAlreadyInTeam} {
+		if err := dbt.AddUser(expectedTeam, expectedEmail); err != expectedErr {
+			t.Errorf("expected %v, got %v", expectedErr, err)
+		}
 	}
 }

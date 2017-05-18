@@ -83,7 +83,7 @@ func New(opt Options) (*Server, error) {
 	us := user.NewService(uOps)
 	us.RegisterService(s)
 
-	tOps := team.NewDatabaseOperations(opt.DB)
+	tOps := team.NewDatabaseOperations(opt.DB, uOps)
 	t := team.NewService(tOps)
 	t.RegisterService(s)
 

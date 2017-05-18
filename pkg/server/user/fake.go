@@ -55,6 +55,22 @@ func (f *FakeOperations) Delete(email string) error {
 	return nil
 }
 
+func (f *FakeOperations) Create(name, email, pass string, admin bool) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if _, found := f.Storage[email]; found {
+		return ErrUserAlreadyExists
+	}
+	f.Storage[email] = &storage.User{
+		Name:     name,
+		Email:    email,
+		Password: pass,
+		IsAdmin:  admin,
+	}
+	return nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

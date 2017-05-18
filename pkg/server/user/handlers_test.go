@@ -112,3 +112,69 @@ func TestDeletePermissionDenied(t *testing.T) {
 		t.Errorf("expected ErrPermissionDenied, got %s", err)
 	}
 }
+
+func TestCreateSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+
+	admin := &storage.User{
+		Email:   "admin@luizalabs.com",
+		IsAdmin: true,
+	}
+	name := "teresa"
+	email := "teresa@luizalabs.com"
+	pass := "test1234"
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", admin)
+	_, err := s.Create(
+		ctx,
+		&userpb.CreateRequest{Name: name, Email: email, Password: pass},
+	)
+	if err != nil {
+		t.Error("Got error on Create: ", err)
+	}
+}
+
+func TestCreateErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+
+	fakeAdmin := &storage.User{
+		Email: "admin@luizalabs.com",
+	}
+	email := "teresa@luizalabs.com"
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", fakeAdmin)
+	_, err := s.Create(
+		ctx,
+		&userpb.CreateRequest{Name: "gopher", Email: email, Password: ""},
+	)
+	if err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %s", err)
+	}
+}
+
+func TestCreateErrUserAlreadyExists(t *testing.T) {
+	fake := NewFakeOperations()
+
+	admin := &storage.User{
+		Email:   "admin@luizalabs.com",
+		IsAdmin: true,
+	}
+	name := "teresa"
+	email := "teresa@luizalabs.com"
+	fake.(*FakeOperations).Storage[email] = &storage.User{
+		Email: email,
+		Name:  name,
+	}
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", admin)
+	_, err := s.Create(
+		ctx,
+		&userpb.CreateRequest{Name: name, Email: email, Password: ""},
+	)
+	if err != ErrUserAlreadyExists {
+		t.Errorf("expected ErrUserAlreadyExists, got %s", err)
+	}
+}

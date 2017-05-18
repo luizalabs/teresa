@@ -126,8 +126,14 @@ func createTeam(cmd *cobra.Command, args []string) {
 }
 
 func teamAddUser(cmd *cobra.Command, args []string) {
-	team, _ := cmd.Flags().GetString("team")
-	user, _ := cmd.Flags().GetString("user")
+	team, err := cmd.Flags().GetString("team")
+	if err != nil {
+		fmt.Fprint(os.Stderr, "Invalid team parameter: ", err)
+	}
+	user, err := cmd.Flags().GetString("user")
+	if err != nil {
+		fmt.Fprint(os.Stderr, "Invalid user parameter: ", err)
+	}
 	if team == "" || user == "" {
 		cmd.Usage()
 		return

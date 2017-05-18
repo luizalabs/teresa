@@ -26,7 +26,7 @@ func (f *FakeOperations) Create(name, email, url string) error {
 	return nil
 }
 
-func (f *FakeOperations) AddUser(name, email string) error {
+func (f *FakeOperations) AddUser(name, userEmail string) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -35,13 +35,13 @@ func (f *FakeOperations) AddUser(name, email string) error {
 		return ErrNotFound
 	}
 
-	u, err := f.UserOps.GetUser(email)
+	u, err := f.UserOps.GetUser(userEmail)
 	if err != nil {
 		return err
 	}
 
 	for _, userOfTeam := range t.Users {
-		if userOfTeam.Email == email {
+		if userOfTeam.Email == userEmail {
 			return ErrUserAlreadyInTeam
 		}
 	}

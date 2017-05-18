@@ -15,7 +15,7 @@ message CreateRequest {
 
 message AddUserRequest {
     string name = 1;
-    string email = 2;
+    string user = 2;
 }
 
 message Empty {}

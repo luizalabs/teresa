@@ -76,17 +76,17 @@ func TestDatabaseOperationsAddUser(t *testing.T) {
 	db.AutoMigrate(&storage.User{})
 	defer db.Close()
 
-	expectedEmail := "gopher"
+	expectedUserEmail := "gopher"
 
 	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
-	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedEmail] = ""
+	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = ""
 
 	expectedTeam := "teresa"
 	if err := dbt.Create(expectedTeam, "", ""); err != nil {
 		t.Fatal("error on create a team:", err)
 	}
 
-	if err := dbt.AddUser(expectedTeam, expectedEmail); err != nil {
+	if err := dbt.AddUser(expectedTeam, expectedUserEmail); err != nil {
 		t.Errorf("error trying on add user to a team: %v", err)
 	}
 }
@@ -132,10 +132,10 @@ func TestDatabaseOperationsAddUserUserAlreadyInTeam(t *testing.T) {
 	db.AutoMigrate(&storage.User{})
 	defer db.Close()
 
-	expectedEmail := "gopher"
+	expectedUserEmail := "gopher"
 
 	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
-	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedEmail] = ""
+	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = ""
 
 	expectedTeam := "teresa"
 	if err := dbt.Create(expectedTeam, "", ""); err != nil {
@@ -143,7 +143,7 @@ func TestDatabaseOperationsAddUserUserAlreadyInTeam(t *testing.T) {
 	}
 
 	for _, expectedErr := range []error{nil, ErrUserAlreadyInTeam} {
-		if err := dbt.AddUser(expectedTeam, expectedEmail); err != expectedErr {
+		if err := dbt.AddUser(expectedTeam, expectedUserEmail); err != expectedErr {
 			t.Errorf("expected %v, got %v", expectedErr, err)
 		}
 	}

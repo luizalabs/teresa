@@ -147,7 +147,7 @@ func teamAddUser(cmd *cobra.Command, args []string) {
 	defer conn.Close()
 
 	cli := teampb.NewTeamClient(conn)
-	req := &teampb.AddUserRequest{Name: team, Email: user}
+	req := &teampb.AddUserRequest{Name: team, User: user}
 	if _, err := cli.AddUser(context.Background(), req); err != nil {
 		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
 		return

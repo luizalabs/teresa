@@ -29,7 +29,7 @@ func (s *Service) AddUser(ctx context.Context, request *teampb.AddUserRequest) (
 	if !u.IsAdmin {
 		return nil, auth.ErrPermissionDenied
 	}
-	if err := s.ops.AddUser(request.Name, request.Email); err != nil {
+	if err := s.ops.AddUser(request.Name, request.User); err != nil {
 		return nil, err
 	}
 	return &teampb.Empty{}, nil

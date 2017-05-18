@@ -48,15 +48,15 @@ func TestFakeOperationsCreateTeamAlreadyExists(t *testing.T) {
 func TestFakeOperationsAddUser(t *testing.T) {
 	fake := NewFakeOperations()
 
-	expectedEmail := "gopher"
-	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedEmail] = ""
+	expectedUserEmail := "gopher"
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = ""
 
 	expectedTeam := "teresa"
 	if err := fake.Create(expectedTeam, "", ""); err != nil {
 		t.Fatal("error trying to create a fake team:", err)
 	}
 
-	if err := fake.AddUser(expectedTeam, expectedEmail); err != nil {
+	if err := fake.AddUser(expectedTeam, expectedUserEmail); err != nil {
 		t.Errorf("error trying on add user to a team: %v", err)
 	}
 }
@@ -85,15 +85,15 @@ func TestFakeOperationsAddUserUserNotFound(t *testing.T) {
 func TestFakeOperationsAddUserUserAlreadyInTeam(t *testing.T) {
 	fake := NewFakeOperations()
 
-	expectedEmail := "gopher"
+	expectedUserEmail := "gopher"
 	expectedName := "teresa"
-	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedEmail] = ""
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = ""
 	fake.(*FakeOperations).Storage[expectedName] = &storage.Team{
 		Name:  expectedName,
-		Users: []storage.User{storage.User{Email: expectedEmail}},
+		Users: []storage.User{storage.User{Email: expectedUserEmail}},
 	}
 
-	if err := fake.AddUser(expectedName, expectedEmail); err != ErrUserAlreadyInTeam {
+	if err := fake.AddUser(expectedName, expectedUserEmail); err != ErrUserAlreadyInTeam {
 		t.Errorf("expected error ErrUserAlreadyInTeam, got %v", err)
 	}
 }

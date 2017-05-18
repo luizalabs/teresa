@@ -8,7 +8,7 @@ import (
 
 type Operations interface {
 	Create(name, email, url string) error
-	AddUser(name, email string) error
+	AddUser(name, userEmail string) error
 }
 
 type DatabaseOperations struct {
@@ -28,12 +28,12 @@ func (dbt *DatabaseOperations) Create(name, email, url string) error {
 	return dbt.DB.Save(t).Error
 }
 
-func (dbt *DatabaseOperations) AddUser(name, email string) error {
+func (dbt *DatabaseOperations) AddUser(name, userEmail string) error {
 	t, err := dbt.getTeam(name)
 	if err != nil {
 		return err
 	}
-	u, err := dbt.UserOps.GetUser(email)
+	u, err := dbt.UserOps.GetUser(userEmail)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (dbt *DatabaseOperations) AddUser(name, email string) error {
 	usersOfTeam := []storage.User{}
 	dbt.DB.Model(t).Association("Users").Find(&usersOfTeam)
 	for _, userOfTeam := range usersOfTeam {
-		if userOfTeam.Email == email {
+		if userOfTeam.Email == userEmail {
 			return ErrUserAlreadyInTeam
 		}
 	}

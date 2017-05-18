@@ -83,7 +83,7 @@ func TestTeamAddUserSuccess(t *testing.T) {
 			return
 		}
 	}
-	t.Errorf("AddUser dont add user for a team")
+	t.Errorf("AddUser didn't add user in team")
 }
 
 func TestTeamAddUserNotFound(t *testing.T) {

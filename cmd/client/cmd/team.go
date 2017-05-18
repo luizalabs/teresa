@@ -141,7 +141,7 @@ func teamAddUser(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Erro connecting to server:", err)
+		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
 		return
 	}
 	defer conn.Close()

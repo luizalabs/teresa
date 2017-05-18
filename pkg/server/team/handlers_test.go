@@ -61,14 +61,14 @@ func TestTeamAddUserSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 
 	expectedName := "teresa"
-	expectedEmail := "gopher@luizalabs.com"
+	expectedUserEmail := "gopher@luizalabs.com"
 	fake.(*FakeOperations).Storage[expectedName] = &storage.Team{Name: expectedName}
-	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedEmail] = ""
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = ""
 
 	s := NewService(fake)
 	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: "gopher", IsAdmin: true})
 
-	req := &teampb.AddUserRequest{Name: expectedName, Email: expectedEmail}
+	req := &teampb.AddUserRequest{Name: expectedName, User: expectedUserEmail}
 	if _, err := s.AddUser(ctx, req); err != nil {
 		t.Fatal("Got error on make AddUser: ", err)
 	}
@@ -79,7 +79,7 @@ func TestTeamAddUserSuccess(t *testing.T) {
 	}
 
 	for _, u := range teamWithUser.Users {
-		if u.Email == expectedEmail {
+		if u.Email == expectedUserEmail {
 			return
 		}
 	}
@@ -91,7 +91,7 @@ func TestTeamAddUserNotFound(t *testing.T) {
 	s := NewService(fake)
 
 	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: "gopher", IsAdmin: true})
-	req := &teampb.AddUserRequest{Name: "teresa", Email: "gopher"}
+	req := &teampb.AddUserRequest{Name: "teresa", User: "gopher"}
 	if _, err := s.AddUser(ctx, req); err != ErrNotFound {
 		t.Errorf("expected error ErrNotFound, got %v", err)
 	}
@@ -105,7 +105,7 @@ func TestTeamAddUserUserNotFound(t *testing.T) {
 	s := NewService(fake)
 
 	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: "gopher", IsAdmin: true})
-	req := &teampb.AddUserRequest{Name: "teresa", Email: "gopher"}
+	req := &teampb.AddUserRequest{Name: "teresa", User: "gopher"}
 	if _, err := s.AddUser(ctx, req); err != user.ErrNotFound {
 		t.Errorf("expected error ErrNotFound, got %v", err)
 	}
@@ -115,16 +115,16 @@ func TestTeamAddUserUserAlreadyInTeam(t *testing.T) {
 	fake := NewFakeOperations()
 
 	expectedName := "teresa"
-	expectedEmail := "gopher"
-	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedEmail] = ""
+	expectedUserEmail := "gopher"
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = ""
 	fake.(*FakeOperations).Storage[expectedName] = &storage.Team{
 		Name:  expectedName,
-		Users: []storage.User{storage.User{Email: expectedEmail}},
+		Users: []storage.User{storage.User{Email: expectedUserEmail}},
 	}
 
 	s := NewService(fake)
 	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: "gopher", IsAdmin: true})
-	req := &teampb.AddUserRequest{Name: expectedName, Email: expectedEmail}
+	req := &teampb.AddUserRequest{Name: expectedName, User: expectedUserEmail}
 
 	if _, err := s.AddUser(ctx, req); err != ErrUserAlreadyInTeam {
 		t.Errorf("expected error ErrUserAlreadyInTeam, got %v", err)
@@ -136,7 +136,7 @@ func TestTeamAddUserErrPermissionDenied(t *testing.T) {
 
 	s := NewService(fake)
 	ctx := context.WithValue(context.Background(), "user", &storage.User{IsAdmin: false})
-	req := &teampb.AddUserRequest{Name: "teresa", Email: "gopher"}
+	req := &teampb.AddUserRequest{Name: "teresa", User: "gopher"}
 
 	if _, err := s.AddUser(ctx, req); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)

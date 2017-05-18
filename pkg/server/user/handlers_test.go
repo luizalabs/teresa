@@ -15,7 +15,10 @@ func TestUserLoginSuccess(t *testing.T) {
 
 	expectedEmail := "teresa@luizalabs.com"
 	expectedPassword := "123456"
-	fake.(*FakeOperations).Storage[expectedEmail] = expectedPassword
+	fake.(*FakeOperations).Storage[expectedEmail] = &storage.User{
+		Password: expectedPassword,
+		Email:    expectedEmail,
+	}
 
 	s := NewService(fake)
 	r, err := s.Login(
@@ -47,7 +50,10 @@ func TestSetPasswordSuccess(t *testing.T) {
 
 	expectedEmail := "teresa@luizalabs.com"
 	expectedPassword := "123456"
-	fake.(*FakeOperations).Storage[expectedEmail] = "gopher"
+	fake.(*FakeOperations).Storage[expectedEmail] = &storage.User{
+		Password: "gopher",
+		Email:    expectedEmail,
+	}
 
 	s := NewService(fake)
 	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: expectedEmail})
@@ -68,7 +74,10 @@ func TestDeleteSuccess(t *testing.T) {
 		IsAdmin: true,
 	}
 	email := "teresa@luizalabs.com"
-	fake.(*FakeOperations).Storage[email] = "gopher"
+	fake.(*FakeOperations).Storage[email] = &storage.User{
+		Password: "gopher",
+		Email:    email,
+	}
 
 	s := NewService(fake)
 	ctx := context.WithValue(context.Background(), "user", admin)
@@ -88,7 +97,10 @@ func TestDeletePermissionDenied(t *testing.T) {
 		Email: "admin@luizalabs.com",
 	}
 	email := "teresa@luizalabs.com"
-	fake.(*FakeOperations).Storage[email] = "gopher"
+	fake.(*FakeOperations).Storage[email] = &storage.User{
+		Password: "gopher",
+		Email:    email,
+	}
 
 	s := NewService(fake)
 	ctx := context.WithValue(context.Background(), "user", fakeAdmin)

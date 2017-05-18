@@ -3,6 +3,7 @@ package user
 import (
 	"testing"
 
+	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
 )
 
@@ -11,7 +12,10 @@ func TestFakeOperationsLogin(t *testing.T) {
 
 	expectedEmail := "teresa@luizalabs.com"
 	expectedPassword := "123456"
-	fake.(*FakeOperations).Storage[expectedEmail] = expectedPassword
+	fake.(*FakeOperations).Storage[expectedEmail] = &storage.User{
+		Password: expectedPassword,
+		Email:    expectedEmail,
+	}
 
 	token, err := fake.Login(expectedEmail, expectedPassword)
 	if err != nil {
@@ -35,7 +39,10 @@ func TestFakeOperationsGetUser(t *testing.T) {
 	fake := NewFakeOperations()
 
 	expectedEmail := "teresa@luizalabs.com"
-	fake.(*FakeOperations).Storage[expectedEmail] = "foo"
+	fake.(*FakeOperations).Storage[expectedEmail] = &storage.User{
+		Password: "foo",
+		Email:    expectedEmail,
+	}
 
 	u, err := fake.GetUser(expectedEmail)
 	if err != nil {
@@ -58,13 +65,16 @@ func TestFakeOperationsSetPassword(t *testing.T) {
 
 	expectedEmail := "teresa@luizalabs.com"
 	expectedPassword := "123456"
-	fake.(*FakeOperations).Storage[expectedEmail] = "gopher"
+	fake.(*FakeOperations).Storage[expectedEmail] = &storage.User{
+		Password: "gopher",
+		Email:    expectedEmail,
+	}
 
 	err := fake.SetPassword(expectedEmail, expectedPassword)
 	if err != nil {
 		t.Fatal("error trying to change user password: ", err)
 	}
-	currentPassword := fake.(*FakeOperations).Storage[expectedEmail]
+	currentPassword := fake.(*FakeOperations).Storage[expectedEmail].Password
 	if currentPassword != expectedPassword {
 		t.Errorf("expected %s, got %s", expectedPassword, currentPassword)
 	}
@@ -82,7 +92,10 @@ func TestFakeOperationsDelete(t *testing.T) {
 	fake := NewFakeOperations()
 
 	email := "teresa@luizalabs.com"
-	fake.(*FakeOperations).Storage[email] = "gopher"
+	fake.(*FakeOperations).Storage[email] = &storage.User{
+		Password: "gopher",
+		Email:    email,
+	}
 
 	if err := fake.Delete(email); err != nil {
 		t.Fatal("Error performing delete in FakeOperations: ", err)

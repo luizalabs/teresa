@@ -35,7 +35,10 @@ func TestAuthorize(t *testing.T) {
 	}
 
 	uOps := user.NewFakeOperations()
-	uOps.(*user.FakeOperations).Storage[validEmail] = "secret"
+	uOps.(*user.FakeOperations).Storage[validEmail] = &storage.User{
+		Password: "secret",
+		Email:    validEmail,
+	}
 
 	var testCases = []struct {
 		token          string
@@ -103,7 +106,10 @@ func TestUnaryInterceptor(t *testing.T) {
 	info := &grpc.UnaryServerInfo{FullMethod: "Test"}
 
 	uOps := user.NewFakeOperations()
-	uOps.(*user.FakeOperations).Storage[expectedUserEmail] = "secret"
+	uOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{
+		Password: "secret",
+		Email:    expectedUserEmail,
+	}
 
 	validToken, err := authenticator.GenerateToken(expectedUserEmail)
 	if err != nil {

@@ -137,5 +137,5 @@ Finally create and deploy the application:
     $ teresa app create myapp --team myteam
     $ teresa deploy /path/to/myapp --app myapp --description "release 1.0"
 
-Make sure your application is ready for Teresa.
+Make sure your application is ready for Teresa.  
 Check out some examples [here](https://github.com/luizalabs/hello-teresa).

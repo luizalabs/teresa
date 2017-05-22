@@ -1,21 +1,13 @@
 package client
 
 import (
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func GetErrorMsg(err error) string {
-	// TODO: we'll change this mess
-	switch grpc.Code(err) {
-	case codes.PermissionDenied:
-		return "Permission Denied"
-	case codes.Unavailable:
-		return "Server Unavailable"
-	case codes.AlreadyExists:
-		return "Resource Already Exists"
-	case codes.NotFound:
-		return "Resource Not Found"
+	stat, ok := status.FromError(err)
+	if !ok {
+		return err.Error()
 	}
-	return err.Error()
+	return stat.Message()
 }

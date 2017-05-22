@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
 )
@@ -16,7 +16,7 @@ func TestGetErrorMsg(t *testing.T) {
 		expected string
 	}{
 		{auth.ErrPermissionDenied, "Permission Denied"},
-		{grpc.Errorf(codes.Unavailable, ""), "Server Unavailable"},
+		{status.Errorf(codes.Unavailable, "Server Unavailable"), "Server Unavailable"},
 		{errors.New("Generic Error"), "Generic Error"},
 	}
 

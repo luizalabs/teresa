@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/luizalabs/teresa-api/models/storage"
-	userpb "github.com/luizalabs/teresa-api/pkg/protobuf"
+	userpb "github.com/luizalabs/teresa-api/pkg/protobuf/user"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
 )
 

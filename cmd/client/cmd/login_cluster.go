@@ -10,7 +10,7 @@ import (
 	"github.com/luizalabs/teresa-api/pkg/client"
 	"github.com/spf13/cobra"
 
-	userpb "github.com/luizalabs/teresa-api/pkg/protobuf"
+	userpb "github.com/luizalabs/teresa-api/pkg/protobuf/user"
 )
 
 var userName string

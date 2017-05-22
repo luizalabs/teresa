@@ -9,6 +9,8 @@ import (
 type Operations interface {
 	Create(name, email, url string) error
 	AddUser(name, userEmail string) error
+	List() ([]*storage.Team, error)
+	ListByUser(userEmail string) ([]*storage.Team, error)
 }
 
 type DatabaseOperations struct {
@@ -47,6 +49,33 @@ func (dbt *DatabaseOperations) AddUser(name, userEmail string) error {
 	}
 
 	return dbt.DB.Model(t).Association("Users").Append(u).Error
+}
+
+func (dbt *DatabaseOperations) List() ([]*storage.Team, error) {
+	var teams []*storage.Team
+	if err := dbt.DB.Find(&teams).Error; err != nil {
+		return nil, err
+	}
+
+	for _, t := range teams {
+		if err := dbt.DB.Model(t).Association("Users").Find(&t.Users).Error; err != nil {
+			return nil, err
+		}
+	}
+	return teams, nil
+}
+
+func (dbt *DatabaseOperations) ListByUser(userEmail string) ([]*storage.Team, error) {
+	u, err := dbt.UserOps.GetUser(userEmail)
+	if err != nil {
+		return nil, err
+	}
+
+	var teams []*storage.Team
+	if err = dbt.DB.Model(u).Association("Teams").Find(&teams).Error; err != nil {
+		return nil, err
+	}
+	return teams, nil
 }
 
 func (dbt *DatabaseOperations) getTeam(name string) (*storage.Team, error) {

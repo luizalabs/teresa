@@ -97,3 +97,93 @@ func TestFakeOperationsAddUserUserAlreadyInTeam(t *testing.T) {
 		t.Errorf("expected error ErrUserAlreadyInTeam, got %v", err)
 	}
 }
+
+func TestFakeOperationsList(t *testing.T) {
+	var testData = []struct {
+		teamName   string
+		usersEmail []string
+	}{
+		{teamName: "Empty"},
+		{teamName: "teresa", usersEmail: []string{"gopher", "k8s"}},
+	}
+
+	fake := NewFakeOperations()
+	for _, tc := range testData {
+		fakeTeam := &storage.Team{Name: tc.teamName}
+		for _, email := range tc.usersEmail {
+			fakeTeam.Users = append(fakeTeam.Users, storage.User{Email: email})
+		}
+		fake.(*FakeOperations).Storage[tc.teamName] = fakeTeam
+	}
+
+	teams, err := fake.List()
+	if err != nil {
+		t.Fatal("error on list teams:", err)
+	}
+
+	if len(teams) != len(testData) {
+		t.Errorf("expected %d, got %d", len(testData), len(teams))
+	}
+}
+
+func TestFakeOperationsListWithoutTeams(t *testing.T) {
+	fake := NewFakeOperations()
+
+	teams, err := fake.List()
+	if err != nil {
+		t.Fatal("error trying to list teams:", err)
+	}
+	if len(teams) > 0 {
+		t.Errorf("expected 0, got %d", len(teams))
+	}
+}
+
+func TestFakeOperationsListByUser(t *testing.T) {
+	expectedUserEmail := "gopher"
+
+	var testData = []struct {
+		teamName   string
+		usersEmail []string
+	}{
+		{teamName: "Empty"},
+		{teamName: "teresa", usersEmail: []string{expectedUserEmail, "k8s"}},
+		{teamName: "gophers", usersEmail: []string{expectedUserEmail, "john"}},
+		{teamName: "vimers", usersEmail: []string{"k8s", "john"}},
+	}
+
+	fake := NewFakeOperations()
+	for _, tc := range testData {
+		fakeTeam := &storage.Team{Name: tc.teamName}
+		for _, email := range tc.usersEmail {
+			fakeTeam.Users = append(fakeTeam.Users, storage.User{Email: email})
+		}
+		fake.(*FakeOperations).Storage[tc.teamName] = fakeTeam
+	}
+
+	teams, err := fake.ListByUser(expectedUserEmail)
+	if err != nil {
+		t.Fatal("error on list teams:", err)
+	}
+
+	if len(teams) != 2 {
+		t.Fatalf("expected 2, got %d", len(teams))
+	}
+
+	for _, currentTeam := range teams {
+		if currentTeam.Name != "gophers" && currentTeam.Name != "teresa" {
+			t.Errorf("expecter gophers or teresa, got %s", currentTeam.Name)
+		}
+	}
+}
+
+func TestFakeOperationsListByUserWithoutTeams(t *testing.T) {
+	fake := NewFakeOperations()
+
+	teams, err := fake.ListByUser("gopher@luizalabs.com")
+	if err != nil {
+		t.Fatal("error trying to list teams:", err)
+	}
+	if len(teams) > 0 {
+		t.Errorf("expected 0, got %d", len(teams))
+	}
+}

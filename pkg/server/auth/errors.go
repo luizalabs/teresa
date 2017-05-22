@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-var ErrPermissionDenied = grpc.Errorf(codes.PermissionDenied, "Permission Denied")
+var ErrPermissionDenied = status.Errorf(codes.PermissionDenied, "Permission Denied")

@@ -49,7 +49,7 @@ func TestFakeOperationsAddUser(t *testing.T) {
 	fake := NewFakeOperations()
 
 	expectedUserEmail := "gopher"
-	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = ""
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{Email: expectedUserEmail}
 
 	expectedTeam := "teresa"
 	if err := fake.Create(expectedTeam, "", ""); err != nil {
@@ -87,7 +87,7 @@ func TestFakeOperationsAddUserUserAlreadyInTeam(t *testing.T) {
 
 	expectedUserEmail := "gopher"
 	expectedName := "teresa"
-	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = ""
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{Email: expectedUserEmail}
 	fake.(*FakeOperations).Storage[expectedName] = &storage.Team{
 		Name:  expectedName,
 		Users: []storage.User{storage.User{Email: expectedUserEmail}},

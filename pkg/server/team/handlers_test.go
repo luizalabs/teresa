@@ -63,7 +63,7 @@ func TestTeamAddUserSuccess(t *testing.T) {
 	expectedName := "teresa"
 	expectedUserEmail := "gopher@luizalabs.com"
 	fake.(*FakeOperations).Storage[expectedName] = &storage.Team{Name: expectedName}
-	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = ""
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{Email: expectedUserEmail}
 
 	s := NewService(fake)
 	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: "gopher", IsAdmin: true})
@@ -116,7 +116,7 @@ func TestTeamAddUserUserAlreadyInTeam(t *testing.T) {
 
 	expectedName := "teresa"
 	expectedUserEmail := "gopher"
-	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = ""
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{Email: expectedUserEmail}
 	fake.(*FakeOperations).Storage[expectedName] = &storage.Team{
 		Name:  expectedName,
 		Users: []storage.User{storage.User{Email: expectedUserEmail}},

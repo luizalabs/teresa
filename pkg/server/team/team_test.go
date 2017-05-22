@@ -79,7 +79,7 @@ func TestDatabaseOperationsAddUser(t *testing.T) {
 	expectedUserEmail := "gopher"
 
 	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
-	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = ""
+	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{Email: expectedUserEmail}
 
 	expectedTeam := "teresa"
 	if err := dbt.Create(expectedTeam, "", ""); err != nil {
@@ -135,7 +135,7 @@ func TestDatabaseOperationsAddUserUserAlreadyInTeam(t *testing.T) {
 	expectedUserEmail := "gopher"
 
 	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
-	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = ""
+	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{Email: expectedUserEmail}
 
 	expectedTeam := "teresa"
 	if err := dbt.Create(expectedTeam, "", ""); err != nil {

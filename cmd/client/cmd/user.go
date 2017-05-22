@@ -11,7 +11,7 @@ import (
 	_ "github.com/prometheus/common/log"
 	"github.com/spf13/cobra"
 
-	userpb "github.com/luizalabs/teresa-api/pkg/protobuf"
+	userpb "github.com/luizalabs/teresa-api/pkg/protobuf/user"
 )
 
 // userCmd represents the user command

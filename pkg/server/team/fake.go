@@ -50,6 +50,26 @@ func (f *FakeOperations) AddUser(name, userEmail string) error {
 	return nil
 }
 
+func (f *FakeOperations) List() ([]*storage.Team, error) {
+	var teams []*storage.Team
+	for _, v := range f.Storage {
+		teams = append(teams, v)
+	}
+	return teams, nil
+}
+
+func (f *FakeOperations) ListByUser(userEmail string) ([]*storage.Team, error) {
+	var teams []*storage.Team
+	for _, v := range f.Storage {
+		for _, u := range v.Users {
+			if u.Email == userEmail {
+				teams = append(teams, v)
+			}
+		}
+	}
+	return teams, nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

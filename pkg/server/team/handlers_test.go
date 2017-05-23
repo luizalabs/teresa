@@ -142,3 +142,85 @@ func TestTeamAddUserErrPermissionDenied(t *testing.T) {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }
+
+func TestTeamListUserAdmin(t *testing.T) {
+	var testData = []struct {
+		teamName   string
+		usersEmail []string
+	}{
+		{teamName: "Empty"},
+		{teamName: "teresa", usersEmail: []string{"gopher", "k8s"}},
+	}
+
+	fake := NewFakeOperations()
+	for _, tc := range testData {
+		fakeTeam := &storage.Team{Name: tc.teamName}
+		for _, email := range tc.usersEmail {
+			fakeTeam.Users = append(fakeTeam.Users, storage.User{Email: email})
+		}
+		fake.(*FakeOperations).Storage[tc.teamName] = fakeTeam
+	}
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &storage.User{IsAdmin: true})
+	resp, err := s.List(ctx, &teampb.Empty{})
+	if err != nil {
+		t.Fatal("error on list teams:", err)
+	}
+
+	if len(resp.Teams) != len(testData) {
+		t.Errorf("expected %d, got %d", len(testData), len(resp.Teams))
+	}
+
+	var (
+		emptyTeam  *teampb.ListResponse_Team
+		teresaTeam *teampb.ListResponse_Team
+	)
+
+	if resp.Teams[0].Name == "Empty" {
+		emptyTeam = resp.Teams[0]
+		teresaTeam = resp.Teams[1]
+	} else {
+		teresaTeam = resp.Teams[0]
+		emptyTeam = resp.Teams[1]
+	}
+
+	if len(emptyTeam.Users) != 0 {
+		t.Errorf("expected 0, got %d", len(emptyTeam.Users))
+	}
+	if len(teresaTeam.Users) != 2 {
+		t.Errorf("expected 2, got %d", len(teresaTeam.Users))
+	}
+}
+
+func TestTeamList(t *testing.T) {
+	expectedUserEmail := "gopher"
+	var testData = []struct {
+		teamName   string
+		usersEmail []string
+	}{
+		{teamName: "Empty"},
+		{teamName: "vimmers", usersEmail: []string{"k8s"}},
+		{teamName: "teresa", usersEmail: []string{expectedUserEmail, "k8s"}},
+		{teamName: "gophers", usersEmail: []string{expectedUserEmail, "pike", "cheney"}},
+	}
+
+	fake := NewFakeOperations()
+	for _, tc := range testData {
+		fakeTeam := &storage.Team{Name: tc.teamName}
+		for _, email := range tc.usersEmail {
+			fakeTeam.Users = append(fakeTeam.Users, storage.User{Email: email})
+		}
+		fake.(*FakeOperations).Storage[tc.teamName] = fakeTeam
+	}
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &storage.User{IsAdmin: false, Email: expectedUserEmail})
+	resp, err := s.List(ctx, &teampb.Empty{})
+	if err != nil {
+		t.Fatal("error on list teams:", err)
+	}
+	if len(resp.Teams) != 2 {
+		t.Errorf("expected 2, got %d", len(resp.Teams))
+	}
+}

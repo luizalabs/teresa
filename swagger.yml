@@ -22,27 +22,6 @@ securityDefinitions:
     name: Authorization
     in: header
 paths:
-  /teams:
-    get:
-      summary: Get teams
-      description: Get a list of teams
-      tags:
-        - teams
-      operationId: getTeams
-      security:
-        - api_key: []
-        - token_header: []
-      responses:
-        200:
-          description: list of teams
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Team"
-        default:
-          description: Unexpected error
-          schema:
-            $ref: "#/definitions/Error"
   /teams/{team_id}:
     get:
       summary: Get team details

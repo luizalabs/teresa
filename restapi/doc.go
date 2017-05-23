@@ -10,15 +10,15 @@ The Teresa PaaS API
     Version: 0.3.2
 
     Consumes:
-    - application/json
-
     - multipart/form-data
+
+    - application/json
 
 
     Produces:
-    - application/json
-
     - application/octet-stream
+
+    - application/json
 
 
 swagger:meta

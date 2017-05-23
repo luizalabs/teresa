@@ -71,9 +71,6 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.TeamsGetTeamDetailHandler = teams.GetTeamDetailHandlerFunc(func(params teams.GetTeamDetailParams, principal interface{}) middleware.Responder {
 		return handlers.GetTeamDetailsHandler(params, principal)
 	})
-	api.TeamsGetTeamsHandler = teams.GetTeamsHandlerFunc(func(params teams.GetTeamsParams, principal interface{}) middleware.Responder {
-		return handlers.GetTeamsHandler(params, principal)
-	})
 	// get a single user from db
 	api.UsersGetUserDetailsHandler = users.GetUserDetailsHandlerFunc(func(params users.GetUserDetailsParams, principal interface{}) middleware.Responder {
 		return handlers.GetUserDetailsHandler(params, principal)

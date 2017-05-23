@@ -79,34 +79,6 @@ func (a *Client) GetTeamDetail(params *GetTeamDetailParams, authInfo runtime.Cli
 }
 
 /*
-GetTeams gets teams
-
-Get a list of teams
-*/
-func (a *Client) GetTeams(params *GetTeamsParams, authInfo runtime.ClientAuthInfoWriter) (*GetTeamsOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetTeamsParams()
-	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "getTeams",
-		Method:             "GET",
-		PathPattern:        "/teams",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetTeamsReader{formats: a.formats},
-		AuthInfo:           authInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetTeamsOK), nil
-}
-
-/*
 UpdateTeam updates team
 
 Update team details

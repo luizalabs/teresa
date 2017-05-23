@@ -90,4 +90,5 @@ build-client:
 	@go build -o teresa cmd/client/main.go
 
 gen-grpc-stubs:
-	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/*.proto
+	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/user/*.proto
+	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/team/*.proto

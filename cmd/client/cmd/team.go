@@ -22,27 +22,7 @@ var teamCmd = &cobra.Command{
 var teamListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all teams",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		teams, err := NewTeresa().GetTeams()
-		if err != nil {
-			return nil
-		}
-		fmt.Println("Teams:")
-		for _, t := range teams {
-			if t.IAmMember {
-				fmt.Printf("  - %s (member)\n", *t.Name)
-			} else {
-				fmt.Printf("  - %s\n", *t.Name)
-			}
-			if t.Email != "" {
-				fmt.Printf("    contact: %s\n", t.Email)
-			}
-			if t.URL != "" {
-				fmt.Printf("    url: %s\n", t.URL)
-			}
-		}
-		return nil
-	},
+	Run:   teamList,
 }
 
 var teamCreateCmd = &cobra.Command{
@@ -91,6 +71,8 @@ func init() {
 	teamCmd.AddCommand(teamListCmd)
 	teamCmd.AddCommand(teamCreateCmd)
 	teamCmd.AddCommand(teamAddUserCmd)
+
+	teamListCmd.Flags().Bool("show-users", false, "show members of team")
 
 	teamCreateCmd.Flags().String("email", "", "team email, if any")
 	teamCreateCmd.Flags().String("url", "", "team site's URL, if any")
@@ -153,4 +135,44 @@ func teamAddUser(cmd *cobra.Command, args []string) {
 		return
 	}
 	fmt.Printf("User %s is now member of the team %s\n", color.CyanString(user), color.CyanString(team))
+}
+
+func teamList(cmd *cobra.Command, args []string) {
+	showUsers, _ := cmd.Flags().GetBool("show-users")
+
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
+		return
+	}
+	defer conn.Close()
+
+	cli := teampb.NewTeamClient(conn)
+	resp, err := cli.List(context.Background(), &teampb.Empty{})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+
+	if len(resp.Teams) == 0 {
+		fmt.Println("You do not belong to any team")
+		return
+	}
+
+	fmt.Println("Teams:")
+	for _, t := range resp.Teams {
+		fmt.Print(color.CyanString(t.Name))
+		for _, s := range []string{t.Email, t.Url} {
+			if s != "" {
+				fmt.Printf(" - %s", s)
+			}
+		}
+		fmt.Print("\n")
+		if !showUsers {
+			continue
+		}
+		for _, u := range t.Users {
+			fmt.Printf("- %s (%s)\n", u.Name, u.Email)
+		}
+	}
 }

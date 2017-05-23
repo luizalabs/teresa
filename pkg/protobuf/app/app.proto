@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package app;
+
+service App {
+    rpc Create(CreateRequest) returns (Empty);
+}
+
+message CreateRequest {
+    string name = 1;
+    string team = 2;
+    string process_type = 3;
+
+    message Limits {
+        message LimitRangeQuantity {
+            string quantity = 1;
+            string resource = 2;
+        }
+  
+        repeated LimitRangeQuantity default = 1;
+        repeated LimitRangeQuantity default_request = 2;
+    }
+    Limits limits = 4;
+
+    message AutoScale {
+        int64 cpu_target_utilization = 1;
+        int64 max = 2;
+        int64 min = 3;
+    }
+    AutoScale auto_scale = 5;
+}
+
+message Empty {}

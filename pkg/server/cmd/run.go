@@ -3,29 +3,26 @@ package cmd
 import (
 	"log"
 
-	"github.com/jinzhu/gorm"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/luizalabs/teresa-api/pkg/server"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
-	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"github.com/luizalabs/teresa-api/pkg/server/secrets"
 	"github.com/spf13/cobra"
 )
 
-var RunCmd = &cobra.Command{
-	Use:   "",
-	Short: "",
-	Long:  ``,
+var runCmd = &cobra.Command{
+	Use:   "run",
+	Short: "Start Teresa gRPC server",
 	Run:   runServer,
 }
 
-var port string
-
 func init() {
-	RunCmd.Flags().StringVarP(&port, "port", "p", "50051", "TCP port to create a listener")
+	RootCmd.AddCommand(runCmd)
+	runCmd.Flags().String("port", "50051", "TCP port to create a listener")
 }
 
 func runServer(cmd *cobra.Command, args []string) {
+	port, _ := cmd.Flags().GetString("port")
 	db, err := getDB()
 	if err != nil {
 		log.Fatal("Error on connect to Database: ", err)
@@ -76,12 +73,4 @@ func getAuth(s secrets.Secrets) (auth.Auth, error) {
 		return nil, err
 	}
 	return auth.New(private, public), nil
-}
-
-func getDB() (*gorm.DB, error) {
-	dbConf := new(database.Config)
-	if err := envconfig.Process("teresadb", dbConf); err != nil {
-		return nil, err
-	}
-	return database.New(*dbConf)
 }

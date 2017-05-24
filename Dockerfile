@@ -6,5 +6,5 @@ COPY . /go/src/github.com/luizalabs/teresa-api
 
 RUN go build -i -o teresa ./cmd/server/main.go
 
-CMD ["./teresa", "--port", "8080"]
+CMD ["./teresa", "run", "--port", "8080"]
 EXPOSE 8080

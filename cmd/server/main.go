@@ -13,7 +13,7 @@ func main() {
 		}
 	}()
 
-	if err := cmd.RunCmd.Execute(); err != nil {
+	if err := cmd.RootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
 }

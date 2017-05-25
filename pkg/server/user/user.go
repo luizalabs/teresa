@@ -7,6 +7,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/validations"
 )
 
 const (
@@ -76,12 +77,16 @@ func (dbu *DatabaseOperations) Delete(email string) error {
 }
 
 func (dbu *DatabaseOperations) Create(name, email, pass string, admin bool) error {
-	u := new(storage.User)
-	if !dbu.DB.Where(&storage.User{Email: email}).First(u).RecordNotFound() {
-		return ErrUserAlreadyExists
+	if !validations.ValidateEmail(email) {
+		return ErrInvalidEmail
 	}
 	if len(pass) < minPassLength {
 		return ErrInvalidPassword
+	}
+
+	u := new(storage.User)
+	if !dbu.DB.Where(&storage.User{Email: email}).First(u).RecordNotFound() {
+		return ErrUserAlreadyExists
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
 	if err != nil {

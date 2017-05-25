@@ -9,4 +9,5 @@ var (
 	ErrNotFound          = status.Errorf(codes.NotFound, "User not found")
 	ErrUserAlreadyExists = status.Errorf(codes.AlreadyExists, "User already exists")
 	ErrInvalidPassword   = status.Errorf(codes.InvalidArgument, "Invalid password")
+	ErrInvalidEmail      = status.Errorf(codes.InvalidArgument, "Invalid e-mail")
 )

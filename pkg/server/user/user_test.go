@@ -211,10 +211,10 @@ func TestDatabaseOperationsCreateUserAlreadyExists(t *testing.T) {
 	dbu := NewDatabaseOperations(db, auth.NewFake())
 	email := "teresa@luizalabs.com"
 
-	if err := createFakeUser(db, email, "123456"); err != nil {
+	if err := createFakeUser(db, email, "12345678"); err != nil {
 		t.Fatal("error creating fake user: ", err)
 	}
-	if err := dbu.Create("gopher", email, "", false); err != ErrUserAlreadyExists {
+	if err := dbu.Create("gopher", email, "12345678", false); err != ErrUserAlreadyExists {
 		t.Errorf("expected ErrUserAlreadyExists, got %v", err)
 	}
 }
@@ -231,5 +231,19 @@ func TestDatabaseOperationsCreateUserInvalidPassword(t *testing.T) {
 
 	if err := dbu.Create("gopher", email, "test", false); err != ErrInvalidPassword {
 		t.Errorf("expected ErrInvalidPassword, got %v", err)
+	}
+}
+
+func TestDatabaseOperationsCreateUserInvalidEmail(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error opening in memory database ", err)
+	}
+	defer db.Close()
+
+	dbu := NewDatabaseOperations(db, auth.NewFake())
+
+	if err := dbu.Create("gopher", "gopher", "12345678", false); err != ErrInvalidEmail {
+		t.Errorf("expected ErrInvalidEmail, got %v", err)
 	}
 }

@@ -173,7 +173,7 @@ func TestDatabaseOperationsList(t *testing.T) {
 		usersEmail []string
 	}{
 		{teamName: "Empty"},
-		{teamName: "teresa", usersEmail: []string{"gopher", "k8s"}},
+		{teamName: "teresa", usersEmail: []string{"gopher@luizalabs.com", "k8s@luizalabs.com"}},
 	}
 
 	db, err := gorm.Open("sqlite3", ":memory:")
@@ -230,16 +230,16 @@ func TestDatabaseOperationsList(t *testing.T) {
 }
 
 func TestDatabaseOperationsListByUser(t *testing.T) {
-	expectedUserEmail := "gopher"
+	expectedUserEmail := "gopher@luizalabs.com"
 
 	var testData = []struct {
 		teamName   string
 		usersEmail []string
 	}{
 		{teamName: "Empty"},
-		{teamName: "teresa", usersEmail: []string{expectedUserEmail, "k8s"}},
-		{teamName: "gophers", usersEmail: []string{expectedUserEmail, "john"}},
-		{teamName: "vimers", usersEmail: []string{"k8s", "john"}},
+		{teamName: "teresa", usersEmail: []string{expectedUserEmail, "k8s@luizalabs.com"}},
+		{teamName: "gophers", usersEmail: []string{expectedUserEmail, "john@luizalabs.com"}},
+		{teamName: "vimers", usersEmail: []string{"k8s@luizalabs.com", "john@luizalabs.com"}},
 	}
 
 	db, err := gorm.Open("sqlite3", ":memory:")
@@ -287,7 +287,7 @@ func TestDatabaseOperationsListByUserWithoutTeams(t *testing.T) {
 	}
 	defer db.Close()
 
-	expectedUserEmail := "gopher"
+	expectedUserEmail := "gopher@luizalabs.com"
 
 	uOps := user.NewDatabaseOperations(db, auth.NewFake())
 	dbt := NewDatabaseOperations(db, uOps)

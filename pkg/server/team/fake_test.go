@@ -104,7 +104,7 @@ func TestFakeOperationsList(t *testing.T) {
 		usersEmail []string
 	}{
 		{teamName: "Empty"},
-		{teamName: "teresa", usersEmail: []string{"gopher", "k8s"}},
+		{teamName: "teresa", usersEmail: []string{"gopher@luizalabs.com", "k8s@luizalabs.com"}},
 	}
 
 	fake := NewFakeOperations()
@@ -139,16 +139,16 @@ func TestFakeOperationsListWithoutTeams(t *testing.T) {
 }
 
 func TestFakeOperationsListByUser(t *testing.T) {
-	expectedUserEmail := "gopher"
+	expectedUserEmail := "gopher@luizalabs.com"
 
 	var testData = []struct {
 		teamName   string
 		usersEmail []string
 	}{
 		{teamName: "Empty"},
-		{teamName: "teresa", usersEmail: []string{expectedUserEmail, "k8s"}},
-		{teamName: "gophers", usersEmail: []string{expectedUserEmail, "john"}},
-		{teamName: "vimers", usersEmail: []string{"k8s", "john"}},
+		{teamName: "teresa", usersEmail: []string{expectedUserEmail, "k8s@luizalabs.com"}},
+		{teamName: "gophers", usersEmail: []string{expectedUserEmail, "john@luizalabs.com"}},
+		{teamName: "vimmers", usersEmail: []string{"k8s@luizalabs.com", "john@luizalabs.com"}},
 	}
 
 	fake := NewFakeOperations()

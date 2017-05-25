@@ -66,7 +66,7 @@ func TestTeamAddUserSuccess(t *testing.T) {
 	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{Email: expectedUserEmail}
 
 	s := NewService(fake)
-	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: "gopher", IsAdmin: true})
+	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: "gopher@luizalabs.com", IsAdmin: true})
 
 	req := &teampb.AddUserRequest{Name: expectedName, User: expectedUserEmail}
 	if _, err := s.AddUser(ctx, req); err != nil {
@@ -115,7 +115,7 @@ func TestTeamAddUserUserAlreadyInTeam(t *testing.T) {
 	fake := NewFakeOperations()
 
 	expectedName := "teresa"
-	expectedUserEmail := "gopher"
+	expectedUserEmail := "gopher@luizalabs.com"
 	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{Email: expectedUserEmail}
 	fake.(*FakeOperations).Storage[expectedName] = &storage.Team{
 		Name:  expectedName,
@@ -123,7 +123,7 @@ func TestTeamAddUserUserAlreadyInTeam(t *testing.T) {
 	}
 
 	s := NewService(fake)
-	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: "gopher", IsAdmin: true})
+	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: "gopher@luizalabs.com", IsAdmin: true})
 	req := &teampb.AddUserRequest{Name: expectedName, User: expectedUserEmail}
 
 	if _, err := s.AddUser(ctx, req); err != ErrUserAlreadyInTeam {
@@ -149,7 +149,7 @@ func TestTeamListUserAdmin(t *testing.T) {
 		usersEmail []string
 	}{
 		{teamName: "Empty"},
-		{teamName: "teresa", usersEmail: []string{"gopher", "k8s"}},
+		{teamName: "teresa", usersEmail: []string{"gopher@luizalabs.com", "k8s@luizalabs.com"}},
 	}
 
 	fake := NewFakeOperations()
@@ -194,15 +194,15 @@ func TestTeamListUserAdmin(t *testing.T) {
 }
 
 func TestTeamList(t *testing.T) {
-	expectedUserEmail := "gopher"
+	expectedUserEmail := "gopher@luizalabs.com"
 	var testData = []struct {
 		teamName   string
 		usersEmail []string
 	}{
 		{teamName: "Empty"},
-		{teamName: "vimmers", usersEmail: []string{"k8s"}},
-		{teamName: "teresa", usersEmail: []string{expectedUserEmail, "k8s"}},
-		{teamName: "gophers", usersEmail: []string{expectedUserEmail, "pike", "cheney"}},
+		{teamName: "vimmers", usersEmail: []string{"k8s@luizalabs.com"}},
+		{teamName: "teresa", usersEmail: []string{expectedUserEmail, "k8s@luizalabs.com"}},
+		{teamName: "gophers", usersEmail: []string{expectedUserEmail, "pike@luizalabs.com", "cheney@luizalabs.com"}},
 	}
 
 	fake := NewFakeOperations()

@@ -33,25 +33,6 @@ var teamCreateCmd = &cobra.Command{
 	Run:     createTeam,
 }
 
-//
-//
-// // delete team
-// var deleteTeamCmd = &cobra.Command{
-// 	Use:   "team",
-// 	Short: "Delete a team",
-// 	Long:  `Delete a team`,
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		if teamIDFlag == 0 {
-// 			Fatalf(cmd, "team ID is required")
-// 		}
-// 		if err := NewTeresa().DeleteTeam(teamIDFlag); err != nil {
-// 			log.Fatalf("Failed to delete team: %s", err)
-// 		}
-// 		log.Infof("Team deleted.")
-// 	},
-// }
-//
-//
 var teamAddUserCmd = &cobra.Command{
 	Use:   "add-user",
 	Short: "Add a member to a team",

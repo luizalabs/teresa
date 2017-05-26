@@ -19,7 +19,7 @@ var createSuperUserCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(createSuperUserCmd)
 	createSuperUserCmd.Flags().String("name", "Admin", "super user name")
-	createSuperUserCmd.Flags().String("email", "admin@teresa.io", "super user email")
+	createSuperUserCmd.Flags().String("email", "", "super user email [required]")
 	createSuperUserCmd.Flags().String("password", "", "super user password [required]")
 }
 
@@ -27,8 +27,13 @@ func createSuperUser(cmd *cobra.Command, args []string) {
 	name, _ := cmd.Flags().GetString("name")
 	email, _ := cmd.Flags().GetString("email")
 	pass, _ := cmd.Flags().GetString("password")
+
 	if pass == "" {
 		fmt.Fprintln(os.Stderr, "Password required")
+		return
+	}
+	if email == "" {
+		fmt.Fprintln(os.Stderr, "E-mail required")
 		return
 	}
 

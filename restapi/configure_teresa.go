@@ -11,7 +11,6 @@ import (
 	"github.com/luizalabs/teresa-api/handlers"
 	"github.com/luizalabs/teresa-api/restapi/operations"
 	"github.com/luizalabs/teresa-api/restapi/operations/deployments"
-	"github.com/luizalabs/teresa-api/restapi/operations/teams"
 	"github.com/luizalabs/teresa-api/restapi/operations/users"
 	"github.com/x-cray/logrus-prefixed-formatter"
 )
@@ -51,10 +50,6 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	// create deployment
 	api.DeploymentsCreateDeploymentHandler = handlers.CreateDeploymentHandler
 
-	// delete team
-	api.TeamsDeleteTeamHandler = teams.DeleteTeamHandlerFunc(func(params teams.DeleteTeamParams, principal interface{}) middleware.Responder {
-		return handlers.DeleteTeamHandler(params, principal)
-	})
 	// app details
 	api.AppsGetAppDetailsHandler = handlers.GetAppDetailsHandler
 
@@ -66,14 +61,6 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 
 	api.DeploymentsGetDeploymentsHandler = deployments.GetDeploymentsHandlerFunc(func(params deployments.GetDeploymentsParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation deployments.GetDeployments has not yet been implemented")
-	})
-	// get team details
-	api.TeamsGetTeamDetailHandler = teams.GetTeamDetailHandlerFunc(func(params teams.GetTeamDetailParams, principal interface{}) middleware.Responder {
-		return handlers.GetTeamDetailsHandler(params, principal)
-	})
-	// get a single user from db
-	api.UsersGetUserDetailsHandler = users.GetUserDetailsHandlerFunc(func(params users.GetUserDetailsParams, principal interface{}) middleware.Responder {
-		return handlers.GetUserDetailsHandler(params, principal)
 	})
 	api.UsersGetUsersHandler = users.GetUsersHandlerFunc(func(params users.GetUsersParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation users.GetUsers has not yet been implemented")
@@ -89,10 +76,6 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 
 	api.AppsUpdateAppScaleHandler = handlers.UpdateAppScaleHandler
 
-	// update a team
-	api.TeamsUpdateTeamHandler = teams.UpdateTeamHandlerFunc(func(params teams.UpdateTeamParams, principal interface{}) middleware.Responder {
-		return handlers.UpdateTeamHandler(params, principal)
-	})
 	api.UsersUpdateUserHandler = users.UpdateUserHandlerFunc(func(params users.UpdateUserParams, principal interface{}) middleware.Responder {
 		return middleware.NotImplemented("operation users.UpdateUser has not yet been implemented")
 	})

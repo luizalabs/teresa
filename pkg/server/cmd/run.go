@@ -6,7 +6,9 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"github.com/luizalabs/teresa-api/pkg/server"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/k8s"
 	"github.com/luizalabs/teresa-api/pkg/server/secrets"
+	"github.com/luizalabs/teresa-api/pkg/server/storage"
 	"github.com/spf13/cobra"
 )
 
@@ -28,6 +30,16 @@ func runServer(cmd *cobra.Command, args []string) {
 		log.Fatal("Error on connect to Database: ", err)
 	}
 
+	st, err := getStorage()
+	if err != nil {
+		log.Fatal("Error configuring storage: ", err)
+	}
+
+	k8s, err := getK8s()
+	if err != nil {
+		log.Fatal("Error configuring k8s client: ", err)
+	}
+
 	sec, err := getSecrets()
 	if err != nil {
 		log.Fatal("Error on get secrects information ", err)
@@ -46,7 +58,10 @@ func runServer(cmd *cobra.Command, args []string) {
 		Port:    port,
 		Auth:    a,
 		DB:      db,
-		TLSCert: tlsCert})
+		TLSCert: tlsCert,
+		Storage: st,
+		K8s:     k8s,
+	})
 	if err != nil {
 		log.Fatal("Error on create Server: ", err)
 	}
@@ -73,4 +88,20 @@ func getAuth(s secrets.Secrets) (auth.Auth, error) {
 		return nil, err
 	}
 	return auth.New(private, public), nil
+}
+
+func getStorage() (storage.Storage, error) {
+	conf := new(storage.Config)
+	if err := envconfig.Process("teresafilestorage", conf); err != nil {
+		return nil, err
+	}
+	return storage.New(conf)
+}
+
+func getK8s() (k8s.Client, error) {
+	conf := new(k8s.Config)
+	if err := envconfig.Process("teresak8s", conf); err != nil {
+		return nil, err
+	}
+	return k8s.New(conf)
 }

@@ -11,6 +11,8 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/k8s"
+	st "github.com/luizalabs/teresa-api/pkg/server/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/team"
 	"github.com/luizalabs/teresa-api/pkg/server/user"
 
@@ -24,6 +26,8 @@ type Options struct {
 	TLSCert *tls.Certificate
 	Auth    auth.Auth
 	DB      *gorm.DB
+	Storage st.Storage
+	K8s     k8s.Client
 }
 
 type Server struct {

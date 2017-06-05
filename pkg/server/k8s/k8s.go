@@ -1,7 +1,8 @@
 package k8s
 
 import (
-	"k8s.io/kubernetes/pkg/api"
+	"github.com/luizalabs/teresa-api/pkg/server/app"
+	"k8s.io/client-go/pkg/api"
 )
 
 var validServiceTypes = map[api.ServiceType]bool{
@@ -11,6 +12,7 @@ var validServiceTypes = map[api.ServiceType]bool{
 }
 
 type Config struct {
+	InCluster          bool   `default:"true"`
 	Host               string `required:"true"`
 	Username           string `required:"true"`
 	Password           string `required:"true"`
@@ -18,12 +20,24 @@ type Config struct {
 	DefaultServiceType string `default:"LoadBalancer"`
 }
 
-type Client interface{}
+type Client interface {
+	app.K8sOperations
+}
 
-func New(conf *Config) (Client, error) {
+func validateConfig(conf *Config) error {
 	serviceType := api.ServiceType(conf.DefaultServiceType)
 	if _, ok := validServiceTypes[serviceType]; !ok {
-		return nil, ErrInvalidServiceType
+		return ErrInvalidServiceType
 	}
-	return newUnversioned(conf)
+	return nil
+}
+
+func New(conf *Config) (Client, error) {
+	if err := validateConfig(conf); err != nil {
+		return nil, err
+	}
+	if conf.InCluster {
+		return newInClusterK8sClient()
+	}
+	return newOutOfClusterK8sClient(conf)
 }

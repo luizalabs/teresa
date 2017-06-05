@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"k8s.io/client-go/pkg/api"
+
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
@@ -24,8 +26,8 @@ func (*fakeK8sOperations) Create(app *App, st st.Storage) error {
 
 func (*fakeK8sOperations) PodList(namespace string) ([]*Pod, error) {
 	pl := []*Pod{
-		{Name: "pod 1", State: PodRunningState},
-		{Name: "pod 2", State: PodRunningState},
+		{Name: "pod 1", State: string(api.PodRunning)},
+		{Name: "pod 2", State: string(api.PodRunning)},
 		{Name: "pod 3", State: "Crash"},
 	}
 	return pl, nil
@@ -36,8 +38,8 @@ func (*fakeK8sOperations) PodLogs(namespace, podName string, lines int, follow b
 	return ioutil.NopCloser(r), nil
 }
 
-func (*fakeK8sOperations) NamespaceMeta(namespace string) (*Meta, error) {
-	return &Meta{Team: "luizalabs"}, nil
+func (*fakeK8sOperations) NamespaceAnnotation(namespace, annotation string) (string, error) {
+	return `{"team": "luizalabs"}`, nil
 }
 
 func (e *errK8sOperations) Create(app *App, st st.Storage) error {
@@ -52,8 +54,8 @@ func (e *errK8sOperations) PodLogs(namespace, podName string, lines int, follow 
 	return nil, e.Err
 }
 
-func (e *errK8sOperations) NamespaceMeta(namespace string) (*Meta, error) {
-	return nil, e.Err
+func (e *errK8sOperations) NamespaceAnnotation(namespace, annotation string) (string, error) {
+	return "", e.Err
 }
 
 func TestAppOperationsCreate(t *testing.T) {

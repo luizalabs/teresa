@@ -28,6 +28,15 @@ type App struct {
 	AutoScale   *AutoScale `json:"autoScale,omitempty"`
 }
 
+type Pod struct {
+	Name  string
+	State string
+}
+
+type Meta struct {
+	Team string `json:"team"`
+}
+
 func newSliceLrq(s []*appb.CreateRequest_Limits_LimitRangeQuantity) []*LimitRangeQuantity {
 	var t []*LimitRangeQuantity
 	for _, tmp := range s {

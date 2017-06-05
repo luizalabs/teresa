@@ -122,3 +122,47 @@ func TestUnaryInterceptor(t *testing.T) {
 		t.Errorf("expected successful execution, got error %v", err)
 	}
 }
+
+func TestStreamInterceptorIgnoreLoginRoute(t *testing.T) {
+	handler := func(srv interface{}, stream grpc.ServerStream) error {
+		return nil
+	}
+	info := &grpc.StreamServerInfo{FullMethod: "Login"}
+	if err := streamInterceptor(nil, nil)(nil, nil, info, handler); err != nil {
+		t.Error("error on process StreamInterceptor: ", err)
+	}
+}
+
+func TestStreamInterceptor(t *testing.T) {
+	expectedUserEmail := "gopher@luizalabs.com"
+	handler := func(srv interface{}, stream grpc.ServerStream) error {
+		ctx := stream.Context()
+		u, ok := ctx.Value("user").(*storage.User)
+		if !ok {
+			return errors.New("Context without User")
+		}
+		if u.Email != expectedUserEmail {
+			return errors.New(fmt.Sprintf("expected %s, got %s", expectedUserEmail, u.Email))
+		}
+		return nil
+	}
+	info := &grpc.StreamServerInfo{FullMethod: "Test"}
+
+	uOps := user.NewFakeOperations()
+	uOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{
+		Password: "secret",
+		Email:    expectedUserEmail,
+	}
+
+	validToken, err := authenticator.GenerateToken(expectedUserEmail)
+	if err != nil {
+		t.Fatal("error on generate token: ", err)
+	}
+	md := metadata.Pairs("token", validToken)
+	ctx := metadata.NewIncomingContext(context.Background(), md)
+
+	stream := &serverStreamWrapper{ctx: ctx}
+	if err := streamInterceptor(authenticator, uOps)(nil, stream, info, handler); err != nil {
+		t.Errorf("expected successful execution, got error %v", err)
+	}
+}

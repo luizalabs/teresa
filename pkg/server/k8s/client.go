@@ -56,13 +56,12 @@ func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {
 	return pods, nil
 }
 
-func (k *k8sClient) PodLogs(namespace string, podName string, lines int, follow bool) (io.ReadCloser, error) {
-	l := int64(lines)
+func (k *k8sClient) PodLogs(namespace string, podName string, lines int64, follow bool) (io.ReadCloser, error) {
 	req := k.kc.CoreV1().Pods(namespace).GetLogs(
 		podName,
 		&k8sv1.PodLogOptions{
 			Follow:    follow,
-			TailLines: &l,
+			TailLines: &lines,
 		},
 	)
 

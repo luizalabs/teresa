@@ -57,7 +57,7 @@ func TestFakeOperationsLogs(t *testing.T) {
 	fake.(*FakeOperations).Storage[app.Name] = app
 
 	expectedLines := 10
-	rc, err := fake.Logs(user, app.Name, expectedLines, false)
+	rc, err := fake.Logs(user, app.Name, int64(expectedLines), false)
 	if err != nil {
 		t.Fatal("error on get logs:", err)
 	}
@@ -85,7 +85,7 @@ func TestFakeOperationsLogsFollow(t *testing.T) {
 	fake.(*FakeOperations).Storage[app.Name] = app
 
 	minimumLines := 1
-	rc, err := fake.Logs(user, app.Name, minimumLines, true)
+	rc, err := fake.Logs(user, app.Name, int64(minimumLines), true)
 	if err != nil {
 		t.Fatal("error on get logs:", err)
 	}

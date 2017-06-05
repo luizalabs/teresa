@@ -34,7 +34,7 @@ func (f *FakeOperations) Create(user *storage.User, app *App) error {
 	return nil
 }
 
-func (f *FakeOperations) Logs(user *storage.User, appName string, lines int, follow bool) (io.ReadCloser, error) {
+func (f *FakeOperations) Logs(user *storage.User, appName string, lines int64, follow bool) (io.ReadCloser, error) {
 	if !hasPerm(user.Email) {
 		return nil, auth.ErrPermissionDenied
 	}
@@ -46,7 +46,7 @@ func (f *FakeOperations) Logs(user *storage.User, appName string, lines int, fol
 	r, w := io.Pipe()
 	go func() {
 		defer w.Close()
-		for i := 0; i < lines; i++ {
+		for i := 0; int64(i) < lines; i++ {
 			fmt.Fprintf(w, "line %d of log\n", i)
 		}
 		if follow {

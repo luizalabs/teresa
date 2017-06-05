@@ -19,14 +19,14 @@ import (
 
 type Operations interface {
 	Create(user *storage.User, app *App) error
-	Logs(user *storage.User, appName string, lines int, follow bool) (io.ReadCloser, error)
+	Logs(user *storage.User, appName string, lines int64, follow bool) (io.ReadCloser, error)
 }
 
 type K8sOperations interface {
 	Create(app *App, st st.Storage) error
 	NamespaceAnnotation(namespace, annotation string) (string, error)
 	PodList(namespace string) ([]*Pod, error)
-	PodLogs(namespace, podName string, lines int, follow bool) (io.ReadCloser, error)
+	PodLogs(namespace, podName string, lines int64, follow bool) (io.ReadCloser, error)
 }
 
 type AppOperations struct {
@@ -73,7 +73,7 @@ func (ops *AppOperations) Create(user *storage.User, app *App) error {
 	return ops.kops.Create(app, ops.st)
 }
 
-func (ops *AppOperations) Logs(user *storage.User, appName string, lines int, follow bool) (io.ReadCloser, error) {
+func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, follow bool) (io.ReadCloser, error) {
 	team, err := ops.getAppTeam(appName)
 	if err != nil {
 		return nil, err

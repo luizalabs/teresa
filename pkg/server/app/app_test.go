@@ -33,7 +33,7 @@ func (*fakeK8sOperations) PodList(namespace string) ([]*Pod, error) {
 	return pl, nil
 }
 
-func (*fakeK8sOperations) PodLogs(namespace, podName string, lines int, follow bool) (io.ReadCloser, error) {
+func (*fakeK8sOperations) PodLogs(namespace, podName string, lines int64, follow bool) (io.ReadCloser, error) {
 	r := bytes.NewBufferString("foo\nbar")
 	return ioutil.NopCloser(r), nil
 }
@@ -50,7 +50,7 @@ func (e *errK8sOperations) PodList(namespace string) ([]*Pod, error) {
 	return nil, e.Err
 }
 
-func (e *errK8sOperations) PodLogs(namespace, podName string, lines int, follow bool) (io.ReadCloser, error) {
+func (e *errK8sOperations) PodLogs(namespace, podName string, lines int64, follow bool) (io.ReadCloser, error) {
 	return nil, e.Err
 }
 

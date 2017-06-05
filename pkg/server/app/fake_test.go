@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bufio"
 	"testing"
 
 	"github.com/luizalabs/teresa-api/models/storage"
@@ -45,5 +46,80 @@ func TestFakeOperationsCreateErrPermissionDenied(t *testing.T) {
 
 	if err := fake.Create(user, app); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestFakeOperationsLogs(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Name: "gopher@luizalabs.com"}
+	app := &App{Name: "teresa"}
+
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	expectedLines := 10
+	rc, err := fake.Logs(user, app.Name, expectedLines, false)
+	if err != nil {
+		t.Fatal("error on get logs:", err)
+	}
+	defer rc.Close()
+
+	count := 0
+	scanner := bufio.NewScanner(rc)
+	for scanner.Scan() {
+		count++
+	}
+	if err := scanner.Err(); err != nil {
+		t.Fatal("error on read logs:", err)
+	}
+
+	if count != expectedLines {
+		t.Errorf("expected %d, got %d", expectedLines, count)
+	}
+}
+
+func TestFakeOperationsLogsFollow(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Name: "gopher@luizalabs.com"}
+	app := &App{Name: "teresa"}
+
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	minimumLines := 1
+	rc, err := fake.Logs(user, app.Name, minimumLines, true)
+	if err != nil {
+		t.Fatal("error on get logs:", err)
+	}
+
+	count := 0
+	scanner := bufio.NewScanner(rc)
+	for scanner.Scan() {
+		count++
+	}
+	if err := scanner.Err(); err != nil {
+		t.Fatal("error on read logs:", err)
+	}
+
+	if count < minimumLines {
+		t.Errorf("expected more than %d, got %d", minimumLines, count)
+	}
+}
+
+func TestFakeOperationsLogsErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	app := &App{Name: "teresa"}
+
+	if _, err := fake.Logs(user, app.Name, 1, false); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestFakeOperationsLogsErrNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Email: "gopher-user@luizalabs.com"}
+	app := &App{Name: "teresa"}
+
+	if _, err := fake.Logs(user, app.Name, 1, false); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }

@@ -4,6 +4,7 @@ package app;
 
 service App {
     rpc Create(CreateRequest) returns (Empty);
+    rpc Logs(LogsRequest) returns (stream LogsResponse);
 }
 
 message CreateRequest {
@@ -16,7 +17,7 @@ message CreateRequest {
             string quantity = 1;
             string resource = 2;
         }
-  
+
         repeated LimitRangeQuantity default = 1;
         repeated LimitRangeQuantity default_request = 2;
     }
@@ -28,6 +29,16 @@ message CreateRequest {
         int64 min = 3;
     }
     AutoScale auto_scale = 5;
+}
+
+message LogsRequest {
+    string name = 1;
+    int64 lines = 2;
+    bool follow = 3;
+}
+
+message LogsResponse {
+    string text = 1;
 }
 
 message Empty {}

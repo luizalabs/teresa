@@ -7,7 +7,8 @@ import (
 type storageType string
 
 const (
-	S3Type storageType = "s3"
+	S3Type   storageType = "s3"
+	FakeType storageType = "fake"
 )
 
 type Config struct {

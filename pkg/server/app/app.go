@@ -2,9 +2,12 @@ package app
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
+
+	"k8s.io/client-go/pkg/api"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -21,7 +24,7 @@ type Operations interface {
 
 type K8sOperations interface {
 	Create(app *App, st st.Storage) error
-	NamespaceMeta(namespace string) (*Meta, error)
+	NamespaceAnnotation(namespace, annotation string) (string, error)
 	PodList(namespace string) ([]*Pod, error)
 	PodLogs(namespace, podName string, lines int, follow bool) (io.ReadCloser, error)
 }
@@ -32,7 +35,9 @@ type AppOperations struct {
 	st   st.Storage
 }
 
-const PodRunningState = "Running"
+const (
+	TeresaAnnotation = "teresa.io/app"
+)
 
 func (ops *AppOperations) hasPerm(user *storage.User, team string) bool {
 	teams, err := ops.tops.ListByUser(user.Email)
@@ -49,6 +54,18 @@ func (ops *AppOperations) hasPerm(user *storage.User, team string) bool {
 	return found
 }
 
+func (ops *AppOperations) getAppTeam(appName string) (string, error) {
+	annotation, err := ops.kops.NamespaceAnnotation(appName, TeresaAnnotation)
+	if err != nil {
+		return "", err
+	}
+	a := new(App)
+	if err := json.Unmarshal([]byte(annotation), a); err != nil {
+		return "", nil
+	}
+	return a.Team, nil
+}
+
 func (ops *AppOperations) Create(user *storage.User, app *App) error {
 	if !ops.hasPerm(user, app.Team) {
 		return auth.ErrPermissionDenied
@@ -57,12 +74,12 @@ func (ops *AppOperations) Create(user *storage.User, app *App) error {
 }
 
 func (ops *AppOperations) Logs(user *storage.User, appName string, lines int, follow bool) (io.ReadCloser, error) {
-	meta, err := ops.kops.NamespaceMeta(appName)
+	team, err := ops.getAppTeam(appName)
 	if err != nil {
-		return nil, ErrNotFound
+		return nil, err
 	}
 
-	if !ops.hasPerm(user, meta.Team) {
+	if !ops.hasPerm(user, team) {
 		return nil, auth.ErrPermissionDenied
 	}
 
@@ -74,7 +91,7 @@ func (ops *AppOperations) Logs(user *storage.User, appName string, lines int, fo
 	r, w := io.Pipe()
 	var wg sync.WaitGroup
 	for _, pod := range pods {
-		if pod.State != PodRunningState {
+		if pod.State != string(api.PodRunning) {
 			continue
 		}
 

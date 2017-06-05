@@ -1,10 +1,6 @@
 package k8s
 
-import (
-	"k8s.io/kubernetes/pkg/client/restclient"
-	"k8s.io/kubernetes/pkg/client/unversioned"
-)
-
+/*
 func newUnversioned(conf *Config) (Client, error) {
 	k8sConf := &restclient.Config{
 		Host:     conf.Host,
@@ -14,3 +10,4 @@ func newUnversioned(conf *Config) (Client, error) {
 	}
 	return unversioned.New(k8sConf)
 }
+*/

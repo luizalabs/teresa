@@ -108,6 +108,7 @@ func TestFakeOperationsLogsErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &storage.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
 
 	if _, err := fake.Logs(user, app.Name, 1, false); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)

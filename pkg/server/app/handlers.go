@@ -1,6 +1,8 @@
 package app
 
 import (
+	"bufio"
+
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 
@@ -19,6 +21,25 @@ func (s *Service) Create(ctx context.Context, req *appb.CreateRequest) (*appb.Em
 		return nil, err
 	}
 	return &appb.Empty{}, nil
+}
+
+func (s *Service) Logs(req *appb.LogsRequest, stream appb.App_LogsServer) error {
+	ctx := stream.Context()
+	user := ctx.Value("user").(*storage.User)
+
+	rc, err := s.ops.Logs(user, req.Name, req.Lines, req.Follow)
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+
+	scanner := bufio.NewScanner(rc)
+	for scanner.Scan() {
+		if err := stream.Send(&appb.LogsResponse{Text: scanner.Text()}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Service) RegisterService(grpcServer *grpc.Server) {

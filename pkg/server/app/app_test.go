@@ -158,6 +158,6 @@ func TestAppOperationsLogsErrNotFound(t *testing.T) {
 	user := &storage.User{Email: "teresa@luizalabs.com"}
 
 	if _, err := ops.Logs(user, "teresa", 10, false); err != ErrNotFound {
-		t.Errorf("expected ErrNotFound, got", err)
+		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }

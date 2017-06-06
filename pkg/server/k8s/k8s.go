@@ -12,10 +12,10 @@ var validServiceTypes = map[api.ServiceType]bool{
 }
 
 type Config struct {
-	InCluster          bool   `default:"true"`
-	Host               string `required:"true"`
-	Username           string `required:"true"`
-	Password           string `required:"true"`
+	InCluster          bool `default:"true"`
+	Host               string
+	Username           string
+	Password           string
 	Insecure           bool   `default:"false"`
 	DefaultServiceType string `default:"LoadBalancer"`
 }

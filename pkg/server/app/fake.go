@@ -35,12 +35,12 @@ func (f *FakeOperations) Create(user *storage.User, app *App) error {
 }
 
 func (f *FakeOperations) Logs(user *storage.User, appName string, lines int64, follow bool) (io.ReadCloser, error) {
-	if !hasPerm(user.Email) {
-		return nil, auth.ErrPermissionDenied
-	}
-
 	if _, found := f.Storage[appName]; !found {
 		return nil, ErrNotFound
+	}
+
+	if !hasPerm(user.Email) {
+		return nil, auth.ErrPermissionDenied
 	}
 
 	r, w := io.Pipe()

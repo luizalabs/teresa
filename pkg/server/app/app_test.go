@@ -60,7 +60,7 @@ func (e *errK8sOperations) NamespaceAnnotation(namespace, annotation string) (st
 
 func TestAppOperationsCreate(t *testing.T) {
 	tops := team.NewFakeOperations()
-	ops := NewAppOperations(tops, &fakeK8sOperations{}, nil)
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	name := "luizalabs"
 	user := &storage.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: name}
@@ -76,7 +76,7 @@ func TestAppOperationsCreate(t *testing.T) {
 
 func TestAppOperationsCreateErrPermissionDenied(t *testing.T) {
 	tops := team.NewFakeOperations()
-	ops := NewAppOperations(tops, &fakeK8sOperations{}, nil)
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	name := "luizalabs"
 	user := &storage.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: name}
@@ -88,7 +88,7 @@ func TestAppOperationsCreateErrPermissionDenied(t *testing.T) {
 
 func TestAppOperationsCreateErrAppAlreadyExists(t *testing.T) {
 	tops := team.NewFakeOperations()
-	ops := NewAppOperations(tops, &fakeK8sOperations{}, nil)
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	name := "luizalabs"
 	user := &storage.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: name}
@@ -109,7 +109,7 @@ func TestAppOperationsCreateErrAppAlreadyExists(t *testing.T) {
 
 func TestAppOperationsLogs(t *testing.T) {
 	tops := team.NewFakeOperations()
-	ops := NewAppOperations(tops, &fakeK8sOperations{}, nil)
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	name := "luizalabs"
 	user := &storage.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: name}
@@ -144,7 +144,7 @@ func TestAppOperationsLogs(t *testing.T) {
 
 func TestAppOperationsLogsErrPermissionDenied(t *testing.T) {
 	tops := team.NewFakeOperations()
-	ops := NewAppOperations(tops, &fakeK8sOperations{}, nil)
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &storage.User{Email: "teresa@luizalabs.com"}
 
 	if _, err := ops.Logs(user, "teresa", 10, false); err != auth.ErrPermissionDenied {
@@ -154,7 +154,7 @@ func TestAppOperationsLogsErrPermissionDenied(t *testing.T) {
 
 func TestAppOperationsLogsErrNotFound(t *testing.T) {
 	tops := team.NewFakeOperations()
-	ops := NewAppOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
+	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
 	user := &storage.User{Email: "teresa@luizalabs.com"}
 
 	if _, err := ops.Logs(user, "teresa", 10, false); err != ErrNotFound {

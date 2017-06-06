@@ -123,6 +123,6 @@ func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, 
 	return r, nil
 }
 
-func NewAppOperations(tops team.Operations, kops K8sOperations, st st.Storage) Operations {
+func NewOperations(tops team.Operations, kops K8sOperations, st st.Storage) Operations {
 	return &AppOperations{tops: tops, kops: kops, st: st}
 }

@@ -2,12 +2,17 @@ package cmd
 
 import (
 	"bufio"
+	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/luizalabs/teresa-api/cmd/client/connection"
 	"github.com/luizalabs/teresa-api/models"
+	"github.com/luizalabs/teresa-api/pkg/client"
+	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
@@ -412,27 +417,7 @@ WARNING:
   You can also simulate tail -f:
 
   $ teresa app logs foo --lines=20 --follow`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 1 {
-			return newUsageError("You should provide the name of the app in order to continue")
-		}
-		appName := args[0]
-		lines, _ := cmd.Flags().GetInt64("lines")
-		follow, _ := cmd.Flags().GetBool("follow")
-		tc := NewTeresa()
-		_, err := tc.GetAppInfo(appName)
-		if err != nil {
-			if isNotFound(err) {
-				return newCmdError("App not found")
-			}
-			return err
-		}
-		err = tc.GetAppLogs(appName, &lines, &follow, os.Stdout)
-		if err != nil {
-			return err
-		}
-		return nil
-	},
+	Run: appLogs,
 }
 
 func init() {
@@ -464,4 +449,41 @@ func init() {
 	// App logs
 	appLogsCmd.Flags().Int64("lines", 10, "number of lines")
 	appLogsCmd.Flags().Bool("follow", false, "follow logs")
+}
+
+func appLogs(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		cmd.Usage()
+		return
+	}
+	appName := args[0]
+	lines, _ := cmd.Flags().GetInt64("lines")
+	follow, _ := cmd.Flags().GetBool("follow")
+
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
+		return
+	}
+	defer conn.Close()
+
+	cli := appb.NewAppClient(conn)
+	req := &appb.LogsRequest{Name: appName, Lines: lines, Follow: follow}
+	stream, err := cli.Logs(context.Background(), req)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+
+	for {
+		msg, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				return
+			}
+			fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+			return
+		}
+		fmt.Println(msg.Text)
+	}
 }

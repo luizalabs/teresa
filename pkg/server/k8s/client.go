@@ -26,7 +26,7 @@ func (k *k8sClient) NamespaceAnnotation(namespace, annotation string) (string, e
 		return "", cleanError(err)
 	}
 
-	return ns.Annotations["teresa.io/app"], nil
+	return ns.Annotations[annotation], nil
 }
 
 func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {

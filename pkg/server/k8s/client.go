@@ -5,7 +5,6 @@ import (
 
 	"github.com/luizalabs/teresa-api/pkg/server/app"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api"
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
@@ -22,16 +21,16 @@ func (k *k8sClient) Create(app *app.App, st st.Storage) error {
 }
 
 func (k *k8sClient) NamespaceAnnotation(namespace, annotation string) (string, error) {
-	ns, err := k.kc.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+	ns, err := k.kc.CoreV1().Namespaces().Get(namespace)
 	if err != nil {
-		return "", err
+		return "", cleanError(err)
 	}
 
 	return ns.Annotations["teresa.io/app"], nil
 }
 
 func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {
-	podList, err := k.kc.CoreV1().Pods(namespace).List(metav1.ListOptions{})
+	podList, err := k.kc.CoreV1().Pods(namespace).List(k8sv1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -85,9 +84,7 @@ func newOutOfClusterK8sClient(conf *Config) (Client, error) {
 		Host:     conf.Host,
 		Username: conf.Username,
 		Password: conf.Password,
-		TLSClientConfig: restclient.TLSClientConfig{
-			Insecure: conf.Insecure,
-		},
+		Insecure: conf.Insecure,
 	}
 	kc, err := kubernetes.NewForConfig(k8sConf)
 	if err != nil {

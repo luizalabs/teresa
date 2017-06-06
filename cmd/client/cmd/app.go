@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"os"
 	"strings"
+
+	context "golang.org/x/net/context"
 
 	"github.com/fatih/color"
 	"github.com/luizalabs/teresa-api/cmd/client/connection"

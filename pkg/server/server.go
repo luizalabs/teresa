@@ -10,6 +10,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/luizalabs/teresa-api/models/storage"
+	"github.com/luizalabs/teresa-api/pkg/server/app"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
 	"github.com/luizalabs/teresa-api/pkg/server/k8s"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
@@ -118,6 +119,10 @@ func New(opt Options) (*Server, error) {
 	tOps := team.NewDatabaseOperations(opt.DB, uOps)
 	t := team.NewService(tOps)
 	t.RegisterService(s)
+
+	appOps := app.NewOperations(tOps, opt.K8s, opt.Storage)
+	a := app.NewService(appOps)
+	a.RegisterService(s)
 
 	return &Server{listener: l, grpcServer: s}, nil
 }

@@ -273,32 +273,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: "#/definitions/Error"
-  /apps/{app_name}/logs:
-    get:
-      summary: Get app logs
-      description: Get app logs
-      tags:
-        - apps
-      operationId: getAppLogs
-      security:
-        - api_key: []
-        - token_header: []
-      produces:
-        - application/octet-stream
-      parameters:
-        - $ref: "#/parameters/appName"
-        - $ref: "#/parameters/follow"
-        - $ref: "#/parameters/lines"
-      responses:
-        200:
-          description: App logs
-          schema:
-            type: string
-            format: binary
-        default:
-          description: Unexpected error
-          schema:
-            $ref: "#/definitions/Error"
   /teams/{team_id}/apps/{app_id}/deployments:
     get:
       summary: Get app deployments

@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestK8sNew(t *testing.T) {
+func TestValidateConfig(t *testing.T) {
 	var testCases = []struct {
 		serviceType   string
 		expectedError error
@@ -14,8 +14,8 @@ func TestK8sNew(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		conf := &Config{DefaultServiceType: tc.serviceType}
-		if _, err := New(conf); err != tc.expectedError {
+		conf := &Config{InCluster: false, DefaultServiceType: tc.serviceType}
+		if err := validateConfig(conf); err != tc.expectedError {
 			t.Errorf("expected %v, got %v", tc.expectedError, err)
 		}
 	}

@@ -44,9 +44,6 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	api.APIKeyAuth = handlers.TokenAuthHandler
 	api.TokenHeaderAuth = handlers.TokenAuthHandler
 
-	// create an app
-	api.AppsCreateAppHandler = handlers.CreateAppHandler
-
 	// create deployment
 	api.DeploymentsCreateDeploymentHandler = handlers.CreateDeploymentHandler
 

@@ -7,8 +7,6 @@ import (
 	"io"
 	"sync"
 
-	"k8s.io/client-go/pkg/api"
-
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/luizalabs/teresa-api/models/storage"
@@ -91,10 +89,6 @@ func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, 
 	r, w := io.Pipe()
 	var wg sync.WaitGroup
 	for _, pod := range pods {
-		if pod.State != string(api.PodRunning) {
-			continue
-		}
-
 		wg.Add(1)
 		go func(namespace, podName string) {
 			defer wg.Done()

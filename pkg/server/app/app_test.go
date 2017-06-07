@@ -28,7 +28,6 @@ func (*fakeK8sOperations) PodList(namespace string) ([]*Pod, error) {
 	pl := []*Pod{
 		{Name: "pod 1", State: string(api.PodRunning)},
 		{Name: "pod 2", State: string(api.PodRunning)},
-		{Name: "pod 3", State: "Crash"},
 	}
 	return pl, nil
 }

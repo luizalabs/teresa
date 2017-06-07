@@ -8,7 +8,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api"
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/rest"
 	restclient "k8s.io/client-go/rest"
 )
 
@@ -68,7 +67,7 @@ func (k *k8sClient) PodLogs(namespace string, podName string, lines int64, follo
 }
 
 func newInClusterK8sClient() (Client, error) {
-	conf, err := rest.InClusterConfig()
+	conf, err := restclient.InClusterConfig()
 	if err != nil {
 		return nil, err
 	}

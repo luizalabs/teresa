@@ -86,9 +86,9 @@ func newCreateRequest() *appb.CreateRequest {
 		},
 	}
 	as := &appb.CreateRequest_AutoScale{
-		CpuTargetUtilization: int64(42),
-		Max:                  int64(666),
-		Min:                  int64(1),
+		CpuTargetUtilization: 42,
+		Max:                  666,
+		Min:                  1,
 	}
 	return &appb.CreateRequest{
 		Name:        "name",

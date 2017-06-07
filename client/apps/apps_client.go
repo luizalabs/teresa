@@ -25,34 +25,6 @@ type Client struct {
 }
 
 /*
-CreateApp creates an app
-
-Create an app
-*/
-func (a *Client) CreateApp(params *CreateAppParams, authInfo runtime.ClientAuthInfoWriter) (*CreateAppCreated, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewCreateAppParams()
-	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "createApp",
-		Method:             "POST",
-		PathPattern:        "/apps",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &CreateAppReader{formats: a.formats},
-		AuthInfo:           authInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*CreateAppCreated), nil
-}
-
-/*
 GetAppDetails gets app details
 
 Get app details

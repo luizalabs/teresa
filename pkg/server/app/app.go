@@ -12,7 +12,10 @@ type Operations interface {
 }
 
 type K8sOperations interface {
-	Create(app *App, st st.Storage) error
+	CreateNamespace(*App, string) error
+	CreateQuota(*App) error
+	CreateSecret(string, string, map[string][]byte) error
+	CreateAutoScale(*App) error
 }
 
 type AppOperations struct {
@@ -40,7 +43,22 @@ func (ops *AppOperations) Create(user *storage.User, app *App) error {
 	if !ops.hasPerm(user, app) {
 		return auth.ErrPermissionDenied
 	}
-	return ops.kops.Create(app, ops.st)
+
+	if err := ops.kops.CreateNamespace(app, user.Email); err != nil {
+		return err
+	}
+
+	if err := ops.kops.CreateQuota(app); err != nil {
+		return err
+	}
+
+	secretName := ops.st.K8sSecretName()
+	data := ops.st.AccessData()
+	if err := ops.kops.CreateSecret(app.Name, secretName, data); err != nil {
+		return err
+	}
+
+	return ops.kops.CreateAutoScale(app)
 }
 
 func NewAppOperations(tops team.Operations, kops K8sOperations, st st.Storage) Operations {

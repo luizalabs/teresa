@@ -50,7 +50,7 @@ func (f *FakeOperations) Logs(user *storage.User, appName string, lines int64, f
 			fmt.Fprintf(w, "line %d of log\n", i)
 		}
 		if follow {
-			rand.Seed(42) // The Anwser
+			rand.Seed(42) // The Answser
 			for i := 0; i <= rand.Intn(5); i++ {
 				fmt.Fprintln(w, "extra random lines")
 			}

@@ -61,7 +61,7 @@ func (ops *AppOperations) getAppTeam(appName string) (string, error) {
 	}
 	a := new(App)
 	if err := json.Unmarshal([]byte(annotation), a); err != nil {
-		return "", nil
+		return "", err
 	}
 	return a.Team, nil
 }

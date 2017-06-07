@@ -24,9 +24,9 @@ message CreateRequest {
     Limits limits = 4;
 
     message AutoScale {
-        int64 cpu_target_utilization = 1;
-        int64 max = 2;
-        int64 min = 3;
+        int32 cpu_target_utilization = 1;
+        int32 max = 2;
+        int32 min = 3;
     }
     AutoScale auto_scale = 5;
 }

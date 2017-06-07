@@ -7,8 +7,6 @@ import (
 	"os"
 	"strings"
 
-	context "golang.org/x/net/context"
-
 	"github.com/fatih/color"
 	"github.com/luizalabs/teresa-api/cmd/client/connection"
 	"github.com/luizalabs/teresa-api/models"
@@ -16,6 +14,8 @@ import (
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+
+	"golang.org/x/net/context"
 )
 
 var appCmd = &cobra.Command{
@@ -48,85 +48,120 @@ The app name must follow this rules:
 
   With all flags...
   $ teresa app create foo --team bar --cpu 200m --max-cpu 500m --memory 512Mi --max-memory 1Gi --scale-min 2 --scale-max 10 --scale-cpu 70 --process-type web`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		// Getting app name
-		if len(args) != 1 {
-			return newUsageError("You should provide the name of the app")
-		}
-		appName := args[0]
-		// Getting flags
-		team, _ := cmd.Flags().GetString("team")
-		targetCPU, _ := cmd.Flags().GetInt64("scale-cpu")
-		scaleMax, _ := cmd.Flags().GetInt64("scale-max")
-		scaleMin, _ := cmd.Flags().GetInt64("scale-min")
-		cpu, _ := cmd.Flags().GetString("cpu")
-		memory, _ := cmd.Flags().GetString("memory")
-		maxCPU, _ := cmd.Flags().GetString("max-cpu")
-		maxMemory, _ := cmd.Flags().GetString("max-memory")
-		processType, _ := cmd.Flags().GetString("process-type")
-		if team == "" {
-			return newUsageError("You should provide the name of the team to continue")
-		}
-		// creating app params
-		app := models.AppIn{}
-		app.Name = &appName
-		app.Team = &team
-		app.Scale = scaleMin
-		// app rollint update
-		msurge := "30%"
-		munavailable := "30%"
-		app.RollingUpdate = &models.AppInRollingUpdate{
-			MaxSurge:       &msurge,
-			MaxUnavailable: &munavailable,
-		}
-		// app limits
-		cpuString := "cpu"
-		memString := "memory"
-		app.Limits = &models.AppInLimits{
-			Default: []*models.LimitRangeQuantity{
-				&models.LimitRangeQuantity{
-					Resource: &cpuString,
-					Quantity: &maxCPU,
-				},
-				&models.LimitRangeQuantity{
-					Resource: &memString,
-					Quantity: &maxMemory,
-				},
-			},
-			DefaultRequest: []*models.LimitRangeQuantity{
-				&models.LimitRangeQuantity{
-					Resource: &cpuString,
-					Quantity: &cpu,
-				},
-				&models.LimitRangeQuantity{
-					Resource: &memString,
-					Quantity: &memory,
-				},
-			},
-		}
-		// autoscale
-		app.AutoScale = &models.AutoScale{
-			CPUTargetUtilization: &targetCPU,
-			Min:                  scaleMin,
-			Max:                  scaleMax,
-		}
-		if processType != "" {
-			app.ProcessType = &processType
-		}
+	Run: createApp,
+}
 
-		tc := NewTeresa()
-		_, err := tc.CreateApp(app)
-		if err != nil {
-			if isUnauthorized(err) {
-				return newCmdErrorf(`You are unauthorized to create an app for the team "%s" team, or the team doesn't exists`, team)
-			} else if isConflicted(err) {
-				return newCmdErrorf(`App "%s" already exists`, appName)
-			}
-			return err
-		}
-		fmt.Printf("App \"%s\" created with success\n", *app.Name)
-		return nil
-	},
+func createApp(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		cmd.Usage()
+		return
+	}
+	name := args[0]
+
+	team, err := cmd.Flags().GetString("team")
+	if err != nil || team == "" {
+		fmt.Fprintln(os.Stderr, "Invalid team parameter: ", err)
+		return
+	}
+
+	targetCPU, err := cmd.Flags().GetInt32("scale-cpu")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Invalid scale-cpu parameter: ", err)
+		return
+	}
+
+	scaleMax, err := cmd.Flags().GetInt32("scale-max")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Invalid scale-max parameter: ", err)
+		return
+	}
+
+	scaleMin, err := cmd.Flags().GetInt32("scale-min")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Invalid scale-min parameter: ", err)
+		return
+	}
+
+	cpu, err := cmd.Flags().GetString("cpu")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Invalid cpu parameter: ", err)
+		return
+	}
+
+	memory, err := cmd.Flags().GetString("memory")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Invalid memory parameter: ", err)
+		return
+	}
+
+	maxCPU, err := cmd.Flags().GetString("max-cpu")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Invalid max-cpu parameter: ", err)
+		return
+	}
+
+	maxMemory, err := cmd.Flags().GetString("max-memory")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Invalid max-memory parameter: ", err)
+		return
+	}
+
+	processType, err := cmd.Flags().GetString("process-type")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Invalid process-type parameter: ", err)
+		return
+	}
+
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
+		return
+	}
+	defer conn.Close()
+
+	lim := &appb.CreateRequest_Limits{
+		Default: []*appb.CreateRequest_Limits_LimitRangeQuantity{
+			&appb.CreateRequest_Limits_LimitRangeQuantity{
+				Resource: "cpu",
+				Quantity: maxCPU,
+			},
+			&appb.CreateRequest_Limits_LimitRangeQuantity{
+				Resource: "memory",
+				Quantity: maxMemory,
+			},
+		},
+		DefaultRequest: []*appb.CreateRequest_Limits_LimitRangeQuantity{
+			&appb.CreateRequest_Limits_LimitRangeQuantity{
+				Resource: "cpu",
+				Quantity: cpu,
+			},
+			&appb.CreateRequest_Limits_LimitRangeQuantity{
+				Resource: "memory",
+				Quantity: memory,
+			},
+		},
+	}
+	as := &appb.CreateRequest_AutoScale{
+		CpuTargetUtilization: targetCPU,
+		Min:                  scaleMin,
+		Max:                  scaleMax,
+	}
+	cli := appb.NewAppClient(conn)
+	_, err = cli.Create(
+		context.Background(),
+		&appb.CreateRequest{
+			Name:        name,
+			Team:        team,
+			ProcessType: processType,
+			Limits:      lim,
+			AutoScale:   as,
+		},
+	)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+	fmt.Println("App created")
 }
 
 var appListCmd = &cobra.Command{
@@ -431,17 +466,17 @@ func init() {
 	appCmd.AddCommand(appEnvSetCmd)
 	appCmd.AddCommand(appEnvUnSetCmd)
 	appCmd.AddCommand(appLogsCmd)
-	// Create App flags
+
 	appCreateCmd.Flags().String("team", "", "team owner of the app")
-	appCreateCmd.Flags().Int64("scale-min", 1, "auto scale min size")
-	appCreateCmd.Flags().Int64("scale-max", 2, "auto scale max size")
-	appCreateCmd.Flags().Int64("scale-cpu", 70, "auto scale target cpu percentage to scale")
+	appCreateCmd.Flags().Int32("scale-min", 1, "auto scale min size")
+	appCreateCmd.Flags().Int32("scale-max", 2, "auto scale max size")
+	appCreateCmd.Flags().Int32("scale-cpu", 70, "auto scale target cpu percentage to scale")
 	appCreateCmd.Flags().String("cpu", "200m", "allocated pod cpu")
 	appCreateCmd.Flags().String("memory", "512Mi", "allocated pod memory")
 	appCreateCmd.Flags().String("max-cpu", "500m", "when set, allows the pod to burst cpu usage up to 'max-cpu'")
 	appCreateCmd.Flags().String("max-memory", "512Mi", "when set, allows the pod to burst memory usage up to 'max-memory'")
 	appCreateCmd.Flags().String("process-type", "", "app process type")
-	// App set env vars
+
 	appEnvSetCmd.Flags().String("app", "", "app name")
 	appEnvSetCmd.Flags().Bool("no-input", false, "set env vars without warning")
 	// App unset env vars

@@ -4,28 +4,32 @@ import (
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
 )
 
+const (
+	processTypeWeb = "web"
+)
+
 type LimitRangeQuantity struct {
-	Quantity string `json:"quantity"`
-	Resource string `json:"resource"`
+	Quantity string
+	Resource string
 }
 
 type Limits struct {
-	Default        []*LimitRangeQuantity `json:"default"`
-	DefaultRequest []*LimitRangeQuantity `json:"defaultRequest"`
+	Default        []*LimitRangeQuantity
+	DefaultRequest []*LimitRangeQuantity
 }
 
 type AutoScale struct {
-	CPUTargetUtilization int64 `json:"cpuTargetUtilization,omitempty"`
-	Max                  int64 `json:"max,omitempty"`
-	Min                  int64 `json:"min,omitempty"`
+	CPUTargetUtilization int32
+	Max                  int32
+	Min                  int32
 }
 
 type App struct {
 	Name        string     `json:"name"`
-	Team        string     `json:"team"`
-	ProcessType string     `json:"processType,omitempty"`
-	Limits      *Limits    `json:"limits,omitempty"`
-	AutoScale   *AutoScale `json:"autoScale,omitempty"`
+	Team        string     `json:"-"`
+	ProcessType string     `json:"processType"`
+	Limits      *Limits    `json:"-"`
+	AutoScale   *AutoScale `json:"-"`
 }
 
 type Pod struct {
@@ -61,6 +65,11 @@ func newApp(req *appb.CreateRequest) *App {
 		}
 	}
 
+	processType := req.ProcessType
+	if processType == "" {
+		processType = processTypeWeb
+	}
+
 	app := &App{
 		AutoScale: as,
 		Limits: &Limits{
@@ -68,7 +77,7 @@ func newApp(req *appb.CreateRequest) *App {
 			DefaultRequest: defReq,
 		},
 		Name:        req.Name,
-		ProcessType: req.ProcessType,
+		ProcessType: processType,
 		Team:        req.Team,
 	}
 	return app

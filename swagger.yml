@@ -96,30 +96,6 @@ paths:
           schema:
             $ref: "#/definitions/GenericError"
   /apps:
-    post:
-      summary: Create an app
-      description: Create an app
-      tags:
-        - apps
-      operationId: createApp
-      security:
-        - api_key: []
-        - token_header: []
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: "#/definitions/AppIn"
-      responses:
-        201:
-          description: Newly created app
-          schema:
-            $ref: "#/definitions/App"
-        default:
-          description: Unexpected error
-          schema:
-            $ref: "#/definitions/Error"
     get:
       summary: Get a list of apps
       description: Get a list of apps

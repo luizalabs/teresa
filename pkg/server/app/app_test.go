@@ -38,7 +38,11 @@ func (*fakeK8sOperations) PodLogs(namespace, podName string, lines int64, follow
 }
 
 func (*fakeK8sOperations) NamespaceAnnotation(namespace, annotation string) (string, error) {
-	return `{"team": "luizalabs"}`, nil
+	return "", nil
+}
+
+func (*fakeK8sOperations) NamespaceLabel(namespace, label string) (string, error) {
+	return "luizalabs", nil
 }
 
 func (e *errK8sOperations) Create(app *App, st st.Storage) error {
@@ -54,6 +58,10 @@ func (e *errK8sOperations) PodLogs(namespace, podName string, lines int64, follo
 }
 
 func (e *errK8sOperations) NamespaceAnnotation(namespace, annotation string) (string, error) {
+	return "", e.Err
+}
+
+func (e *errK8sOperations) NamespaceLabel(namespace, label string) (string, error) {
 	return "", e.Err
 }
 

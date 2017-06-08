@@ -2,7 +2,6 @@ package app
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
@@ -23,6 +22,7 @@ type Operations interface {
 type K8sOperations interface {
 	Create(app *App, st st.Storage) error
 	NamespaceAnnotation(namespace, annotation string) (string, error)
+	NamespaceLabel(namespace, label string) (string, error)
 	PodList(namespace string) ([]*Pod, error)
 	PodLogs(namespace, podName string, lines int64, follow bool) (io.ReadCloser, error)
 }
@@ -35,6 +35,7 @@ type AppOperations struct {
 
 const (
 	TeresaAnnotation = "teresa.io/app"
+	TeresaTeamLabel  = "teresa.io/team"
 )
 
 func (ops *AppOperations) hasPerm(user *storage.User, team string) bool {
@@ -52,18 +53,6 @@ func (ops *AppOperations) hasPerm(user *storage.User, team string) bool {
 	return found
 }
 
-func (ops *AppOperations) getAppTeam(appName string) (string, error) {
-	annotation, err := ops.kops.NamespaceAnnotation(appName, TeresaAnnotation)
-	if err != nil {
-		return "", err
-	}
-	a := new(App)
-	if err := json.Unmarshal([]byte(annotation), a); err != nil {
-		return "", err
-	}
-	return a.Team, nil
-}
-
 func (ops *AppOperations) Create(user *storage.User, app *App) error {
 	if !ops.hasPerm(user, app.Team) {
 		return auth.ErrPermissionDenied
@@ -72,7 +61,7 @@ func (ops *AppOperations) Create(user *storage.User, app *App) error {
 }
 
 func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, follow bool) (io.ReadCloser, error) {
-	team, err := ops.getAppTeam(appName)
+	team, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
 	if err != nil {
 		return nil, err
 	}

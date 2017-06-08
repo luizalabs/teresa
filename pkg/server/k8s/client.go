@@ -19,13 +19,30 @@ func (k *k8sClient) Create(app *app.App, st st.Storage) error {
 	panic("not implemented")
 }
 
-func (k *k8sClient) NamespaceAnnotation(namespace, annotation string) (string, error) {
+func (k *k8sClient) getNamespace(namespace string) (*k8sv1.Namespace, error) {
 	ns, err := k.kc.CoreV1().Namespaces().Get(namespace)
 	if err != nil {
-		return "", cleanError(err)
+		return nil, cleanError(err)
+	}
+	return ns, nil
+}
+
+func (k *k8sClient) NamespaceAnnotation(namespace, annotation string) (string, error) {
+	ns, err := k.getNamespace(namespace)
+	if err != nil {
+		return "", err
 	}
 
 	return ns.Annotations[annotation], nil
+}
+
+func (k k8sClient) NamespaceLabel(namespace, label string) (string, error) {
+	ns, err := k.getNamespace(namespace)
+	if err != nil {
+		return "", err
+	}
+
+	return ns.Labels[label], nil
 }
 
 func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {

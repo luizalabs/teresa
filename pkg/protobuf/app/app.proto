@@ -5,6 +5,7 @@ package app;
 service App {
     rpc Create(CreateRequest) returns (Empty);
     rpc Logs(LogsRequest) returns (stream LogsResponse);
+    rpc Info(InfoRequest) returns (InfoResponse);
 }
 
 message CreateRequest {
@@ -39,6 +40,54 @@ message LogsRequest {
 
 message LogsResponse {
     string text = 1;
+}
+
+message InfoRequest {
+    string name = 1;
+}
+
+message InfoResponse {
+    string team = 1;
+
+    message Address {
+        string hostname = 1;
+    }
+    repeated Address addresses = 2;
+
+    message EnvVar {
+        string key = 1;
+        string value = 2;
+    }
+    repeated EnvVar env_vars = 3;
+
+    message Status {
+        message Pod {
+            string name = 1;
+            string state = 2;
+        }
+
+        int32 cpu = 1;
+        repeated Pod pods = 3;
+    }
+    Status status = 4;
+
+    message AutoScale {
+        int32 cpu_target_utilization = 1;
+        int32 max = 2;
+        int32 min = 3;
+    }
+    AutoScale auto_scale = 5;
+
+    message Limits {
+        message LimitRangeQuantity {
+            string quantity = 1;
+            string resource = 2;
+        }
+
+        repeated LimitRangeQuantity default = 1;
+        repeated LimitRangeQuantity default_request = 2;
+    }
+    Limits limits = 6;
 }
 
 message Empty {}

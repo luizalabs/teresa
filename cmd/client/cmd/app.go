@@ -203,89 +203,73 @@ var appInfoCmd = &cobra.Command{
 	Short:   "All infos about the app",
 	Long:    "Return all infos about an specific app, like addresses, scale, auto scale, etc...",
 	Example: "  $ teresa app info foo",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 1 {
-			return newUsageError("You should provide the name of the app in order to continue")
-		}
-		appName := args[0]
-		tc := NewTeresa()
-		app, err := tc.GetAppInfo(appName)
-		if err != nil {
-			if isNotFound(err) {
-				return newCmdError("App not found")
-			}
-			return err
-		}
+	Run:     appInfo,
+}
 
-		color.New(color.FgCyan, color.Bold).Printf("[%s]\n", *app.Name)
-		bold := color.New(color.Bold).SprintFunc()
+func appInfo(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		cmd.Usage()
+		return
+	}
+	name := args[0]
 
-		fmt.Println(bold("team:"), *app.Team)
-		if len(app.AddressList) > 0 {
-			fmt.Println(bold("addresses:"))
-			for _, a := range app.AddressList {
-				fmt.Printf("  %s\n", a)
-			}
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
+		return
+	}
+	defer conn.Close()
+
+	cli := appb.NewAppClient(conn)
+	info, err := cli.Info(context.Background(), &appb.InfoRequest{Name: name})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+
+	color.New(color.FgCyan, color.Bold).Printf("[%s]\n", name)
+	bold := color.New(color.Bold).SprintFunc()
+
+	fmt.Println(bold("team:"), info.Team)
+	if len(info.Addresses) > 0 {
+		fmt.Println(bold("addresses:"))
+		for _, addr := range info.Addresses {
+			fmt.Printf("  %s\n", addr.Hostname)
 		}
-		if len(app.EnvVars) > 0 {
-			fmt.Println(bold("env vars:"))
-			for _, e := range app.EnvVars {
-				fmt.Printf("  %s=%s\n", *e.Key, *e.Value)
-			}
+	}
+	if len(info.EnvVars) > 0 {
+		fmt.Println(bold("env vars:"))
+		for _, ev := range info.EnvVars {
+			fmt.Printf("  %s=%s\n", ev.Key, ev.Value)
 		}
-		if app.Status != nil && (app.Status.CPU != nil || app.Status.Pods != nil) {
-			fmt.Println(bold("status:"))
-			if app.Status.CPU != nil {
-				fmt.Printf("  %s %d%%\n", bold("cpu:"), *app.Status.CPU)
-			}
-			if app.Status.Pods != nil {
-				fmt.Printf("  %s %d\n", bold("pods:"), *app.Status.Pods)
-			}
+	}
+	if info.Status != nil {
+		fmt.Println(bold("status:"))
+		fmt.Printf("  %s %d%%\n", bold("cpu:"), info.Status.Cpu)
+		fmt.Printf("  %s %d\n", bold("pods:"), len(info.Status.Pods))
+		for _, pod := range info.Status.Pods {
+			fmt.Printf("    %s %s  %s %s\n", "Name:", pod.Name, "State:", pod.State)
 		}
-		if app.AutoScale != nil {
-			fmt.Println(bold("autoscale:"))
-			if app.AutoScale.CPUTargetUtilization != nil {
-				fmt.Printf("  %s %d%%\n", bold("cpu:"), *app.AutoScale.CPUTargetUtilization)
-			}
-			fmt.Printf("  %s %d\n", bold("max:"), app.AutoScale.Max)
-			fmt.Printf("  %s %d\n", bold("min:"), app.AutoScale.Min)
+	}
+	if info.AutoScale != nil {
+		fmt.Println(bold("autoscale:"))
+		fmt.Printf("  %s %d%%\n", bold("cpu:"), info.AutoScale.CpuTargetUtilization)
+		fmt.Printf("  %s %d\n", bold("max:"), info.AutoScale.Max)
+		fmt.Printf("  %s %d\n", bold("min:"), info.AutoScale.Min)
+	}
+	fmt.Println(bold("limits:"))
+	if len(info.Limits.Default) > 0 {
+		fmt.Println(bold("  defaults"))
+		for _, item := range info.Limits.Default {
+			fmt.Printf("    %s %s\n", bold(item.Resource), item.Quantity)
 		}
-		fmt.Println(bold("limits:"))
-		if len(app.Limits.Default) > 0 {
-			fmt.Println(bold("  defaults"))
-			for _, l := range app.Limits.Default {
-				fmt.Printf("    %s %s\n", bold(*l.Resource), *l.Quantity)
-			}
+	}
+	if len(info.Limits.DefaultRequest) > 0 {
+		fmt.Println(bold("  request"))
+		for _, item := range info.Limits.DefaultRequest {
+			fmt.Printf("    %s %s\n", bold(item.Resource), item.Quantity)
 		}
-		if len(app.Limits.DefaultRequest) > 0 {
-			fmt.Println(bold("  request"))
-			for _, l := range app.Limits.DefaultRequest {
-				fmt.Printf("    %s %s\n", bold(*l.Resource), *l.Quantity)
-			}
-		}
-		if app.HealthCheck != nil && (app.HealthCheck.Liveness != nil || app.HealthCheck.Readiness != nil) {
-			fmt.Println(bold("healthcheck:"))
-			if app.HealthCheck.Liveness != nil {
-				fmt.Println(bold("  liveness:"))
-				fmt.Printf("    %s %s\n", bold("path:"), app.HealthCheck.Liveness.Path)
-				fmt.Printf("    %s %ds\n", bold("period:"), app.HealthCheck.Liveness.PeriodSeconds)
-				fmt.Printf("    %s %ds\n", bold("timeout:"), app.HealthCheck.Liveness.TimeoutSeconds)
-				fmt.Printf("    %s %ds\n", bold("initial delay:"), app.HealthCheck.Liveness.InitialDelaySeconds)
-				fmt.Printf("    %s %d\n", bold("success threshold:"), app.HealthCheck.Liveness.SuccessThreshold)
-				fmt.Printf("    %s %d\n", bold("failure threshold:"), app.HealthCheck.Liveness.FailureThreshold)
-			}
-			if app.HealthCheck.Readiness != nil {
-				fmt.Println(bold("  readiness:"))
-				fmt.Printf("    %s %s\n", bold("path:"), app.HealthCheck.Readiness.Path)
-				fmt.Printf("    %s %ds\n", bold("period:"), app.HealthCheck.Readiness.PeriodSeconds)
-				fmt.Printf("    %s %ds\n", bold("timeout:"), app.HealthCheck.Readiness.TimeoutSeconds)
-				fmt.Printf("    %s %ds\n", bold("initial delay:"), app.HealthCheck.Readiness.InitialDelaySeconds)
-				fmt.Printf("    %s %d\n", bold("success threshold:"), app.HealthCheck.Readiness.SuccessThreshold)
-				fmt.Printf("    %s %d\n", bold("failure threshold:"), app.HealthCheck.Readiness.FailureThreshold)
-			}
-		}
-		return nil
-	},
+	}
 }
 
 var appEnvSetCmd = &cobra.Command{

@@ -53,7 +53,7 @@ func (*fakeK8sOperations) PodLogs(namespace, podName string, lines int64, follow
 }
 
 func (*fakeK8sOperations) NamespaceAnnotation(namespace, annotation string) (string, error) {
-	return "", nil
+	return `{"name": "test"}`, nil
 }
 
 func (*fakeK8sOperations) NamespaceLabel(namespace, label string) (string, error) {
@@ -62,6 +62,40 @@ func (*fakeK8sOperations) NamespaceLabel(namespace, label string) (string, error
 
 func (*fakeK8sOperations) CreateAutoScale(app *App) error {
 	return nil
+}
+
+func (*fakeK8sOperations) AddressList(namespace string) ([]*Address, error) {
+	addr := []*Address{{Hostname: "host1"}}
+	return addr, nil
+}
+
+func (*fakeK8sOperations) Status(namespace string) (*Status, error) {
+	stat := &Status{
+		CPU: 33,
+		Pods: []*Pod{
+			{Name: "pod 1", State: string(api.PodRunning)},
+			{Name: "pod 2", State: string(api.PodPending)},
+			{Name: "pod 3", State: string(api.PodRunning)},
+		},
+	}
+	return stat, nil
+}
+
+func (*fakeK8sOperations) AutoScale(namespace string) (*AutoScale, error) {
+	as := &AutoScale{CPUTargetUtilization: 42, Max: 10, Min: 1}
+	return as, nil
+}
+
+func (*fakeK8sOperations) Limits(namespace, name string) (*Limits, error) {
+	lrq1 := &LimitRangeQuantity{Quantity: "1", Resource: "resource1"}
+	lrq2 := &LimitRangeQuantity{Quantity: "2", Resource: "resource2"}
+	lrq3 := &LimitRangeQuantity{Quantity: "3", Resource: "resource3"}
+	lrq4 := &LimitRangeQuantity{Quantity: "4", Resource: "resource4"}
+	lim := &Limits{
+		Default:        []*LimitRangeQuantity{lrq1, lrq2},
+		DefaultRequest: []*LimitRangeQuantity{lrq3, lrq4},
+	}
+	return lim, nil
 }
 
 func (e *errK8sOperations) CreateNamespace(app *App, user string) error {
@@ -94,6 +128,22 @@ func (e *errK8sOperations) NamespaceAnnotation(namespace, annotation string) (st
 
 func (e *errK8sOperations) NamespaceLabel(namespace, label string) (string, error) {
 	return "", e.Err
+}
+
+func (e *errK8sOperations) AddressList(namespace string) ([]*Address, error) {
+	return nil, e.Err
+}
+
+func (e *errK8sOperations) Status(namespace string) (*Status, error) {
+	return nil, e.Err
+}
+
+func (e *errK8sOperations) AutoScale(namespace string) (*AutoScale, error) {
+	return nil, e.Err
+}
+
+func (e *errK8sOperations) Limits(namespace, name string) (*Limits, error) {
+	return nil, e.Err
 }
 
 func TestAppOperationsCreate(t *testing.T) {
@@ -250,5 +300,68 @@ func TestAppOperationsCreateErrAutoScale(t *testing.T) {
 
 	if ops.Create(user, app) == nil {
 		t.Errorf("expected error, got nil")
+	}
+}
+
+func TestAppOperationsInfo(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	teamName := "luizalabs"
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: teamName}
+	tops.(*team.FakeOperations).Storage[app.Name] = &storage.Team{
+		Name:  teamName,
+		Users: []storage.User{*user},
+	}
+
+	info, err := ops.Info(user, app.Name)
+	if err != nil {
+		t.Fatal("error getting app info: ", err)
+	}
+
+	if info.Team != teamName {
+		t.Errorf("expected %s, got %s", teamName, info.Team)
+	}
+
+	if len(info.Addresses) != 1 { // see fakeK8sOperations.AddressList
+		t.Errorf("expected 2, got %d", len(info.Addresses))
+	}
+
+	if info.Status.CPU != 33 { // see fakeK8sOperations.Status
+		t.Errorf("expected 33, got %d", info.Status.CPU)
+	}
+
+	if info.AutoScale.CPUTargetUtilization != 42 { // see fakeK8sOperations.AutoScale
+		t.Errorf("expected 42, got %d", info.AutoScale.CPUTargetUtilization)
+	}
+
+	ndef := len(info.Limits.Default)
+	if ndef != 2 { // see fakeK8sOperations.Limits
+		t.Errorf("expected 2, got %d", ndef)
+	}
+
+	ndefReq := len(info.Limits.DefaultRequest)
+	if ndefReq != 2 {
+		t.Errorf("expected 2, got %d", ndefReq)
+	}
+}
+
+func TestAppOperationsInfoErrPermissionDenied(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+
+	if _, err := ops.Info(user, "teresa"); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestAppOperationsInfoErrNotFound(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+
+	if _, err := ops.Info(user, "teresa"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }

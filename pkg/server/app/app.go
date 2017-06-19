@@ -2,6 +2,7 @@ package app
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
@@ -17,6 +18,7 @@ import (
 type Operations interface {
 	Create(user *storage.User, app *App) error
 	Logs(user *storage.User, appName string, lines int64, follow bool) (io.ReadCloser, error)
+	Info(user *storage.User, appName string) (*Info, error)
 }
 
 type K8sOperations interface {
@@ -28,6 +30,10 @@ type K8sOperations interface {
 	CreateQuota(app *App) error
 	CreateSecret(appName, secretName string, data map[string][]byte) error
 	CreateAutoScale(app *App) error
+	AddressList(namespace string) ([]*Address, error)
+	Status(namespace string) (*Status, error)
+	AutoScale(namespace string) (*AutoScale, error)
+	Limits(namespace, name string) (*Limits, error)
 }
 
 type AppOperations struct {
@@ -37,6 +43,7 @@ type AppOperations struct {
 }
 
 const (
+	limitsName       = "limits"
 	TeresaAnnotation = "teresa.io/app"
 	TeresaTeamLabel  = "teresa.io/team"
 )
@@ -122,6 +129,56 @@ func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, 
 	}()
 
 	return r, nil
+}
+
+func (ops *AppOperations) Info(user *storage.User, appName string) (*Info, error) {
+	team, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
+	if err != nil {
+		return nil, err
+	}
+
+	if !ops.hasPerm(user, team) {
+		return nil, auth.ErrPermissionDenied
+	}
+
+	an, err := ops.kops.NamespaceAnnotation(appName, TeresaAnnotation)
+	if err != nil {
+		return nil, err
+	}
+	var app App
+	if err := json.Unmarshal([]byte(an), &app); err != nil {
+		return nil, err
+	}
+
+	addr, err := ops.kops.AddressList(appName)
+	if err != nil {
+		return nil, err
+	}
+
+	stat, err := ops.kops.Status(appName)
+	if err != nil {
+		return nil, err
+	}
+
+	as, err := ops.kops.AutoScale(appName)
+	if err != nil {
+		return nil, err
+	}
+
+	lim, err := ops.kops.Limits(appName, limitsName)
+	if err != nil {
+		return nil, err
+	}
+
+	info := &Info{
+		Team:      team,
+		Addresses: addr,
+		Status:    stat,
+		AutoScale: as,
+		Limits:    lim,
+		EnvVars:   app.EnvVars,
+	}
+	return info, nil
 }
 
 func NewOperations(tops team.Operations, kops K8sOperations, st st.Storage) Operations {

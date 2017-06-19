@@ -6,6 +6,7 @@ import (
 
 	"github.com/luizalabs/teresa-api/pkg/server/app"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/pkg/api/resource"
@@ -213,6 +214,101 @@ func (k *k8sClient) CreateAutoScale(a *app.App) error {
 
 	_, err := k.kc.AutoscalingV1().HorizontalPodAutoscalers(a.Name).Create(hpa)
 	return err
+}
+
+func (k *k8sClient) AddressList(namespace string) ([]*app.Address, error) {
+	srvs, err := k.kc.CoreV1().Services(namespace).List(k8sv1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	addrs := []*app.Address{}
+	for _, srv := range srvs.Items {
+		for _, i := range srv.Status.LoadBalancer.Ingress {
+			h := i.Hostname
+			if h == "" {
+				h = i.IP
+			}
+			addrs = append(addrs, &app.Address{Hostname: h})
+		}
+	}
+	return addrs, nil
+}
+
+func (k *k8sClient) Status(namespace string) (*app.Status, error) {
+	hpa, err := k.kc.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	pods, err := k.PodList(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	var cpu int32
+	if hpa.Status.CurrentCPUUtilizationPercentage != nil {
+		cpu = *hpa.Status.CurrentCPUUtilizationPercentage
+	}
+
+	stat := &app.Status{
+		CPU:  cpu,
+		Pods: pods,
+	}
+	return stat, nil
+}
+
+func (k *k8sClient) AutoScale(namespace string) (*app.AutoScale, error) {
+	hpa, err := k.kc.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	var cpu, min int32
+	if hpa.Spec.TargetCPUUtilizationPercentage != nil {
+		cpu = *hpa.Spec.TargetCPUUtilizationPercentage
+	}
+	if hpa.Spec.MinReplicas != nil {
+		min = *hpa.Spec.MinReplicas
+	}
+
+	as := &app.AutoScale{
+		CPUTargetUtilization: cpu,
+		Min:                  min,
+		Max:                  hpa.Spec.MaxReplicas,
+	}
+	return as, nil
+}
+
+func (k *k8sClient) Limits(namespace, name string) (*app.Limits, error) {
+	lr, err := k.kc.CoreV1().LimitRanges(namespace).Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	var def, defReq []*app.LimitRangeQuantity
+	for _, item := range lr.Spec.Limits {
+		for k, v := range item.Default {
+			q := &app.LimitRangeQuantity{
+				Resource: string(k),
+				Quantity: v.String(),
+			}
+			def = append(def, q)
+		}
+		for k, v := range item.DefaultRequest {
+			q := &app.LimitRangeQuantity{
+				Resource: string(k),
+				Quantity: v.String(),
+			}
+			defReq = append(defReq, q)
+		}
+	}
+
+	lim := &app.Limits{
+		Default:        def,
+		DefaultRequest: defReq,
+	}
+	return lim, nil
 }
 
 func newInClusterK8sClient() (Client, error) {

@@ -124,3 +124,39 @@ func TestFakeOperationsLogsErrNotFound(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
+
+func TestFakeOperationsInfo(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Name: "gopher@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	info, err := fake.Info(user, app.Name)
+	if err != nil {
+		t.Fatal("error getting app info: ", err)
+	}
+
+	if info == nil {
+		t.Fatal("expected a valid info, got nil")
+	}
+}
+
+func TestFakeOperationsInfoErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	if _, err := fake.Info(user, app.Name); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestFakeOperationsInfoErrNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Name: "gopher@luizalabs.com"}
+
+	if _, err := fake.Info(user, "teresa"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}

@@ -122,3 +122,39 @@ func TestLogsPermissionDenied(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
+
+func TestInfoSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &storage.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	if _, err := s.Info(ctx, &appb.InfoRequest{Name: name}); err != nil {
+		t.Error("Got error on info: ", err)
+	}
+}
+
+func TestInfoAppNotFound(t *testing.T) {
+	s := NewService(NewFakeOperations())
+	user := &storage.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	if _, err := s.Info(ctx, &appb.InfoRequest{Name: "teresa"}); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestInfoPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	if _, err := s.Info(ctx, &appb.InfoRequest{Name: name}); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}

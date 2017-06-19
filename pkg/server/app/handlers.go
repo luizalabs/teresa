@@ -42,6 +42,17 @@ func (s *Service) Logs(req *appb.LogsRequest, stream appb.App_LogsServer) error 
 	return nil
 }
 
+func (s *Service) Info(ctx context.Context, req *appb.InfoRequest) (*appb.InfoResponse, error) {
+	user := ctx.Value("user").(*storage.User)
+
+	info, err := s.ops.Info(user, req.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return newInfoResponse(info), nil
+}
+
 func (s *Service) RegisterService(grpcServer *grpc.Server) {
 	appb.RegisterAppServer(grpcServer, s)
 }

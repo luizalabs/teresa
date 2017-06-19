@@ -59,6 +59,21 @@ func (f *FakeOperations) Logs(user *storage.User, appName string, lines int64, f
 	return r, nil
 }
 
+func (f *FakeOperations) Info(user *storage.User, appName string) (*Info, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if !hasPerm(user.Email) {
+		return nil, auth.ErrPermissionDenied
+	}
+
+	if _, found := f.Storage[appName]; !found {
+		return nil, ErrNotFound
+	}
+
+	return &Info{}, nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

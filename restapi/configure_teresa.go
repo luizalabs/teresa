@@ -47,9 +47,6 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 	// create deployment
 	api.DeploymentsCreateDeploymentHandler = handlers.CreateDeploymentHandler
 
-	// app details
-	api.AppsGetAppDetailsHandler = handlers.GetAppDetailsHandler
-
 	// list apps
 	api.AppsGetAppsHandler = handlers.GetAppsHandler
 

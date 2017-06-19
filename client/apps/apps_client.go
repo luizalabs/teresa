@@ -4,8 +4,6 @@ package apps
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"io"
-
 	"github.com/go-openapi/runtime"
 
 	strfmt "github.com/go-openapi/strfmt"
@@ -22,62 +20,6 @@ Client for apps API
 type Client struct {
 	transport runtime.ClientTransport
 	formats   strfmt.Registry
-}
-
-/*
-GetAppDetails gets app details
-
-Get app details
-*/
-func (a *Client) GetAppDetails(params *GetAppDetailsParams, authInfo runtime.ClientAuthInfoWriter) (*GetAppDetailsOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetAppDetailsParams()
-	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "getAppDetails",
-		Method:             "GET",
-		PathPattern:        "/apps/{app_name}",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetAppDetailsReader{formats: a.formats},
-		AuthInfo:           authInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetAppDetailsOK), nil
-}
-
-/*
-GetAppLogs gets app logs
-
-Get app logs
-*/
-func (a *Client) GetAppLogs(params *GetAppLogsParams, authInfo runtime.ClientAuthInfoWriter, writer io.Writer) (*GetAppLogsOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetAppLogsParams()
-	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "getAppLogs",
-		Method:             "GET",
-		PathPattern:        "/apps/{app_name}/logs",
-		ProducesMediaTypes: []string{"application/octet-stream"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetAppLogsReader{formats: a.formats, writer: writer},
-		AuthInfo:           authInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetAppLogsOK), nil
 }
 
 /*
@@ -122,7 +64,7 @@ func (a *Client) PartialUpdateApp(params *PartialUpdateAppParams, authInfo runti
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "partialUpdateApp",
 		Method:             "PATCH",
-		PathPattern:        "/apps/{app_name}",
+		PathPattern:        "/apps",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http"},
@@ -150,7 +92,7 @@ func (a *Client) UpdateApp(params *UpdateAppParams, authInfo runtime.ClientAuthI
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "updateApp",
 		Method:             "PUT",
-		PathPattern:        "/apps/{app_name}",
+		PathPattern:        "/apps",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http"},

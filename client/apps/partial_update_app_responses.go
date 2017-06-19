@@ -53,7 +53,7 @@ type PartialUpdateAppOK struct {
 }
 
 func (o *PartialUpdateAppOK) Error() string {
-	return fmt.Sprintf("[PATCH /apps/{app_name}][%d] partialUpdateAppOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[PATCH /apps][%d] partialUpdateAppOK  %+v", 200, o.Payload)
 }
 
 func (o *PartialUpdateAppOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -91,7 +91,7 @@ func (o *PartialUpdateAppDefault) Code() int {
 }
 
 func (o *PartialUpdateAppDefault) Error() string {
-	return fmt.Sprintf("[PATCH /apps/{app_name}][%d] partialUpdateApp default  %+v", o._statusCode, o.Payload)
+	return fmt.Sprintf("[PATCH /apps][%d] partialUpdateApp default  %+v", o._statusCode, o.Payload)
 }
 
 func (o *PartialUpdateAppDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -97,38 +97,6 @@ func (tc TeresaClient) GetApps() (appList []*models.App, err error) {
 	return r.Payload, nil
 }
 
-// GetAppInfo returns all info about the app
-func (tc TeresaClient) GetAppInfo(appName string) (app *models.App, err error) {
-	p := apps.NewGetAppDetailsParams().WithAppName(appName)
-	r, err := tc.teresa.Apps.GetAppDetails(p, tc.apiKeyAuthFunc)
-	if err != nil {
-		return nil, err
-	}
-	return r.Payload, nil
-}
-
-func (tc TeresaClient) GetAppLogs(appName string, lines *int64, follow *bool, writer io.Writer) error {
-	p := apps.NewGetAppLogsParams().WithAppName(appName)
-	p.Follow = follow
-	p.Lines = lines
-	_, err := tc.teresa.Apps.GetAppLogs(p, tc.apiKeyAuthFunc, writer)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// GetAppDetail Create app attributes
-func (tc TeresaClient) GetAppDetail(teamID, appID int64) (app *models.App, err error) {
-	// params := apps.NewGetAppDetailsParams().WithTeamID(teamID).WithAppID(appID)
-	// r, err := tc.teresa.Apps.GetAppDetails(params, tc.apiKeyAuthFunc)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return r.Payload, nil
-	return
-}
-
 // CreateDeploy creates a new deploy
 func (tc TeresaClient) CreateDeploy(appName, deployDescription string, tarBall *os.File, writer io.Writer) error {
 	p := deployments.NewCreateDeploymentParams()

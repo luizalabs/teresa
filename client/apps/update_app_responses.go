@@ -53,7 +53,7 @@ type UpdateAppOK struct {
 }
 
 func (o *UpdateAppOK) Error() string {
-	return fmt.Sprintf("[PUT /apps/{app_name}][%d] updateAppOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[PUT /apps][%d] updateAppOK  %+v", 200, o.Payload)
 }
 
 func (o *UpdateAppOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -91,7 +91,7 @@ func (o *UpdateAppDefault) Code() int {
 }
 
 func (o *UpdateAppDefault) Error() string {
-	return fmt.Sprintf("[PUT /apps/{app_name}][%d] updateApp default  %+v", o._statusCode, o.Payload)
+	return fmt.Sprintf("[PUT /apps][%d] updateApp default  %+v", o._statusCode, o.Payload)
 }
 
 func (o *UpdateAppDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -52,20 +52,18 @@ type TeresaAPI struct {
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
 
-	// TokenHeaderAuth registers a function that takes a token and returns a principal
-	// it performs authentication based on an api key Authorization provided in the header
-	TokenHeaderAuth func(string) (interface{}, error)
-
 	// APIKeyAuth registers a function that takes a token and returns a principal
 	// it performs authentication based on an api key token provided in the query
 	APIKeyAuth func(string) (interface{}, error)
+
+	// TokenHeaderAuth registers a function that takes a token and returns a principal
+	// it performs authentication based on an api key Authorization provided in the header
+	TokenHeaderAuth func(string) (interface{}, error)
 
 	// DeploymentsCreateDeploymentHandler sets the operation handler for the create deployment operation
 	DeploymentsCreateDeploymentHandler deployments.CreateDeploymentHandler
 	// TeamsDeleteTeamHandler sets the operation handler for the delete team operation
 	TeamsDeleteTeamHandler teams.DeleteTeamHandler
-	// AppsGetAppDetailsHandler sets the operation handler for the get app details operation
-	AppsGetAppDetailsHandler apps.GetAppDetailsHandler
 	// AppsGetAppsHandler sets the operation handler for the get apps operation
 	AppsGetAppsHandler apps.GetAppsHandler
 	// DeploymentsGetDeploymentsHandler sets the operation handler for the get deployments operation
@@ -159,12 +157,12 @@ func (o *TeresaAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
-	if o.TokenHeaderAuth == nil {
-		unregistered = append(unregistered, "AuthorizationAuth")
-	}
-
 	if o.APIKeyAuth == nil {
 		unregistered = append(unregistered, "TokenAuth")
+	}
+
+	if o.TokenHeaderAuth == nil {
+		unregistered = append(unregistered, "AuthorizationAuth")
 	}
 
 	if o.DeploymentsCreateDeploymentHandler == nil {
@@ -173,10 +171,6 @@ func (o *TeresaAPI) Validate() error {
 
 	if o.TeamsDeleteTeamHandler == nil {
 		unregistered = append(unregistered, "teams.DeleteTeamHandler")
-	}
-
-	if o.AppsGetAppDetailsHandler == nil {
-		unregistered = append(unregistered, "apps.GetAppDetailsHandler")
 	}
 
 	if o.AppsGetAppsHandler == nil {
@@ -242,13 +236,13 @@ func (o *TeresaAPI) AuthenticatorsFor(schemes map[string]spec.SecurityScheme) ma
 	for name, scheme := range schemes {
 		switch name {
 
-		case "token_header":
-
-			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.TokenHeaderAuth)
-
 		case "api_key":
 
 			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.APIKeyAuth)
+
+		case "token_header":
+
+			result[name] = security.APIKeyAuth(scheme.Name, scheme.In, o.TokenHeaderAuth)
 
 		}
 	}
@@ -329,11 +323,6 @@ func (o *TeresaAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/apps/{app_name}"] = apps.NewGetAppDetails(o.context, o.AppsGetAppDetailsHandler)
-
-	if o.handlers["GET"] == nil {
-		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
-	}
 	o.handlers["GET"]["/apps"] = apps.NewGetApps(o.context, o.AppsGetAppsHandler)
 
 	if o.handlers["GET"] == nil {
@@ -359,12 +348,12 @@ func (o *TeresaAPI) initHandlerCache() {
 	if o.handlers["PATCH"] == nil {
 		o.handlers[strings.ToUpper("PATCH")] = make(map[string]http.Handler)
 	}
-	o.handlers["PATCH"]["/apps/{app_name}"] = apps.NewPartialUpdateApp(o.context, o.AppsPartialUpdateAppHandler)
+	o.handlers["PATCH"]["/apps"] = apps.NewPartialUpdateApp(o.context, o.AppsPartialUpdateAppHandler)
 
 	if o.handlers["PUT"] == nil {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)
 	}
-	o.handlers["PUT"]["/apps/{app_name}"] = apps.NewUpdateApp(o.context, o.AppsUpdateAppHandler)
+	o.handlers["PUT"]["/apps"] = apps.NewUpdateApp(o.context, o.AppsUpdateAppHandler)
 
 	if o.handlers["PUT"] == nil {
 		o.handlers[strings.ToUpper("PUT")] = make(map[string]http.Handler)

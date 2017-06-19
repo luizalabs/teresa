@@ -58,6 +58,25 @@ func deepValueEqual(v1, v2 reflect.Value) bool {
 	}
 }
 
+// We need to skip EnvVars
+func cmpAppWithCreateRequest(app *App, req *appb.CreateRequest) bool {
+	var tmp = struct {
+		A string
+		B string
+		C string
+		D *Limits
+		E *AutoScale
+	}{
+		app.Name,
+		app.Team,
+		app.ProcessType,
+		app.Limits,
+		app.AutoScale,
+	}
+
+	return deepEqual(&tmp, req)
+}
+
 func newCreateRequest() *appb.CreateRequest {
 	lrq1 := &appb.CreateRequest_Limits_LimitRangeQuantity{
 		Quantity: "1",
@@ -103,7 +122,34 @@ func TestNewApp(t *testing.T) {
 	req := newCreateRequest()
 	app := newApp(req)
 
-	if !deepEqual(app, req) {
+	if !cmpAppWithCreateRequest(app, req) {
 		t.Errorf("expected %v, got %v", req, app)
+	}
+}
+
+func TestNewInfoResponse(t *testing.T) {
+	lrq1 := &LimitRangeQuantity{Quantity: "1", Resource: "resource1"}
+	lrq2 := &LimitRangeQuantity{Quantity: "2", Resource: "resource2"}
+	info := &Info{
+		Team:      "luizalabs",
+		Addresses: []*Address{{Hostname: "host1"}},
+		EnvVars: []*EnvVar{
+			{Key: "key1", Value: "value1"},
+			{Key: "key2", Value: "value2"},
+		},
+		Status: &Status{
+			CPU:  42,
+			Pods: []*Pod{{Name: "pod 1", State: "Running"}},
+		},
+		AutoScale: &AutoScale{CPUTargetUtilization: 33, Max: 10, Min: 1},
+		Limits: &Limits{
+			Default:        []*LimitRangeQuantity{lrq1},
+			DefaultRequest: []*LimitRangeQuantity{lrq2},
+		},
+	}
+
+	resp := newInfoResponse(info)
+	if !deepEqual(info, resp) {
+		t.Errorf("expected %v, got %v", info, resp)
 	}
 }

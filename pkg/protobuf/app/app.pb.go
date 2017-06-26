@@ -173,9 +173,9 @@ func (m *CreateRequest_AutoScale) GetMin() int32 {
 }
 
 type ListResponse struct {
-
-	Apps []*ListResponse_App `protobuf:"bytes,1,rep,name=apps" json:"apps,omitempty"`
-
+	App  string `protobuf:"bytes,1,opt,name=app" json:"app,omitempty"`
+	Team string `protobuf:"bytes,2,opt,name=team" json:"team,omitempty"`
+	Url  string `protobuf:"bytes,3,opt,name=url" json:"url,omitempty"`
 }
 
 func (m *ListResponse) Reset()                    { *m = ListResponse{} }
@@ -205,18 +205,22 @@ func (m *ListResponse_App) GetTeam() string {
 
 	if m != nil {
 		return m.Team
-	}
-	return ""
-}
 
-func (m *ListResponse_App) GetApp() string {
+func (m *ListResponse) GetApp() string {
 	if m != nil {
 		return m.App
 	}
 	return ""
 }
 
-func (m *ListResponse_App) GetUrl() string {
+func (m *ListResponse) GetTeam() string {
+	if m != nil {
+		return m.Team
+	}
+	return ""
+}
+
+func (m *ListResponse) GetUrl() string {
 	if m != nil {
 		return m.Url
 	}
@@ -278,7 +282,7 @@ type InfoRequest struct {
 func (m *InfoRequest) Reset()                    { *m = InfoRequest{} }
 func (m *InfoRequest) String() string            { return proto.CompactTextString(m) }
 func (*InfoRequest) ProtoMessage()               {}
-func (*InfoRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+func (*InfoRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
 func (m *InfoRequest) GetName() string {
 	if m != nil {
@@ -299,7 +303,7 @@ type InfoResponse struct {
 func (m *InfoResponse) Reset()                    { *m = InfoResponse{} }
 func (m *InfoResponse) String() string            { return proto.CompactTextString(m) }
 func (*InfoResponse) ProtoMessage()               {}
-func (*InfoResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+func (*InfoResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
 func (m *InfoResponse) GetTeam() string {
 	if m != nil {
@@ -350,7 +354,7 @@ type InfoResponse_Address struct {
 func (m *InfoResponse_Address) Reset()                    { *m = InfoResponse_Address{} }
 func (m *InfoResponse_Address) String() string            { return proto.CompactTextString(m) }
 func (*InfoResponse_Address) ProtoMessage()               {}
-func (*InfoResponse_Address) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4, 0} }
+func (*InfoResponse_Address) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5, 0} }
 
 func (m *InfoResponse_Address) GetHostname() string {
 	if m != nil {
@@ -367,7 +371,7 @@ type InfoResponse_EnvVar struct {
 func (m *InfoResponse_EnvVar) Reset()                    { *m = InfoResponse_EnvVar{} }
 func (m *InfoResponse_EnvVar) String() string            { return proto.CompactTextString(m) }
 func (*InfoResponse_EnvVar) ProtoMessage()               {}
-func (*InfoResponse_EnvVar) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4, 1} }
+func (*InfoResponse_EnvVar) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5, 1} }
 
 func (m *InfoResponse_EnvVar) GetKey() string {
 	if m != nil {
@@ -391,7 +395,7 @@ type InfoResponse_Status struct {
 func (m *InfoResponse_Status) Reset()                    { *m = InfoResponse_Status{} }
 func (m *InfoResponse_Status) String() string            { return proto.CompactTextString(m) }
 func (*InfoResponse_Status) ProtoMessage()               {}
-func (*InfoResponse_Status) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4, 2} }
+func (*InfoResponse_Status) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5, 2} }
 
 func (m *InfoResponse_Status) GetCpu() int32 {
 	if m != nil {
@@ -415,7 +419,7 @@ type InfoResponse_Status_Pod struct {
 func (m *InfoResponse_Status_Pod) Reset()                    { *m = InfoResponse_Status_Pod{} }
 func (m *InfoResponse_Status_Pod) String() string            { return proto.CompactTextString(m) }
 func (*InfoResponse_Status_Pod) ProtoMessage()               {}
-func (*InfoResponse_Status_Pod) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4, 2, 0} }
+func (*InfoResponse_Status_Pod) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5, 2, 0} }
 
 func (m *InfoResponse_Status_Pod) GetName() string {
 	if m != nil {
@@ -440,7 +444,7 @@ type InfoResponse_AutoScale struct {
 func (m *InfoResponse_AutoScale) Reset()                    { *m = InfoResponse_AutoScale{} }
 func (m *InfoResponse_AutoScale) String() string            { return proto.CompactTextString(m) }
 func (*InfoResponse_AutoScale) ProtoMessage()               {}
-func (*InfoResponse_AutoScale) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4, 3} }
+func (*InfoResponse_AutoScale) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5, 3} }
 
 func (m *InfoResponse_AutoScale) GetCpuTargetUtilization() int32 {
 	if m != nil {
@@ -471,7 +475,7 @@ type InfoResponse_Limits struct {
 func (m *InfoResponse_Limits) Reset()                    { *m = InfoResponse_Limits{} }
 func (m *InfoResponse_Limits) String() string            { return proto.CompactTextString(m) }
 func (*InfoResponse_Limits) ProtoMessage()               {}
-func (*InfoResponse_Limits) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4, 4} }
+func (*InfoResponse_Limits) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5, 4} }
 
 func (m *InfoResponse_Limits) GetDefault() []*InfoResponse_Limits_LimitRangeQuantity {
 	if m != nil {
@@ -498,7 +502,7 @@ func (m *InfoResponse_Limits_LimitRangeQuantity) Reset() {
 func (m *InfoResponse_Limits_LimitRangeQuantity) String() string { return proto.CompactTextString(m) }
 func (*InfoResponse_Limits_LimitRangeQuantity) ProtoMessage()    {}
 func (*InfoResponse_Limits_LimitRangeQuantity) Descriptor() ([]byte, []int) {
-	return fileDescriptor0, []int{4, 4, 0}
+	return fileDescriptor0, []int{5, 4, 0}
 }
 
 func (m *InfoResponse_Limits_LimitRangeQuantity) GetQuantity() string {
@@ -523,7 +527,7 @@ type SetEnvRequest struct {
 func (m *SetEnvRequest) Reset()                    { *m = SetEnvRequest{} }
 func (m *SetEnvRequest) String() string            { return proto.CompactTextString(m) }
 func (*SetEnvRequest) ProtoMessage()               {}
-func (*SetEnvRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+func (*SetEnvRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
 func (m *SetEnvRequest) GetName() string {
 	if m != nil {
@@ -547,7 +551,7 @@ type SetEnvRequest_EnvVar struct {
 func (m *SetEnvRequest_EnvVar) Reset()                    { *m = SetEnvRequest_EnvVar{} }
 func (m *SetEnvRequest_EnvVar) String() string            { return proto.CompactTextString(m) }
 func (*SetEnvRequest_EnvVar) ProtoMessage()               {}
-func (*SetEnvRequest_EnvVar) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5, 0} }
+func (*SetEnvRequest_EnvVar) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6, 0} }
 
 func (m *SetEnvRequest_EnvVar) GetKey() string {
 	if m != nil {
@@ -571,7 +575,7 @@ type UnsetEnvRequest struct {
 func (m *UnsetEnvRequest) Reset()                    { *m = UnsetEnvRequest{} }
 func (m *UnsetEnvRequest) String() string            { return proto.CompactTextString(m) }
 func (*UnsetEnvRequest) ProtoMessage()               {}
-func (*UnsetEnvRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+func (*UnsetEnvRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
 
 func (m *UnsetEnvRequest) GetName() string {
 	if m != nil {
@@ -593,7 +597,11 @@ type Empty struct {
 func (m *Empty) Reset()                    { *m = Empty{} }
 func (m *Empty) String() string            { return proto.CompactTextString(m) }
 func (*Empty) ProtoMessage()               {}
+<<<<<<< 7795dcc105fbff3be3cecca890ca52dbcc9f5f68
 func (*Empty) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+=======
+func (*Empty) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+>>>>>>> Starting Teresa app list developement
 
 func init() {
 	proto.RegisterType((*CreateRequest)(nil), "app.CreateRequest")
@@ -601,7 +609,10 @@ func init() {
 	proto.RegisterType((*CreateRequest_Limits_LimitRangeQuantity)(nil), "app.CreateRequest.Limits.LimitRangeQuantity")
 	proto.RegisterType((*CreateRequest_AutoScale)(nil), "app.CreateRequest.AutoScale")
 	proto.RegisterType((*ListResponse)(nil), "app.ListResponse")
+<<<<<<< 7795dcc105fbff3be3cecca890ca52dbcc9f5f68
 	proto.RegisterType((*ListResponse_App)(nil), "app.ListResponse.App")
+=======
+>>>>>>> Starting Teresa app list developement
 	proto.RegisterType((*LogsRequest)(nil), "app.LogsRequest")
 	proto.RegisterType((*LogsResponse)(nil), "app.LogsResponse")
 	proto.RegisterType((*InfoRequest)(nil), "app.InfoRequest")
@@ -708,6 +719,15 @@ func (c *appClient) SetEnv(ctx context.Context, in *SetEnvRequest, opts ...grpc.
 func (c *appClient) UnsetEnv(ctx context.Context, in *UnsetEnvRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := grpc.Invoke(ctx, "/app.App/UnsetEnv", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appClient) List(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListResponse, error) {
+	out := new(ListResponse)
+	err := grpc.Invoke(ctx, "/app.App/List", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -822,6 +842,24 @@ func _App_UnsetEnv_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _App_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).List(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/app.App/List",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).List(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _App_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "app.App",
 	HandlerType: (*AppServer)(nil),
@@ -842,6 +880,10 @@ var _App_serviceDesc = grpc.ServiceDesc{
 			MethodName: "UnsetEnv",
 			Handler:    _App_UnsetEnv_Handler,
 		},
+		{
+			MethodName: "List",
+			Handler:    _App_List_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -856,7 +898,6 @@ var _App_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("app.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-
 	// 461 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x53, 0x4d, 0x6f, 0xd3, 0x40,
 	0x10, 0x95, 0xeb, 0x8f, 0x36, 0x93, 0x00, 0x61, 0x54, 0x55, 0xc6, 0xe2, 0x10, 0x2c, 0x21, 0xe5,

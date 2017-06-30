@@ -64,11 +64,11 @@ func (f *FakeOperations) Info(user *storage.User, appName string) (*Info, error)
 	defer f.mutex.Unlock()
 
 	if !hasPerm(user.Email) {
-		return nil, auth.ErrPermissionDenied
+		return nil, newAppErr(auth.ErrPermissionDenied, fmt.Errorf("error"))
 	}
 
 	if _, found := f.Storage[appName]; !found {
-		return nil, ErrNotFound
+		return nil, newAppErr(ErrNotFound, fmt.Errorf("error"))
 	}
 
 	return &Info{}, nil

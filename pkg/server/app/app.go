@@ -34,6 +34,7 @@ type K8sOperations interface {
 	Status(namespace string) (*Status, error)
 	AutoScale(namespace string) (*AutoScale, error)
 	Limits(namespace, name string) (*Limits, error)
+	IsNotFound(err error) bool
 }
 
 type AppOperations struct {
@@ -134,40 +135,48 @@ func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, 
 func (ops *AppOperations) Info(user *storage.User, appName string) (*Info, error) {
 	team, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
 	if err != nil {
-		return nil, err
+		if ops.kops.IsNotFound(err) {
+			return nil, newAppErr(ErrNotFound, err)
+		}
+		return nil, newAppErr(ErrUnknown, err)
 	}
 
 	if !ops.hasPerm(user, team) {
-		return nil, auth.ErrPermissionDenied
+		err := fmt.Errorf("permission denied user %s on team %s", user.Name, team)
+		return nil, newAppErr(auth.ErrPermissionDenied, err)
 	}
 
 	an, err := ops.kops.NamespaceAnnotation(appName, TeresaAnnotation)
 	if err != nil {
-		return nil, err
+		if ops.kops.IsNotFound(err) {
+			return nil, newAppErr(ErrNotFound, err)
+		}
+		return nil, newAppErr(ErrUnknown, err)
 	}
 	var app App
 	if err := json.Unmarshal([]byte(an), &app); err != nil {
-		return nil, err
+		err = fmt.Errorf("unmarshal app failed: %v", err)
+		return nil, newAppErr(ErrUnknown, err)
 	}
 
 	addr, err := ops.kops.AddressList(appName)
 	if err != nil {
-		return nil, err
+		return nil, newAppErr(ErrUnknown, err)
 	}
 
 	stat, err := ops.kops.Status(appName)
 	if err != nil {
-		return nil, err
+		return nil, newAppErr(ErrUnknown, err)
 	}
 
 	as, err := ops.kops.AutoScale(appName)
 	if err != nil {
-		return nil, err
+		return nil, newAppErr(ErrUnknown, err)
 	}
 
 	lim, err := ops.kops.Limits(appName, limitsName)
 	if err != nil {
-		return nil, err
+		return nil, newAppErr(ErrUnknown, err)
 	}
 
 	info := &Info{

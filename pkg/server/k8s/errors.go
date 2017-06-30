@@ -1,10 +1,11 @@
 package k8s
 
 import (
-	"errors"
+	"github.com/pkg/errors"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
 	k8serrors "k8s.io/client-go/pkg/api/errors"
 )
 
@@ -23,4 +24,8 @@ func cleanError(err error) error {
 		}
 	}
 	return err
+}
+
+func (k *k8sClient) IsNotFound(err error) bool {
+	return k8serrors.IsNotFound(errors.Cause(err))
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/luizalabs/teresa-api/pkg/server/app"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
+	"github.com/pkg/errors"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api"
@@ -26,7 +27,7 @@ func (k *k8sClient) Create(app *app.App, st st.Storage) error {
 func (k *k8sClient) getNamespace(namespace string) (*k8sv1.Namespace, error) {
 	ns, err := k.kc.CoreV1().Namespaces().Get(namespace)
 	if err != nil {
-		return nil, cleanError(err)
+		return nil, err
 	}
 	return ns, nil
 }
@@ -34,7 +35,7 @@ func (k *k8sClient) getNamespace(namespace string) (*k8sv1.Namespace, error) {
 func (k *k8sClient) NamespaceAnnotation(namespace, annotation string) (string, error) {
 	ns, err := k.getNamespace(namespace)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "get annotation failed")
 	}
 
 	return ns.Annotations[annotation], nil
@@ -43,7 +44,7 @@ func (k *k8sClient) NamespaceAnnotation(namespace, annotation string) (string, e
 func (k k8sClient) NamespaceLabel(namespace, label string) (string, error) {
 	ns, err := k.getNamespace(namespace)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "get label failed")
 	}
 
 	return ns.Labels[label], nil
@@ -219,7 +220,7 @@ func (k *k8sClient) CreateAutoScale(a *app.App) error {
 func (k *k8sClient) AddressList(namespace string) ([]*app.Address, error) {
 	srvs, err := k.kc.CoreV1().Services(namespace).List(k8sv1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get addr list failed")
 	}
 
 	addrs := []*app.Address{}
@@ -238,12 +239,12 @@ func (k *k8sClient) AddressList(namespace string) ([]*app.Address, error) {
 func (k *k8sClient) Status(namespace string) (*app.Status, error) {
 	hpa, err := k.kc.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(namespace)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get status failed")
 	}
 
 	pods, err := k.PodList(namespace)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get status failed")
 	}
 
 	var cpu int32
@@ -261,7 +262,7 @@ func (k *k8sClient) Status(namespace string) (*app.Status, error) {
 func (k *k8sClient) AutoScale(namespace string) (*app.AutoScale, error) {
 	hpa, err := k.kc.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(namespace)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get autoscale failed")
 	}
 
 	var cpu, min int32
@@ -283,7 +284,7 @@ func (k *k8sClient) AutoScale(namespace string) (*app.AutoScale, error) {
 func (k *k8sClient) Limits(namespace, name string) (*app.Limits, error) {
 	lr, err := k.kc.CoreV1().LimitRanges(namespace).Get(name)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get limits failed")
 	}
 
 	var def, defReq []*app.LimitRangeQuantity

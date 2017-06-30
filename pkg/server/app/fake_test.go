@@ -147,8 +147,8 @@ func TestFakeOperationsInfoErrPermissionDenied(t *testing.T) {
 	app := &App{Name: "teresa"}
 	fake.(*FakeOperations).Storage[app.Name] = app
 
-	if _, err := fake.Info(user, app.Name); err != auth.ErrPermissionDenied {
-		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	if _, err := fake.Info(user, app.Name); grpcErr(err) != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", grpcErr(err))
 	}
 }
 
@@ -156,7 +156,7 @@ func TestFakeOperationsInfoErrNotFound(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &storage.User{Name: "gopher@luizalabs.com"}
 
-	if _, err := fake.Info(user, "teresa"); err != ErrNotFound {
-		t.Errorf("expected ErrNotFound, got %v", err)
+	if _, err := fake.Info(user, "teresa"); grpcErr(err) != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", grpcErr(err))
 	}
 }

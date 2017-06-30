@@ -98,6 +98,10 @@ func (*fakeK8sOperations) Limits(namespace, name string) (*Limits, error) {
 	return lim, nil
 }
 
+func (*fakeK8sOperations) IsNotFound(err error) bool {
+	return true
+}
+
 func (e *errK8sOperations) CreateNamespace(app *App, user string) error {
 	return e.NamespaceErr
 }
@@ -144,6 +148,10 @@ func (e *errK8sOperations) AutoScale(namespace string) (*AutoScale, error) {
 
 func (e *errK8sOperations) Limits(namespace, name string) (*Limits, error) {
 	return nil, e.Err
+}
+
+func (*errK8sOperations) IsNotFound(err error) bool {
+	return true
 }
 
 func TestAppOperationsCreate(t *testing.T) {
@@ -351,8 +359,8 @@ func TestAppOperationsInfoErrPermissionDenied(t *testing.T) {
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &storage.User{Email: "teresa@luizalabs.com"}
 
-	if _, err := ops.Info(user, "teresa"); err != auth.ErrPermissionDenied {
-		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	if _, err := ops.Info(user, "teresa"); grpcErr(err) != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", grpcErr(err))
 	}
 }
 
@@ -361,7 +369,7 @@ func TestAppOperationsInfoErrNotFound(t *testing.T) {
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
 	user := &storage.User{Email: "teresa@luizalabs.com"}
 
-	if _, err := ops.Info(user, "teresa"); err != ErrNotFound {
-		t.Errorf("expected ErrNotFound, got %v", err)
+	if _, err := ops.Info(user, "teresa"); grpcErr(err) != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", grpcErr(err))
 	}
 }

@@ -4,74 +4,36 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/luizalabs/teresa-api/cmd/client/connection"
 	"github.com/luizalabs/teresa-api/cmd/client/tar"
 	"github.com/luizalabs/teresa-api/pkg/client"
+	dpb "github.com/luizalabs/teresa-api/pkg/protobuf/deploy"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
+	context "golang.org/x/net/context"
 )
 
 var deployCmd = &cobra.Command{
 	Use:   "deploy <app folder>",
 	Short: "Deploy an app",
-	// 	Long: `Deploy an application.
-	//
-	// To deploy an app you have to pass it's name, the team the app
-	// belongs and the path to the source code. You might want to
-	// describe your deployments through --description, as that'll
-	// eventually help on rollbacks.
-	//
-	// eg.:
-	//
-	//   $ teresa deploy . --app webapi --team site --description "release 1.2 with new checkout"
-	// 	`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		cluster, err := getCurrentClusterName()
-		if err != nil {
-			return newCmdError("You have to select a cluster first, check the config help: teresa config")
-		}
-		if len(args) != 1 {
-			return newUsageError("You should provide the app folder in order to continue")
-		}
-		appFolder := args[0]
-		appName, _ := cmd.Flags().GetString("app")
-		deployDescription, _ := cmd.Flags().GetString("description")
-		// showing warning message to the user
-		fmt.Printf("Deploying app %s to the cluster %s...\n", color.CyanString(`"%s"`, appName), color.YellowString(`"%s"`, cluster))
-		noinput, _ := cmd.Flags().GetBool("no-input")
-		if !noinput {
-			fmt.Print("Are you sure? (yes/NO)? ")
-			// Waiting for the user answer...
-			s, _ := bufio.NewReader(os.Stdin).ReadString('\n')
-			if s = strings.ToLower(strings.TrimRight(s, "\r\n")); s != "yes" {
-				return nil
-			}
-		}
-
-		// create and get the archive
-		fmt.Println("Generating tarball of:", appFolder)
-		tarPath, err := createTempArchiveToUpload(appName, appFolder)
-		if err != nil {
-			// TODO: check what happen when the app folder is not valid
-			return err
-		}
-		file, err := os.Open(*tarPath)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		tc := NewTeresa()
-		err = tc.CreateDeploy(appName, deployDescription, file, os.Stdout)
-		if err != nil {
-			return err
-		}
-		return nil
-	},
+	Long: `Deploy an application.
+	
+	To deploy an app you have to pass it's name, the team the app
+	belongs and the path to the source code. You might want to
+	describe your deployments through --description, as that'll
+	eventually help on rollbacks.
+	
+	eg.:
+	
+	  $ teresa deploy . --app webapi --team site --description "release 1.2 with new checkout"
+	`,
+	Run: deployApp,
 }
 
 func getCurrentClusterName() (string, error) {
@@ -85,37 +47,17 @@ func getCurrentClusterName() (string, error) {
 	return cfg.CurrentCluster, nil
 }
 
-// // Writer to be used on deployment, as Write() is very specific and
-// // should be implemented some other way -- moving out the deployment
-// // error checking from it's Write method.
-// type deploymentWriter struct {
-// 	w io.Writer
-// }
-//
-// // Write the buffer out to logger, return an error when the string
-// // `----------deployment-error----------` is found on the buffer.
-// func (tw *deploymentWriter) Write(p []byte) (n int, err error) {
-// 	s := strings.Replace(string(p), deploymentErrorMark, "", -1)
-// 	s = strings.Replace(s, deploymentSuccessMark, "", -1)
-// 	// log.Info(strings.Trim(fmt.Sprintf("%s", s), "\n"))
-// 	if strings.Contains(string(p), deploymentErrorMark) {
-// 		return len(p), errors.New("Deploy failed")
-// 	}
-// 	return len(p), nil
-// }
-
-// create a temporary archive file of the app to deploy and return the path of this file
-func createTempArchiveToUpload(appName, source string) (path *string, err error) {
+func createTempArchiveToUpload(appName, source string) (path string, err error) {
 	id := uuid.NewV4()
 	source, err = filepath.Abs(source)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	p := filepath.Join(os.TempDir(), fmt.Sprintf("%s_%s.tar.gz", appName, id))
 	if err = createArchive(source, p); err != nil {
-		return nil, err
+		return "", err
 	}
-	return &p, nil
+	return p, nil
 }
 
 // create an archive of the source folder
@@ -208,4 +150,101 @@ func init() {
 	deployCmd.Flags().String("description", "", "deploy description (required)")
 	deployCmd.Flags().Bool("no-input", false, "deploy app without warning")
 
+}
+
+func deployApp(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		cmd.Usage()
+		return
+	}
+	appFolder := args[0]
+	appName, _ := cmd.Flags().GetString("app")
+	deployDescription, _ := cmd.Flags().GetString("description")
+	noInput, _ := cmd.Flags().GetBool("no-input")
+
+	currentClusterName, err := getCurrentClusterName()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error on read config file:", err)
+	}
+
+	fmt.Printf("Deploying app %s to the cluster %s...\n", color.CyanString(`"%s"`, appName), color.YellowString(`"%s"`, currentClusterName))
+
+	if !noInput {
+		fmt.Print("Are you sure? (yes/NO)? ")
+		s, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+		if !strings.HasPrefix(strings.ToLower(s), "yes") {
+			return
+		}
+	}
+
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
+		return
+	}
+	defer conn.Close()
+
+	cli := dpb.NewDeployClient(conn)
+	stream, err := cli.Make(context.Background())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+
+	info := &dpb.DeployRequest{Value: &dpb.DeployRequest_Info_{&dpb.DeployRequest_Info{
+		App:         appName,
+		Description: deployDescription,
+	}}}
+	if err := stream.Send(info); err != nil {
+		fmt.Fprintln(os.Stderr, "Error sending deploy informations:", err)
+		return
+	}
+
+	fmt.Println("Generation tarball of:", appFolder)
+	tarPath, err := createTempArchiveToUpload(appName, appFolder)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error generating tarball:", err)
+		return
+	}
+
+	f, err := os.Open(tarPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error reading temp file", err)
+		return
+	}
+	defer f.Close()
+
+	r := bufio.NewReader(f)
+	buf := make([]byte, 1024)
+	for {
+		n, err := r.Read(buf)
+		if err != nil && err != io.EOF {
+			fmt.Fprintln(os.Stderr, "Error reading bytes of temp file", err)
+			return
+		}
+		if n == 0 {
+			break
+		}
+
+		bufMsg := &dpb.DeployRequest{Value: &dpb.DeployRequest_File_{&dpb.DeployRequest_File{
+			Chunk: buf,
+		}}}
+		if err := stream.Send(bufMsg); err != nil {
+			fmt.Fprintln(os.Stderr, "Error sending tarball chunk:", client.GetErrorMsg(err))
+			return
+		}
+	}
+	stream.CloseSend()
+
+	for {
+		msg, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				return
+			}
+			fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+			return
+		}
+		fmt.Println(msg.Text)
+	}
 }

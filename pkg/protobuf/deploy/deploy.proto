@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package deploy;
+
+service Deploy {
+    rpc Make(stream DeployRequest) returns (stream DeployResponse);
+}
+
+message DeployRequest {
+    message Info {
+        string app = 1;
+        string description = 2;
+    }
+
+    message File {
+        bytes chunk = 1;
+    }
+
+    oneof value {
+        Info info = 1;
+        File file = 2;
+    }
+}
+
+message DeployResponse {
+    string text = 1;
+}

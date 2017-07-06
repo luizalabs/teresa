@@ -8,6 +8,9 @@ import (
 
 	"golang.org/x/net/context"
 
+	log "github.com/Sirupsen/logrus"
+	"github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/jinzhu/gorm"
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/app"
@@ -18,8 +21,10 @@ import (
 	"github.com/luizalabs/teresa-api/pkg/server/user"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 type Options struct {
@@ -98,6 +103,11 @@ func (s *Server) Run() error {
 	return s.grpcServer.Serve(s.listener)
 }
 
+func recFunc(p interface{}) (err error) {
+	log.WithField("panic", p).Error("teresa-server recovered")
+	return status.Errorf(codes.Unknown, "Internal Server Error")
+}
+
 func New(opt Options) (*Server, error) {
 	l, err := net.Listen("tcp", fmt.Sprintf(":%s", opt.Port))
 	if err != nil {
@@ -107,10 +117,19 @@ func New(opt Options) (*Server, error) {
 	creds := credentials.NewServerTLSFromCert(opt.TLSCert)
 
 	uOps := user.NewDatabaseOperations(opt.DB, opt.Auth)
+	recOpts := []grpc_recovery.Option{
+		grpc_recovery.WithRecoveryHandler(recFunc),
+	}
 	s := grpc.NewServer(
 		grpc.Creds(creds),
-		grpc.UnaryInterceptor(unaryInterceptor(opt.Auth, uOps)),
-		grpc.StreamInterceptor(streamInterceptor(opt.Auth, uOps)),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			unaryInterceptor(opt.Auth, uOps),
+			grpc_recovery.UnaryServerInterceptor(recOpts...),
+		)),
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
+			streamInterceptor(opt.Auth, uOps),
+			grpc_recovery.StreamServerInterceptor(recOpts...),
+		)),
 	)
 
 	us := user.NewService(uOps)

@@ -3,9 +3,10 @@ package k8s
 import (
 	"encoding/json"
 	"io"
+	"time"
 
 	"github.com/luizalabs/teresa-api/pkg/server/app"
-	st "github.com/luizalabs/teresa-api/pkg/server/storage"
+	"github.com/luizalabs/teresa-api/pkg/server/deploy"
 	"github.com/pkg/errors"
 
 	"k8s.io/client-go/kubernetes"
@@ -13,15 +14,12 @@ import (
 	"k8s.io/client-go/pkg/api/resource"
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
 	asv1 "k8s.io/client-go/pkg/apis/autoscaling/v1"
+	"k8s.io/client-go/pkg/util/wait"
 	restclient "k8s.io/client-go/rest"
 )
 
 type k8sClient struct {
 	kc *kubernetes.Clientset
-}
-
-func (k *k8sClient) Create(app *app.App, st st.Storage) error {
-	panic("not implemented")
 }
 
 func (k *k8sClient) getNamespace(namespace string) (*k8sv1.Namespace, error) {
@@ -310,6 +308,102 @@ func (k *k8sClient) Limits(namespace, name string) (*app.Limits, error) {
 		DefaultRequest: defReq,
 	}
 	return lim, nil
+}
+
+func (k *k8sClient) CreateDeploy(deploySpec *deploy.DeploySpec) error {
+	pods, err := k.PodList(deploy.Namespace)
+	if err != nil {
+		return err
+	}
+
+	deployYaml := deploySpecToK8sDeploy(deploySpec, len(pods))
+	_, err := k.kc.Deployments(deploySpec.Namespace).Update(deployYaml)
+	return err
+}
+
+func (k *k8sClient) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, error) {
+	podYaml := podSpecToK8sPod(podSpec)
+	pod, err := k.kc.Pods(podSpec.Namespace).Create(podYaml)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	exitCodeChan := make(chan int)
+	r, w := io.Pipe()
+	go func() {
+		defer func() {
+			w.Close()
+			close(exitCodeChan)
+		}()
+
+		if err := k.waitPodStart(pod, 1*time.Second, 5*time.Minute); err != nil {
+			return
+		}
+
+		stream, err := k.PodLogs(podSpec.Namespace, podSpec.Name, 10, true)
+		if err != nil {
+			return
+		}
+		io.Copy(w, stream)
+
+		if err = k.waitPodEnd(pod, 1*time.Second, 5*time.Minute); err != nil {
+			return
+		}
+
+		ec, err := k.podExitCode(pod)
+		if err != nil {
+			return
+		}
+
+		exitCodeChan <- ec
+		go k.killPod(pod)
+	}()
+	return r, exitCodeChan, nil
+}
+
+func (k *k8sClient) killPod(pod *k8sv1.Pod) error {
+	return k.kc.Pods(pod.Namespace).Delete(pod.Name, &k8sv1.DeleteOptions{})
+}
+
+func (k *k8sClient) waitPodStart(pod *k8sv1.Pod, checkInterval, timeout time.Duration) error {
+	podsClient := k.kc.Pods(pod.Namespace)
+	return wait.PollImmediate(checkInterval, timeout, func() (bool, error) {
+		p, err := podsClient.Get(pod.Name)
+		if err != nil {
+			return false, err
+		}
+		if p.Status.Phase == k8sv1.PodFailed {
+			return true, ErrPodRunFailed
+		}
+		result := p.Status.Phase == k8sv1.PodRunning || p.Status.Phase == k8sv1.PodSucceeded
+		return result, nil
+	})
+}
+
+func (k *k8sClient) waitPodEnd(pod *k8sv1.Pod, checkInterval, timeout time.Duration) error {
+	podsClient := k.kc.Pods(pod.Namespace)
+	return wait.PollImmediate(checkInterval, timeout, func() (bool, error) {
+		p, err := podsClient.Get(pod.Name)
+		if err != nil {
+			return false, err
+		}
+		result := p.Status.Phase == k8sv1.PodSucceeded || p.Status.Phase == k8sv1.PodFailed
+		return result, nil
+	})
+}
+
+func (k *k8sClient) podExitCode(pod *k8sv1.Pod) (int, error) {
+	p, err := k.kc.Pods(pod.Namespace).Get(pod.Name)
+	if err != nil {
+		return 1, err
+	}
+	for _, containerStatus := range p.Status.ContainerStatuses {
+		state := containerStatus.State.Terminated
+		if state.ExitCode != 0 {
+			return int(state.ExitCode), nil
+		}
+	}
+	return 0, nil
 }
 
 func newInClusterK8sClient() (Client, error) {

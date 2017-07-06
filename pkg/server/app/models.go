@@ -29,11 +29,6 @@ type EnvVar struct {
 	Value string `json:"value"`
 }
 
-type EnvVar struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
 type App struct {
 	Name        string     `json:"name"`
 	Team        string     `json:"-"`

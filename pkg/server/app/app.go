@@ -19,6 +19,8 @@ type Operations interface {
 	Create(user *storage.User, app *App) error
 	Logs(user *storage.User, appName string, lines int64, follow bool) (io.ReadCloser, error)
 	Info(user *storage.User, appName string) (*Info, error)
+	TeamName(appName string) (string, error)
+	Meta(appName string) (*App, error)
 }
 
 type K8sOperations interface {
@@ -133,30 +135,19 @@ func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, 
 }
 
 func (ops *AppOperations) Info(user *storage.User, appName string) (*Info, error) {
-	team, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
+	teamName, err := ops.TeamName(appName)
 	if err != nil {
-		if ops.kops.IsNotFound(err) {
-			return nil, newAppErr(ErrNotFound, err)
-		}
-		return nil, newAppErr(ErrUnknown, err)
+		return nil, err
 	}
 
-	if !ops.hasPerm(user, team) {
-		err := fmt.Errorf("permission denied user %s on team %s", user.Name, team)
+	if !ops.hasPerm(user, teamName) {
+		err := fmt.Errorf("permission denied user %s on team %s", user.Name, teamName)
 		return nil, newAppErr(auth.ErrPermissionDenied, err)
 	}
 
-	an, err := ops.kops.NamespaceAnnotation(appName, TeresaAnnotation)
+	appMeta, err := ops.Meta(appName)
 	if err != nil {
-		if ops.kops.IsNotFound(err) {
-			return nil, newAppErr(ErrNotFound, err)
-		}
-		return nil, newAppErr(ErrUnknown, err)
-	}
-	var app App
-	if err := json.Unmarshal([]byte(an), &app); err != nil {
-		err = fmt.Errorf("unmarshal app failed: %v", err)
-		return nil, newAppErr(ErrUnknown, err)
+		return nil, err
 	}
 
 	addr, err := ops.kops.AddressList(appName)
@@ -180,14 +171,42 @@ func (ops *AppOperations) Info(user *storage.User, appName string) (*Info, error
 	}
 
 	info := &Info{
-		Team:      team,
+		Team:      teamName,
 		Addresses: addr,
 		Status:    stat,
 		AutoScale: as,
 		Limits:    lim,
-		EnvVars:   app.EnvVars,
+		EnvVars:   appMeta.EnvVars,
 	}
 	return info, nil
+}
+
+func (ops *AppOperations) TeamName(appName string) (string, error) {
+	teamName, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
+	if err != nil {
+		if ops.kops.IsNotFound(err) {
+			return "", newAppErr(ErrNotFound, err)
+		}
+		return "", newAppErr(ErrUnknown, err)
+	}
+	return teamName, nil
+}
+
+func (ops *AppOperations) Meta(appName string) (*App, error) {
+	an, err := ops.kops.NamespaceAnnotation(appName, TeresaAnnotation)
+	if err != nil {
+		if ops.kops.IsNotFound(err) {
+			return nil, newAppErr(ErrNotFound, err)
+		}
+		return nil, newAppErr(ErrUnknown, err)
+	}
+	a := new(App)
+	if err := json.Unmarshal([]byte(an), a); err != nil {
+		err = fmt.Errorf("unmarshal app failed: %v", err)
+		return nil, newAppErr(ErrUnknown, err)
+	}
+
+	return a, nil
 }
 
 func NewOperations(tops team.Operations, kops K8sOperations, st st.Storage) Operations {

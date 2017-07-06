@@ -347,6 +347,14 @@
 			"Rev": "aed02d124ae4a0e94fea4541c8effd05bf0c8296"
 		},
 		{
+			"ImportPath": "github.com/grpc-ecosystem/go-grpc-middleware",
+			"Rev": "f63a7dfb64c138bd93d5c5b896d8b33c4b08e000"
+		},
+		{
+			"ImportPath": "github.com/grpc-ecosystem/go-grpc-middleware/recovery",
+			"Rev": "f63a7dfb64c138bd93d5c5b896d8b33c4b08e000"
+		},
+		{
 			"ImportPath": "github.com/hashicorp/hcl",
 			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
 		},

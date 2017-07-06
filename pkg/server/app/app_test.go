@@ -202,6 +202,28 @@ func TestAppOperationsCreateErrAppAlreadyExists(t *testing.T) {
 	}
 }
 
+func TestAppTeamName(t *testing.T) {
+	ops := NewOperations(team.NewFakeOperations(), &fakeK8sOperations{}, st.NewFake())
+	teamName, err := ops.TeamName("teresa")
+	if err != nil {
+		t.Error("got error on get teamName:", err)
+	}
+	if teamName != "luizalabs" { //see fakeK8sOperations
+		t.Errorf("expected luizalabs, got %s", teamName)
+	}
+}
+
+func TestAppMeta(t *testing.T) {
+	ops := NewOperations(team.NewFakeOperations(), &fakeK8sOperations{}, st.NewFake())
+	a, err := ops.Meta("teresa")
+	if err != nil {
+		t.Errorf("got error on get app Meta:", err)
+	}
+	if a.Name != "test" {
+		t.Errorf("expected luizalabs, got %s", a.Name)
+	}
+}
+
 func TestAppOperationsLogs(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)

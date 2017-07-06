@@ -224,6 +224,36 @@ func TestAppMeta(t *testing.T) {
 	}
 }
 
+func TestAppOperationsHasPermission(t *testing.T) {
+	appName := "teresa"
+	goodUserEmail := "teresa@luizalabs.com"
+
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	teamName := "luizalabs"
+	user := &storage.User{Email: goodUserEmail}
+	tops.(*team.FakeOperations).Storage[teamName] = &storage.Team{
+		Name:  teamName,
+		Users: []storage.User{*user},
+	}
+
+	var testCases = []struct {
+		email    string
+		expected bool
+	}{
+		{goodUserEmail, true},
+		{"bad-user@luizalabs.com", false},
+	}
+
+	for _, tc := range testCases {
+		u := &storage.User{Email: tc.email}
+		actual := ops.HasPermission(u, appName)
+		if tc.expected != actual {
+			t.Errorf("expected %v, got %v", tc.expected, actual)
+		}
+	}
+}
+
 func TestAppOperationsLogs(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)

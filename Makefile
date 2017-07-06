@@ -93,3 +93,4 @@ gen-grpc-stubs:
 	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/user/*.proto
 	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/team/*.proto
 	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/app/*.proto
+	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/deploy/*.proto

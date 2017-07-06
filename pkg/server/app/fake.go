@@ -74,6 +74,21 @@ func (f *FakeOperations) Info(user *storage.User, appName string) (*Info, error)
 	return &Info{}, nil
 }
 
+func (f *FakeOperations) TeamName(appName string) (string, error) {
+	return "luizalabs", nil
+}
+
+func (f *FakeOperations) Meta(appName string) (*App, error) {
+	a := &App{
+		Name:        "teresa",
+		ProcessType: "web",
+		EnvVars: []*EnvVar{
+			&EnvVar{Key: "KEY", Value: "Value"},
+		},
+	}
+	return a, nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

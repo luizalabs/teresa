@@ -160,3 +160,25 @@ func TestFakeOperationsInfoErrNotFound(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %v", grpcErr(err))
 	}
 }
+
+func TestFakeOperationsTeamName(t *testing.T) {
+	fake := NewFakeOperations()
+	teamName, err := fake.TeamName("teresa")
+	if err != nil {
+		t.Errorf("got error on get TeamName:", err)
+	}
+	if teamName != "luizalabs" {
+		t.Errorf("expected luizalabs, got %s", teamName)
+	}
+}
+
+func TestFakeOperationsMeta(t *testing.T) {
+	fake := NewFakeOperations()
+	a, err := fake.Meta("teresa")
+	if err != nil {
+		t.Errorf("got error on get app Meta:", err)
+	}
+	if a.Name != "teresa" {
+		t.Errorf("expected teresa, got %s", a.Name)
+	}
+}

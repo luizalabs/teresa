@@ -19,6 +19,10 @@ func hasPerm(email string) bool {
 	return email != "bad-user@luizalabs.com"
 }
 
+func (f *FakeOperations) HasPermission(user *storage.User, appName string) bool {
+	return hasPerm(user.Email)
+}
+
 func (f *FakeOperations) Create(user *storage.User, app *App) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()

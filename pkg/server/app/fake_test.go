@@ -182,3 +182,21 @@ func TestFakeOperationsMeta(t *testing.T) {
 		t.Errorf("expected teresa, got %s", a.Name)
 	}
 }
+
+func TestFakeHasPermission(t *testing.T) {
+	var testCases = []struct {
+		email    string
+		expected bool
+	}{
+		{"gopher@luizalabs.com", true},
+		{"bad-user@luizalabs.com", false},
+	}
+	fake := NewFakeOperations()
+
+	for _, tc := range testCases {
+		actual := fake.HasPermission(&storage.User{Email: tc.email}, "teresa")
+		if actual != tc.expected {
+			t.Errorf("expected %v, got %v", tc.expected, actual)
+		}
+	}
+}

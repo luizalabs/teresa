@@ -21,6 +21,7 @@ type Operations interface {
 	Info(user *storage.User, appName string) (*Info, error)
 	TeamName(appName string) (string, error)
 	Meta(appName string) (*App, error)
+	HasPermission(user *storage.User, appName string) bool
 }
 
 type K8sOperations interface {
@@ -64,6 +65,14 @@ func (ops *AppOperations) hasPerm(user *storage.User, team string) bool {
 		}
 	}
 	return found
+}
+
+func (ops *AppOperations) HasPermission(user *storage.User, appName string) bool {
+	teamName, err := ops.TeamName(appName)
+	if err != nil {
+		return false
+	}
+	return ops.hasPerm(user, teamName)
 }
 
 func (ops *AppOperations) Create(user *storage.User, app *App) error {

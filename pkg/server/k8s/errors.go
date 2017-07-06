@@ -12,6 +12,7 @@ import (
 var (
 	ErrInvalidServiceType = errors.New("Invalid service type")
 	ErrNotFound           = status.Errorf(codes.NotFound, "Resource not found")
+	ErrPodRunFailed       = status.Errorf(codes.Aborted, "Pod went into failed status")
 )
 
 func cleanError(err error) error {

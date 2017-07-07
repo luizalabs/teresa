@@ -18,6 +18,8 @@ type Operations interface {
 type K8sOperations interface {
 	PodRun(podSpec *PodSpec) (io.ReadCloser, <-chan int, error)
 	CreateDeploy(deploySpec *DeploySpec) error
+	HasService(namespace, name string) (bool, error)
+	CreateService(namespace, name string) error
 }
 
 type DeployOperations struct {
@@ -60,6 +62,24 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 		if err := ops.createDeploy(a, tYaml, description, slugURL); err != nil {
 			// TODO: Add Log Here
 			fmt.Println("ERROR CREATE DEPLOY:", err)
+			return
+		}
+
+		if a.ProcessType != app.ProcessTypeWeb {
+			return
+		}
+		hasSrv, err := ops.k8s.HasService(appName, appName)
+		if err != nil {
+			// TODO: Add Log Here
+			fmt.Println("ERROR CHECKING APP SERVICE:", err)
+			return
+		}
+		if !hasSrv {
+			fmt.Fprintf(w, "Exposing LoadBalancer service")
+			if err := ops.k8s.CreateService(appName, appName); err != nil {
+				//TODO: Add Log Here
+				fmt.Println("ERROR CREATING SERVICE:", err)
+			}
 		}
 	}()
 	return r, nil

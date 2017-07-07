@@ -18,7 +18,6 @@ type Operations interface {
 type K8sOperations interface {
 	PodRun(podSpec *PodSpec) (io.ReadCloser, <-chan int, error)
 	CreateDeploy(deploySpec *DeploySpec) error
-	NamespaceAnnotation(namespace, annotation string) (string, error)
 }
 
 type DeployOperations struct {

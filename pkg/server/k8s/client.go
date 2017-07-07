@@ -19,7 +19,8 @@ import (
 )
 
 type k8sClient struct {
-	kc *kubernetes.Clientset
+	kc                 *kubernetes.Clientset
+	defaultServiceType string
 }
 
 func (k *k8sClient) getNamespace(namespace string) (*k8sv1.Namespace, error) {
@@ -314,6 +315,9 @@ func (k *k8sClient) CreateDeploy(deploySpec *deploy.DeploySpec) error {
 	replicas := k.currentPodReplicasFromDeploy(deploySpec.Namespace, deploySpec.Name)
 	deployYaml := deploySpecToK8sDeploy(deploySpec, replicas)
 	_, err := k.kc.Deployments(deploySpec.Namespace).Update(deployYaml)
+	if k.IsNotFound(err) {
+		_, err = k.kc.Deployments(deploySpec.Namespace).Create(deployYaml)
+	}
 	return err
 }
 
@@ -350,6 +354,23 @@ func (k *k8sClient) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, 
 		go k.killPod(pod)
 	}()
 	return r, exitCodeChan, nil
+}
+
+func (k *k8sClient) HasService(namespace, appName string) (bool, error) {
+	_, err := k.kc.CoreV1().Services(namespace).Get(appName)
+	if err != nil {
+		if k.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (k *k8sClient) CreateService(namespace, appName string) error {
+	srvSpec := serviceSpec(namespace, appName, k.defaultServiceType)
+	_, err := k.kc.CoreV1().Services(namespace).Create(srvSpec)
+	return err
 }
 
 func (k *k8sClient) killPod(pod *k8sv1.Pod) error {
@@ -405,16 +426,18 @@ func (k *k8sClient) currentPodReplicasFromDeploy(namespace, appName string) int3
 	return d.Status.Replicas
 }
 
-func newInClusterK8sClient() (Client, error) {
-	conf, err := restclient.InClusterConfig()
+func newInClusterK8sClient(conf *Config) (Client, error) {
+	k8sConf, err := restclient.InClusterConfig()
 	if err != nil {
 		return nil, err
 	}
-	kc, err := kubernetes.NewForConfig(conf)
+	kc, err := kubernetes.NewForConfig(k8sConf)
 	if err != nil {
 		return nil, err
 	}
-	return &k8sClient{kc}, nil
+	return &k8sClient{
+		kc: kc, defaultServiceType: conf.DefaultServiceType,
+	}, nil
 }
 
 func newOutOfClusterK8sClient(conf *Config) (Client, error) {
@@ -428,5 +451,7 @@ func newOutOfClusterK8sClient(conf *Config) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &k8sClient{kc}, nil
+	return &k8sClient{
+		kc: kc, defaultServiceType: conf.DefaultServiceType,
+	}, nil
 }

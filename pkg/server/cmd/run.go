@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"crypto/tls"
 	"log"
 
 	"github.com/kelseyhightower/envconfig"
@@ -21,10 +22,20 @@ var runCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(runCmd)
 	runCmd.Flags().String("port", "50051", "TCP port to create a listener")
+	runCmd.Flags().Bool("notls", false, "disable TLS")
 }
 
 func runServer(cmd *cobra.Command, args []string) {
-	port, _ := cmd.Flags().GetString("port")
+	port, err := cmd.Flags().GetString("port")
+	if err != nil {
+		log.Fatal("Invalid port parameter: ", err)
+	}
+
+	notls, err := cmd.Flags().GetBool("notls")
+	if err != nil {
+		log.Fatal("Invalid notls parameter: ", err)
+	}
+
 	db, err := getDB()
 	if err != nil {
 		log.Fatal("Error on connect to Database: ", err)
@@ -50,9 +61,12 @@ func runServer(cmd *cobra.Command, args []string) {
 		log.Fatal("Error on get auth information ", err)
 	}
 
-	tlsCert, err := sec.TLSCertificate()
-	if err != nil {
-		log.Fatal("Error on get TLS cert ", err)
+	var tlsCert *tls.Certificate
+	if !notls {
+		tlsCert, err = sec.TLSCertificate()
+		if err != nil {
+			log.Fatal("Error getting TLS cert ", err)
+		}
 	}
 	s, err := server.New(server.Options{
 		Port:    port,

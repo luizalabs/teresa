@@ -49,7 +49,7 @@ func newPodSpec(name, image string, a *app.App, envVars map[string]string, fileS
 		Namespace: a.Name,
 		Image:     image,
 		VolumeMounts: []*PodVolumeMountsSpec{{
-			Name:      "storage-key",
+			Name:      "storage-keys",
 			MountPath: "/var/run/secrets/deis/objectstore/creds",
 			ReadOnly:  true,
 		}},
@@ -87,7 +87,7 @@ func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, descri
 		map[string]string{
 			"APP":             a.Name,
 			"PORT":            strconv.Itoa(DefaultPort),
-			"SLUG_URL:":       slugURL,
+			"SLUG_URL":        slugURL,
 			"BUILDER_STORAGE": fileStorage.Type(),
 		},
 		fileStorage,
@@ -97,10 +97,13 @@ func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, descri
 		Description: description,
 		SlugURL:     slugURL,
 		PodSpec:     *ps,
-		TeresaYaml: TeresaYaml{
+	}
+
+	if tYaml != nil {
+		ds.TeresaYaml = TeresaYaml{
 			HealthCheck:   tYaml.HealthCheck,
 			RollingUpdate: tYaml.RollingUpdate,
-		},
+		}
 	}
 
 	return ds

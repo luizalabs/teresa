@@ -56,7 +56,11 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 		if err = ops.buildApp(tarBall, a, deployId, buildDest, w); err != nil {
 			return
 		}
-		ops.createDeploy(a, tYaml, description, buildDest)
+		slugURL := fmt.Sprintf("%s/slug.tgz", buildDest)
+		if err := ops.createDeploy(a, tYaml, description, slugURL); err != nil {
+			// TODO: Add Log Here
+			fmt.Println("ERROR CREATE DEPLOY:", err)
+		}
 	}()
 	return r, nil
 }
@@ -77,10 +81,10 @@ func (ops *DeployOperations) buildApp(tarBall io.ReadSeeker, a *app.App, deployI
 	if err != nil {
 		return err
 	}
+	go io.Copy(stream, podStream)
 
-	io.Copy(stream, podStream)
-	exitCode := <-exitCodeChan
-	if exitCode != 0 {
+	exitCode, ok := <-exitCodeChan
+	if !ok || exitCode != 0 {
 		return ErrBuildFail
 	}
 	return nil

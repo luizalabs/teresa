@@ -31,7 +31,7 @@ var deployCmd = &cobra.Command{
 	
 	eg.:
 	
-	  $ teresa deploy . --app webapi --team site --description "release 1.2 with new checkout"
+	  $ teresa deploy . --app webapi --description "release 1.2 with new checkout"
 	`,
 	Run: deployApp,
 }
@@ -60,7 +60,6 @@ func createTempArchiveToUpload(appName, source string) (path string, err error) 
 	return p, nil
 }
 
-// create an archive of the source folder
 func createArchive(source, target string) error {
 	dir, err := os.Stat(source)
 	if err != nil {
@@ -196,7 +195,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 		Description: deployDescription,
 	}}}
 	if err := stream.Send(info); err != nil {
-		fmt.Fprintln(os.Stderr, "Error sending deploy informations:", err)
+		fmt.Fprintln(os.Stderr, "Error sending deploy information:", err)
 		return
 	}
 
@@ -209,17 +208,17 @@ func deployApp(cmd *cobra.Command, args []string) {
 
 	f, err := os.Open(tarPath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error reading temp file", err)
+		fmt.Fprintln(os.Stderr, "Error reading temp file:", err)
 		return
 	}
 	defer f.Close()
 
 	r := bufio.NewReader(f)
-	buf := make([]byte, 1024)
 	for {
+		buf := make([]byte, 1024)
 		n, err := r.Read(buf)
 		if err != nil && err != io.EOF {
-			fmt.Fprintln(os.Stderr, "Error reading bytes of temp file", err)
+			fmt.Fprintln(os.Stderr, "Error reading bytes of temp file:", err)
 			return
 		}
 		if n == 0 {

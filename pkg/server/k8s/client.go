@@ -311,12 +311,8 @@ func (k *k8sClient) Limits(namespace, name string) (*app.Limits, error) {
 }
 
 func (k *k8sClient) CreateDeploy(deploySpec *deploy.DeploySpec) error {
-	pods, err := k.PodList(deploy.Namespace)
-	if err != nil {
-		return err
-	}
-
-	deployYaml := deploySpecToK8sDeploy(deploySpec, len(pods))
+	replicas := k.currentPodReplicasFromDeploy(deploySpec.Namespace, deploySpec.Name)
+	deployYaml := deploySpecToK8sDeploy(deploySpec, replicas)
 	_, err := k.kc.Deployments(deploySpec.Namespace).Update(deployYaml)
 	return err
 }
@@ -350,12 +346,7 @@ func (k *k8sClient) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, 
 			return
 		}
 
-		ec, err := k.podExitCode(pod)
-		if err != nil {
-			return
-		}
-
-		exitCodeChan <- ec
+		exitCodeChan <- k.podExitCode(pod)
 		go k.killPod(pod)
 	}()
 	return r, exitCodeChan, nil
@@ -392,18 +383,26 @@ func (k *k8sClient) waitPodEnd(pod *k8sv1.Pod, checkInterval, timeout time.Durat
 	})
 }
 
-func (k *k8sClient) podExitCode(pod *k8sv1.Pod) (int, error) {
+func (k *k8sClient) podExitCode(pod *k8sv1.Pod) int {
 	p, err := k.kc.Pods(pod.Namespace).Get(pod.Name)
 	if err != nil {
-		return 1, err
+		return 1
 	}
 	for _, containerStatus := range p.Status.ContainerStatuses {
 		state := containerStatus.State.Terminated
 		if state.ExitCode != 0 {
-			return int(state.ExitCode), nil
+			return int(state.ExitCode)
 		}
 	}
-	return 0, nil
+	return 0
+}
+
+func (k *k8sClient) currentPodReplicasFromDeploy(namespace, appName string) int32 {
+	d, err := k.kc.Deployments(namespace).Get(appName)
+	if err != nil || d.Status.Replicas < 1 {
+		return 1
+	}
+	return d.Status.Replicas
 }
 
 func newInClusterK8sClient() (Client, error) {

@@ -62,7 +62,7 @@ func podSpecToK8sPod(podSpec *deploy.PodSpec) *k8sv1.Pod {
 	return pod
 }
 
-func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int) *k8s_extensions.Deployment {
+func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) *k8s_extensions.Deployment {
 	c := podSpecToK8sContainer(&deploySpec.PodSpec)
 	volumes := podSpecVolumesToK8sVolumes(deploySpec.Volume)
 
@@ -80,7 +80,7 @@ func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int) *k8s_ext
 	}
 
 	ps := k8sv1.PodSpec{
-		RestartPolicy: k8sv1.RestartPolicyNever,
+		RestartPolicy: k8sv1.RestartPolicyAlways,
 		Containers:    []k8sv1.Container{c},
 		Volumes:       volumes,
 	}
@@ -92,7 +92,6 @@ func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int) *k8s_ext
 	}
 
 	rhl := int32(deploySpec.RevisionHistoryLimit)
-	replicasInt32 := int32(replicas)
 	d := &k8s_extensions.Deployment{
 		TypeMeta: unversioned.TypeMeta{
 			APIVersion: "extensions/v1beta1",
@@ -108,7 +107,7 @@ func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int) *k8s_ext
 			},
 		},
 		Spec: k8s_extensions.DeploymentSpec{
-			Replicas: &replicasInt32,
+			Replicas: &replicas,
 			Strategy: k8s_extensions.DeploymentStrategy{
 				Type: k8s_extensions.RollingUpdateDeploymentStrategyType,
 				RollingUpdate: &k8s_extensions.RollingUpdateDeployment{

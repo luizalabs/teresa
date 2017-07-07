@@ -114,14 +114,11 @@ func New(opt Options) (*Server, error) {
 		return nil, err
 	}
 
-	creds := credentials.NewServerTLSFromCert(opt.TLSCert)
-
 	uOps := user.NewDatabaseOperations(opt.DB, opt.Auth)
 	recOpts := []grpc_recovery.Option{
 		grpc_recovery.WithRecoveryHandler(recFunc),
 	}
-	s := grpc.NewServer(
-		grpc.Creds(creds),
+	sOpts := []grpc.ServerOption{
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			unaryInterceptor(opt.Auth, uOps),
 			grpc_recovery.UnaryServerInterceptor(recOpts...),
@@ -130,7 +127,13 @@ func New(opt Options) (*Server, error) {
 			streamInterceptor(opt.Auth, uOps),
 			grpc_recovery.StreamServerInterceptor(recOpts...),
 		)),
-	)
+	}
+	if opt.TLSCert != nil {
+		creds := credentials.NewServerTLSFromCert(opt.TLSCert)
+		sOpts = append(sOpts, grpc.Creds(creds))
+	}
+
+	s := grpc.NewServer(sOpts...)
 
 	us := user.NewService(uOps)
 	us.RegisterService(s)

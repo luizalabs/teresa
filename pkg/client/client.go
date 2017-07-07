@@ -17,14 +17,23 @@ func (t *tokenAuth) GetRequestMetadata(context.Context, ...string) (map[string]s
 	return map[string]string{"token": t.token}, nil
 }
 
-func (*tokenAuth) RequireTransportSecurity() bool { return true }
+func (*tokenAuth) RequireTransportSecurity() bool { return false }
 
-func New(cfg ClusterConfig) (*grpc.ClientConn, error) {
+func New(cfg ClusterConfig, noTLS, tlsInsecure bool) (*grpc.ClientConn, error) {
 	tlsConfig := new(tls.Config)
-	creds := credentials.NewTLS(tlsConfig)
-	return grpc.Dial(
-		cfg.Server,
+
+	opts := []grpc.DialOption{
 		grpc.WithPerRPCCredentials(&tokenAuth{cfg.Token}),
-		grpc.WithTransportCredentials(creds),
-	)
+	}
+	if noTLS {
+		opts = append(opts, grpc.WithInsecure())
+	} else {
+		if tlsInsecure {
+			tlsConfig.InsecureSkipVerify = true
+		}
+		creds := credentials.NewTLS(tlsConfig)
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+	}
+
+	return grpc.Dial(cfg.Server, opts...)
 }

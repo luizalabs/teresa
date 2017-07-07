@@ -112,7 +112,7 @@ func createApp(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	conn, err := connection.New(cfgFile)
+	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
 		return
@@ -213,7 +213,7 @@ func appInfo(cmd *cobra.Command, args []string) {
 	}
 	name := args[0]
 
-	conn, err := connection.New(cfgFile)
+	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
 		return
@@ -480,7 +480,7 @@ func appLogs(cmd *cobra.Command, args []string) {
 	lines, _ := cmd.Flags().GetInt64("lines")
 	follow, _ := cmd.Flags().GetBool("follow")
 
-	conn, err := connection.New(cfgFile)
+	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
 		return

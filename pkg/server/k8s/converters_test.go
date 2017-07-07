@@ -139,7 +139,7 @@ func TestDeploySpecToK8sDeploy(t *testing.T) {
 		},
 	}
 
-	expectedReplicas := 5
+	var expectedReplicas int32 = 5
 	k8sDeploy := deploySpecToK8sDeploy(ds, expectedReplicas)
 
 	if len(k8sDeploy.Spec.Template.Spec.Containers) != 1 {

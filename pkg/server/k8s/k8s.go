@@ -39,7 +39,7 @@ func New(conf *Config) (Client, error) {
 		return nil, err
 	}
 	if conf.InCluster {
-		return newInClusterK8sClient()
+		return newInClusterK8sClient(conf)
 	}
 	return newOutOfClusterK8sClient(conf)
 }

@@ -153,3 +153,34 @@ func healthCheckProbeToK8sProbe(probe *deploy.HealthCheckProbe) *k8sv1.Probe {
 		},
 	}
 }
+
+func serviceSpec(namespace, name, srvType string) *k8sv1.Service {
+	serviceType := k8sv1.ServiceType(srvType)
+	return &k8sv1.Service{
+		TypeMeta: unversioned.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Service",
+		},
+		ObjectMeta: k8sv1.ObjectMeta{
+			Labels: map[string]string{
+				"run": name,
+			},
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: k8sv1.ServiceSpec{
+			Type:            serviceType,
+			SessionAffinity: k8sv1.ServiceAffinityNone,
+			Selector: map[string]string{
+				"run": name,
+			},
+			Ports: []k8sv1.ServicePort{
+				k8sv1.ServicePort{
+					Port:       80,
+					Protocol:   k8sv1.ProtocolTCP,
+					TargetPort: intstr.FromInt(deploy.DefaultPort),
+				},
+			},
+		},
+	}
+}

@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	processTypeWeb = "web"
+	ProcessTypeWeb = "web"
 )
 
 type LimitRangeQuantity struct {
@@ -106,7 +106,7 @@ func newApp(req *appb.CreateRequest) *App {
 
 	processType := req.ProcessType
 	if processType == "" {
-		processType = processTypeWeb
+		processType = ProcessTypeWeb
 	}
 
 	app := &App{

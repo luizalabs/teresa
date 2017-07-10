@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/app"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
@@ -60,27 +62,11 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 		}
 		slugURL := fmt.Sprintf("%s/slug.tgz", buildDest)
 		if err := ops.createDeploy(a, tYaml, description, slugURL, rhl); err != nil {
-			// TODO: Add Log Here
-			fmt.Println("ERROR CREATE DEPLOY:", err)
+			log.WithError(err).Errorf("Creating deploy")
 			return
 		}
 
-		if a.ProcessType != app.ProcessTypeWeb {
-			return
-		}
-		hasSrv, err := ops.k8s.HasService(appName, appName)
-		if err != nil {
-			// TODO: Add Log Here
-			fmt.Println("ERROR CHECKING APP SERVICE:", err)
-			return
-		}
-		if !hasSrv {
-			fmt.Fprintln(w, "Exposing LoadBalancer service")
-			if err := ops.k8s.CreateService(appName, appName); err != nil {
-				//TODO: Add Log Here
-				fmt.Println("ERROR CREATING SERVICE:", err)
-			}
-		}
+		ops.exposeService(a, w)
 	}()
 	return r, nil
 }
@@ -88,6 +74,23 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 func (ops *DeployOperations) createDeploy(a *app.App, tYaml *TeresaYaml, description, slugPath string, rhl int) error {
 	deploySpec := newDeploySpec(a, tYaml, ops.fileStorage, description, slugPath, a.ProcessType, rhl)
 	return ops.k8s.CreateDeploy(deploySpec)
+}
+
+func (ops *DeployOperations) exposeService(a *app.App, w io.Writer) {
+	if a.ProcessType != app.ProcessTypeWeb {
+		return
+	}
+	hasSrv, err := ops.k8s.HasService(a.Name, a.Name)
+	if err != nil {
+		log.WithError(err).Errorf("Checking APP service")
+		return
+	}
+	if !hasSrv {
+		fmt.Fprintln(w, "Exposing LoadBalancer service")
+		if err := ops.k8s.CreateService(a.Name, a.Name); err != nil {
+			log.WithError(err).Errorf("Creating service")
+		}
+	}
 }
 
 func (ops *DeployOperations) buildApp(tarBall io.ReadSeeker, a *app.App, deployId, buildDest string, stream io.Writer) error {

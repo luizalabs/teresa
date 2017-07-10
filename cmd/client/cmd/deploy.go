@@ -17,6 +17,7 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 	context "golang.org/x/net/context"
+	"golang.org/x/sync/errgroup"
 )
 
 var deployCmd = &cobra.Command{
@@ -183,8 +184,10 @@ func deployApp(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
+	ctx := context.Background()
+
 	cli := dpb.NewDeployClient(conn)
-	stream, err := cli.Make(context.Background())
+	stream, err := cli.Make(ctx)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
 		return
@@ -199,27 +202,38 @@ func deployApp(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error { return sendAppTarball(appName, appFolder, stream) })
+	g.Go(func() error { return streamServerMsgs(stream) })
+
+	if err := g.Wait(); err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+	}
+}
+
+func sendAppTarball(appName, appFolder string, stream dpb.Deploy_MakeClient) error {
 	fmt.Println("Generation tarball of:", appFolder)
 	tarPath, err := createTempArchiveToUpload(appName, appFolder)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error generating tarball:", err)
-		return
+		fmt.Fprintln(os.Stderr, "Error generating tarball:")
+		return err
 	}
 
 	f, err := os.Open(tarPath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error reading temp file:", err)
-		return
+		fmt.Fprintln(os.Stderr, "Error reading temp file:")
+		return err
 	}
 	defer f.Close()
+	defer stream.CloseSend()
 
 	r := bufio.NewReader(f)
 	for {
 		buf := make([]byte, 1024)
 		n, err := r.Read(buf)
 		if err != nil && err != io.EOF {
-			fmt.Fprintln(os.Stderr, "Error reading bytes of temp file:", err)
-			return
+			fmt.Fprintln(os.Stderr, "Error reading bytes of temp file:")
+			return err
 		}
 		if n == 0 {
 			break
@@ -229,21 +243,23 @@ func deployApp(cmd *cobra.Command, args []string) {
 			Chunk: buf,
 		}}}
 		if err := stream.Send(bufMsg); err != nil {
-			fmt.Fprintln(os.Stderr, "Error sending tarball chunk:", client.GetErrorMsg(err))
-			return
+			fmt.Fprintln(os.Stderr, "Error sending tarball chunk:")
+			return err
 		}
 	}
-	stream.CloseSend()
+	return nil
+}
 
+func streamServerMsgs(stream dpb.Deploy_MakeClient) error {
 	for {
 		msg, err := stream.Recv()
 		if err != nil {
 			if err == io.EOF {
-				return
+				break
 			}
-			fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-			return
+			return err
 		}
 		fmt.Println(msg.Text)
 	}
+	return nil
 }

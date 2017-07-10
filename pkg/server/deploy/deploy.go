@@ -12,7 +12,7 @@ import (
 )
 
 type Operations interface {
-	Deploy(user *storage.User, appName string, tarBall io.ReadSeeker, description string) (io.ReadCloser, error)
+	Deploy(user *storage.User, appName string, tarBall io.ReadSeeker, description string, rhl int) (io.ReadCloser, error)
 }
 
 type K8sOperations interface {
@@ -28,7 +28,7 @@ type DeployOperations struct {
 	k8s         K8sOperations
 }
 
-func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall io.ReadSeeker, description string) (io.ReadCloser, error) {
+func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall io.ReadSeeker, description string, rhl int) (io.ReadCloser, error) {
 	a, err := ops.appOps.Meta(appName)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 			return
 		}
 		slugURL := fmt.Sprintf("%s/slug.tgz", buildDest)
-		if err := ops.createDeploy(a, tYaml, description, slugURL); err != nil {
+		if err := ops.createDeploy(a, tYaml, description, slugURL, rhl); err != nil {
 			// TODO: Add Log Here
 			fmt.Println("ERROR CREATE DEPLOY:", err)
 			return
@@ -75,7 +75,7 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 			return
 		}
 		if !hasSrv {
-			fmt.Fprintf(w, "Exposing LoadBalancer service")
+			fmt.Fprintln(w, "Exposing LoadBalancer service")
 			if err := ops.k8s.CreateService(appName, appName); err != nil {
 				//TODO: Add Log Here
 				fmt.Println("ERROR CREATING SERVICE:", err)
@@ -85,8 +85,8 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 	return r, nil
 }
 
-func (ops *DeployOperations) createDeploy(a *app.App, tYaml *TeresaYaml, description, slugPath string) error {
-	deploySpec := newDeploySpec(a, tYaml, ops.fileStorage, description, slugPath, a.ProcessType)
+func (ops *DeployOperations) createDeploy(a *app.App, tYaml *TeresaYaml, description, slugPath string, rhl int) error {
+	deploySpec := newDeploySpec(a, tYaml, ops.fileStorage, description, slugPath, a.ProcessType, rhl)
 	return ops.k8s.CreateDeploy(deploySpec)
 }
 

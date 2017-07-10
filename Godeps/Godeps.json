@@ -690,6 +690,10 @@
 			"Rev": "04e1573abc896e70388bd387a69753c378d46466"
 		},
 		{
+			"ImportPath": "golang.org/x/sync/errgroup",
+			"Rev": "f52d1811a62927559de87708c8913c1650ce4f26"
+		},
+		{
 			"ImportPath": "golang.org/x/sys/unix",
 			"Rev": "62bee037599929a6e9146f29d10dd5208c43507d"
 		},

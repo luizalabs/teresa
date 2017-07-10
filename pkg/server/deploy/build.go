@@ -79,7 +79,7 @@ func newBuildSpec(a *app.App, deployId, tarBallLocation, buildDest string, fileS
 	)
 }
 
-func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, description, slugURL, processType string) *DeploySpec {
+func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, description, slugURL, processType string, rhl int) *DeploySpec {
 	ps := newPodSpec(
 		a.Name,
 		slugRunnerImage,
@@ -93,10 +93,11 @@ func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, descri
 		fileStorage,
 	)
 	ds := &DeploySpec{
-		Args:        []string{"start", processType},
-		Description: description,
-		SlugURL:     slugURL,
-		PodSpec:     *ps,
+		Args:                 []string{"start", processType},
+		Description:          description,
+		SlugURL:              slugURL,
+		PodSpec:              *ps,
+		RevisionHistoryLimit: rhl,
 	}
 
 	if tYaml != nil {

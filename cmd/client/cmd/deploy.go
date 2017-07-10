@@ -259,7 +259,7 @@ func streamServerMsgs(stream dpb.Deploy_MakeClient) error {
 			}
 			return err
 		}
-		fmt.Println(msg.Text)
+		fmt.Print(msg.Text)
 	}
 	return nil
 }

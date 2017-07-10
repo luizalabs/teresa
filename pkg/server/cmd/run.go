@@ -7,6 +7,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"github.com/luizalabs/teresa-api/pkg/server"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/deploy"
 	"github.com/luizalabs/teresa-api/pkg/server/k8s"
 	"github.com/luizalabs/teresa-api/pkg/server/secrets"
 	"github.com/luizalabs/teresa-api/pkg/server/storage"
@@ -68,13 +69,20 @@ func runServer(cmd *cobra.Command, args []string) {
 			log.Fatal("Error getting TLS cert ", err)
 		}
 	}
+
+	deployOpt, err := getDeployOpt()
+	if err != nil {
+		log.Fatal("Error getting deploy configuration:", err)
+	}
+
 	s, err := server.New(server.Options{
-		Port:    port,
-		Auth:    a,
-		DB:      db,
-		TLSCert: tlsCert,
-		Storage: st,
-		K8s:     k8s,
+		Port:      port,
+		Auth:      a,
+		DB:        db,
+		TLSCert:   tlsCert,
+		Storage:   st,
+		K8s:       k8s,
+		DeployOpt: deployOpt,
 	})
 	if err != nil {
 		log.Fatal("Error on create Server: ", err)
@@ -118,4 +126,12 @@ func getK8s() (k8s.Client, error) {
 		return nil, err
 	}
 	return k8s.New(conf)
+}
+
+func getDeployOpt() (*deploy.Options, error) {
+	conf := new(deploy.Options)
+	if err := envconfig.Process("teresadeploy", conf); err != nil {
+		return nil, err
+	}
+	return conf, nil
 }

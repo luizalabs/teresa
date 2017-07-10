@@ -3,7 +3,9 @@ package deploy
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
+	"time"
 
 	"google.golang.org/grpc"
 
@@ -11,8 +13,18 @@ import (
 	dpb "github.com/luizalabs/teresa-api/pkg/protobuf/deploy"
 )
 
+const (
+	keepAliveMessage = "\u200B" // Zero width space
+)
+
+type Options struct {
+	KeepAliveTimeout     time.Duration `split_words:"true" default:"30s"`
+	RevisionHistoryLimit int           `split_words:"true" default:"5"`
+}
+
 type Service struct {
-	ops Operations
+	ops     Operations
+	options *Options
 }
 
 func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
@@ -40,25 +52,50 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 	}
 
 	rs := bytes.NewReader(content.Bytes())
-	rc, err := s.ops.Deploy(u, appName, rs, description)
+	rc, err := s.ops.Deploy(u, appName, rs, description, s.options.RevisionHistoryLimit)
 	if err != nil {
 		return err
 	}
 	defer rc.Close()
 
-	scanner := bufio.NewScanner(rc)
-	for scanner.Scan() {
-		if err := stream.Send(&dpb.DeployResponse{Text: scanner.Text()}); err != nil {
+	deployMsgs := sendMsgsToAChannel(rc)
+	var msg string
+
+	for {
+		select {
+		case <-time.After(s.options.KeepAliveTimeout):
+			msg = keepAliveMessage
+		case m, ok := <-deployMsgs:
+			if !ok {
+				return nil
+			}
+			msg = m
+		}
+
+		if err := stream.Send(&dpb.DeployResponse{Text: msg}); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+func sendMsgsToAChannel(r io.Reader) <-chan string {
+	c := make(chan string)
+	go func() {
+		defer close(c)
+		scanner := bufio.NewScanner(r)
+		for scanner.Scan() {
+			c <- fmt.Sprintln(scanner.Text())
+		}
+	}()
+
+	return c
+}
+
 func (s *Service) RegisterService(grpcServer *grpc.Server) {
 	dpb.RegisterDeployServer(grpcServer, s)
 }
 
-func NewService(ops Operations) *Service {
-	return &Service{ops: ops}
+func NewService(ops Operations, options *Options) *Service {
+	return &Service{ops: ops, options: options}
 }

@@ -24,12 +24,13 @@ import (
 )
 
 type Options struct {
-	Port    string
-	TLSCert *tls.Certificate
-	Auth    auth.Auth
-	DB      *gorm.DB
-	Storage st.Storage
-	K8s     k8s.Client
+	Port      string
+	TLSCert   *tls.Certificate
+	Auth      auth.Auth
+	DB        *gorm.DB
+	Storage   st.Storage
+	K8s       k8s.Client
+	DeployOpt *deploy.Options
 }
 
 type Server struct {
@@ -126,7 +127,7 @@ func New(opt Options) (*Server, error) {
 	a.RegisterService(s)
 
 	dOps := deploy.NewDeployOperations(appOps, opt.K8s, opt.Storage)
-	d := deploy.NewService(dOps)
+	d := deploy.NewService(dOps, opt.DeployOpt)
 	d.RegisterService(s)
 
 	return &Server{listener: l, grpcServer: s}, nil

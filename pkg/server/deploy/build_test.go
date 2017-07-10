@@ -81,6 +81,7 @@ func TestNewDeploySpec(t *testing.T) {
 	expectedSlugURL := "http://teresa.io/slug.tgz"
 	expectedProcessType := "worker"
 	expectedName := "deploy-test"
+	expectedRevisionHistoryLimit := 5
 
 	ds := newDeploySpec(
 		&app.App{Name: expectedName},
@@ -89,6 +90,7 @@ func TestNewDeploySpec(t *testing.T) {
 		expectedDescription,
 		expectedSlugURL,
 		expectedProcessType,
+		expectedRevisionHistoryLimit,
 	)
 
 	if len(ds.Args) != 2 || ds.Args[1] != expectedProcessType {
@@ -105,5 +107,9 @@ func TestNewDeploySpec(t *testing.T) {
 
 	if ds.PodSpec.Name != expectedName {
 		t.Errorf("expected %s, got %s", expectedName, ds.PodSpec.Name)
+	}
+
+	if ds.RevisionHistoryLimit != expectedRevisionHistoryLimit {
+		t.Errorf("expected %d, got %d", expectedRevisionHistoryLimit, ds.RevisionHistoryLimit)
 	}
 }

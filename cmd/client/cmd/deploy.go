@@ -165,6 +165,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 	currentClusterName, err := getCurrentClusterName()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error on read config file:", err)
+		return
 	}
 
 	fmt.Printf("Deploying app %s to the cluster %s...\n", color.CyanString(`"%s"`, appName), color.YellowString(`"%s"`, currentClusterName))
@@ -212,7 +213,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 }
 
 func sendAppTarball(appName, appFolder string, stream dpb.Deploy_MakeClient) error {
-	fmt.Println("Generation tarball of:", appFolder)
+	fmt.Println("Generating tarball of:", appFolder)
 	tarPath, err := createTempArchiveToUpload(appName, appFolder)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error generating tarball:")

@@ -37,6 +37,6 @@ func TestGetTeresaYamlFromTarBallWithoutTheTersaYamlFile(t *testing.T) {
 		t.Fatal("error getting teresa yaml from tarball:", err)
 	}
 	if tYaml != nil {
-		t.Errorf("expected nil, got %s", tYaml)
+		t.Errorf("expected nil, got %v", tYaml)
 	}
 }

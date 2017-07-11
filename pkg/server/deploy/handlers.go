@@ -76,7 +76,6 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 			return err
 		}
 	}
-	return nil
 }
 
 func sendMsgsToAChannel(r io.Reader) <-chan string {

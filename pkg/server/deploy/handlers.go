@@ -58,7 +58,7 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 	}
 	defer rc.Close()
 
-	deployMsgs := sendMsgsToAChannel(rc)
+	deployMsgs := channelFromReader(rc)
 	var msg string
 
 	for {
@@ -78,7 +78,7 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 	}
 }
 
-func sendMsgsToAChannel(r io.Reader) <-chan string {
+func channelFromReader(r io.Reader) <-chan string {
 	c := make(chan string)
 	go func() {
 		defer close(c)

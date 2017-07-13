@@ -164,7 +164,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 
 	currentClusterName, err := getCurrentClusterName()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error on read config file:", err)
+		fmt.Fprintln(os.Stderr, "error reading config file:", err)
 		return
 	}
 
@@ -231,12 +231,12 @@ func sendAppTarball(appName, appFolder string, stream dpb.Deploy_MakeClient) err
 	r := bufio.NewReader(f)
 	for {
 		buf := make([]byte, 1024)
-		n, err := r.Read(buf)
-		if err != nil && err != io.EOF {
-			fmt.Fprintln(os.Stderr, "Error reading bytes of temp file:")
-			return err
-		}
-		if n == 0 {
+		_, err := r.Read(buf)
+		if err != nil {
+			if err != io.EOF {
+				fmt.Fprintln(os.Stderr, "Error reading bytes of temp file:")
+				return err
+			}
 			break
 		}
 

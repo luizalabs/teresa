@@ -58,12 +58,12 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 	go func() {
 		defer w.Close()
 		if err = ops.buildApp(tarBall, a, deployId, buildDest, w); err != nil {
-			log.WithError(err).Errorf("Building app")
+			log.WithError(err).Errorf("Building app %s", appName)
 			return
 		}
 		slugURL := fmt.Sprintf("%s/slug.tgz", buildDest)
 		if err := ops.createDeploy(a, tYaml, description, slugURL, rhl); err != nil {
-			log.WithError(err).Errorf("Creating deploy")
+			log.WithError(err).Errorf("Creating deploy app %s", appName)
 			return
 		}
 

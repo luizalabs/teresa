@@ -19,7 +19,7 @@ type Operations interface {
 
 type K8sOperations interface {
 	PodRun(podSpec *PodSpec) (io.ReadCloser, <-chan int, error)
-	CreateDeploy(deploySpec *DeploySpec) error
+	CreateOrUpdateDeploy(deploySpec *DeploySpec) error
 	HasService(namespace, name string) (bool, error)
 	CreateService(namespace, name string) error
 }
@@ -58,6 +58,7 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 	go func() {
 		defer w.Close()
 		if err = ops.buildApp(tarBall, a, deployId, buildDest, w); err != nil {
+			log.WithError(err).Errorf("Building app")
 			return
 		}
 		slugURL := fmt.Sprintf("%s/slug.tgz", buildDest)
@@ -73,7 +74,7 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 
 func (ops *DeployOperations) createDeploy(a *app.App, tYaml *TeresaYaml, description, slugPath string, rhl int) error {
 	deploySpec := newDeploySpec(a, tYaml, ops.fileStorage, description, slugPath, a.ProcessType, rhl)
-	return ops.k8s.CreateDeploy(deploySpec)
+	return ops.k8s.CreateOrUpdateDeploy(deploySpec)
 }
 
 func (ops *DeployOperations) exposeService(a *app.App, w io.Writer) {

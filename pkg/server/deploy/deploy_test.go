@@ -40,7 +40,7 @@ func (f *fakeK8sOperations) PodRun(podSpec *PodSpec) (io.ReadCloser, <-chan int,
 	return f.podRunReadCloser, f.podRunExitCodeChan, f.podRunErr
 }
 
-func (f *fakeK8sOperations) CreateDeploy(deploySpec *DeploySpec) error {
+func (f *fakeK8sOperations) CreateOrUpdateDeploy(deploySpec *DeploySpec) error {
 	f.lastDeploySpec = deploySpec
 	return f.createDeployReturn
 }

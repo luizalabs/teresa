@@ -87,7 +87,7 @@ func (ops *DeployOperations) exposeService(a *app.App, w io.Writer) {
 		return
 	}
 	if !hasSrv {
-		fmt.Fprintln(w, "Exposing LoadBalancer service")
+		fmt.Fprintln(w, "Exposing service")
 		if err := ops.k8s.CreateService(a.Name, a.Name); err != nil {
 			log.WithError(err).Errorf("Creating service")
 		}

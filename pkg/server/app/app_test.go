@@ -215,7 +215,7 @@ func TestAppTeamName(t *testing.T) {
 
 func TestAppMeta(t *testing.T) {
 	ops := NewOperations(team.NewFakeOperations(), &fakeK8sOperations{}, st.NewFake())
-	a, err := ops.Meta("teresa")
+	a, err := ops.Get("teresa")
 	if err != nil {
 		t.Errorf("got error on get app Meta:", err)
 	}

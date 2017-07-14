@@ -32,20 +32,13 @@ func configureAPI(api *operations.TeresaAPI) http.Handler {
 
 	api.Logger = log.Infof
 
-	api.MultipartformConsumer = runtime.DiscardConsumer
-
 	api.JSONConsumer = runtime.JSONConsumer()
 
 	api.JSONProducer = runtime.JSONProducer()
 
-	api.BinProducer = runtime.ByteStreamProducer()
-
 	// authentication
 	api.APIKeyAuth = handlers.TokenAuthHandler
 	api.TokenHeaderAuth = handlers.TokenAuthHandler
-
-	// create deployment
-	api.DeploymentsCreateDeploymentHandler = handlers.CreateDeploymentHandler
 
 	// list apps
 	api.AppsGetAppsHandler = handlers.GetAppsHandler

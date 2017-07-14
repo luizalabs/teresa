@@ -82,7 +82,7 @@ func (f *FakeOperations) TeamName(appName string) (string, error) {
 	return "luizalabs", nil
 }
 
-func (f *FakeOperations) Meta(appName string) (*App, error) {
+func (f *FakeOperations) Get(appName string) (*App, error) {
 	a := &App{
 		Name:        "teresa",
 		ProcessType: "web",

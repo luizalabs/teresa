@@ -31,7 +31,7 @@ type DeployOperations struct {
 }
 
 func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall io.ReadSeeker, description string, rhl int) (io.ReadCloser, error) {
-	a, err := ops.appOps.Meta(appName)
+	a, err := ops.appOps.Get(appName)
 	if err != nil {
 		return nil, err
 	}
@@ -83,13 +83,13 @@ func (ops *DeployOperations) exposeService(a *app.App, w io.Writer) {
 	}
 	hasSrv, err := ops.k8s.HasService(a.Name, a.Name)
 	if err != nil {
-		log.WithError(err).Errorf("Checking APP service")
+		log.WithError(err).Errorf("Checking %s service", a.Name)
 		return
 	}
 	if !hasSrv {
 		fmt.Fprintln(w, "Exposing service")
 		if err := ops.k8s.CreateService(a.Name, a.Name); err != nil {
-			log.WithError(err).Errorf("Creating service")
+			log.WithError(err).Errorf("Creating service of app %s", a.Name)
 		}
 	}
 }

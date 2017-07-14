@@ -20,7 +20,7 @@ type Operations interface {
 	Logs(user *storage.User, appName string, lines int64, follow bool) (io.ReadCloser, error)
 	Info(user *storage.User, appName string) (*Info, error)
 	TeamName(appName string) (string, error)
-	Meta(appName string) (*App, error)
+	Get(appName string) (*App, error)
 	HasPermission(user *storage.User, appName string) bool
 }
 
@@ -154,7 +154,7 @@ func (ops *AppOperations) Info(user *storage.User, appName string) (*Info, error
 		return nil, newAppErr(auth.ErrPermissionDenied, err)
 	}
 
-	appMeta, err := ops.Meta(appName)
+	appMeta, err := ops.Get(appName)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +201,7 @@ func (ops *AppOperations) TeamName(appName string) (string, error) {
 	return teamName, nil
 }
 
-func (ops *AppOperations) Meta(appName string) (*App, error) {
+func (ops *AppOperations) Get(appName string) (*App, error) {
 	an, err := ops.kops.NamespaceAnnotation(appName, TeresaAnnotation)
 	if err != nil {
 		if ops.kops.IsNotFound(err) {

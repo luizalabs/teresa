@@ -3,9 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/go-openapi/runtime"
@@ -13,7 +11,6 @@ import (
 	httptransport "github.com/go-openapi/runtime/client"
 	apiclient "github.com/luizalabs/teresa-api/client"
 	"github.com/luizalabs/teresa-api/client/apps"
-	"github.com/luizalabs/teresa-api/client/deployments"
 	"github.com/luizalabs/teresa-api/client/teams"
 	"github.com/luizalabs/teresa-api/models"
 	cli "github.com/luizalabs/teresa-api/pkg/client"
@@ -95,17 +92,6 @@ func (tc TeresaClient) GetApps() (appList []*models.App, err error) {
 		return nil, err
 	}
 	return r.Payload, nil
-}
-
-// CreateDeploy creates a new deploy
-func (tc TeresaClient) CreateDeploy(appName, deployDescription string, tarBall *os.File, writer io.Writer) error {
-	p := deployments.NewCreateDeploymentParams()
-	p.AppName = appName
-	p.AppTarball = *tarBall
-	p.Description = &deployDescription
-
-	_, err := tc.teresa.Deployments.CreateDeployment(p, tc.apiKeyAuthFunc, writer)
-	return err
 }
 
 // PartialUpdateApp partial updates app... for now, updates only envvars

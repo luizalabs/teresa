@@ -267,40 +267,6 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/GenericError"
-  /apps/{app_name}/deployments:
-    post:
-      summary: Create a new deploy
-      description: Create a deploy for an app
-      tags:
-        - deployments
-      operationId: createDeployment
-      security:
-        - api_key: []
-        - token_header: []
-      consumes:
-        - multipart/form-data
-      produces:
-        - application/octet-stream
-      parameters:
-        - $ref: "#/parameters/appName"
-        - name: description
-          in: formData
-          required: false
-          type: string
-        - name: appTarball
-          in: formData
-          required: true
-          type: file
-      responses:
-        200:
-          description: App
-          schema:
-            type: string
-            format: binary
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/Error"
   /users:
     get:
       summary: Get users

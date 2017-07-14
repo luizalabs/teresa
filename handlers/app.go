@@ -2,15 +2,11 @@ package handlers
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/luizalabs/teresa-api/helpers"
 	"github.com/luizalabs/teresa-api/k8s"
 	"github.com/luizalabs/teresa-api/models"
 	"github.com/luizalabs/teresa-api/restapi/operations/apps"
-	"io"
-	"k8s.io/kubernetes/pkg/api"
-	"net/http"
 )
 
 // CreateAppHandler handler for "-X POST /apps"
@@ -148,39 +144,4 @@ var UpdateAppAutoScaleHandler apps.UpdateAppAutoScaleHandlerFunc = func(params a
 	}
 	l.Debug(`app auto scale updated with success`)
 	return apps.NewUpdateAppAutoScaleOK().WithPayload(app)
-}
-
-var GetAppLogsHandler apps.GetAppLogsHandlerFunc = func(params apps.GetAppLogsParams, principal interface{}) middleware.Responder {
-	var r middleware.ResponderFunc = func(rw http.ResponseWriter, pr runtime.Producer) {
-		tk := k8s.IToToken(principal)
-		opts := &api.PodLogOptions{
-			Follow:    *params.Follow,
-			TailLines: params.Lines,
-		}
-		l := log.WithField("app", params.AppName).WithField("token", *tk.Email).WithField("requestId", helpers.NewShortUUID())
-		r, err := k8s.Client.Apps().GetLogs(params.AppName, tk, opts)
-		if err != nil {
-			var httpErr *GenericError
-			if k8s.IsInputError(err) {
-				l.WithError(err).Warn("error requesting logs")
-				httpErr = NewBadRequestError(err)
-			} else if k8s.IsUnauthorizedError(err) {
-				l.WithError(err).Warn("error requesting logs")
-				httpErr = NewUnauthorizedError(err)
-			} else if k8s.IsNotFoundError(err) {
-				l.WithError(err).Warn("error requesting logs")
-				httpErr = NewNotFoundError(err)
-			} else {
-				l.WithError(err).Warn("error requesting logs")
-				httpErr = NewInternalServerError(err)
-			}
-			rw.WriteHeader(int(*httpErr.Payload.Code))
-			rw.Write([]byte(*httpErr.Payload.Message))
-			return
-		}
-		defer r.Close()
-		w := newFlushResponseWriter(rw)
-		io.Copy(w, r)
-	}
-	return r
 }

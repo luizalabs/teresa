@@ -12,12 +12,8 @@ The Teresa PaaS API
     Consumes:
     - application/json
 
-    - multipart/form-data
-
 
     Produces:
-    - application/octet-stream
-
     - application/json
 
 

@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"crypto/tls"
-	"log"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/luizalabs/teresa-api/pkg/server"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
@@ -29,44 +29,44 @@ func init() {
 func runServer(cmd *cobra.Command, args []string) {
 	port, err := cmd.Flags().GetString("port")
 	if err != nil {
-		log.Fatal("Invalid port parameter: ", err)
+		log.WithError(err).Fatal("invalid port parameter")
 	}
 
 	notls, err := cmd.Flags().GetBool("notls")
 	if err != nil {
-		log.Fatal("Invalid notls parameter: ", err)
+		log.WithError(err).Fatal("invalid notls parameter")
 	}
 
 	db, err := getDB()
 	if err != nil {
-		log.Fatal("Error on connect to Database: ", err)
+		log.WithError(err).Fatal("failed to connect to database")
 	}
 
 	st, err := getStorage()
 	if err != nil {
-		log.Fatal("Error configuring storage: ", err)
+		log.WithError(err).Fatal("failed to configure storage")
 	}
 
 	k8s, err := getK8s()
 	if err != nil {
-		log.Fatal("Error configuring k8s client: ", err)
+		log.WithError(err).Fatal("failed to configure k8s client")
 	}
 
 	sec, err := getSecrets()
 	if err != nil {
-		log.Fatal("Error on get secrects information ", err)
+		log.WithError(err).Fatal("failed to get secrets data")
 	}
 
 	a, err := getAuth(sec)
 	if err != nil {
-		log.Fatal("Error on get auth information ", err)
+		log.WithError(err).Fatal("failed to get auth data")
 	}
 
 	var tlsCert *tls.Certificate
 	if !notls {
 		tlsCert, err = sec.TLSCertificate()
 		if err != nil {
-			log.Fatal("Error getting TLS cert ", err)
+			log.WithError(err).Fatal("failed to get TLS cert")
 		}
 	}
 
@@ -85,11 +85,11 @@ func runServer(cmd *cobra.Command, args []string) {
 		DeployOpt: deployOpt,
 	})
 	if err != nil {
-		log.Fatal("Error on create Server: ", err)
+		log.WithError(err).Fatal("failed to create server")
 	}
 
-	log.Println("Start TERESA server on port ", port)
-	log.Print(s.Run())
+	log.Info("starting teresa-server on port ", port)
+	log.Info(s.Run())
 }
 
 func getSecrets() (secrets.Secrets, error) {

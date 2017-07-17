@@ -395,6 +395,11 @@
 			"Rev": "66487b23f2880ba32e185121d2cd51a338ea069a"
 		},
 		{
+			"ImportPath": "github.com/imdario/mergo",
+			"Comment": "0.2.2-12-ge3000cb",
+			"Rev": "e3000cb3d28c72b837601cac94debd91032d19fe"
+		},
+		{
 			"ImportPath": "github.com/inconshreveable/mousetrap",
 			"Rev": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
 		},
@@ -1341,6 +1346,11 @@
 			"Rev": "e121606b0d09b2e1c467183ee46217fa85a6b672"
 		},
 		{
+			"ImportPath": "k8s.io/client-go/pkg/util/homedir",
+			"Comment": "v2.0.0",
+			"Rev": "e121606b0d09b2e1c467183ee46217fa85a6b672"
+		},
+		{
 			"ImportPath": "k8s.io/client-go/pkg/util/integer",
 			"Comment": "v2.0.0",
 			"Rev": "e121606b0d09b2e1c467183ee46217fa85a6b672"
@@ -1451,7 +1461,27 @@
 			"Rev": "e121606b0d09b2e1c467183ee46217fa85a6b672"
 		},
 		{
+			"ImportPath": "k8s.io/client-go/tools/auth",
+			"Comment": "v2.0.0",
+			"Rev": "e121606b0d09b2e1c467183ee46217fa85a6b672"
+		},
+		{
+			"ImportPath": "k8s.io/client-go/tools/clientcmd",
+			"Comment": "v2.0.0",
+			"Rev": "e121606b0d09b2e1c467183ee46217fa85a6b672"
+		},
+		{
 			"ImportPath": "k8s.io/client-go/tools/clientcmd/api",
+			"Comment": "v2.0.0",
+			"Rev": "e121606b0d09b2e1c467183ee46217fa85a6b672"
+		},
+		{
+			"ImportPath": "k8s.io/client-go/tools/clientcmd/api/latest",
+			"Comment": "v2.0.0",
+			"Rev": "e121606b0d09b2e1c467183ee46217fa85a6b672"
+		},
+		{
+			"ImportPath": "k8s.io/client-go/tools/clientcmd/api/v1",
 			"Comment": "v2.0.0",
 			"Rev": "e121606b0d09b2e1c467183ee46217fa85a6b672"
 		},

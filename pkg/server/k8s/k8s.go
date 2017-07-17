@@ -1,6 +1,8 @@
 package k8s
 
 import (
+	"time"
+
 	"github.com/luizalabs/teresa-api/pkg/server/app"
 	"github.com/luizalabs/teresa-api/pkg/server/deploy"
 	"k8s.io/client-go/pkg/api"
@@ -13,12 +15,9 @@ var validServiceTypes = map[api.ServiceType]bool{
 }
 
 type Config struct {
-	InCluster          bool `default:"true"`
-	Host               string
-	Username           string
-	Password           string
-	Insecure           bool   `default:"false"`
-	DefaultServiceType string `default:"LoadBalancer"`
+	ConfigFile         string        `split_words:"true"`
+	DefaultServiceType string        `split_words:"true" default:"LoadBalancer"`
+	Timeout            time.Duration `default:"30s"`
 }
 
 type Client interface {
@@ -38,7 +37,7 @@ func New(conf *Config) (Client, error) {
 	if err := validateConfig(conf); err != nil {
 		return nil, err
 	}
-	if conf.InCluster {
+	if conf.ConfigFile == "" {
 		return newInClusterK8sClient(conf)
 	}
 	return newOutOfClusterK8sClient(conf)

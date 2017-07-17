@@ -6,6 +6,8 @@ service App {
     rpc Create(CreateRequest) returns (Empty);
     rpc Logs(LogsRequest) returns (stream LogsResponse);
     rpc Info(InfoRequest) returns (InfoResponse);
+    rpc SetEnv(SetEnvRequest) returns (Empty);
+    rpc UnsetEnv(UnsetEnvRequest) returns (Empty);
 }
 
 message CreateRequest {
@@ -88,6 +90,21 @@ message InfoResponse {
         repeated LimitRangeQuantity default_request = 2;
     }
     Limits limits = 6;
+}
+
+message SetEnvRequest {
+    string name = 1;
+
+    message EnvVar {
+        string key = 1;
+        string value = 2;
+    }
+    repeated EnvVar env_vars = 2;
+}
+
+message UnsetEnvRequest {
+    string name = 1;
+    repeated string env_vars = 2;
 }
 
 message Empty {}

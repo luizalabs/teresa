@@ -196,3 +196,44 @@ func newInfoResponse(info *Info) *appb.InfoResponse {
 		Limits:    lim,
 	}
 }
+
+func newEnvVars(req *appb.SetEnvRequest) []*EnvVar {
+	tmp := []*EnvVar{}
+	for _, ev := range req.EnvVars {
+		if ev == nil {
+			continue
+		}
+		tmp = append(tmp, &EnvVar{Key: ev.Key, Value: ev.Value})
+	}
+	return tmp
+}
+
+func setEnvVars(app *App, evs []*EnvVar) {
+	for _, ev := range evs {
+		found := false
+		for _, tmp := range app.EnvVars {
+			if tmp.Key == ev.Key {
+				tmp.Value = ev.Value
+				found = true
+				break
+			}
+		}
+		if !found {
+			app.EnvVars = append(app.EnvVars, &EnvVar{
+				Key:   ev.Key,
+				Value: ev.Value,
+			})
+		}
+	}
+}
+
+func unsetEnvVars(app *App, evs []string) {
+	for _, ev := range evs {
+		for i, tmp := range app.EnvVars {
+			if tmp.Key == ev {
+				app.EnvVars = append(app.EnvVars[:i], app.EnvVars[i+1:]...)
+				break
+			}
+		}
+	}
+}

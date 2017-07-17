@@ -153,3 +153,67 @@ func TestNewInfoResponse(t *testing.T) {
 		t.Errorf("expected %v, got %v", info, resp)
 	}
 }
+
+func TestSetEnvVars(t *testing.T) {
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	var testCases = []struct {
+		evs  []*EnvVar
+		want []*EnvVar
+	}{
+		{
+			[]*EnvVar{
+				{Key: "key2", Value: "value2"},
+			},
+			[]*EnvVar{
+				{Key: "key1", Value: "value1"},
+				{Key: "key2", Value: "value2"},
+			},
+		},
+		{
+			[]*EnvVar{
+				{Key: "key1", Value: "new-value1"},
+				{Key: "key2", Value: "value2"},
+			},
+			[]*EnvVar{
+				{Key: "key1", Value: "new-value1"},
+				{Key: "key2", Value: "value2"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		app.EnvVars = []*EnvVar{{Key: "key1", Value: "value1"}}
+		setEnvVars(app, tc.evs)
+		if !reflect.DeepEqual(app.EnvVars, tc.want) {
+			t.Errorf("expected %v, got %v", tc.want, app.EnvVars)
+		}
+	}
+}
+
+func TestUnsetEnvVars(t *testing.T) {
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	var testCases = []struct {
+		evs  []string
+		want []*EnvVar
+	}{
+		{
+			[]string{"key2"},
+			[]*EnvVar{{Key: "key1", Value: "value1"}},
+		},
+		{
+			[]string{"key1", "key2"},
+			[]*EnvVar{},
+		},
+	}
+
+	for _, tc := range testCases {
+		app.EnvVars = []*EnvVar{
+			{Key: "key1", Value: "value1"},
+			{Key: "key2", Value: "value2"},
+		}
+		unsetEnvVars(app, tc.evs)
+		if !reflect.DeepEqual(app.EnvVars, tc.want) {
+			t.Errorf("expected %v, got %v", tc.want, app.EnvVars)
+		}
+	}
+}

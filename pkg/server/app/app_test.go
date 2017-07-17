@@ -13,6 +13,7 @@ import (
 
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/slug"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/team"
 )
@@ -102,6 +103,18 @@ func (*fakeK8sOperations) IsNotFound(err error) bool {
 	return true
 }
 
+func (*fakeK8sOperations) SetNamespaceAnnotations(namespace string, annotations map[string]string) error {
+	return nil
+}
+
+func (*fakeK8sOperations) DeleteDeployEnvVars(namespace, name string, evNames []string) error {
+	return nil
+}
+
+func (*fakeK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error {
+	return nil
+}
+
 func (e *errK8sOperations) CreateNamespace(app *App, user string) error {
 	return e.NamespaceErr
 }
@@ -152,6 +165,18 @@ func (e *errK8sOperations) Limits(namespace, name string) (*Limits, error) {
 
 func (*errK8sOperations) IsNotFound(err error) bool {
 	return true
+}
+
+func (e *errK8sOperations) SetNamespaceAnnotations(namespace string, annotations map[string]string) error {
+	return e.Err
+}
+
+func (e *errK8sOperations) DeleteDeployEnvVars(namespace, name string, evNames []string) error {
+	return e.Err
+}
+
+func (e *errK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error {
+	return e.Err
 }
 
 func TestAppOperationsCreate(t *testing.T) {
@@ -423,5 +448,114 @@ func TestAppOperationsInfoErrNotFound(t *testing.T) {
 
 	if _, err := ops.Info(user, "teresa"); grpcErr(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", grpcErr(err))
+	}
+}
+
+func TestAppOperationsSetEnv(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Name] = &storage.Team{
+		Name:  app.Team,
+		Users: []storage.User{*user},
+	}
+	evs := []*EnvVar{
+		{Key: "key1", Value: "value1"},
+		{Key: "key2", Value: "value2"},
+	}
+
+	if err := ops.SetEnv(user, app.Name, evs); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func TestAppOperationsSetEnvErrPermissionDenied(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+
+	if err := ops.SetEnv(user, "teresa", nil); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestAppOperationsSetEnvErrNotFound(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+
+	if err := ops.SetEnv(user, "teresa", nil); grpcErr(err) != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestAppOperationsUnsetEnv(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Name] = &storage.Team{
+		Name:  app.Team,
+		Users: []storage.User{*user},
+	}
+	evs := []string{"key1", "key2"}
+
+	if err := ops.UnsetEnv(user, app.Name, evs); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func TestAppOperationsUnsetEnvErrPermissionDenied(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+
+	if err := ops.UnsetEnv(user, "teresa", nil); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestAppOperationsUnsetEnvErrNotFound(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+
+	if err := ops.UnsetEnv(user, "teresa", nil); grpcErr(err) != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestAppOperationsSetEnvProtectedVar(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Name] = &storage.Team{
+		Name:  app.Team,
+		Users: []storage.User{*user},
+	}
+	evs := make([]*EnvVar, len(slug.ProtectedEnvVars))
+	for i, _ := range evs {
+		evs[i] = &EnvVar{Key: slug.ProtectedEnvVars[i], Value: "test"}
+	}
+
+	if err := ops.SetEnv(user, app.Name, evs); err == nil {
+		t.Errorf("expected error, got nil")
+	}
+}
+
+func TestAppOperationsUnSetEnvProtectedVar(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Name] = &storage.Team{
+		Name:  app.Team,
+		Users: []storage.User{*user},
+	}
+
+	if err := ops.UnsetEnv(user, app.Name, slug.ProtectedEnvVars[:]); err == nil {
+		t.Errorf("expected error, got nil")
 	}
 }

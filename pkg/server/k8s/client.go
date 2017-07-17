@@ -17,6 +17,7 @@ import (
 	asv1 "k8s.io/client-go/pkg/apis/autoscaling/v1"
 	"k8s.io/client-go/pkg/util/wait"
 	restclient "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
@@ -496,6 +497,7 @@ func newInClusterK8sClient(conf *Config) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	k8sConf.Timeout = conf.Timeout
 	kc, err := kubernetes.NewForConfig(k8sConf)
 	if err != nil {
 		return nil, err
@@ -506,12 +508,11 @@ func newInClusterK8sClient(conf *Config) (Client, error) {
 }
 
 func newOutOfClusterK8sClient(conf *Config) (Client, error) {
-	k8sConf := &restclient.Config{
-		Host:     conf.Host,
-		Username: conf.Username,
-		Password: conf.Password,
-		Insecure: conf.Insecure,
+	k8sConf, err := clientcmd.BuildConfigFromFlags("", conf.ConfigFile)
+	if err != nil {
+		return nil, err
 	}
+	k8sConf.Timeout = conf.Timeout
 	kc, err := kubernetes.NewForConfig(k8sConf)
 	if err != nil {
 		return nil, err

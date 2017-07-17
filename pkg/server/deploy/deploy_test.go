@@ -184,7 +184,10 @@ func TestExposeService(t *testing.T) {
 			st.NewFake(),
 		)
 		deployOperations := ops.(*DeployOperations)
-		deployOperations.exposeService(&app.App{ProcessType: tc.appProcessType}, new(bytes.Buffer))
+		err := deployOperations.exposeService(&app.App{ProcessType: tc.appProcessType}, new(bytes.Buffer))
+		if err != tc.hasSrvErr {
+			t.Error("error exposing service:", err)
+		}
 
 		if fakeK8s.createServiceWasCalled != tc.expectedCreateServiceWasCalled {
 			t.Errorf(

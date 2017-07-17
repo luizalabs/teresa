@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"time"
 
@@ -16,6 +17,10 @@ import (
 	asv1 "k8s.io/client-go/pkg/apis/autoscaling/v1"
 	"k8s.io/client-go/pkg/util/wait"
 	restclient "k8s.io/client-go/rest"
+)
+
+const (
+	patchDeployEnvVarsTmpl = `{"spec":{"template":{"spec":{"containers":[{"name": "%s", "env":%s}]}}}}`
 )
 
 type k8sClient struct {
@@ -429,6 +434,61 @@ func (k *k8sClient) currentPodReplicasFromDeploy(namespace, appName string) int3
 		return 1
 	}
 	return d.Status.Replicas
+}
+
+func (k *k8sClient) SetNamespaceAnnotations(namespace string, annotations map[string]string) error {
+	ns, err := k.getNamespace(namespace)
+	if err != nil {
+		return err
+	}
+
+	for key, value := range annotations {
+		ns.Annotations[key] = value
+	}
+	_, err = k.kc.CoreV1().Namespaces().Update(ns)
+	return err
+}
+
+func (k *k8sClient) patchDeployEnvVars(namespace, name string, v interface{}) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return errors.Wrap(err, "failed to json encode env vars")
+	}
+	data := fmt.Sprintf(patchDeployEnvVarsTmpl, name, string(b))
+
+	_, err = k.kc.ExtensionsV1beta1().Deployments(namespace).Patch(
+		name,
+		api.StrategicMergePatchType,
+		[]byte(data),
+	)
+
+	return errors.Wrap(err, "patch deploy failed")
+}
+
+func (k *k8sClient) DeleteDeployEnvVars(namespace, name string, evNames []string) error {
+	type EnvVar struct {
+		Name  string `json:"name"`
+		Patch string `json:"$patch"`
+	}
+	env := make([]*EnvVar, len(evNames))
+	for i, _ := range evNames {
+		env[i] = &EnvVar{Name: evNames[i], Patch: "delete"}
+	}
+
+	return k.patchDeployEnvVars(namespace, name, env)
+}
+
+func (k *k8sClient) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*app.EnvVar) error {
+	type EnvVar struct {
+		Name  string `json:"name"`
+		Value string `json:"value"`
+	}
+	env := make([]*EnvVar, len(evs))
+	for i, _ := range evs {
+		env[i] = &EnvVar{Name: evs[i].Key, Value: evs[i].Value}
+	}
+
+	return k.patchDeployEnvVars(namespace, name, env)
 }
 
 func newInClusterK8sClient(conf *Config) (Client, error) {

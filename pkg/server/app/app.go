@@ -11,6 +11,7 @@ import (
 
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/slug"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/team"
 )
@@ -22,6 +23,8 @@ type Operations interface {
 	TeamName(appName string) (string, error)
 	Get(appName string) (*App, error)
 	HasPermission(user *storage.User, appName string) bool
+	SetEnv(user *storage.User, appName string, evs []*EnvVar) error
+	UnsetEnv(user *storage.User, appName string, evs []string) error
 }
 
 type K8sOperations interface {
@@ -38,6 +41,9 @@ type K8sOperations interface {
 	AutoScale(namespace string) (*AutoScale, error)
 	Limits(namespace, name string) (*Limits, error)
 	IsNotFound(err error) bool
+	SetNamespaceAnnotations(namespace string, annotations map[string]string) error
+	DeleteDeployEnvVars(namespace, name string, evNames []string) error
+	CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error
 }
 
 type AppOperations struct {
@@ -50,6 +56,7 @@ const (
 	limitsName       = "limits"
 	TeresaAnnotation = "teresa.io/app"
 	TeresaTeamLabel  = "teresa.io/team"
+	TeresaLastUser   = "teresa.io/last-user"
 )
 
 func (ops *AppOperations) hasPerm(user *storage.User, team string) bool {
@@ -216,6 +223,94 @@ func (ops *AppOperations) Get(appName string) (*App, error) {
 	}
 
 	return a, nil
+}
+
+func (ops *AppOperations) checkPermAndGet(user *storage.User, appName string) (*App, error) {
+	team, err := ops.TeamName(appName)
+	if err != nil {
+		return nil, err
+	}
+
+	if !ops.hasPerm(user, team) {
+		return nil, auth.ErrPermissionDenied
+	}
+
+	return ops.Get(appName)
+}
+
+func (ops *AppOperations) saveApp(app *App, lastUser string) error {
+	b, err := json.Marshal(app)
+	if err != nil {
+		return err
+	}
+
+	anMap := map[string]string{
+		TeresaAnnotation: string(b),
+		TeresaLastUser:   lastUser,
+	}
+
+	return ops.kops.SetNamespaceAnnotations(app.Name, anMap)
+}
+
+func (ops *AppOperations) SetEnv(user *storage.User, appName string, evs []*EnvVar) error {
+	evNames := make([]string, len(evs))
+	for i, _ := range evs {
+		evNames[i] = evs[i].Key
+	}
+	if err := checkForProtectedEnvVars(evNames); err != nil {
+		return err
+	}
+
+	app, err := ops.checkPermAndGet(user, appName)
+	if err != nil {
+		return err
+	}
+
+	setEnvVars(app, evs)
+
+	if err := ops.saveApp(app, user.Name); err != nil {
+		return err
+	}
+
+	err = ops.kops.CreateOrUpdateDeployEnvVars(appName, appName, evs)
+	if ops.kops.IsNotFound(err) {
+		return nil
+	}
+	return err
+}
+
+func (ops *AppOperations) UnsetEnv(user *storage.User, appName string, evNames []string) error {
+	if err := checkForProtectedEnvVars(evNames); err != nil {
+		return err
+	}
+
+	app, err := ops.checkPermAndGet(user, appName)
+	if err != nil {
+		return err
+	}
+
+	unsetEnvVars(app, evNames)
+
+	if err := ops.saveApp(app, user.Name); err != nil {
+		return err
+	}
+
+	err = ops.kops.DeleteDeployEnvVars(appName, appName, evNames)
+	if ops.kops.IsNotFound(err) {
+		return nil
+	}
+	return err
+}
+
+func checkForProtectedEnvVars(evsNames []string) error {
+	for _, name := range slug.ProtectedEnvVars {
+		for _, item := range evsNames {
+			if name == item {
+				return fmt.Errorf("Can't change protected env var %s", name)
+			}
+		}
+	}
+	return nil
 }
 
 func NewOperations(tops team.Operations, kops K8sOperations, st st.Storage) Operations {

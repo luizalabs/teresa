@@ -8,8 +8,8 @@ import (
 
 func getDB() (*gorm.DB, error) {
 	dbConf := new(database.Config)
-	if err := envconfig.Process("teresadb", dbConf); err != nil {
+	if err := envconfig.Process("teresa_db", dbConf); err != nil {
 		return nil, err
 	}
-	return database.New(*dbConf)
+	return database.New(dbConf)
 }

@@ -61,7 +61,7 @@ func (f *FileSystemSecrets) TLSCertificate() (*tls.Certificate, error) {
 	return f.tlsCert, nil
 }
 
-func NewFileSystemSecrets(conf FileSystemSecretsConfig) (Secrets, error) {
+func NewFileSystemSecrets(conf *FileSystemSecretsConfig) (Secrets, error) {
 	s := &FileSystemSecrets{
 		privateKeyPath: conf.PrivateKey,
 		publicKeypath:  conf.PublicKey,

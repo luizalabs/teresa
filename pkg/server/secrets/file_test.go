@@ -6,7 +6,7 @@ import (
 )
 
 func TestFileSystemSecrets(t *testing.T) {
-	f, err := NewFileSystemSecrets(FileSystemSecretsConfig{
+	f, err := NewFileSystemSecrets(&FileSystemSecretsConfig{
 		PrivateKey: filepath.Join("testdata", "fake.rsa"),
 		PublicKey:  filepath.Join("testdata", "fake.rsa.pub"),
 		TLSCert:    filepath.Join("testdata", "tls.crt"),

@@ -9,7 +9,6 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/luizalabs/teresa-api/cmd/client/connection"
-	"github.com/luizalabs/teresa-api/models"
 	"github.com/luizalabs/teresa-api/pkg/client"
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
 	"github.com/olekukonko/tablewriter"
@@ -289,62 +288,64 @@ WARNING:
   You can also provide more than one env var at a time:
 
   $ teresa app env-set FOO=bar BAR=foo --app myapp`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		appName, _ := cmd.Flags().GetString("app")
-		if appName == "" {
-			return newUsageError("You should provide the name of the app in order to continue")
+	Run: appEnvSet,
+}
+
+func appEnvSet(cmd *cobra.Command, args []string) {
+	appName, err := cmd.Flags().GetString("app")
+	if err != nil || appName == "" {
+		fmt.Fprintln(os.Stderr, "Invalid app parameter: ", err)
+		return
+	}
+
+	if len(args) == 0 {
+		cmd.Usage()
+		return
+	}
+
+	evs := make([]*appb.SetEnvRequest_EnvVar, len(args))
+	for i, item := range args {
+		tmp := strings.SplitN(item, "=", 2)
+		if len(tmp) != 2 {
+			fmt.Fprintln(os.Stderr, "Env vars must be in the format FOO=bar")
+			return
 		}
-		if len(args) == 0 {
-			return newUsageError("You should provide env vars following the examples...")
+		evs[i] = &appb.SetEnvRequest_EnvVar{Key: tmp[0], Value: tmp[1]}
+	}
+
+	fmt.Printf("Setting env vars and %s %s...\n", color.YellowString("restarting"), color.CyanString(`"%s"`, appName))
+	for _, ev := range evs {
+		fmt.Printf("  %s: %s\n", ev.Key, ev.Value)
+	}
+
+	noinput, err := cmd.Flags().GetBool("no-input")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Invalid no-input parameter: ", err)
+		return
+	}
+	if !noinput {
+		fmt.Print("Are you sure? (yes/NO)? ")
+		s, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+		s = strings.ToLower(strings.TrimRight(s, "\r\n"))
+		if s != "yes" {
+			return
 		}
-		// parsing env vars from args...
-		evars := make([]*models.PatchAppEnvVar, len(args))
-		for i, s := range args {
-			x := strings.SplitN(s, "=", 2)
-			if len(x) != 2 {
-				return newUsageError("Env vars must be in the format FOO=bar")
-			}
-			evars[i] = &models.PatchAppEnvVar{
-				Key:   &x[0],
-				Value: x[1],
-			}
-		}
-		// creating body for request
-		action := "add"
-		path := "/envvars"
-		op := &models.PatchAppRequest{
-			Op:    &action,
-			Path:  &path,
-			Value: evars,
-		}
-		fmt.Printf("Setting env vars and %s %s...\n", color.YellowString("restarting"), color.CyanString(`"%s"`, appName))
-		for _, e := range evars {
-			fmt.Printf("  %s: %s\n", *e.Key, e.Value)
-		}
-		noinput, _ := cmd.Flags().GetBool("no-input")
-		if noinput == false {
-			fmt.Print("Are you sure? (yes/NO)? ")
-			// Waiting for the user answer...
-			s, _ := bufio.NewReader(os.Stdin).ReadString('\n')
-			s = strings.ToLower(strings.TrimRight(s, "\r\n"))
-			if s != "yes" {
-				return nil
-			}
-		}
-		// Updating env vars
-		tc := NewTeresa()
-		_, err := tc.PartialUpdateApp(appName, []*models.PatchAppRequest{op})
-		if err != nil {
-			if isNotFound(err) {
-				return newCmdError("App not found")
-			} else if isBadRequest(err) {
-				return newCmdError("Manualy change system env vars are not allowed")
-			}
-			return err
-		}
-		fmt.Println("Env vars updated with success")
-		return nil
-	},
+	}
+
+	conn, err := connection.New(cfgFile, &connOpts)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
+		return
+	}
+	defer conn.Close()
+
+	cli := appb.NewAppClient(conn)
+	req := &appb.SetEnvRequest{Name: appName, EnvVars: evs}
+	if _, err := cli.SetEnv(context.Background(), req); err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+	fmt.Println("Env vars updated with success")
 }
 
 var appEnvUnSetCmd = &cobra.Command{
@@ -366,59 +367,54 @@ To unset an env var called "FOO":
 You can also provide more than one env var at a time:
 
   $ teresa app env-unset FOO BAR --app myapp`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		appName, _ := cmd.Flags().GetString("app")
-		if appName == "" {
-			return newUsageError("You should provide the name of the app in order to continue")
+	Run: appEnvUnset,
+}
+
+func appEnvUnset(cmd *cobra.Command, args []string) {
+	appName, err := cmd.Flags().GetString("app")
+	if err != nil || appName == "" {
+		fmt.Fprintln(os.Stderr, "Invalid app parameter: ", err)
+		return
+	}
+
+	if len(args) == 0 {
+		cmd.Usage()
+		return
+	}
+
+	fmt.Printf("Unsetting env vars and %s %s...\n", color.YellowString("restarting"), color.CyanString(`"%s"`, appName))
+	for _, ev := range args {
+		fmt.Printf("  %s\n", ev)
+	}
+
+	noinput, err := cmd.Flags().GetBool("no-input")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Invalid no-input parameter: ", err)
+		return
+	}
+	if !noinput {
+		fmt.Print("Are you sure? (yes/NO)? ")
+		s, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+		s = strings.ToLower(strings.TrimRight(s, "\r\n"))
+		if s != "yes" {
+			return
 		}
-		if len(args) == 0 {
-			return newUsageError("You should provide env vars following the examples...")
-		}
-		// parsing env vars from args...
-		evars := make([]*models.PatchAppEnvVar, len(args))
-		for i, k := range args {
-			key := k
-			e := models.PatchAppEnvVar{
-				Key: &key,
-			}
-			evars[i] = &e
-		}
-		// creating body for request
-		action := "remove"
-		path := "/envvars"
-		op := &models.PatchAppRequest{
-			Op:    &action,
-			Path:  &path,
-			Value: evars,
-		}
-		fmt.Printf("Unsetting env vars and %s %s...\n", color.YellowString("restarting"), color.CyanString(`"%s"`, appName))
-		for _, e := range evars {
-			fmt.Printf("  %s\n", *e.Key)
-		}
-		noinput, _ := cmd.Flags().GetBool("no-input")
-		if noinput == false {
-			fmt.Print("Are you sure? (yes/NO)? ")
-			// Waiting for the user answer...
-			s, _ := bufio.NewReader(os.Stdin).ReadString('\n')
-			s = strings.ToLower(strings.TrimRight(s, "\r\n"))
-			if s != "yes" {
-				return nil
-			}
-		}
-		// Updating env vars
-		tc := NewTeresa()
-		_, err := tc.PartialUpdateApp(appName, []*models.PatchAppRequest{op})
-		if err != nil {
-			if isNotFound(err) {
-				return newCmdError("App not found")
-			} else if isBadRequest(err) {
-				return newCmdError("Manualy change system env vars are not allowed")
-			}
-			return err
-		}
-		fmt.Println("Env vars updated with success")
-		return nil
-	},
+	}
+
+	conn, err := connection.New(cfgFile, &connOpts)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
+		return
+	}
+	defer conn.Close()
+
+	cli := appb.NewAppClient(conn)
+	req := &appb.UnsetEnvRequest{Name: appName, EnvVars: args}
+	if _, err := cli.UnsetEnv(context.Background(), req); err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+	fmt.Println("Env vars updated with success")
 }
 
 var appLogsCmd = &cobra.Command{

@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/luizalabs/teresa-api/pkg/client"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
 	"github.com/luizalabs/teresa-api/pkg/server/user"
@@ -17,15 +18,26 @@ var createSuperUserCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(createSuperUserCmd)
-	createSuperUserCmd.Flags().String("name", "Admin", "super user name")
+	createSuperUserCmd.Flags().String("name", "admin", "super user name")
 	createSuperUserCmd.Flags().String("email", "", "super user email [required]")
 	createSuperUserCmd.Flags().String("password", "", "super user password [required]")
 }
 
 func createSuperUser(cmd *cobra.Command, args []string) {
-	name, _ := cmd.Flags().GetString("name")
-	email, _ := cmd.Flags().GetString("email")
-	pass, _ := cmd.Flags().GetString("password")
+	name, err := cmd.Flags().GetString("name")
+	if err != nil {
+		log.WithError(err).Fatal("invalid name parameter")
+	}
+
+	email, err := cmd.Flags().GetString("email")
+	if err != nil {
+		log.WithError(err).Fatal("invalid email parameter")
+	}
+
+	pass, err := cmd.Flags().GetString("password")
+	if err != nil {
+		log.WithError(err).Fatal("invalid password parameter")
+	}
 
 	if pass == "" {
 		client.PrintErrorAndExit("Password required")
@@ -44,5 +56,5 @@ func createSuperUser(cmd *cobra.Command, args []string) {
 	if err := uOps.Create(name, email, pass, true); err != nil {
 		client.PrintErrorAndExit("Error on create super user: %s", client.GetErrorMsg(err))
 	}
-	fmt.Println("Super User created")
+	fmt.Println("Superuser created")
 }

@@ -55,6 +55,27 @@ func (s *Service) Info(ctx context.Context, req *appb.InfoRequest) (*appb.InfoRe
 	return newInfoResponse(info), nil
 }
 
+func (s *Service) SetEnv(ctx context.Context, req *appb.SetEnvRequest) (*appb.Empty, error) {
+	user := ctx.Value("user").(*storage.User)
+	evs := newEnvVars(req)
+
+	if err := s.ops.SetEnv(user, req.Name, evs); err != nil {
+		return nil, err
+	}
+
+	return &appb.Empty{}, nil
+}
+
+func (s *Service) UnsetEnv(ctx context.Context, req *appb.UnsetEnvRequest) (*appb.Empty, error) {
+	user := ctx.Value("user").(*storage.User)
+
+	if err := s.ops.UnsetEnv(user, req.Name, req.EnvVars); err != nil {
+		return nil, err
+	}
+
+	return &appb.Empty{}, nil
+}
+
 func (s *Service) RegisterService(grpcServer *grpc.Server) {
 	appb.RegisterAppServer(grpcServer, s)
 }

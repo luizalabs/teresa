@@ -200,3 +200,65 @@ func TestFakeHasPermission(t *testing.T) {
 		}
 	}
 }
+
+func TestFakeOperationsSetEnv(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Name: "gopher@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	if err := fake.SetEnv(user, app.Name, nil); err != nil {
+		t.Fatal("error setting app env: ", err)
+	}
+}
+
+func TestFakeOperationsSetEnvErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	if err := fake.SetEnv(user, app.Name, nil); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestFakeOperationsSetEnvErrNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Name: "gopher@luizalabs.com"}
+
+	if err := fake.SetEnv(user, "teresa", nil); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestFakeOperationsUnsetEnv(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Name: "gopher@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	if err := fake.UnsetEnv(user, app.Name, nil); err != nil {
+		t.Fatal("error unsetting app env: ", err)
+	}
+}
+
+func TestFakeOperationsUnsetEnvErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	if err := fake.UnsetEnv(user, app.Name, nil); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestFakeOperationsUnsetEnvErrNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Name: "gopher@luizalabs.com"}
+
+	if err := fake.UnsetEnv(user, "teresa", nil); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}

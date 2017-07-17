@@ -378,10 +378,8 @@ func (k *k8sClient) HasService(namespace, appName string) (bool, error) {
 
 func (k *k8sClient) CreateService(namespace, appName string) error {
 	srvSpec := serviceSpec(namespace, appName, k.defaultServiceType)
-	if _, err := k.kc.CoreV1().Services(namespace).Create(srvSpec); err != nil {
-		return errors.Wrap(err, "create service failed")
-	}
-	return nil
+	_, err := k.kc.CoreV1().Services(namespace).Create(srvSpec)
+	return errors.Wrap(err, "create service failed")
 }
 
 func (k *k8sClient) killPod(pod *k8sv1.Pod) error {

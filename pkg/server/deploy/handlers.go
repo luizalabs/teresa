@@ -11,7 +11,6 @@ import (
 
 	"github.com/luizalabs/teresa-api/models/storage"
 	dpb "github.com/luizalabs/teresa-api/pkg/protobuf/deploy"
-	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 )
 
 const (
@@ -55,7 +54,7 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 	rs := bytes.NewReader(content.Bytes())
 	rc, err := s.ops.Deploy(u, appName, rs, description, s.options.RevisionHistoryLimit)
 	if err != nil {
-		return teresa_errors.Get(err)
+		return err
 	}
 	defer rc.Close()
 

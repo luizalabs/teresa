@@ -10,10 +10,13 @@ import (
 	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 	"github.com/luizalabs/teresa-api/pkg/server/user"
 )
 
@@ -81,17 +84,17 @@ func TestAuthorize(t *testing.T) {
 	}
 }
 
-func TestUnaryInterceptorIgnoreLoginRoute(t *testing.T) {
+func TestLoginUnaryInterceptorIgnoreLoginRoute(t *testing.T) {
 	handler := func(context.Context, interface{}) (interface{}, error) {
 		return nil, nil
 	}
 	info := &grpc.UnaryServerInfo{FullMethod: "Login"}
-	if _, err := unaryInterceptor(nil, nil)(context.Background(), nil, info, handler); err != nil {
+	if _, err := loginUnaryInterceptor(nil, nil)(context.Background(), nil, info, handler); err != nil {
 		t.Error("error on process unaryInterceptor: ", err)
 	}
 }
 
-func TestUnaryInterceptor(t *testing.T) {
+func TestLoginUnaryInterceptor(t *testing.T) {
 	expectedUserEmail := "gopher@luizalabs.com"
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		u, ok := ctx.Value("user").(*storage.User)
@@ -118,22 +121,22 @@ func TestUnaryInterceptor(t *testing.T) {
 	md := metadata.Pairs("token", validToken)
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 
-	if ok, err := unaryInterceptor(authenticator, uOps)(ctx, nil, info, handler); err != nil || !ok.(bool) {
+	if ok, err := loginUnaryInterceptor(authenticator, uOps)(ctx, nil, info, handler); err != nil || !ok.(bool) {
 		t.Errorf("expected successful execution, got error %v", err)
 	}
 }
 
-func TestStreamInterceptorIgnoreLoginRoute(t *testing.T) {
+func TestLoginStreamInterceptorIgnoreLoginRoute(t *testing.T) {
 	handler := func(srv interface{}, stream grpc.ServerStream) error {
 		return nil
 	}
 	info := &grpc.StreamServerInfo{FullMethod: "Login"}
-	if err := streamInterceptor(nil, nil)(nil, nil, info, handler); err != nil {
+	if err := loginStreamInterceptor(nil, nil)(nil, nil, info, handler); err != nil {
 		t.Error("error on process StreamInterceptor: ", err)
 	}
 }
 
-func TestStreamInterceptor(t *testing.T) {
+func TestLoginStreamInterceptor(t *testing.T) {
 	expectedUserEmail := "gopher@luizalabs.com"
 	handler := func(srv interface{}, stream grpc.ServerStream) error {
 		ctx := stream.Context()
@@ -162,7 +165,65 @@ func TestStreamInterceptor(t *testing.T) {
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 
 	stream := &serverStreamWrapper{ctx: ctx}
-	if err := streamInterceptor(authenticator, uOps)(nil, stream, info, handler); err != nil {
+	if err := loginStreamInterceptor(authenticator, uOps)(nil, stream, info, handler); err != nil {
 		t.Errorf("expected successful execution, got error %v", err)
+	}
+}
+
+func TestLogStreamInterceptor(t *testing.T) {
+	rawErr := errors.New("error")
+	grpcErr := status.Errorf(codes.Unknown, "grpc error")
+
+	var testCases = []struct {
+		rawError      error
+		expectedError error
+	}{
+		{teresa_errors.New(grpcErr, rawErr), grpcErr},
+		{grpcErr, grpcErr},
+		{rawErr, rawErr},
+		{nil, nil},
+	}
+
+	for _, tc := range testCases {
+		handler := func(srv interface{}, stream grpc.ServerStream) error {
+			return tc.rawError
+		}
+		info := &grpc.StreamServerInfo{FullMethod: "Test"}
+
+		actualError := logStreamInterceptor(nil, &serverStreamWrapper{}, info, handler)
+		if actualError != tc.expectedError {
+			t.Errorf("expected %v, got %v", tc.expectedError, actualError)
+		}
+	}
+}
+
+func TestLogUnaryInterceptor(t *testing.T) {
+	rawErr := errors.New("error")
+	grpcErr := status.Errorf(codes.Unknown, "grpc error")
+
+	var testCases = []struct {
+		expectedResult string
+		rawError       error
+		expectedError  error
+	}{
+		{"result", rawErr, rawErr},
+		{"result", teresa_errors.New(grpcErr, rawErr), grpcErr},
+		{"result", nil, nil},
+		{"", grpcErr, grpcErr},
+	}
+
+	for _, tc := range testCases {
+		handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+			return tc.expectedResult, tc.rawError
+		}
+		info := &grpc.UnaryServerInfo{FullMethod: "Test"}
+
+		actualResult, actualError := logUnaryInterceptor(context.Background(), nil, info, handler)
+		if actualResult != tc.expectedResult {
+			t.Errorf("expected %s, got %s", tc.expectedResult, actualResult)
+		}
+		if actualError != tc.expectedError {
+			t.Errorf("expected %v, got %v", tc.expectedError, actualError)
+		}
 	}
 }

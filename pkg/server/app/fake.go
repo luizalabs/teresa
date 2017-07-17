@@ -93,6 +93,36 @@ func (f *FakeOperations) Get(appName string) (*App, error) {
 	return a, nil
 }
 
+func (f *FakeOperations) SetEnv(user *storage.User, appName string, envVars []*EnvVar) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if !hasPerm(user.Email) {
+		return auth.ErrPermissionDenied
+	}
+
+	if _, found := f.Storage[appName]; !found {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
+func (f *FakeOperations) UnsetEnv(user *storage.User, appName string, envVars []string) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if !hasPerm(user.Email) {
+		return auth.ErrPermissionDenied
+	}
+
+	if _, found := f.Storage[appName]; !found {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

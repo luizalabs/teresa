@@ -7,7 +7,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	db, err := New(Config{Database: ":memory:"})
+	db, err := New(&Config{Database: ":memory:"})
 	if err != nil {
 		t.Fatal("error trying to create a new database connection:", err)
 	}

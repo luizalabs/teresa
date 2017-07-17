@@ -2,23 +2,29 @@ package database
 
 import (
 	"fmt"
-	"log"
+	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/jinzhu/gorm"
 )
 
-// Duplicated for now
+const (
+	maxAttempts    = 20
+	defaultDialect = "sqlite3"
+	defaultUri     = "teresa.sqlite"
+)
+
 type Config struct {
 	Hostname string
-	Port     int
+	Port     int `default:"3306"`
 	Username string
 	Password string
 	Database string
 }
 
-func New(conf Config) (*gorm.DB, error) {
-	dialect := "sqlite3"
-	uri := "teresa.sqlite"
+func New(conf *Config) (*gorm.DB, error) {
+	dialect := defaultDialect
+	uri := defaultUri
 	if conf.Hostname != "" {
 		dialect = "mysql"
 		uri = fmt.Sprintf(
@@ -30,11 +36,33 @@ func New(conf Config) (*gorm.DB, error) {
 		uri = conf.Database
 	}
 
-	log.Printf("Using %s to connect to %s", dialect, conf.Database)
-	db, err := gorm.Open(dialect, uri)
+	var db *gorm.DB
+	var err error
+	for attempts := 1; attempts <= maxAttempts; attempts++ {
+		db, err = gorm.Open(dialect, uri)
+		if err == nil {
+			break
+		}
+		log.WithFields(log.Fields{
+			"dialect": dialect,
+			"db":      conf.Database,
+			"host":    conf.Hostname,
+			"user":    conf.Username,
+			"err":     err,
+		}).Warnf("failed to connect to database, retrying in %d seconds", attempts)
+		time.Sleep(time.Duration(attempts) * time.Second)
+	}
+
 	if err != nil {
 		return nil, err
 	}
+
+	log.WithFields(log.Fields{
+		"dialect": dialect,
+		"db":      conf.Database,
+		"host":    conf.Hostname,
+		"user":    conf.Username,
+	}).Info("connected to database")
 
 	db.LogMode(true)
 	return db, nil

@@ -94,10 +94,10 @@ func runServer(cmd *cobra.Command, args []string) {
 
 func getSecrets() (secrets.Secrets, error) {
 	conf := new(secrets.FileSystemSecretsConfig)
-	if err := envconfig.Process("teresasecrets", conf); err != nil {
+	if err := envconfig.Process("teresa_secrets", conf); err != nil {
 		return nil, err
 	}
-	return secrets.NewFileSystemSecrets(*conf)
+	return secrets.NewFileSystemSecrets(conf)
 }
 
 func getAuth(s secrets.Secrets) (auth.Auth, error) {
@@ -114,7 +114,7 @@ func getAuth(s secrets.Secrets) (auth.Auth, error) {
 
 func getStorage() (storage.Storage, error) {
 	conf := new(storage.Config)
-	if err := envconfig.Process("teresafilestorage", conf); err != nil {
+	if err := envconfig.Process("teresa_storage", conf); err != nil {
 		return nil, err
 	}
 	return storage.New(conf)
@@ -122,7 +122,7 @@ func getStorage() (storage.Storage, error) {
 
 func getK8s() (k8s.Client, error) {
 	conf := new(k8s.Config)
-	if err := envconfig.Process("teresak8s", conf); err != nil {
+	if err := envconfig.Process("teresa_k8s", conf); err != nil {
 		return nil, err
 	}
 	return k8s.New(conf)
@@ -130,7 +130,7 @@ func getK8s() (k8s.Client, error) {
 
 func getDeployOpt() (*deploy.Options, error) {
 	conf := new(deploy.Options)
-	if err := envconfig.Process("teresadeploy", conf); err != nil {
+	if err := envconfig.Process("teresa_deploy", conf); err != nil {
 		return nil, err
 	}
 	return conf, nil

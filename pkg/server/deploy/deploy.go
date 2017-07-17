@@ -10,6 +10,7 @@ import (
 	"github.com/luizalabs/teresa-api/pkg/server/app"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
+	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 	"github.com/pborman/uuid"
 )
 
@@ -48,7 +49,7 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 
 	tYaml, err := getTeresaYamlFromTarBall(tarBall) // get tYaml and parse before update deploy
 	if err != nil {
-		return nil, err
+		return nil, teresa_errors.New(ErrInvalidTeresaYamlFile, err)
 	}
 
 	deployId := genDeployId()
@@ -67,7 +68,9 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 			return
 		}
 
-		ops.exposeService(a, w)
+		if err := ops.exposeService(a, w); err != nil {
+			log.WithError(err).Errorf("Exposing service %s", appName)
+		}
 	}()
 	return r, nil
 }
@@ -77,21 +80,21 @@ func (ops *DeployOperations) createDeploy(a *app.App, tYaml *TeresaYaml, descrip
 	return ops.k8s.CreateOrUpdateDeploy(deploySpec)
 }
 
-func (ops *DeployOperations) exposeService(a *app.App, w io.Writer) {
+func (ops *DeployOperations) exposeService(a *app.App, w io.Writer) error {
 	if a.ProcessType != app.ProcessTypeWeb {
-		return
+		return nil
 	}
 	hasSrv, err := ops.k8s.HasService(a.Name, a.Name)
 	if err != nil {
-		log.WithError(err).Errorf("Checking %s service", a.Name)
-		return
+		return err
 	}
 	if !hasSrv {
 		fmt.Fprintln(w, "Exposing service")
 		if err := ops.k8s.CreateService(a.Name, a.Name); err != nil {
-			log.WithError(err).Errorf("Creating service of app %s", a.Name)
+			return err
 		}
 	}
+	return nil // already exposed
 }
 
 func (ops *DeployOperations) buildApp(tarBall io.ReadSeeker, a *app.App, deployId, buildDest string, stream io.Writer) error {

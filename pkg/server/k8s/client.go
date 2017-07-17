@@ -330,7 +330,7 @@ func (k *k8sClient) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, 
 	podYaml := podSpecToK8sPod(podSpec)
 	pod, err := k.kc.Pods(podSpec.Namespace).Create(podYaml)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.Wrap(err, "pod create failed")
 	}
 
 	exitCodeChan := make(chan int)
@@ -371,15 +371,17 @@ func (k *k8sClient) HasService(namespace, appName string) (bool, error) {
 		if k.IsNotFound(err) {
 			return false, nil
 		}
-		return false, err
+		return false, errors.Wrap(err, "get service failed")
 	}
 	return true, nil
 }
 
 func (k *k8sClient) CreateService(namespace, appName string) error {
 	srvSpec := serviceSpec(namespace, appName, k.defaultServiceType)
-	_, err := k.kc.CoreV1().Services(namespace).Create(srvSpec)
-	return err
+	if _, err := k.kc.CoreV1().Services(namespace).Create(srvSpec); err != nil {
+		return errors.Wrap(err, "create service failed")
+	}
+	return nil
 }
 
 func (k *k8sClient) killPod(pod *k8sv1.Pod) error {

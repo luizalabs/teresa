@@ -1,4 +1,3 @@
-SWAGGER_SPEC=swagger.yml
 TERESA_API_NAME=Teresa
 IMAGE_NAME=teresa
 IMAGE_VERSION=0.1.1
@@ -31,15 +30,6 @@ help:
 	@echo "stop"
 	@echo " stop the teresa API docker image"
 	@echo
-	@echo "validate"
-	@echo " validate swagger file $(SWAGGER_SPEC) aginst swagger specification 2.0"
-	@echo
-	@echo "gen-api-server"
-	@echo " generate the API server code as described by $(SWAGGER_SPEC)"
-	@echo
-	@echo "gen-api-client"
-	@echo " generate the API client code as described by $(SWAGGER_SPEC)"
-	@echo
 	@echo "To run the API container you'll have to set the following env variables:"
 	@echo
 	@echo "	TERESAK8S_HOST"
@@ -71,20 +61,8 @@ stop:
 shell:
 	docker run --rm --name $(IMAGE_NAME)-$(IMAGE_INSTANCE) -i -t $(IMAGE_NAME):$(IMAGE_VERSION) /bin/bash
 
-gen-api-server:
-	swagger generate server -A $(TERESA_API_NAME) -f $(SWAGGER_SPEC)
-
 run-api-server:
-	go run ./cmd/teresa-server/main.go --port 8080
-
-gen-api-client:
-	swagger generate client -A $(TERESA_API_NAME) -f $(SWAGGER_SPEC)
-
-validate:
-	swagger validate $(SWAGGER_SPEC)
-
-swagger-docs:
-	go run docs/webserver.go swagger.yml
+	go run ./cmd/server/main.go run --port 8080
 
 build-client:
 	@go build -o teresa cmd/client/main.go

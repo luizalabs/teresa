@@ -1,15 +1,12 @@
 package storage
 
 import (
-	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"  // mysql used in production
 	_ "github.com/jinzhu/gorm/dialects/sqlite" // used in dev or test
-	"github.com/kelseyhightower/envconfig"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -98,42 +95,4 @@ type DatabaseConfig struct {
 	Username string
 	Password string
 	Database string
-}
-
-func init() {
-	var err error
-	var conf DatabaseConfig
-	var dialect, uri string
-
-	// on production, we read the database configuration only from envvars
-	env := os.Getenv("TERESA_ENVIRONMENT")
-
-	err = envconfig.Process("teresadb", &conf)
-	if env == "PRODUCTION" && err != nil {
-		log.Fatalf("Failed to read configuration from environment: %s", err.Error())
-	}
-
-	// we got to read the conf from env
-	if env == "PRODUCTION" || (err == nil && conf.Hostname != "") {
-		dialect = "mysql"
-		uri = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", conf.Username, conf.Password, conf.Hostname, conf.Port, conf.Database)
-	} else {
-		dialect = "sqlite3"
-		uri = "teresa.sqlite"
-		if db := conf.Database; db != "" {
-			uri = db
-		}
-	}
-	log.Printf("Using %s to connect to %s", dialect, uri)
-
-	DB, err = gorm.Open(dialect, uri)
-	if err != nil {
-		log.Fatalf("failed to connect database: %s", err.Error())
-	}
-
-	// Print log.
-	DB.LogMode(true)
-
-	// only create, never change
-	DB.AutoMigrate(&Team{}, &User{}, &Application{}, &EnvVar{}, &AppAddress{}, &Deployment{})
 }

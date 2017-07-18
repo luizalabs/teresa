@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	context "golang.org/x/net/context"
 
@@ -74,16 +73,14 @@ func createTeam(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
-		return
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
 
 	cli := teampb.NewTeamClient(conn)
 	req := &teampb.CreateRequest{Name: name, Email: email, Url: url}
 	if _, err := cli.Create(context.Background(), req); err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 	fmt.Println("Team created with success")
 }
@@ -91,11 +88,11 @@ func createTeam(cmd *cobra.Command, args []string) {
 func teamAddUser(cmd *cobra.Command, args []string) {
 	team, err := cmd.Flags().GetString("team")
 	if err != nil {
-		fmt.Fprint(os.Stderr, "Invalid team parameter: ", err)
+		client.PrintErrorAndExit("Invalid team parameter: %v", err)
 	}
 	user, err := cmd.Flags().GetString("user")
 	if err != nil {
-		fmt.Fprint(os.Stderr, "Invalid user parameter: ", err)
+		client.PrintErrorAndExit("Invalid user parameter: %v", err)
 	}
 	if team == "" || user == "" {
 		cmd.Usage()
@@ -104,16 +101,14 @@ func teamAddUser(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
-		return
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
 
 	cli := teampb.NewTeamClient(conn)
 	req := &teampb.AddUserRequest{Name: team, User: user}
 	if _, err := cli.AddUser(context.Background(), req); err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 	fmt.Printf("User %s is now member of the team %s\n", color.CyanString(user), color.CyanString(team))
 }
@@ -123,16 +118,14 @@ func teamList(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
-		return
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
 
 	cli := teampb.NewTeamClient(conn)
 	resp, err := cli.List(context.Background(), &teampb.Empty{})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 
 	if len(resp.Teams) == 0 {

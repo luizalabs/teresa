@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/luizalabs/teresa-api/pkg/client"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
@@ -29,24 +28,21 @@ func createSuperUser(cmd *cobra.Command, args []string) {
 	pass, _ := cmd.Flags().GetString("password")
 
 	if pass == "" {
-		fmt.Fprintln(os.Stderr, "Password required")
+		client.PrintErrorAndExit("Password required")
 		return
 	}
 	if email == "" {
-		fmt.Fprintln(os.Stderr, "E-mail required")
-		return
+		client.PrintErrorAndExit("E-mail required")
 	}
 
 	db, err := getDB()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error on connect to Database: ", err)
-		return
+		client.PrintErrorAndExit("Error on connect to Database: %v", err)
 	}
 
 	uOps := user.NewDatabaseOperations(db, auth.NewFake())
 	if err := uOps.Create(name, email, pass, true); err != nil {
-		fmt.Fprintln(os.Stderr, "Error on create super user:", client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit("Error on create super user: %s", client.GetErrorMsg(err))
 	}
 	fmt.Println("Super User created")
 }

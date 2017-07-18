@@ -92,16 +92,14 @@ func useCluster(cmd *cobra.Command, args []string) {
 	name := args[0]
 	c, err := client.ReadConfigFile(cfgFile)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Cannot read the config file, are you create it with `teresa set-cluster` command?")
-		return
+		client.PrintErrorAndExit("Cannot read the config file, have you created it with `teresa set-cluster` command?")
 	}
 	if _, ok := c.Clusters[name]; !ok {
-		fmt.Fprintf(os.Stderr, "Cluster `%s` not configured yet\n", name)
-		return
+		client.PrintErrorAndExit("Cluster `%s` not configured yet", name)
 	}
 	c.CurrentCluster = name
 	if err = client.SaveConfigFile(cfgFile, c); err != nil {
-		fmt.Fprintln(os.Stderr, "Erro trying to save config file:", err)
+		client.PrintErrorAndExit("Erro trying to save config file: %v", err)
 	}
 }
 
@@ -112,8 +110,7 @@ func setCluster(cmd *cobra.Command, args []string) {
 		return
 	}
 	if serverFlag == "" {
-		fmt.Fprintln(os.Stderr, "Server URI not provided")
-		return
+		client.PrintErrorAndExit("Server URI not provided")
 	}
 	name := args[0]
 
@@ -131,7 +128,7 @@ func setCluster(cmd *cobra.Command, args []string) {
 	}
 
 	if err = client.SaveConfigFile(cfgFile, c); err != nil {
-		fmt.Fprintln(os.Stderr, "Erro trying to save config file:", err)
+		client.PrintErrorAndExit("Erro trying to save config file: %v", err)
 	}
 }
 
@@ -139,14 +136,13 @@ func viewConfigFile(cmd *cobra.Command, args []string) {
 	y, err := ioutil.ReadFile(cfgFile)
 	if err != nil {
 		if _, ok := err.(*os.PathError); ok {
-			fmt.Fprintf(
-				os.Stderr,
-				"Config file not found on `%s` use command `teresa config set-cluster` to create the config file\n",
-				cfgFile)
+			client.PrintErrorAndExit(
+				"Config file not found on `%s` use command `teresa config set-cluster` to create the config file",
+				cfgFile,
+			)
 		} else {
-			fmt.Fprintln(os.Stderr, "Error trying to read config file: ", err)
+			client.PrintErrorAndExit("Error trying to read config file: %v", err)
 		}
-		return
 	}
 	fmt.Println(string(y))
 }

@@ -164,8 +164,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 
 	currentClusterName, err := getCurrentClusterName()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error reading config file:", err)
-		return
+		client.PrintErrorAndExit("error reading config file: %v", err)
 	}
 
 	fmt.Printf("Deploying app %s to the cluster %s...\n", color.CyanString(`"%s"`, appName), color.YellowString(`"%s"`, currentClusterName))
@@ -180,8 +179,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
-		return
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
 
@@ -190,8 +188,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 	cli := dpb.NewDeployClient(conn)
 	stream, err := cli.Make(ctx)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 
 	info := &dpb.DeployRequest{Value: &dpb.DeployRequest_Info_{&dpb.DeployRequest_Info{
@@ -199,8 +196,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 		Description: deployDescription,
 	}}}
 	if err := stream.Send(info); err != nil {
-		fmt.Fprintln(os.Stderr, "Error sending deploy information:", err)
-		return
+		client.PrintErrorAndExit("Error sending deploy information: %v", err)
 	}
 
 	g, ctx := errgroup.WithContext(ctx)
@@ -208,7 +204,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 	g.Go(func() error { return streamServerMsgs(stream) })
 
 	if err := g.Wait(); err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 }
 

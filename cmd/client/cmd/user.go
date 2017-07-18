@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	context "golang.org/x/net/context"
 
@@ -46,19 +45,18 @@ var setUserPasswordCmd = &cobra.Command{
 func setPassword(cmd *cobra.Command, args []string) {
 	p, err := client.GetMaskedPassword("New Password: ")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error trying to get the user password: ", err)
+		client.PrintErrorAndExit("Error trying to get the user password: %v", err)
 	}
 
 	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
 
 	cli := userpb.NewUserClient(conn)
 	if _, err := cli.SetPassword(context.Background(), &userpb.SetPasswordRequest{Password: p}); err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 	fmt.Println("Password updated")
 }
@@ -71,8 +69,7 @@ func deleteUser(cmd *cobra.Command, args []string) {
 	}
 	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
-		return
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
 
@@ -82,8 +79,7 @@ func deleteUser(cmd *cobra.Command, args []string) {
 		&userpb.DeleteRequest{Email: email},
 	)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 	fmt.Println("User deleted")
 }
@@ -91,23 +87,19 @@ func deleteUser(cmd *cobra.Command, args []string) {
 func createUser(cmd *cobra.Command, args []string) {
 	name, err := cmd.Flags().GetString("name")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid user parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid user parameter: %v", err)
 	}
 	email, err := cmd.Flags().GetString("email")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid email parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid email parameter: %v", err)
 	}
 	pass, err := cmd.Flags().GetString("password")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid password parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid password parameter: %v", err)
 	}
 	admin, err := cmd.Flags().GetBool("admin")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid admin parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid admin parameter: %v", err)
 	}
 	if email == "" || name == "" || pass == "" {
 		cmd.Usage()
@@ -115,8 +107,7 @@ func createUser(cmd *cobra.Command, args []string) {
 	}
 	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
-		return
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
 
@@ -131,8 +122,7 @@ func createUser(cmd *cobra.Command, args []string) {
 		},
 	)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 	fmt.Println("User created")
 }

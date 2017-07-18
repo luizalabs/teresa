@@ -59,62 +59,52 @@ func createApp(cmd *cobra.Command, args []string) {
 
 	team, err := cmd.Flags().GetString("team")
 	if err != nil || team == "" {
-		fmt.Fprintln(os.Stderr, "Invalid team parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid team parameter: %v", err)
 	}
 
 	targetCPU, err := cmd.Flags().GetInt32("scale-cpu")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid scale-cpu parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid scale-cpu parameter: %v", err)
 	}
 
 	scaleMax, err := cmd.Flags().GetInt32("scale-max")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid scale-max parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid scale-max parameter: %v", err)
 	}
 
 	scaleMin, err := cmd.Flags().GetInt32("scale-min")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid scale-min parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid scale-min parameter: %v", err)
 	}
 
 	cpu, err := cmd.Flags().GetString("cpu")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid cpu parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid cpu parameter: %v", err)
 	}
 
 	memory, err := cmd.Flags().GetString("memory")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid memory parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid memory parameter: %v", err)
 	}
 
 	maxCPU, err := cmd.Flags().GetString("max-cpu")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid max-cpu parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid max-cpu parameter: %v", err)
 	}
 
 	maxMemory, err := cmd.Flags().GetString("max-memory")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid max-memory parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid max-memory parameter: %v", err)
 	}
 
 	processType, err := cmd.Flags().GetString("process-type")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid process-type parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid process-type parameter: %v", err)
 	}
 
 	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
-		return
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
 
@@ -157,8 +147,7 @@ func createApp(cmd *cobra.Command, args []string) {
 		},
 	)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 	fmt.Println("App created")
 }
@@ -214,16 +203,14 @@ func appInfo(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
-		return
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
 
 	cli := appb.NewAppClient(conn)
 	info, err := cli.Info(context.Background(), &appb.InfoRequest{Name: name})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 
 	color.New(color.FgCyan, color.Bold).Printf("[%s]\n", name)
@@ -478,8 +465,7 @@ func appLogs(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
-		return
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
 
@@ -487,8 +473,7 @@ func appLogs(cmd *cobra.Command, args []string) {
 	req := &appb.LogsRequest{Name: appName, Lines: lines, Follow: follow}
 	stream, err := cli.Logs(context.Background(), req)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 
 	for {
@@ -497,8 +482,7 @@ func appLogs(cmd *cobra.Command, args []string) {
 			if err == io.EOF {
 				return
 			}
-			fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-			return
+			client.PrintErrorAndExit(client.GetErrorMsg(err))
 		}
 		fmt.Println(msg.Text)
 	}

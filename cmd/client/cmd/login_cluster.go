@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	context "golang.org/x/net/context"
 
@@ -35,27 +34,24 @@ func login(cmd *cobra.Command, args []string) {
 
 	p, err := client.GetMaskedPassword("Password: ")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error trying to get the user password: ", err)
-		return
+		client.PrintErrorAndExit("Error trying to get the user password: %v", err)
 	}
 
 	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
-		return
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
 
 	cli := userpb.NewUserClient(conn)
 	res, err := cli.Login(context.Background(), &userpb.LoginRequest{Email: userName, Password: p})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 	fmt.Println("Login OK")
 
 	if err = client.SaveToken(cfgFile, res.Token); err != nil {
-		fmt.Fprintln(os.Stderr, "Error trying to save token in configuration file: ", err)
+		client.PrintErrorAndExit("Error trying to save token in configuration file: %v", err)
 	}
 }
 

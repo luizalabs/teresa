@@ -82,7 +82,12 @@ func recFunc(p interface{}) (err error) {
 func logUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	resp, err := handler(ctx, req)
 	if err != nil {
-		log.WithField("route", info.FullMethod).WithField("request", req).Error(err)
+		logger := log.WithField("route", info.FullMethod).WithField("request", req).WithError(err)
+		u, ok := ctx.Value("user").(*storage.User)
+		if ok {
+			logger = logger.WithField("user", u.Email)
+		}
+		logger.Error("Log Interceptor got an Error")
 		return resp, teresa_errors.Get(err)
 	}
 	return resp, nil
@@ -91,7 +96,12 @@ func logUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryS
 func logStreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	err := handler(srv, stream)
 	if err != nil {
-		log.WithField("route", info.FullMethod).Error(err)
+		logger := log.WithField("route", info.FullMethod).WithError(err)
+		u, ok := stream.Context().Value("user").(*storage.User)
+		if ok {
+			logger = logger.WithField("user", u.Email)
+		}
+		logger.Error("Log Interceptor got an Error")
 		return teresa_errors.Get(err)
 	}
 	return nil

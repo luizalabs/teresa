@@ -190,7 +190,8 @@ func TestLogStreamInterceptor(t *testing.T) {
 		}
 		info := &grpc.StreamServerInfo{FullMethod: "Test"}
 
-		actualError := logStreamInterceptor(nil, &serverStreamWrapper{}, info, handler)
+		ss := &serverStreamWrapper{ctx: context.Background()}
+		actualError := logStreamInterceptor(nil, ss, info, handler)
 		if actualError != tc.expectedError {
 			t.Errorf("expected %v, got %v", tc.expectedError, actualError)
 		}

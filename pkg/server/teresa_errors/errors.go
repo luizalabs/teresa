@@ -1,6 +1,13 @@
 package teresa_errors
 
-import "fmt"
+import (
+	"fmt"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+var ErrInternalServerError = status.Errorf(codes.Unknown, "Internal Server Error")
 
 type GrpcError interface {
 	Grpc() error

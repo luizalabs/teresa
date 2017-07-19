@@ -104,6 +104,7 @@ func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, descri
 		ds.TeresaYaml = TeresaYaml{
 			HealthCheck:   tYaml.HealthCheck,
 			RollingUpdate: tYaml.RollingUpdate,
+			Lifecycle:     tYaml.Lifecycle,
 		}
 	}
 

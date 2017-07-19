@@ -76,7 +76,7 @@ func TestDeploy(t *testing.T) {
 	}
 	podExitCodeChan <- 0
 
-	tarBall, err := os.Open(filepath.Join("testdata", "fooTxt.tar"))
+	tarBall, err := os.Open(filepath.Join("testdata", "fooTxt.tgz"))
 	if err != nil {
 		t.Fatal("error getting tarBall:", err)
 	}

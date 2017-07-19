@@ -7,7 +7,7 @@ import (
 )
 
 func TestGetTeresaYamlFromTarBall(t *testing.T) {
-	tarBall, err := os.Open(filepath.Join("testdata", "teresaYaml.tar"))
+	tarBall, err := os.Open(filepath.Join("testdata", "teresaYaml.tgz"))
 	if err != nil {
 		t.Fatal("error getting tarBall:", err)
 	}
@@ -26,7 +26,7 @@ func TestGetTeresaYamlFromTarBall(t *testing.T) {
 }
 
 func TestGetTeresaYamlFromTarBallWithoutTheTersaYamlFile(t *testing.T) {
-	tarBall, err := os.Open(filepath.Join("testdata", "fooTxt.tar"))
+	tarBall, err := os.Open(filepath.Join("testdata", "fooTxt.tgz"))
 	if err != nil {
 		t.Fatal("error getting tarBall:", err)
 	}
@@ -35,6 +35,22 @@ func TestGetTeresaYamlFromTarBallWithoutTheTersaYamlFile(t *testing.T) {
 	tYaml, err := getTeresaYamlFromTarBall(tarBall)
 	if err != nil {
 		t.Fatal("error getting teresa yaml from tarball:", err)
+	}
+	if tYaml != nil {
+		t.Errorf("expected nil, got %v", tYaml)
+	}
+}
+
+func TestGetTeresaYamlFromTarBallInvalidYaml(t *testing.T) {
+	tarBall, err := os.Open(filepath.Join("testdata", "teresaYamlInvalid.tgz"))
+	if err != nil {
+		t.Fatal("error getting tarBall:", err)
+	}
+	defer tarBall.Close()
+
+	tYaml, err := getTeresaYamlFromTarBall(tarBall)
+	if err == nil {
+		t.Fatal("expected error, got nil")
 	}
 	if tYaml != nil {
 		t.Errorf("expected nil, got %v", tYaml)

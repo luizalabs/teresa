@@ -79,6 +79,10 @@ func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) *k8s_e
 		}
 	}
 
+	if deploySpec.Lifecycle != nil {
+		c.Lifecycle = lifecycleToK8sLifecycle(deploySpec.Lifecycle)
+	}
+
 	ps := k8sv1.PodSpec{
 		RestartPolicy: k8sv1.RestartPolicyAlways,
 		Containers:    []k8sv1.Container{c},
@@ -152,6 +156,20 @@ func healthCheckProbeToK8sProbe(probe *deploy.HealthCheckProbe) *k8sv1.Probe {
 			},
 		},
 	}
+}
+
+func lifecycleToK8sLifecycle(lc *deploy.Lifecycle) *k8sv1.Lifecycle {
+	k8sLc := new(k8sv1.Lifecycle)
+
+	if lc.PreStop != nil {
+		k8sLc.PreStop = &k8sv1.Handler{
+			Exec: &k8sv1.ExecAction{
+				Command: []string{"/bin/sleep", strconv.Itoa(lc.PreStop.DrainTimeoutSeconds)},
+			},
+		}
+	}
+
+	return k8sLc
 }
 
 func serviceSpec(namespace, name, srvType string) *k8sv1.Service {

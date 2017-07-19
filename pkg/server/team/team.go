@@ -1,9 +1,13 @@
 package team
 
 import (
+	"fmt"
+
 	"github.com/jinzhu/gorm"
 	"github.com/luizalabs/teresa-api/models/storage"
+	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 	"github.com/luizalabs/teresa-api/pkg/server/user"
+	"github.com/pkg/errors"
 )
 
 type Operations interface {
@@ -27,7 +31,14 @@ func (dbt *DatabaseOperations) Create(name, email, url string) error {
 	t.Name = name
 	t.Email = email
 	t.URL = url
-	return dbt.DB.Save(t).Error
+
+	if err := dbt.DB.Save(t).Error; err != nil {
+		return teresa_errors.New(
+			teresa_errors.ErrInternalServerError,
+			errors.Wrap(err, fmt.Sprintf("saving team %s", name)),
+		)
+	}
+	return nil
 }
 
 func (dbt *DatabaseOperations) AddUser(name, userEmail string) error {
@@ -54,12 +65,18 @@ func (dbt *DatabaseOperations) AddUser(name, userEmail string) error {
 func (dbt *DatabaseOperations) List() ([]*storage.Team, error) {
 	var teams []*storage.Team
 	if err := dbt.DB.Find(&teams).Error; err != nil {
-		return nil, err
+		return nil, teresa_errors.New(
+			teresa_errors.ErrInternalServerError,
+			errors.Wrap(err, "finding teams"),
+		)
 	}
 
 	for _, t := range teams {
 		if err := dbt.DB.Model(t).Association("Users").Find(&t.Users).Error; err != nil {
-			return nil, err
+			return nil, teresa_errors.New(
+				teresa_errors.ErrInternalServerError,
+				errors.Wrap(err, fmt.Sprintf("associating team %s with its users", t.Name)),
+			)
 		}
 	}
 	return teams, nil
@@ -73,7 +90,10 @@ func (dbt *DatabaseOperations) ListByUser(userEmail string) ([]*storage.Team, er
 
 	var teams []*storage.Team
 	if err = dbt.DB.Model(u).Association("Teams").Find(&teams).Error; err != nil {
-		return nil, err
+		return nil, teresa_errors.New(
+			teresa_errors.ErrInternalServerError,
+			errors.Wrap(err, fmt.Sprintf("finding teams of user %s", userEmail)),
+		)
 	}
 	return teams, nil
 }

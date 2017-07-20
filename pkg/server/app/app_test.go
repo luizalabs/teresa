@@ -16,6 +16,7 @@ import (
 	"github.com/luizalabs/teresa-api/pkg/server/slug"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/team"
+	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 )
 
 type fakeK8sOperations struct{}
@@ -99,6 +100,10 @@ func (*fakeK8sOperations) Limits(namespace, name string) (*Limits, error) {
 	return lim, nil
 }
 
+func (*fakeK8sOperations) IsAlreadyExists(err error) bool {
+	return true
+}
+
 func (*fakeK8sOperations) IsNotFound(err error) bool {
 	return true
 }
@@ -163,6 +168,10 @@ func (e *errK8sOperations) Limits(namespace, name string) (*Limits, error) {
 	return nil, e.Err
 }
 
+func (*errK8sOperations) IsAlreadyExists(err error) bool {
+	return true
+}
+
 func (*errK8sOperations) IsNotFound(err error) bool {
 	return true
 }
@@ -223,7 +232,7 @@ func TestAppOperationsCreateErrAppAlreadyExists(t *testing.T) {
 	ops.(*AppOperations).kops = &errK8sOperations{NamespaceErr: ErrAlreadyExists}
 
 	if err := ops.Create(user, app); err != ErrAlreadyExists {
-		t.Errorf("expected ErrAppAlreadyExists got %s", err)
+		t.Errorf("expected %v got %v", ErrAlreadyExists, err)
 	}
 }
 
@@ -436,8 +445,8 @@ func TestAppOperationsInfoErrPermissionDenied(t *testing.T) {
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &storage.User{Email: "teresa@luizalabs.com"}
 
-	if _, err := ops.Info(user, "teresa"); grpcErr(err) != auth.ErrPermissionDenied {
-		t.Errorf("expected ErrPermissionDenied, got %v", grpcErr(err))
+	if _, err := ops.Info(user, "teresa"); teresa_errors.Get(err) != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", teresa_errors.Get(err))
 	}
 }
 
@@ -446,8 +455,8 @@ func TestAppOperationsInfoErrNotFound(t *testing.T) {
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
 	user := &storage.User{Email: "teresa@luizalabs.com"}
 
-	if _, err := ops.Info(user, "teresa"); grpcErr(err) != ErrNotFound {
-		t.Errorf("expected ErrNotFound, got %v", grpcErr(err))
+	if _, err := ops.Info(user, "teresa"); teresa_errors.Get(err) != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", teresa_errors.Get(err))
 	}
 }
 
@@ -485,7 +494,7 @@ func TestAppOperationsSetEnvErrNotFound(t *testing.T) {
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
 	user := &storage.User{Email: "teresa@luizalabs.com"}
 
-	if err := ops.SetEnv(user, "teresa", nil); grpcErr(err) != ErrNotFound {
+	if err := ops.SetEnv(user, "teresa", nil); teresa_errors.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
@@ -521,7 +530,7 @@ func TestAppOperationsUnsetEnvErrNotFound(t *testing.T) {
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
 	user := &storage.User{Email: "teresa@luizalabs.com"}
 
-	if err := ops.UnsetEnv(user, "teresa", nil); grpcErr(err) != ErrNotFound {
+	if err := ops.UnsetEnv(user, "teresa", nil); teresa_errors.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }

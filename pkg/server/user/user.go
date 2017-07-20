@@ -38,7 +38,7 @@ func (dbu *DatabaseOperations) Login(email, password string) (string, error) {
 	if err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); err != nil {
 		return "", teresa_errors.New(
 			auth.ErrPermissionDenied,
-			errors.Wrap(err, fmt.Sprintf("Authentication faield for user %s", email)),
+			errors.Wrap(err, fmt.Sprintf("Authentication failed for user %s", email)),
 		)
 	}
 

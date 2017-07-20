@@ -31,3 +31,7 @@ func cleanError(err error) error {
 func (k *k8sClient) IsNotFound(err error) bool {
 	return k8serrors.IsNotFound(errors.Cause(err))
 }
+
+func (k *k8sClient) IsAlreadyExists(err error) bool {
+	return k8serrors.IsAlreadyExists(errors.Cause(err))
+}

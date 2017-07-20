@@ -14,6 +14,7 @@ import (
 	"github.com/luizalabs/teresa-api/pkg/server/slug"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/team"
+	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 )
 
 type Operations interface {
@@ -41,6 +42,7 @@ type K8sOperations interface {
 	AutoScale(namespace string) (*AutoScale, error)
 	Limits(namespace, name string) (*Limits, error)
 	IsNotFound(err error) bool
+	IsAlreadyExists(err error) bool
 	SetNamespaceAnnotations(namespace string, annotations map[string]string) error
 	DeleteDeployEnvVars(namespace, name string, evNames []string) error
 	CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error
@@ -88,26 +90,36 @@ func (ops *AppOperations) Create(user *storage.User, app *App) error {
 	}
 
 	if err := ops.kops.CreateNamespace(app, user.Email); err != nil {
-		return err
+		if ops.kops.IsAlreadyExists(err) {
+			return ErrAlreadyExists
+		}
+		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 
 	if err := ops.kops.CreateQuota(app); err != nil {
-		return err
+		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 
 	secretName := ops.st.K8sSecretName()
 	data := ops.st.AccessData()
 	if err := ops.kops.CreateSecret(app.Name, secretName, data); err != nil {
-		return err
+		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 
-	return ops.kops.CreateAutoScale(app)
+	if err := ops.kops.CreateAutoScale(app); err != nil {
+		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+	}
+
+	return nil
 }
 
 func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, follow bool) (io.ReadCloser, error) {
 	team, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
 	if err != nil {
-		return nil, err
+		if ops.kops.IsNotFound(err) {
+			return nil, ErrNotFound
+		}
+		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 
 	if !ops.hasPerm(user, team) {
@@ -116,7 +128,7 @@ func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, 
 
 	pods, err := ops.kops.PodList(appName)
 	if err != nil {
-		return nil, err
+		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 
 	r, w := io.Pipe()
@@ -128,7 +140,7 @@ func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, 
 
 			logs, err := ops.kops.PodLogs(namespace, podName, lines, follow)
 			if err != nil {
-				log.Errorf("streaming logs from pod %s: %v", podName, err)
+				log.WithError(err).Errorf("streaming logs from pod %s", podName)
 				return
 			}
 			defer logs.Close()
@@ -138,7 +150,7 @@ func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, 
 				fmt.Fprintf(w, "[%s] - %s\n", podName, scanner.Text())
 			}
 			if err := scanner.Err(); err != nil {
-				log.Errorf("streaming logs from pod %s: %v", podName, err)
+				log.WithError(err).Errorf("streaming logs from pod %s", podName)
 			}
 		}(appName, pod.Name)
 	}
@@ -157,8 +169,7 @@ func (ops *AppOperations) Info(user *storage.User, appName string) (*Info, error
 	}
 
 	if !ops.hasPerm(user, teamName) {
-		err := fmt.Errorf("permission denied user %s on team %s", user.Name, teamName)
-		return nil, newAppErr(auth.ErrPermissionDenied, err)
+		return nil, auth.ErrPermissionDenied
 	}
 
 	appMeta, err := ops.Get(appName)
@@ -168,22 +179,22 @@ func (ops *AppOperations) Info(user *storage.User, appName string) (*Info, error
 
 	addr, err := ops.kops.AddressList(appName)
 	if err != nil {
-		return nil, newAppErr(ErrUnknown, err)
+		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 
 	stat, err := ops.kops.Status(appName)
 	if err != nil {
-		return nil, newAppErr(ErrUnknown, err)
+		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 
 	as, err := ops.kops.AutoScale(appName)
 	if err != nil {
-		return nil, newAppErr(ErrUnknown, err)
+		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 
 	lim, err := ops.kops.Limits(appName, limitsName)
 	if err != nil {
-		return nil, newAppErr(ErrUnknown, err)
+		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 
 	info := &Info{
@@ -201,9 +212,9 @@ func (ops *AppOperations) TeamName(appName string) (string, error) {
 	teamName, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
 	if err != nil {
 		if ops.kops.IsNotFound(err) {
-			return "", newAppErr(ErrNotFound, err)
+			return "", teresa_errors.New(ErrNotFound, err)
 		}
-		return "", newAppErr(ErrUnknown, err)
+		return "", teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 	return teamName, nil
 }
@@ -212,14 +223,14 @@ func (ops *AppOperations) Get(appName string) (*App, error) {
 	an, err := ops.kops.NamespaceAnnotation(appName, TeresaAnnotation)
 	if err != nil {
 		if ops.kops.IsNotFound(err) {
-			return nil, newAppErr(ErrNotFound, err)
+			return nil, teresa_errors.New(ErrNotFound, err)
 		}
-		return nil, newAppErr(ErrUnknown, err)
+		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 	a := new(App)
 	if err := json.Unmarshal([]byte(an), a); err != nil {
 		err = fmt.Errorf("unmarshal app failed: %v", err)
-		return nil, newAppErr(ErrUnknown, err)
+		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 
 	return a, nil
@@ -241,7 +252,7 @@ func (ops *AppOperations) checkPermAndGet(user *storage.User, appName string) (*
 func (ops *AppOperations) saveApp(app *App, lastUser string) error {
 	b, err := json.Marshal(app)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal app failed: %v", err)
 	}
 
 	anMap := map[string]string{
@@ -269,14 +280,16 @@ func (ops *AppOperations) SetEnv(user *storage.User, appName string, evs []*EnvV
 	setEnvVars(app, evs)
 
 	if err := ops.saveApp(app, user.Name); err != nil {
-		return err
+		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 
-	err = ops.kops.CreateOrUpdateDeployEnvVars(appName, appName, evs)
-	if ops.kops.IsNotFound(err) {
-		return nil
+	if err = ops.kops.CreateOrUpdateDeployEnvVars(appName, appName, evs); err != nil {
+		if ops.kops.IsNotFound(err) {
+			return nil
+		}
+		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
-	return err
+	return nil
 }
 
 func (ops *AppOperations) UnsetEnv(user *storage.User, appName string, evNames []string) error {
@@ -292,21 +305,23 @@ func (ops *AppOperations) UnsetEnv(user *storage.User, appName string, evNames [
 	unsetEnvVars(app, evNames)
 
 	if err := ops.saveApp(app, user.Name); err != nil {
-		return err
+		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
 
-	err = ops.kops.DeleteDeployEnvVars(appName, appName, evNames)
-	if ops.kops.IsNotFound(err) {
-		return nil
+	if err = ops.kops.DeleteDeployEnvVars(appName, appName, evNames); err != nil {
+		if ops.kops.IsNotFound(err) {
+			return nil
+		}
+		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
 	}
-	return err
+	return nil
 }
 
 func checkForProtectedEnvVars(evsNames []string) error {
 	for _, name := range slug.ProtectedEnvVars {
 		for _, item := range evsNames {
 			if name == item {
-				return fmt.Errorf("Can't change protected env var %s", name)
+				return ErrProtectedEnvVar
 			}
 		}
 	}

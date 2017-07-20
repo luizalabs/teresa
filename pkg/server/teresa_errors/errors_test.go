@@ -18,6 +18,7 @@ func TestGet(t *testing.T) {
 	}{
 		{New(grpcErr, someErr), grpcErr},
 		{someErr, someErr},
+		{NewInternalServerError(someErr), ErrInternalServerError},
 	}
 
 	for _, tc := range testCases {

@@ -93,21 +93,21 @@ func (ops *AppOperations) Create(user *storage.User, app *App) error {
 		if ops.kops.IsAlreadyExists(err) {
 			return ErrAlreadyExists
 		}
-		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return teresa_errors.NewInternalServerError(err)
 	}
 
 	if err := ops.kops.CreateQuota(app); err != nil {
-		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return teresa_errors.NewInternalServerError(err)
 	}
 
 	secretName := ops.st.K8sSecretName()
 	data := ops.st.AccessData()
 	if err := ops.kops.CreateSecret(app.Name, secretName, data); err != nil {
-		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return teresa_errors.NewInternalServerError(err)
 	}
 
 	if err := ops.kops.CreateAutoScale(app); err != nil {
-		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return teresa_errors.NewInternalServerError(err)
 	}
 
 	return nil
@@ -119,7 +119,7 @@ func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, 
 		if ops.kops.IsNotFound(err) {
 			return nil, ErrNotFound
 		}
-		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return nil, teresa_errors.NewInternalServerError(err)
 	}
 
 	if !ops.hasPerm(user, team) {
@@ -128,7 +128,7 @@ func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, 
 
 	pods, err := ops.kops.PodList(appName)
 	if err != nil {
-		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return nil, teresa_errors.NewInternalServerError(err)
 	}
 
 	r, w := io.Pipe()
@@ -179,22 +179,22 @@ func (ops *AppOperations) Info(user *storage.User, appName string) (*Info, error
 
 	addr, err := ops.kops.AddressList(appName)
 	if err != nil {
-		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return nil, teresa_errors.NewInternalServerError(err)
 	}
 
 	stat, err := ops.kops.Status(appName)
 	if err != nil {
-		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return nil, teresa_errors.NewInternalServerError(err)
 	}
 
 	as, err := ops.kops.AutoScale(appName)
 	if err != nil {
-		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return nil, teresa_errors.NewInternalServerError(err)
 	}
 
 	lim, err := ops.kops.Limits(appName, limitsName)
 	if err != nil {
-		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return nil, teresa_errors.NewInternalServerError(err)
 	}
 
 	info := &Info{
@@ -212,9 +212,9 @@ func (ops *AppOperations) TeamName(appName string) (string, error) {
 	teamName, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
 	if err != nil {
 		if ops.kops.IsNotFound(err) {
-			return "", teresa_errors.New(ErrNotFound, err)
+			return "", ErrNotFound
 		}
-		return "", teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return "", teresa_errors.NewInternalServerError(err)
 	}
 	return teamName, nil
 }
@@ -225,12 +225,12 @@ func (ops *AppOperations) Get(appName string) (*App, error) {
 		if ops.kops.IsNotFound(err) {
 			return nil, teresa_errors.New(ErrNotFound, err)
 		}
-		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return nil, teresa_errors.NewInternalServerError(err)
 	}
 	a := new(App)
 	if err := json.Unmarshal([]byte(an), a); err != nil {
 		err = fmt.Errorf("unmarshal app failed: %v", err)
-		return nil, teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return nil, teresa_errors.NewInternalServerError(err)
 	}
 
 	return a, nil
@@ -280,14 +280,14 @@ func (ops *AppOperations) SetEnv(user *storage.User, appName string, evs []*EnvV
 	setEnvVars(app, evs)
 
 	if err := ops.saveApp(app, user.Name); err != nil {
-		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return teresa_errors.NewInternalServerError(err)
 	}
 
 	if err = ops.kops.CreateOrUpdateDeployEnvVars(appName, appName, evs); err != nil {
 		if ops.kops.IsNotFound(err) {
 			return nil
 		}
-		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return teresa_errors.NewInternalServerError(err)
 	}
 	return nil
 }
@@ -305,14 +305,14 @@ func (ops *AppOperations) UnsetEnv(user *storage.User, appName string, evNames [
 	unsetEnvVars(app, evNames)
 
 	if err := ops.saveApp(app, user.Name); err != nil {
-		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return teresa_errors.NewInternalServerError(err)
 	}
 
 	if err = ops.kops.DeleteDeployEnvVars(appName, appName, evNames); err != nil {
 		if ops.kops.IsNotFound(err) {
 			return nil
 		}
-		return teresa_errors.New(teresa_errors.ErrInternalServerError, err)
+		return teresa_errors.NewInternalServerError(err)
 	}
 	return nil
 }

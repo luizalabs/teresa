@@ -37,3 +37,7 @@ func Get(err error) error {
 func New(grpcErr, err error) Error {
 	return &serverError{grpc: grpcErr, err: err}
 }
+
+func NewInternalServerError(err error) Error {
+	return New(ErrInternalServerError, err)
+}

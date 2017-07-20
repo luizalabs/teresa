@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"os"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
@@ -18,6 +19,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/grpclog"
 )
 
 type Options struct {
@@ -67,6 +69,7 @@ func New(opt Options) (*Server, error) {
 	}
 
 	s := grpc.NewServer(sOpts...)
+	grpclog.SetLogger(NewLogger(os.Stdout))
 
 	us := user.NewService(uOps)
 	us.RegisterService(s)

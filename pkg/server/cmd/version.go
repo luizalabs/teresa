@@ -9,12 +9,14 @@ import (
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Shows the client version information",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Version: %s\n", version.Version)
-	},
+	Short: "Show the server version information",
+	Run:   showVersion,
 }
 
 func init() {
 	RootCmd.AddCommand(versionCmd)
+}
+
+func showVersion(cmd *cobra.Command, args []string) {
+	fmt.Printf("Version: %s\n", version.Version)
 }

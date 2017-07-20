@@ -10,6 +10,7 @@ import (
 	"github.com/luizalabs/teresa-api/models/storage"
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 )
 
 type LogsStreamWrapper struct {
@@ -141,7 +142,7 @@ func TestInfoAppNotFound(t *testing.T) {
 	user := &storage.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	if _, err := s.Info(ctx, &appb.InfoRequest{Name: "teresa"}); err != ErrNotFound {
+	if _, err := s.Info(ctx, &appb.InfoRequest{Name: "teresa"}); teresa_errors.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
@@ -154,7 +155,7 @@ func TestInfoPermissionDenied(t *testing.T) {
 	user := &storage.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	if _, err := s.Info(ctx, &appb.InfoRequest{Name: name}); err != auth.ErrPermissionDenied {
+	if _, err := s.Info(ctx, &appb.InfoRequest{Name: name}); teresa_errors.Get(err) != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }

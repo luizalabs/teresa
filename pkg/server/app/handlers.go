@@ -6,7 +6,6 @@ import (
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/luizalabs/teresa-api/models/storage"
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
 )
@@ -48,8 +47,7 @@ func (s *Service) Info(ctx context.Context, req *appb.InfoRequest) (*appb.InfoRe
 
 	info, err := s.ops.Info(user, req.Name)
 	if err != nil {
-		log.Errorf("app info failed: %v", err)
-		return nil, grpcErr(err)
+		return nil, err
 	}
 
 	return newInfoResponse(info), nil

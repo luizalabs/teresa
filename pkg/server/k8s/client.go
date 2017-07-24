@@ -497,7 +497,6 @@ func newInClusterK8sClient(conf *Config) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	k8sConf.Timeout = conf.Timeout
 	kc, err := kubernetes.NewForConfig(k8sConf)
 	if err != nil {
 		return nil, err
@@ -512,7 +511,6 @@ func newOutOfClusterK8sClient(conf *Config) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	k8sConf.Timeout = conf.Timeout
 	kc, err := kubernetes.NewForConfig(k8sConf)
 	if err != nil {
 		return nil, err

@@ -1,8 +1,6 @@
 package k8s
 
 import (
-	"time"
-
 	"github.com/luizalabs/teresa-api/pkg/server/app"
 	"github.com/luizalabs/teresa-api/pkg/server/deploy"
 	"k8s.io/client-go/pkg/api"
@@ -15,9 +13,8 @@ var validServiceTypes = map[api.ServiceType]bool{
 }
 
 type Config struct {
-	ConfigFile         string        `split_words:"true"`
-	DefaultServiceType string        `split_words:"true" default:"LoadBalancer"`
-	Timeout            time.Duration `default:"30s"`
+	ConfigFile         string `split_words:"true"`
+	DefaultServiceType string `split_words:"true" default:"LoadBalancer"`
 }
 
 type Client interface {

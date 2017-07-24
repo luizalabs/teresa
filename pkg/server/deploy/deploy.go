@@ -71,6 +71,7 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 		if err := ops.exposeService(a, w); err != nil {
 			log.WithError(err).Errorf("Exposing service %s", appName)
 		}
+		fmt.Fprintln(w, fmt.Sprintf("The app %s has been successfully deployed", appName))
 	}()
 	return r, nil
 }

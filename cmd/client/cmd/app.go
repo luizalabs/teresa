@@ -59,47 +59,47 @@ func createApp(cmd *cobra.Command, args []string) {
 
 	team, err := cmd.Flags().GetString("team")
 	if err != nil || team == "" {
-		client.PrintErrorAndExit("Invalid team parameter: %v", err)
+		client.PrintErrorAndExit("Invalid team parameter")
 	}
 
 	targetCPU, err := cmd.Flags().GetInt32("scale-cpu")
 	if err != nil {
-		client.PrintErrorAndExit("Invalid scale-cpu parameter: %v", err)
+		client.PrintErrorAndExit("Invalid scale-cpu parameter")
 	}
 
 	scaleMax, err := cmd.Flags().GetInt32("scale-max")
 	if err != nil {
-		client.PrintErrorAndExit("Invalid scale-max parameter: %v", err)
+		client.PrintErrorAndExit("Invalid scale-max parameter")
 	}
 
 	scaleMin, err := cmd.Flags().GetInt32("scale-min")
 	if err != nil {
-		client.PrintErrorAndExit("Invalid scale-min parameter: %v", err)
+		client.PrintErrorAndExit("Invalid scale-min parameter")
 	}
 
 	cpu, err := cmd.Flags().GetString("cpu")
 	if err != nil {
-		client.PrintErrorAndExit("Invalid cpu parameter: %v", err)
+		client.PrintErrorAndExit("Invalid cpu parameter")
 	}
 
 	memory, err := cmd.Flags().GetString("memory")
 	if err != nil {
-		client.PrintErrorAndExit("Invalid memory parameter: %v", err)
+		client.PrintErrorAndExit("Invalid memory parameter")
 	}
 
 	maxCPU, err := cmd.Flags().GetString("max-cpu")
 	if err != nil {
-		client.PrintErrorAndExit("Invalid max-cpu parameter: %v", err)
+		client.PrintErrorAndExit("Invalid max-cpu parameter")
 	}
 
 	maxMemory, err := cmd.Flags().GetString("max-memory")
 	if err != nil {
-		client.PrintErrorAndExit("Invalid max-memory parameter: %v", err)
+		client.PrintErrorAndExit("Invalid max-memory parameter")
 	}
 
 	processType, err := cmd.Flags().GetString("process-type")
 	if err != nil {
-		client.PrintErrorAndExit("Invalid process-type parameter: %v", err)
+		client.PrintErrorAndExit("Invalid process-type parameter")
 	}
 
 	conn, err := connection.New(cfgFile, &connOpts)
@@ -281,8 +281,7 @@ WARNING:
 func appEnvSet(cmd *cobra.Command, args []string) {
 	appName, err := cmd.Flags().GetString("app")
 	if err != nil || appName == "" {
-		fmt.Fprintln(os.Stderr, "Invalid app parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid app parameter")
 	}
 
 	if len(args) == 0 {
@@ -294,8 +293,7 @@ func appEnvSet(cmd *cobra.Command, args []string) {
 	for i, item := range args {
 		tmp := strings.SplitN(item, "=", 2)
 		if len(tmp) != 2 {
-			fmt.Fprintln(os.Stderr, "Env vars must be in the format FOO=bar")
-			return
+			client.PrintErrorAndExit("Env vars must be in the format FOO=bar")
 		}
 		evs[i] = &appb.SetEnvRequest_EnvVar{Key: tmp[0], Value: tmp[1]}
 	}
@@ -307,8 +305,7 @@ func appEnvSet(cmd *cobra.Command, args []string) {
 
 	noinput, err := cmd.Flags().GetBool("no-input")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid no-input parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid no-input parameter")
 	}
 	if !noinput {
 		fmt.Print("Are you sure? (yes/NO)? ")
@@ -321,8 +318,7 @@ func appEnvSet(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
-		return
+		client.PrintErrorAndExit("Error connecting to server: %s", err)
 	}
 	defer conn.Close()
 
@@ -360,8 +356,7 @@ You can also provide more than one env var at a time:
 func appEnvUnset(cmd *cobra.Command, args []string) {
 	appName, err := cmd.Flags().GetString("app")
 	if err != nil || appName == "" {
-		fmt.Fprintln(os.Stderr, "Invalid app parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid app parameter")
 	}
 
 	if len(args) == 0 {
@@ -376,8 +371,7 @@ func appEnvUnset(cmd *cobra.Command, args []string) {
 
 	noinput, err := cmd.Flags().GetBool("no-input")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid no-input parameter: ", err)
-		return
+		client.PrintErrorAndExit("Invalid no-input parameter")
 	}
 	if !noinput {
 		fmt.Print("Are you sure? (yes/NO)? ")
@@ -390,8 +384,7 @@ func appEnvUnset(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, &connOpts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server: ", err)
-		return
+		client.PrintErrorAndExit("Error connecting to server: %s", err)
 	}
 	defer conn.Close()
 

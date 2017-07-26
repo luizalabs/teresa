@@ -499,31 +499,3 @@ func appLogs(cmd *cobra.Command, args []string) {
 		fmt.Println(msg.Text)
 	}
 }
-
-func appList(cmd *cobra.Command) {
-	conn, err := connection.New(cfgFile)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
-		return
-	}
-	defer conn.Close()
-
-	cli := appb.NewAppClient(conn)
-	stream, err := cli.List(context.Background())
-	if err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
-	}
-
-	for {
-		msg, err := stream.Recv()
-		if err != nil {
-			if err == io.EOF {
-				return
-			}
-			fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-			return
-		}
-		fmt.Println(msg.Text)
-	}
-}

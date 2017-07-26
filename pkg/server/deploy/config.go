@@ -47,7 +47,70 @@ type TeresaYaml struct {
 	Lifecycle     *Lifecycle     `yaml:"lifecycle,omitempty"`
 }
 
-const TeresaYamlFileName = "teresa.yaml"
+type Procfile map[string]string
+
+type DeployConfigFiles struct {
+	TeresaYaml *TeresaYaml
+	Procfile   Procfile
+}
+
+const (
+	TeresaYamlFileName = "teresa.yaml"
+	ProcfileFileName   = "Procfile"
+)
+
+func readFileFromTarBall(r io.Reader, t interface{}) error {
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	return yaml.Unmarshal(b, t)
+}
+
+func getDeployConfigFilesFromTarBall(tarBall io.ReadSeeker) (*DeployConfigFiles, error) {
+	gReader, err := gzip.NewReader(tarBall)
+	if err != nil {
+		return nil, err
+	}
+	defer gReader.Close()
+
+	deployFiles := new(DeployConfigFiles)
+	tarReader := tar.NewReader(gReader)
+	for {
+		hdr, err := tarReader.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+
+		if hdr.Name != TeresaYamlFileName && hdr.Name != ProcfileFileName {
+			continue
+		}
+
+		if hdr.Name == TeresaYamlFileName {
+			deployFiles.TeresaYaml = new(TeresaYaml)
+			if err := readFileFromTarBall(tarReader, deployFiles.TeresaYaml); err != nil {
+				return nil, err
+			}
+			if err := validateTeresaYaml(deployFiles.TeresaYaml); err != nil {
+				return nil, err
+			}
+		} else {
+			deployFiles.Procfile = make(map[string]string)
+			if err := readFileFromTarBall(tarReader, deployFiles.Procfile); err != nil {
+				return nil, err
+			}
+		}
+
+		if deployFiles.TeresaYaml != nil && deployFiles.Procfile != nil {
+			return deployFiles, nil
+		}
+	}
+
+	return deployFiles, nil
+}
 
 func getTeresaYamlFromTarBall(tarBall io.ReadSeeker) (*TeresaYaml, error) {
 	gReader, err := gzip.NewReader(tarBall)
@@ -74,7 +137,6 @@ func getTeresaYamlFromTarBall(tarBall io.ReadSeeker) (*TeresaYaml, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		teresaYaml := new(TeresaYaml)
 		if err = yaml.Unmarshal(b, teresaYaml); err != nil {
 			return nil, err

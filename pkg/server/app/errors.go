@@ -6,6 +6,7 @@ import (
 )
 
 var (
+
 	ErrAlreadyExists   = status.Errorf(codes.AlreadyExists, "App already exists")
 	ErrNotFound        = status.Errorf(codes.NotFound, "App not found")
 	ErrProtectedEnvVar = status.Errorf(codes.InvalidArgument, "Can't change protected env vars")

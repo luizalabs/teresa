@@ -11,7 +11,6 @@ import (
 	"github.com/luizalabs/teresa-api/cmd/client/connection"
 	"github.com/luizalabs/teresa-api/pkg/client"
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
 	"golang.org/x/net/context"
@@ -181,7 +180,6 @@ func appList(cmd *cobra.Command, args []string) {
 		fmt.Println("You do not belong to any team")
 		return
 	}
-
 	// rendering app list in a table view
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"TEAM", "APP", "ADDRESS"})

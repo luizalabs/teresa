@@ -128,8 +128,8 @@ func TestDeploySpecToK8sDeploy(t *testing.T) {
 		PodSpec: deploy.PodSpec{
 			Name:  "Teresa",
 			Image: "luizalabs/teresa:0.0.1",
+			Args:  []string{"run", "web"},
 		},
-		Args: []string{"run", "web"},
 		TeresaYaml: deploy.TeresaYaml{
 			HealthCheck: &deploy.HealthCheck{
 				Liveness:  &deploy.HealthCheckProbe{PeriodSeconds: 2},

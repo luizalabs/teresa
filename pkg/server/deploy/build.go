@@ -32,6 +32,7 @@ type PodSpec struct {
 	Env          map[string]string
 	VolumeMounts []*PodVolumeMountsSpec
 	Volume       []*PodVolumeSpec
+	Args         []string
 }
 
 type DeploySpec struct {
@@ -40,7 +41,6 @@ type DeploySpec struct {
 	RevisionHistoryLimit int
 	Description          string
 	SlugURL              string
-	Args                 []string
 }
 
 func newPodSpec(name, image string, a *app.App, envVars map[string]string, fileStorage st.Storage) *PodSpec {
@@ -92,8 +92,9 @@ func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, descri
 		},
 		fileStorage,
 	)
+	ps.Args = []string{"start", processType}
+
 	ds := &DeploySpec{
-		Args:                 []string{"start", processType},
 		Description:          description,
 		SlugURL:              slugURL,
 		PodSpec:              *ps,

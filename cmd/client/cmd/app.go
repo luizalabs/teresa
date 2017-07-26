@@ -186,7 +186,7 @@ func appList(cmd *cobra.Command, args []string) {
 	fmt.Println("Apps:")
 	for _, t := range resp.Apps {
 		fmt.Print(color.CyanString(t.Team))
-		fmt.Print(color.CyanString(t.App))
+		fmt.Print(color.CyanString(" - %s", t.App))
 		for _, s := range []string{t.Url} {
 			if s != "" {
 				fmt.Printf(" - %s", s)
@@ -196,44 +196,8 @@ func appList(cmd *cobra.Command, args []string) {
 		if !showApps {
 			continue
 		}
-//for _, u := range t.Apps {
-//	fmt.Printf("- %s (%s)\n", u.Name, u.Url, u.Team
-//}
 	}
 }
-
-/*
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tc := NewTeresa()
-		apps, err := tc.GetApps()
-		fmt.Println(apps)
-		if err != nil {
-			if isNotFound(err) {
-				return newCmdError("You have no apps")
-			}
-			return err
-		}
-		// rendering app info in a table view
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"TEAM", "APP", "ADDRESS"})
-		table.SetRowLine(true)
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetRowSeparator("-")
-		table.SetAutoWrapText(false)
-		for _, app := range apps {
-			a := ""
-			if len(app.AddressList) > 0 {
-				a = app.AddressList[0]
-			}
-			r := []string{*app.Team, *app.Name, a}
-			table.Append(r)
-		}
-		table.Render()
-		return nil
-	},
-
-}
-*/
 
 var appInfoCmd = &cobra.Command{
 	Use:     "info <name>",
@@ -527,34 +491,6 @@ func appLogs(cmd *cobra.Command, args []string) {
 				return
 			}
 			client.PrintErrorAndExit(client.GetErrorMsg(err))
-		}
-		fmt.Println(msg.Text)
-	}
-}
-
-func appList(cmd *cobra.Command) {
-	conn, err := connection.New(cfgFile)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
-		return
-	}
-	defer conn.Close()
-
-	cli := appb.NewAppClient(conn)
-	stream, err := cli.List(context.Background())
-	if err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
-	}
-
-	for {
-		msg, err := stream.Recv()
-		if err != nil {
-			if err == io.EOF {
-				return
-			}
-			fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-			return
 		}
 		fmt.Println(msg.Text)
 	}

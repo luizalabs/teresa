@@ -107,9 +107,7 @@ func (k k8sClient) FindAppByLabel(label string) ([]string, error) {
 	apps := make([]string, 0)
 	for _, appl := range appls.Items {
 		app := appl.ObjectMeta.Name 
-			fmt.Println(app)
-			apps = append(apps, string(app))
-//		}
+		apps = append(apps, string(app))
 	}
 	return apps, nil
 }

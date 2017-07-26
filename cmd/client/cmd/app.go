@@ -172,7 +172,6 @@ func appList(cmd *cobra.Command, args []string) {
 
 	cli := appb.NewAppClient(conn)
 	resp, err := cli.List(context.Background(), &appb.Empty{})
-	fmt.Println(resp)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
 		return

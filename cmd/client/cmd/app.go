@@ -11,6 +11,7 @@ import (
 	"github.com/luizalabs/teresa-api/cmd/client/connection"
 	"github.com/luizalabs/teresa-api/pkg/client"
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
 	"golang.org/x/net/context"

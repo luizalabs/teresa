@@ -8,6 +8,7 @@ service App {
     rpc Info(InfoRequest) returns (InfoResponse);
     rpc SetEnv(SetEnvRequest) returns (Empty);
     rpc UnsetEnv(UnsetEnvRequest) returns (Empty);
+    rpc List(Empty) returns (ListResponse);
 }
 
 message CreateRequest {
@@ -32,6 +33,17 @@ message CreateRequest {
         int32 min = 3;
     }
     AutoScale auto_scale = 5;
+}
+
+message ListResponse {
+    
+    message App {
+        string team = 1;
+        string app  = 2;
+        string urls  = 3;    
+    }
+    repeated App apps = 1;
+
 }
 
 message LogsRequest {

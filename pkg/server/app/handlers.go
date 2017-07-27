@@ -3,6 +3,8 @@ package app
 import (
 	"time"
 
+	log "github.com/Sirupsen/logrus"
+
 	context "golang.org/x/net/context"
 
 	"google.golang.org/grpc"
@@ -10,6 +12,7 @@ import (
 	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/goutil"
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
+	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 )
 
 const (
@@ -90,6 +93,18 @@ func (s *Service) UnsetEnv(ctx context.Context, req *appb.UnsetEnvRequest) (*app
 	}
 
 	return &appb.Empty{}, nil
+}
+
+func (s *Service) List(ctx context.Context, _ *appb.Empty) (*appb.ListResponse, error) {
+	user := ctx.Value("user").(*storage.User)
+
+	list, err := s.ops.List(user)
+	if err != nil {
+		log.Errorf("app list failed: %v", err)
+		return nil, teresa_errors.Get(err)
+	}
+
+	return newListResponse(list), nil
 }
 
 func (s *Service) RegisterService(grpcServer *grpc.Server) {

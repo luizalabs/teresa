@@ -502,6 +502,20 @@ func (k *k8sClient) DeleteNamespace(namespace string) error {
 	return errors.Wrap(err, "delete ns failed")
 }
 
+func (k k8sClient) ListNamespaceByLabel(label string) ([]string, error) {
+	ls := fmt.Sprintf("teresa.io/team=%s", label)
+	appls, err := k.kc.CoreV1().Namespaces().List(k8sv1.ListOptions{LabelSelector: ls})
+	if err != nil {
+		return nil, err
+	}
+	apps := make([]string, 0)
+	for _, appl := range appls.Items {
+		app := appl.ObjectMeta.Name
+		apps = append(apps, string(app))
+	}
+	return apps, nil
+}
+
 func newInClusterK8sClient(conf *Config) (Client, error) {
 	k8sConf, err := restclient.InClusterConfig()
 	if err != nil {

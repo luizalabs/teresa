@@ -160,6 +160,31 @@ func TestInfoPermissionDenied(t *testing.T) {
 	}
 }
 
+func TestListSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &storage.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	if _, err := s.List(ctx, &appb.Empty{}); err != nil {
+		t.Error("Got error on list: ", err)
+	}
+}
+
+/*
+func TestListAppNotFound(t *testing.T) {
+	s := NewService(NewFakeOperations())
+	user := &storage.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	if _, err := s.List(ctx, &appb.Empty{}); teresa_errors.Get(err) != nil {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+*/
+
 func TestSetEnvSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"

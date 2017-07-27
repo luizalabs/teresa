@@ -26,6 +26,7 @@ type Operations interface {
 	HasPermission(user *storage.User, appName string) bool
 	SetEnv(user *storage.User, appName string, evs []*EnvVar) error
 	UnsetEnv(user *storage.User, appName string, evs []string) error
+	List(user *storage.User) ([]*List, error)
 }
 
 type K8sOperations interface {
@@ -47,6 +48,7 @@ type K8sOperations interface {
 	DeleteDeployEnvVars(namespace, name string, evNames []string) error
 	CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error
 	DeleteNamespace(namespace string) error
+	ListNamespaceByLabel(label string) ([]string, error)
 }
 
 type AppOperations struct {
@@ -333,6 +335,33 @@ func checkForProtectedEnvVars(evsNames []string) error {
 		}
 	}
 	return nil
+}
+
+func (ops *AppOperations) List(user *storage.User) ([]*List, error) {
+	teams, err := ops.tops.ListByUser(user.Email)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*List, 0)
+	for _, team := range teams {
+		appNames, err := ops.kops.ListNamespaceByLabel(team.Name)
+		if err != nil {
+			return nil, err
+		}
+		for _, app := range appNames {
+			appAdd, err := ops.kops.AddressList(app)
+			if err != nil {
+				return nil, err
+			}
+			list := &List{
+				Team:      team.Name,
+				Addresses: appAdd,
+				Name:      string(app),
+			}
+			result = append(result, list)
+		}
+	}
+	return result, nil
 }
 
 func NewOperations(tops team.Operations, kops K8sOperations, st st.Storage) Operations {

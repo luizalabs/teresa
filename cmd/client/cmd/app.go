@@ -11,6 +11,7 @@ import (
 	"github.com/luizalabs/teresa-api/cmd/client/connection"
 	"github.com/luizalabs/teresa-api/pkg/client"
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
 	"golang.org/x/net/context"
@@ -156,7 +157,6 @@ var appListCmd = &cobra.Command{
 	Short:   "List all apps",
 	Long:    "Return all apps with address and team.",
 	Example: "  $ teresa app list",
-
 	Run: appList,
 }
 
@@ -182,20 +182,27 @@ func appList(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	// rendering app list in a table view
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"TEAM", "APP", "ADDRESS"})
+	table.SetRowLine(true)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetRowSeparator("-")
+	table.SetAutoWrapText(false)
 	fmt.Println("Apps:")
 	for _, t := range resp.Apps {
-		fmt.Print(color.CyanString(t.Team))
-		fmt.Print(color.CyanString(" - %s", t.App))
 		for _, s := range []string{t.Url} {
 			if s != "" {
 				fmt.Printf(" - %s", s)
-			}
+			} else {s = "n/a"}
+			r := []string{t.Team, t.App, s}
+			table.Append(r)
 		}
-		fmt.Print("\n")
 		if !showApps {
 			continue
 		}
 	}
+	table.Render()
 }
 
 var appInfoCmd = &cobra.Command{

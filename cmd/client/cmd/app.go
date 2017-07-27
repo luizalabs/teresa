@@ -157,30 +157,43 @@ var appListCmd = &cobra.Command{
 	Short:   "List all apps",
 	Long:    "Return all apps with address and team.",
 	Example: "  $ teresa app list",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tc := NewTeresa()
-		apps, err := tc.GetApps()
-		if err != nil {
-			return err
+	Run:     appList,
+}
+
+func appList(cmd *cobra.Command, args []string) {
+
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
+
+	cli := appb.NewAppClient(conn)
+	resp, err := cli.List(context.Background(), &appb.Empty{})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+
+	if len(resp.Apps) == 0 {
+		fmt.Println("You do not have to any app")
+		return
+	}
+	// rendering app list in a table view
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"TEAM", "APP", "ADDRESS"})
+	table.SetRowLine(true)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetRowSeparator("-")
+	table.SetAutoWrapText(false)
+	for _, t := range resp.Apps {
+		if t.Urls == "" {
+			t.Urls = "n/a"
 		}
-		// rendering app info in a table view
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"TEAM", "APP", "ADDRESS"})
-		table.SetRowLine(true)
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetRowSeparator("-")
-		table.SetAutoWrapText(false)
-		for _, app := range apps {
-			a := ""
-			if len(app.AddressList) > 0 {
-				a = app.AddressList[0]
-			}
-			r := []string{*app.Team, *app.Name, a}
-			table.Append(r)
-		}
-		table.Render()
-		return nil
-	},
+		r := []string{t.Team, t.App, t.Urls}
+		table.Append(r)
+	}
+	table.Render()
 }
 
 var appInfoCmd = &cobra.Command{
@@ -442,6 +455,8 @@ func init() {
 	// App logs
 	appLogsCmd.Flags().Int64("lines", 10, "number of lines")
 	appLogsCmd.Flags().Bool("follow", false, "follow logs")
+	// App list
+	appListCmd.Flags().Bool("show-apps", false, "Show team's app(s)")
 }
 
 func appLogs(cmd *cobra.Command, args []string) {

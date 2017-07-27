@@ -20,7 +20,8 @@ import (
 )
 
 type fakeK8sOperations struct {
-	Namespaces map[string]struct{}
+	Namespaces  map[string]struct{}
+	ErrNotFound error
 }
 
 type errK8sOperations struct {
@@ -129,6 +130,10 @@ func (f *fakeK8sOperations) DeleteNamespace(namespace string) error {
 	return nil
 }
 
+func (*fakeK8sOperations) ListNamespaceByLabel(label string) ([]string, error) {
+	return nil, nil
+}
+
 func (e *errK8sOperations) CreateNamespace(app *App, user string) error {
 	return e.NamespaceErr
 }
@@ -200,6 +205,10 @@ func (e *errK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, e
 func (e *errK8sOperations) DeleteNamespace(namespace string) error {
 	delete(e.Namespaces, namespace)
 	return e.DeleteNamespaceErr
+}
+
+func (e *errK8sOperations) ListNamespaceByLabel(label string) ([]string, error) {
+	return nil, e.Err
 }
 
 func TestAppOperationsCreate(t *testing.T) {
@@ -515,6 +524,33 @@ func TestAppOperationsInfoErrNotFound(t *testing.T) {
 
 	if _, err := ops.Info(user, "teresa"); teresa_errors.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", teresa_errors.Get(err))
+	}
+}
+
+func TestAppOperationsList(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	teamName := "luizalabs"
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: teamName}
+	tops.(*team.FakeOperations).Storage[app.Name] = &storage.Team{
+		Name:  teamName,
+		Users: []storage.User{*user},
+	}
+
+	list, err := ops.List(user)
+	if err != nil {
+		t.Fatal("error getting app list: ", err)
+	}
+
+	for _, a := range list {
+		if a.Team != teamName {
+			t.Errorf("expected %s, got %s", teamName, a.Team)
+		}
+
+		if len(a.Addresses) != 1 { // see fakeK8sOperations.AddressList
+			t.Errorf("expected 2, got %d", len(a.Addresses))
+		}
 	}
 }
 

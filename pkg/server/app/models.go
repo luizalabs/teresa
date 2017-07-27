@@ -2,6 +2,8 @@ package app
 
 import (
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
+
+	"strings"
 )
 
 const (
@@ -59,6 +61,16 @@ type Info struct {
 	Status    *Status
 	AutoScale *AutoScale
 	Limits    *Limits
+}
+
+type List struct {
+	Team      string
+	Addresses []*Address
+	Name      string
+}
+
+type AppList struct {
+	AppList string
 }
 
 func newSliceLrq(s []*appb.CreateRequest_Limits_LimitRangeQuantity) []*LimitRangeQuantity {
@@ -235,5 +247,35 @@ func unsetEnvVars(app *App, evs []string) {
 				break
 			}
 		}
+	}
+}
+
+func newListResponse(list []*List) *appb.ListResponse {
+	if list == nil {
+		return nil
+	}
+
+	appNames := []*appb.ListResponse_App{}
+
+	for _, item := range list {
+		if item == nil {
+			continue
+		}
+		var tmp []string
+		for _, elt := range item.Addresses {
+			tmp = append(tmp, elt.Hostname)
+		}
+		addrs := strings.Join(tmp, ",")
+
+		appName := &appb.ListResponse_App{
+			Urls: addrs,
+			App:  item.Name,
+			Team: item.Team,
+		}
+		appNames = append(appNames, appName)
+	}
+
+	return &appb.ListResponse{
+		Apps: appNames,
 	}
 }

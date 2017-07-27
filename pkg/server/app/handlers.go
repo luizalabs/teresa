@@ -74,6 +74,25 @@ func (s *Service) UnsetEnv(ctx context.Context, req *appb.UnsetEnvRequest) (*app
 	return &appb.Empty{}, nil
 }
 
+func (s *Service) List(req *appb.Empty, stream appb.ListResponse) error {
+	ctx := stream.Context()
+	user := ctx.Value("user").(*storage.User)
+
+	rc, err := s.ops.List(user, req.team)
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+
+	scanner := bufio.NewScanner(rc)
+	for scanner.Scan() {
+		if err := stream.Send(&appb.ListResponse{Text: scanner.Text()}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *Service) RegisterService(grpcServer *grpc.Server) {
 	appb.RegisterAppServer(grpcServer, s)
 }

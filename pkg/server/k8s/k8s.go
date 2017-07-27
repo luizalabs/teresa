@@ -36,8 +36,8 @@ func New(conf *Config) (Client, error) {
 	if err := validateConfig(conf); err != nil {
 		return nil, err
 	}
-	if conf.ConfigFile == "" {
-		return newInClusterK8sClient(conf)
+	if !conf.InCluster {
+		return newInClusterK8sClient()
 	}
 	return newOutOfClusterK8sClient(conf)
 }

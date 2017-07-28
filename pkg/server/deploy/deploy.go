@@ -47,7 +47,7 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 		return nil, auth.ErrPermissionDenied
 	}
 
-	tYaml, err := getTeresaYamlFromTarBall(tarBall) // get tYaml and parse before update deploy
+	confFiles, err := getDeployConfigFilesFromTarBall(tarBall)
 	if err != nil {
 		return nil, teresa_errors.New(ErrInvalidTeresaYamlFile, err)
 	}
@@ -63,7 +63,7 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 			return
 		}
 		slugURL := fmt.Sprintf("%s/slug.tgz", buildDest)
-		if err := ops.createDeploy(a, tYaml, description, slugURL, rhl); err != nil {
+		if err := ops.createDeploy(a, confFiles.TeresaYaml, description, slugURL, rhl); err != nil {
 			log.WithError(err).Errorf("Creating deploy app %s", appName)
 			return
 		}

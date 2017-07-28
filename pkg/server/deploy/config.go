@@ -112,46 +112,6 @@ func getDeployConfigFilesFromTarBall(tarBall io.ReadSeeker) (*DeployConfigFiles,
 	return deployFiles, nil
 }
 
-func getTeresaYamlFromTarBall(tarBall io.ReadSeeker) (*TeresaYaml, error) {
-	gReader, err := gzip.NewReader(tarBall)
-	if err != nil {
-		return nil, err
-	}
-	defer gReader.Close()
-
-	tarReader := tar.NewReader(gReader)
-	for {
-		hdr, err := tarReader.Next()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return nil, err
-		}
-
-		if hdr.Name != TeresaYamlFileName {
-			continue
-		}
-
-		b, err := ioutil.ReadAll(tarReader)
-		if err != nil {
-			return nil, err
-		}
-		teresaYaml := new(TeresaYaml)
-		if err = yaml.Unmarshal(b, teresaYaml); err != nil {
-			return nil, err
-		}
-
-		if err := validateTeresaYaml(teresaYaml); err != nil {
-			return nil, err
-		}
-
-		return teresaYaml, nil
-	}
-
-	return nil, nil
-}
-
 func validateTeresaYaml(tYaml *TeresaYaml) error {
 	if tYaml.Lifecycle != nil && tYaml.Lifecycle.PreStop != nil {
 		if tYaml.Lifecycle.PreStop.DrainTimeoutSeconds > maxDrainTimeoutSeconds || tYaml.Lifecycle.PreStop.DrainTimeoutSeconds < 0 {

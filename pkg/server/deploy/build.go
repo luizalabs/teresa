@@ -111,3 +111,20 @@ func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, descri
 
 	return ds
 }
+
+func newRunCommandSpec(a *app.App, command, slugURL string, fileStorage st.Storage) *PodSpec {
+	ps := newPodSpec(
+		fmt.Sprintf("release-%s", a.Name),
+		slugRunnerImage,
+		a,
+		map[string]string{
+			"APP":             a.Name,
+			"PORT":            strconv.Itoa(DefaultPort),
+			"SLUG_URL":        slugURL,
+			"BUILDER_STORAGE": fileStorage.Type(),
+		},
+		fileStorage,
+	)
+	ps.Args = []string{"start", command}
+	return ps
+}

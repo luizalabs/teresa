@@ -76,6 +76,32 @@ func TestNewBuildSpec(t *testing.T) {
 	}
 }
 
+func TestNewCommandRunSpec(t *testing.T) {
+	expectedSlugURL := "http://teresa.io/slug.tgz"
+	a := &app.App{Name: "teresa"}
+	expectedCommand := "python manage.py migrate"
+	s := st.NewFake()
+
+	ps := newRunCommandSpec(a, expectedCommand, expectedSlugURL, s)
+	if !strings.HasSuffix(ps.Name, a.Name) {
+		t.Errorf("expected release-%s, got %s", a.Name, ps.Name)
+	}
+
+	if ps.Image != slugRunnerImage {
+		t.Errorf("expected %s, got %s", slugRunnerImage, ps.Image)
+	}
+
+	ev := map[string]string{
+		"SLUG_URL":        expectedSlugURL,
+		"BUILDER_STORAGE": s.Type(),
+	}
+	for k, v := range ev {
+		if ps.Env[k] != v {
+			t.Errorf("expected %s, got %s for key %s", v, ps.Env[k], k)
+		}
+	}
+}
+
 func TestNewDeploySpec(t *testing.T) {
 	expectedDescription := "test"
 	expectedSlugURL := "http://teresa.io/slug.tgz"

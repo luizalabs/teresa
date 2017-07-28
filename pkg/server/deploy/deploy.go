@@ -14,6 +14,8 @@ import (
 	"github.com/pborman/uuid"
 )
 
+const ProcfileReleaseCmd = "release"
+
 type Operations interface {
 	Deploy(user *storage.User, appName string, tarBall io.ReadSeeker, description string, rhl int) (io.ReadCloser, error)
 }
@@ -62,7 +64,15 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 			log.WithError(err).Errorf("Building app %s", appName)
 			return
 		}
+
 		slugURL := fmt.Sprintf("%s/slug.tgz", buildDest)
+		releaseCmd := confFiles.Procfile[ProcfileReleaseCmd]
+		if confFiles.Procfile != nil && releaseCmd != "" {
+			if err := ops.runReleaseCmd(a, slugURL, w); err != nil {
+				log.WithError(err).Errorf("Running release command %s in app %s", releaseCmd, appName)
+			}
+		}
+
 		if err := ops.createDeploy(a, confFiles.TeresaYaml, description, slugURL, rhl); err != nil {
 			log.WithError(err).Errorf("Creating deploy app %s", appName)
 			return
@@ -74,6 +84,21 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 		fmt.Fprintln(w, fmt.Sprintf("The app %s has been successfully deployed", appName))
 	}()
 	return r, nil
+}
+
+func (ops *DeployOperations) runReleaseCmd(a *app.App, slugPath string, stream io.Writer) error {
+	runCommandSpec := newRunCommandSpec(a, ProcfileReleaseCmd, slugPath, ops.fileStorage)
+	podStream, exitCodeChan, err := ops.k8s.PodRun(runCommandSpec)
+	if err != nil {
+		return err
+	}
+	go io.Copy(stream, podStream)
+
+	exitCode, ok := <-exitCodeChan
+	if !ok || exitCode != 0 {
+		return ErrReleaseFail
+	}
+	return nil
 }
 
 func (ops *DeployOperations) createDeploy(a *app.App, tYaml *TeresaYaml, description, slugPath string, rhl int) error {

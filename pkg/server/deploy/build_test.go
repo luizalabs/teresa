@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -78,13 +79,14 @@ func TestNewBuildSpec(t *testing.T) {
 
 func TestNewCommandRunSpec(t *testing.T) {
 	expectedSlugURL := "http://teresa.io/slug.tgz"
-	a := &app.App{Name: "teresa"}
 	expectedCommand := "python manage.py migrate"
+	expectedBuildId := "1234"
+	a := &app.App{Name: "teresa"}
 	s := st.NewFake()
 
-	ps := newRunCommandSpec(a, expectedCommand, expectedSlugURL, s)
-	if !strings.HasSuffix(ps.Name, a.Name) {
-		t.Errorf("expected release-%s, got %s", a.Name, ps.Name)
+	ps := newRunCommandSpec(a, expectedBuildId, expectedCommand, expectedSlugURL, s)
+	if !strings.HasSuffix(ps.Name, fmt.Sprintf("%s-%s", a.Name, expectedBuildId)) {
+		t.Errorf("expected release-%s-%s, got %s", a.Name, expectedBuildId, ps.Name)
 	}
 
 	if ps.Image != slugRunnerImage {

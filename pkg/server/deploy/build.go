@@ -112,9 +112,9 @@ func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, descri
 	return ds
 }
 
-func newRunCommandSpec(a *app.App, command, slugURL string, fileStorage st.Storage) *PodSpec {
+func newRunCommandSpec(a *app.App, deployId, command, slugURL string, fileStorage st.Storage) *PodSpec {
 	ps := newPodSpec(
-		fmt.Sprintf("release-%s", a.Name),
+		fmt.Sprintf("release-%s-%s", a.Name, deployId),
 		slugRunnerImage,
 		a,
 		map[string]string{

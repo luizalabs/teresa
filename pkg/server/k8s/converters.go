@@ -16,6 +16,11 @@ func podSpecToK8sContainer(podSpec *deploy.PodSpec) k8sv1.Container {
 		ImagePullPolicy: k8sv1.PullIfNotPresent,
 		Image:           podSpec.Image,
 	}
+
+	for _, arg := range podSpec.Args {
+		c.Args = append(c.Args, arg)
+	}
+
 	for k, v := range podSpec.Env {
 		c.Env = append(c.Env, k8sv1.EnvVar{Name: k, Value: v})
 	}
@@ -65,10 +70,6 @@ func podSpecToK8sPod(podSpec *deploy.PodSpec) *k8sv1.Pod {
 func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) *k8s_extensions.Deployment {
 	c := podSpecToK8sContainer(&deploySpec.PodSpec)
 	volumes := podSpecVolumesToK8sVolumes(deploySpec.Volume)
-
-	for _, arg := range deploySpec.Args {
-		c.Args = append(c.Args, arg)
-	}
 
 	if deploySpec.HealthCheck != nil {
 		if deploySpec.HealthCheck.Liveness != nil {

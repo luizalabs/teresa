@@ -70,6 +70,7 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 		if confFiles.Procfile != nil && releaseCmd != "" {
 			if err := ops.runReleaseCmd(a, slugURL, w); err != nil {
 				log.WithError(err).Errorf("Running release command %s in app %s", releaseCmd, appName)
+				return
 			}
 		}
 
@@ -88,6 +89,8 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 
 func (ops *DeployOperations) runReleaseCmd(a *app.App, slugPath string, stream io.Writer) error {
 	runCommandSpec := newRunCommandSpec(a, ProcfileReleaseCmd, slugPath, ops.fileStorage)
+
+	fmt.Fprintln(stream, "Running release command")
 	podStream, exitCodeChan, err := ops.k8s.PodRun(runCommandSpec)
 	if err != nil {
 		return err

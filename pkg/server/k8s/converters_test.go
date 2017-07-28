@@ -13,6 +13,7 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 		Name:  "Teresa",
 		Image: "luizalabs/teresa:0.0.1",
 		Env:   map[string]string{"ENV-KEY": "ENV-VALUE"},
+		Args:  []string{"start", "release"},
 		VolumeMounts: []*deploy.PodVolumeMountsSpec{
 			&deploy.PodVolumeMountsSpec{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
 		},
@@ -41,6 +42,12 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 		}
 		if c.VolumeMounts[idx].ReadOnly != vm.ReadOnly {
 			t.Errorf("expected %v, got %v", vm.ReadOnly, c.VolumeMounts[idx].ReadOnly)
+		}
+	}
+
+	for idx, arg := range ps.Args {
+		if c.Args[idx] != arg {
+			t.Errorf("expected %s, got %s", arg, c.Args[idx])
 		}
 	}
 }

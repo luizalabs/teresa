@@ -91,15 +91,12 @@ func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugPath string
 	runCommandSpec := newRunCommandSpec(a, deployId, ProcfileReleaseCmd, slugPath, ops.fileStorage)
 
 	fmt.Fprintln(stream, "Running release command")
-	podStream, exitCodeChan, err := ops.k8s.PodRun(runCommandSpec)
+	err := ops.podRun(runCommandSpec, stream)
 	if err != nil {
+		if err == ErrPodRunFail {
+			return ErrReleaseFail
+		}
 		return err
-	}
-	go io.Copy(stream, podStream)
-
-	exitCode, ok := <-exitCodeChan
-	if !ok || exitCode != 0 {
-		return ErrReleaseFail
 	}
 	return nil
 }
@@ -133,7 +130,18 @@ func (ops *DeployOperations) buildApp(tarBall io.ReadSeeker, a *app.App, deployI
 		return err
 	}
 	buildSpec := newBuildSpec(a, deployId, tarBallLocation, buildDest, ops.fileStorage)
-	podStream, exitCodeChan, err := ops.k8s.PodRun(buildSpec)
+	err := ops.podRun(buildSpec, stream)
+	if err != nil {
+		if err == ErrPodRunFail {
+			return ErrBuildFail
+		}
+		return err
+	}
+	return nil
+}
+
+func (ops *DeployOperations) podRun(podSpec *PodSpec, stream io.Writer) error {
+	podStream, exitCodeChan, err := ops.k8s.PodRun(podSpec)
 	if err != nil {
 		return err
 	}
@@ -141,7 +149,7 @@ func (ops *DeployOperations) buildApp(tarBall io.ReadSeeker, a *app.App, deployI
 
 	exitCode, ok := <-exitCodeChan
 	if !ok || exitCode != 0 {
-		return ErrBuildFail
+		return ErrPodRunFail
 	}
 	return nil
 }

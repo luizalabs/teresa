@@ -238,6 +238,44 @@ func TestBuildApp(t *testing.T) {
 	}
 }
 
+func TestRunReleaseCmd(t *testing.T) {
+	var testCases = []struct {
+		exitCode    int
+		expectedErr error
+	}{
+		{0, nil}, {1, ErrReleaseFail},
+	}
+
+	podExitCodeChan := make(chan int, 1)
+	defer close(podExitCodeChan)
+
+	fakeK8s := &fakeK8sOperations{
+		podRunExitCodeChan: podExitCodeChan,
+		podRunReadCloser:   ioutil.NopCloser(new(bytes.Buffer)),
+	}
+
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		fakeK8s,
+		st.NewFake(),
+	)
+
+	for _, tc := range testCases {
+		podExitCodeChan <- tc.exitCode
+		deployOperations := ops.(*DeployOperations)
+		err := deployOperations.runReleaseCmd(
+			&app.App{Name: "Test"},
+			"123456",
+			"/slug.tgz",
+			new(bytes.Buffer),
+		)
+
+		if err != tc.expectedErr {
+			t.Errorf("expected %v, got %v", tc.expectedErr, err)
+		}
+	}
+}
+
 func TestGenDeployId(t *testing.T) {
 	generatedIds := make(map[string]bool)
 	for i := 0; i < 10; i++ {

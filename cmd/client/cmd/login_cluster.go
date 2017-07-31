@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	"fmt"
-
 	context "golang.org/x/net/context"
 
+	"github.com/fatih/color"
 	"github.com/luizalabs/teresa-api/cmd/client/connection"
 	"github.com/luizalabs/teresa-api/pkg/client"
 	"github.com/spf13/cobra"
@@ -48,7 +47,7 @@ func login(cmd *cobra.Command, args []string) {
 	if err != nil {
 		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
-	fmt.Println("Login OK")
+	color.Green("Login OK")
 
 	if err = client.SaveToken(cfgFile, res.Token); err != nil {
 		client.PrintErrorAndExit("Error trying to save token in configuration file: %v", err)

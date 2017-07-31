@@ -8,7 +8,6 @@ import (
 	"runtime"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/luizalabs/teresa-api/cmd/client/connection"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/x-cray/logrus-prefixed-formatter"
@@ -16,8 +15,6 @@ import (
 
 // log object to use over the cli
 var log *logrus.Logger
-
-var connOpts connection.Options
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -98,15 +95,11 @@ func init() {
 	RootCmd.SuggestionsMinimumDistance = 3
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
 	RootCmd.PersistentFlags().BoolVar(&debugFlag, "debug", false, "debug mode")
-	RootCmd.PersistentFlags().BoolVar(&connOpts.TLSInsecure, "tlsinsecure", false, "allow insecure TLS connections")
-	RootCmd.PersistentFlags().BoolVar(&connOpts.NoTLS, "notls", false, "disable TLS")
 	RootCmd.PersistentFlags().MarkHidden("debug")
 }
 
 func initLog() {
-	// TODO: melhorar o log e enviar logs para o logentries
 	log = logrus.New()
-	// lgr.Formatter = new(logrus.JSONFormatter)
 	log.Formatter = new(prefixed.TextFormatter)
 	log.Out = os.Stdout
 	log.Level = logrus.InfoLevel

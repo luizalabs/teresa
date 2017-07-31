@@ -37,7 +37,7 @@ func login(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Error trying to get the user password: %v", err)
 	}
 
-	conn, err := connection.New(cfgFile, &connOpts)
+	conn, err := connection.New(cfgFile)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}

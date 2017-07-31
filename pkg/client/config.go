@@ -12,8 +12,10 @@ import (
 )
 
 type ClusterConfig struct {
-	Server string `yaml:"server"`
-	Token  string `yaml:"token"`
+	Server   string `yaml:"server"`
+	Token    string `yaml:"token"`
+	UseTLS   bool   `yaml:"tls"`
+	Insecure bool   `yaml:"insecure"`
 }
 
 type Config struct {

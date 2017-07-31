@@ -48,7 +48,7 @@ func setPassword(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Error trying to get the user password: %v", err)
 	}
 
-	conn, err := connection.New(cfgFile, &connOpts)
+	conn, err := connection.New(cfgFile)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
@@ -67,7 +67,7 @@ func deleteUser(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 		return
 	}
-	conn, err := connection.New(cfgFile, &connOpts)
+	conn, err := connection.New(cfgFile)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
@@ -105,7 +105,7 @@ func createUser(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 		return
 	}
-	conn, err := connection.New(cfgFile, &connOpts)
+	conn, err := connection.New(cfgFile)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}

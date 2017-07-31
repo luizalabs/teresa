@@ -177,7 +177,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	conn, err := connection.New(cfgFile, &connOpts)
+	conn, err := connection.New(cfgFile)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}

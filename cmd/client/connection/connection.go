@@ -5,15 +5,10 @@ import (
 	"google.golang.org/grpc"
 )
 
-type Options struct {
-	NoTLS       bool
-	TLSInsecure bool
-}
-
-func New(cfgFile string, opts *Options) (*grpc.ClientConn, error) {
+func New(cfgFile string) (*grpc.ClientConn, error) {
 	cfg, err := client.GetConfig(cfgFile)
 	if err != nil {
 		return nil, err
 	}
-	return client.New(*cfg, opts.NoTLS, opts.TLSInsecure)
+	return client.New(*cfg)
 }

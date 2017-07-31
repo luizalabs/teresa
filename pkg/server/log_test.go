@@ -8,14 +8,14 @@ import (
 
 func TestFilteredWriter(t *testing.T) {
 	var testCases = []struct {
-		filter   []string
+		filter   [][]byte
 		in       string
 		expected string
 	}{
-		{[]string{"please ignore"}, "useless msg please ignore", ""},
-		{[]string{}, "a message", "a message"},
-		{[]string{"please ignore"}, "very important info", "very important info"},
-		{[]string{"please ignore", "useless"}, "useless msg", ""},
+		{[][]byte{[]byte("please ignore")}, "useless msg please ignore", ""},
+		{[][]byte{}, "a message", "a message"},
+		{[][]byte{[]byte("please ignore")}, "very important info", "very important info"},
+		{[][]byte{[]byte("please ignore"), []byte("useless")}, "useless msg", ""},
 	}
 
 	for _, tc := range testCases {

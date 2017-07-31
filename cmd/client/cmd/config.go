@@ -110,9 +110,18 @@ func setCluster(cmd *cobra.Command, args []string) {
 	if server == "" {
 		client.PrintErrorAndExit("Server URI not provided")
 	}
-	useTLS, _ := cmd.Flags().GetBool("tls")
-	insecure, _ := cmd.Flags().GetBool("tlsinsecure")
-	current, _ := cmd.Flags().GetBool("current")
+	useTLS, err := cmd.Flags().GetBool("tls")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid tls parameter")
+	}
+	insecure, err := cmd.Flags().GetBool("tlsinsecure")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid tlsinsecure parameter")
+	}
+	current, err := cmd.Flags().GetBool("current")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid current parameter")
+	}
 	name := args[0]
 
 	c, err := client.ReadConfigFile(cfgFile)

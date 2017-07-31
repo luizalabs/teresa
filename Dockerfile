@@ -4,7 +4,7 @@ RUN mkdir -p /go/src/github.com/luizalabs/teresa-api
 WORKDIR /go/src/github.com/luizalabs/teresa-api
 COPY . /go/src/github.com/luizalabs/teresa-api
 
-RUN go build -i -o teresa ./cmd/server/main.go
+RUN make build-server
 
-CMD ["./teresa", "run", "--port", "8080"]
+CMD ["./teresa-server", "run", "--port", "8080"]
 EXPOSE 8080

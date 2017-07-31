@@ -3,6 +3,8 @@ IMAGE_NAME=teresa
 IMAGE_VERSION=0.1.1
 IMAGE_INSTANCE=default
 TERESA_DOCKER_PORT ?= 8080
+TERESA_VERSION ?= $(shell git describe --always --tags)
+TERESA_API=github.com/luizalabs/teresa-api
 
 DOCKER_RUN_CMD=docker run \
 	-e TERESAK8S_HOST=$(TERESAK8S_HOST) \
@@ -64,8 +66,11 @@ shell:
 run-api-server:
 	go run ./cmd/server/main.go run --port 8080
 
+build-server:
+	@go build -ldflags "-X $(TERESA_API)/pkg/version.Version=$(TERESA_VERSION)" -o teresa-server $(TERESA_API)/cmd/server
+
 build-client:
-	@go build -o teresa cmd/client/main.go
+	@go build -ldflags "-X $(TERESA_API)/pkg/version.Version=$(TERESA_VERSION)" -o teresa $(TERESA_API)/cmd/client
 
 gen-grpc-stubs:
 	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/user/*.proto

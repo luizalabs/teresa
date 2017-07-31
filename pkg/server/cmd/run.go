@@ -23,7 +23,7 @@ var runCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(runCmd)
 	runCmd.Flags().String("port", "50051", "TCP port to create a listener")
-	runCmd.Flags().Bool("notls", false, "disable TLS")
+	runCmd.Flags().Bool("tls", false, "enable TLS")
 }
 
 func runServer(cmd *cobra.Command, args []string) {
@@ -32,9 +32,9 @@ func runServer(cmd *cobra.Command, args []string) {
 		log.WithError(err).Fatal("invalid port parameter")
 	}
 
-	notls, err := cmd.Flags().GetBool("notls")
+	useTLS, err := cmd.Flags().GetBool("tls")
 	if err != nil {
-		log.WithError(err).Fatal("invalid notls parameter")
+		log.WithError(err).Fatal("invalid tls parameter")
 	}
 
 	db, err := getDB()
@@ -63,7 +63,7 @@ func runServer(cmd *cobra.Command, args []string) {
 	}
 
 	var tlsCert *tls.Certificate
-	if !notls {
+	if useTLS {
 		tlsCert, err = sec.TLSCertificate()
 		if err != nil {
 			log.WithError(err).Fatal("failed to get TLS cert")

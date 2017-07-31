@@ -9,11 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	serverFlag  string
-	currentFlag bool
-)
-
 // configCmd represents the config command
 var configCmd = &cobra.Command{
 	Use:   "config",
@@ -77,8 +72,10 @@ func init() {
 
 	configCmd.AddCommand(viewConfigCmd)
 
-	setClusterCmd.Flags().StringVarP(&serverFlag, "server", "s", "", "URI of the server")
-	setClusterCmd.Flags().BoolVar(&currentFlag, "current", false, "Set this server to future use")
+	setClusterCmd.Flags().String("server", "", "URI of the server")
+	setClusterCmd.Flags().Bool("tls", false, "Enables TLS")
+	setClusterCmd.Flags().Bool("tlsinsecure", false, "Allow insecure TLS connections")
+	setClusterCmd.Flags().Bool("current", false, "Set this server to future use")
 	configCmd.AddCommand(setClusterCmd)
 
 	configCmd.AddCommand(useClusterCmd)
@@ -109,9 +106,13 @@ func setCluster(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 		return
 	}
-	if serverFlag == "" {
+	server, _ := cmd.Flags().GetString("server")
+	if server == "" {
 		client.PrintErrorAndExit("Server URI not provided")
 	}
+	useTLS, _ := cmd.Flags().GetBool("tls")
+	insecure, _ := cmd.Flags().GetBool("tlsinsecure")
+	current, _ := cmd.Flags().GetBool("current")
 	name := args[0]
 
 	c, err := client.ReadConfigFile(cfgFile)
@@ -122,8 +123,12 @@ func setCluster(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	c.Clusters[name] = client.ClusterConfig{Server: serverFlag}
-	if currentFlag {
+	c.Clusters[name] = client.ClusterConfig{
+		Server:   server,
+		UseTLS:   useTLS,
+		Insecure: insecure,
+	}
+	if current {
 		c.CurrentCluster = name
 	}
 

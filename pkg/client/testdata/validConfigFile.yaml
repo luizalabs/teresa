@@ -2,7 +2,11 @@ clusters:
   cluster-a:
     server: https://teresa-a.com
     token: auth-token-cluster-a
+    tls: false
+    insecure: false
   cluster-b:
     server: https://teresa-b.com
     token: auth-token-cluster-b
+    tls: true
+    insecure: false
 current_cluster: cluster-a

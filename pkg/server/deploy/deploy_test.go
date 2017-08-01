@@ -61,7 +61,7 @@ func TestDeployPermissionDenied(t *testing.T) {
 		st.NewFake(),
 	)
 	u := &storage.User{Email: "bad-user@luizalabs.com"}
-	if _, err := ops.Deploy(u, "teresa", &fakeReadSeeker{}, "test", 1); err != auth.ErrPermissionDenied {
+	if _, err := ops.Deploy(u, "teresa", &fakeReadSeeker{}, "test", &Options{}); err != auth.ErrPermissionDenied {
 		t.Errorf("expecter ErrPermissionDenied, got %v", err)
 	}
 }
@@ -88,7 +88,7 @@ func TestDeploy(t *testing.T) {
 		st.NewFake(),
 	)
 	u := &storage.User{Email: "gopher@luizalabs.com"}
-	r, err := ops.Deploy(u, "teresa", tarBall, "test", 1)
+	r, err := ops.Deploy(u, "teresa", tarBall, "test", &Options{})
 	if err != nil {
 		t.Fatal("error making deploy:", err)
 	}
@@ -100,7 +100,7 @@ func TestCreateDeploy(t *testing.T) {
 	a := &app.App{Name: expectedName}
 	expectedDescription := "test-description"
 	expectedSlugURL := "test-slug"
-	expectedRevisionHistoryLimit := 3
+	opts := &Options{RevisionHistoryLimit: 3}
 
 	fakeK8s := new(fakeK8sOperations)
 	ops := NewDeployOperations(
@@ -115,7 +115,7 @@ func TestCreateDeploy(t *testing.T) {
 		nil,
 		expectedDescription,
 		expectedSlugURL,
-		expectedRevisionHistoryLimit,
+		opts,
 	)
 
 	if err != nil {
@@ -131,8 +131,8 @@ func TestCreateDeploy(t *testing.T) {
 	if fakeK8s.lastDeploySpec.SlugURL != expectedSlugURL {
 		t.Errorf("expected %s, got %s", expectedSlugURL, fakeK8s.lastDeploySpec.SlugURL)
 	}
-	if fakeK8s.lastDeploySpec.RevisionHistoryLimit != expectedRevisionHistoryLimit {
-		t.Errorf("expected %d, got %d", expectedRevisionHistoryLimit, fakeK8s.lastDeploySpec.RevisionHistoryLimit)
+	if fakeK8s.lastDeploySpec.RevisionHistoryLimit != opts.RevisionHistoryLimit {
+		t.Errorf("expected %d, got %d", opts.RevisionHistoryLimit, fakeK8s.lastDeploySpec.RevisionHistoryLimit)
 	}
 }
 
@@ -152,7 +152,7 @@ func TestCreateDeployReturnError(t *testing.T) {
 		nil,
 		"some desc",
 		"some slug",
-		1,
+		&Options{},
 	)
 
 	if err != expectedErr {
@@ -230,6 +230,7 @@ func TestBuildApp(t *testing.T) {
 			"123456",
 			"/slug.tgz",
 			new(bytes.Buffer),
+			&Options{},
 		)
 
 		if err != tc.expectedErr {
@@ -268,6 +269,7 @@ func TestRunReleaseCmd(t *testing.T) {
 			"123456",
 			"/slug.tgz",
 			new(bytes.Buffer),
+			&Options{},
 		)
 
 		if err != tc.expectedErr {

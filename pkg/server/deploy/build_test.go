@@ -49,6 +49,7 @@ func TestNewBuildSpec(t *testing.T) {
 	expectedDeployId := "123"
 	expectedTarBallLocation := "narnia"
 	expectedBuildDest := "nowhere"
+	opts := &Options{SlugBuilderImage: "image"}
 
 	ps := newBuildSpec(
 		&app.App{},
@@ -56,14 +57,15 @@ func TestNewBuildSpec(t *testing.T) {
 		expectedTarBallLocation,
 		expectedBuildDest,
 		st.NewFake(),
+		opts,
 	)
 
 	if !strings.HasSuffix(ps.Name, expectedDeployId) {
 		t.Errorf("expected build-%s, got %s", expectedDeployId, ps.Name)
 	}
 
-	if ps.Image != slugBuilderImage {
-		t.Errorf("expected %s, got %s", slugBuilderImage, ps.Image)
+	if ps.Image != opts.SlugBuilderImage {
+		t.Errorf("expected %s, got %s", opts.SlugBuilderImage, ps.Image)
 	}
 
 	ev := map[string]string{
@@ -83,14 +85,15 @@ func TestNewCommandRunSpec(t *testing.T) {
 	expectedBuildId := "1234"
 	a := &app.App{Name: "teresa"}
 	s := st.NewFake()
+	opts := &Options{SlugRunnerImage: "image"}
 
-	ps := newRunCommandSpec(a, expectedBuildId, expectedCommand, expectedSlugURL, s)
+	ps := newRunCommandSpec(a, expectedBuildId, expectedCommand, expectedSlugURL, s, opts)
 	if !strings.HasSuffix(ps.Name, fmt.Sprintf("%s-%s", a.Name, expectedBuildId)) {
 		t.Errorf("expected release-%s-%s, got %s", a.Name, expectedBuildId, ps.Name)
 	}
 
-	if ps.Image != slugRunnerImage {
-		t.Errorf("expected %s, got %s", slugRunnerImage, ps.Image)
+	if ps.Image != opts.SlugRunnerImage {
+		t.Errorf("expected %s, got %s", opts.SlugRunnerImage, ps.Image)
 	}
 
 	ev := map[string]string{
@@ -109,7 +112,7 @@ func TestNewDeploySpec(t *testing.T) {
 	expectedSlugURL := "http://teresa.io/slug.tgz"
 	expectedProcessType := "worker"
 	expectedName := "deploy-test"
-	expectedRevisionHistoryLimit := 5
+	opts := &Options{RevisionHistoryLimit: 5}
 
 	ds := newDeploySpec(
 		&app.App{Name: expectedName},
@@ -118,7 +121,7 @@ func TestNewDeploySpec(t *testing.T) {
 		expectedDescription,
 		expectedSlugURL,
 		expectedProcessType,
-		expectedRevisionHistoryLimit,
+		opts,
 	)
 
 	if len(ds.Args) != 2 || ds.Args[1] != expectedProcessType {
@@ -137,7 +140,7 @@ func TestNewDeploySpec(t *testing.T) {
 		t.Errorf("expected %s, got %s", expectedName, ds.PodSpec.Name)
 	}
 
-	if ds.RevisionHistoryLimit != expectedRevisionHistoryLimit {
-		t.Errorf("expected %d, got %d", expectedRevisionHistoryLimit, ds.RevisionHistoryLimit)
+	if ds.RevisionHistoryLimit != opts.RevisionHistoryLimit {
+		t.Errorf("expected %d, got %d", opts.RevisionHistoryLimit, ds.RevisionHistoryLimit)
 	}
 }

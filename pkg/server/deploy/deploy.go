@@ -61,7 +61,7 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 	go func() {
 		defer w.Close()
 		if err = ops.buildApp(tarBall, a, deployId, buildDest, w); err != nil {
-			log.WithError(err).Errorf("Building app %s", appName)
+			log.WithError(err).WithField("id", deployId).Errorf("Building app %s", appName)
 			return
 		}
 
@@ -69,7 +69,7 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 		releaseCmd := confFiles.Procfile[ProcfileReleaseCmd]
 		if confFiles.Procfile != nil && releaseCmd != "" {
 			if err := ops.runReleaseCmd(a, deployId, slugURL, w); err != nil {
-				log.WithError(err).Errorf("Running release command %s in app %s", releaseCmd, appName)
+				log.WithError(err).WithField("id", deployId).Errorf("Running release command %s in app %s", releaseCmd, appName)
 				return
 			}
 		}

@@ -29,6 +29,11 @@ type k8sClient struct {
 	defaultServiceType string
 }
 
+func (k *k8sClient) HealthCheck() error {
+	_, err := k.kc.CoreV1().Namespaces().List(k8sv1.ListOptions{})
+	return err
+}
+
 func (k *k8sClient) getNamespace(namespace string) (*k8sv1.Namespace, error) {
 	ns, err := k.kc.CoreV1().Namespaces().Get(namespace)
 	if err != nil {

@@ -566,6 +566,11 @@
 			"Rev": "0aa62d5ddceb50dbcb909d790b5345affd3669b6"
 		},
 		{
+			"ImportPath": "github.com/soheilhy/cmux",
+			"Comment": "v0.1.2-13-g34a8ab6",
+			"Rev": "34a8ab6cda23238fe53bfa79c2f3fd77a9896540"
+		},
+		{
 			"ImportPath": "github.com/spf13/afero",
 			"Rev": "52e4a6cfac46163658bd4f123c49b6ee7dc75f78"
 		},

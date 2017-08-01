@@ -9,9 +9,7 @@ import (
 )
 
 const (
-	slugBuilderImage = "luizalabs/slugbuilder:v2.4.9"
-	slugRunnerImage  = "luizalabs/slugrunner:v2.2.4"
-	DefaultPort      = 5000
+	DefaultPort = 5000
 )
 
 type PodVolumeMountsSpec struct {
@@ -65,10 +63,10 @@ func newPodSpec(name, image string, a *app.App, envVars map[string]string, fileS
 	return ps
 }
 
-func newBuildSpec(a *app.App, deployId, tarBallLocation, buildDest string, fileStorage st.Storage) *PodSpec {
+func newBuildSpec(a *app.App, deployId, tarBallLocation, buildDest string, fileStorage st.Storage, opts *Options) *PodSpec {
 	return newPodSpec(
 		fmt.Sprintf("build-%s", deployId),
-		slugBuilderImage,
+		opts.SlugBuilderImage,
 		a,
 		map[string]string{
 			"TAR_PATH":        tarBallLocation,
@@ -79,10 +77,10 @@ func newBuildSpec(a *app.App, deployId, tarBallLocation, buildDest string, fileS
 	)
 }
 
-func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, description, slugURL, processType string, rhl int) *DeploySpec {
+func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, description, slugURL, processType string, opts *Options) *DeploySpec {
 	ps := newPodSpec(
 		a.Name,
-		slugRunnerImage,
+		opts.SlugRunnerImage,
 		a,
 		map[string]string{
 			"APP":             a.Name,
@@ -98,7 +96,7 @@ func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, descri
 		Description:          description,
 		SlugURL:              slugURL,
 		PodSpec:              *ps,
-		RevisionHistoryLimit: rhl,
+		RevisionHistoryLimit: opts.RevisionHistoryLimit,
 	}
 
 	if tYaml != nil {
@@ -112,10 +110,10 @@ func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, descri
 	return ds
 }
 
-func newRunCommandSpec(a *app.App, deployId, command, slugURL string, fileStorage st.Storage) *PodSpec {
+func newRunCommandSpec(a *app.App, deployId, command, slugURL string, fileStorage st.Storage, opts *Options) *PodSpec {
 	ps := newPodSpec(
 		fmt.Sprintf("release-%s-%s", a.Name, deployId),
-		slugRunnerImage,
+		opts.SlugRunnerImage,
 		a,
 		map[string]string{
 			"APP":             a.Name,

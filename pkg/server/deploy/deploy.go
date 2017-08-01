@@ -17,7 +17,7 @@ import (
 const ProcfileReleaseCmd = "release"
 
 type Operations interface {
-	Deploy(user *storage.User, appName string, tarBall io.ReadSeeker, description string, rhl int) (io.ReadCloser, error)
+	Deploy(user *storage.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, error)
 }
 
 type K8sOperations interface {
@@ -33,7 +33,7 @@ type DeployOperations struct {
 	k8s         K8sOperations
 }
 
-func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall io.ReadSeeker, description string, rhl int) (io.ReadCloser, error) {
+func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, error) {
 	a, err := ops.appOps.Get(appName)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 	r, w := io.Pipe()
 	go func() {
 		defer w.Close()
-		if err = ops.buildApp(tarBall, a, deployId, buildDest, w); err != nil {
+		if err = ops.buildApp(tarBall, a, deployId, buildDest, w, opts); err != nil {
 			log.WithError(err).WithField("id", deployId).Errorf("Building app %s", appName)
 			return
 		}
@@ -68,13 +68,13 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 		slugURL := fmt.Sprintf("%s/slug.tgz", buildDest)
 		releaseCmd := confFiles.Procfile[ProcfileReleaseCmd]
 		if confFiles.Procfile != nil && releaseCmd != "" {
-			if err := ops.runReleaseCmd(a, deployId, slugURL, w); err != nil {
+			if err := ops.runReleaseCmd(a, deployId, slugURL, w, opts); err != nil {
 				log.WithError(err).WithField("id", deployId).Errorf("Running release command %s in app %s", releaseCmd, appName)
 				return
 			}
 		}
 
-		if err := ops.createDeploy(a, confFiles.TeresaYaml, description, slugURL, rhl); err != nil {
+		if err := ops.createDeploy(a, confFiles.TeresaYaml, description, slugURL, opts); err != nil {
 			log.WithError(err).Errorf("Creating deploy app %s", appName)
 			return
 		}
@@ -87,8 +87,8 @@ func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall 
 	return r, nil
 }
 
-func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugPath string, stream io.Writer) error {
-	runCommandSpec := newRunCommandSpec(a, deployId, ProcfileReleaseCmd, slugPath, ops.fileStorage)
+func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugPath string, stream io.Writer, opts *Options) error {
+	runCommandSpec := newRunCommandSpec(a, deployId, ProcfileReleaseCmd, slugPath, ops.fileStorage, opts)
 
 	fmt.Fprintln(stream, "Running release command")
 	err := ops.podRun(runCommandSpec, stream)
@@ -101,8 +101,8 @@ func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugPath string
 	return nil
 }
 
-func (ops *DeployOperations) createDeploy(a *app.App, tYaml *TeresaYaml, description, slugPath string, rhl int) error {
-	deploySpec := newDeploySpec(a, tYaml, ops.fileStorage, description, slugPath, a.ProcessType, rhl)
+func (ops *DeployOperations) createDeploy(a *app.App, tYaml *TeresaYaml, description, slugPath string, opts *Options) error {
+	deploySpec := newDeploySpec(a, tYaml, ops.fileStorage, description, slugPath, a.ProcessType, opts)
 	return ops.k8s.CreateOrUpdateDeploy(deploySpec)
 }
 
@@ -123,13 +123,13 @@ func (ops *DeployOperations) exposeService(a *app.App, w io.Writer) error {
 	return nil // already exposed
 }
 
-func (ops *DeployOperations) buildApp(tarBall io.ReadSeeker, a *app.App, deployId, buildDest string, stream io.Writer) error {
+func (ops *DeployOperations) buildApp(tarBall io.ReadSeeker, a *app.App, deployId, buildDest string, stream io.Writer, opts *Options) error {
 	tarBall.Seek(0, 0)
 	tarBallLocation := fmt.Sprintf("deploys/%s/%s/in/app.tar.gz", a.Name, deployId)
 	if err := ops.fileStorage.UploadFile(tarBallLocation, tarBall); err != nil {
 		return err
 	}
-	buildSpec := newBuildSpec(a, deployId, tarBallLocation, buildDest, ops.fileStorage)
+	buildSpec := newBuildSpec(a, deployId, tarBallLocation, buildDest, ops.fileStorage, opts)
 	err := ops.podRun(buildSpec, stream)
 	if err != nil {
 		if err == ErrPodRunFail {

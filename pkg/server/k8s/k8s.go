@@ -3,6 +3,7 @@ package k8s
 import (
 	"github.com/luizalabs/teresa-api/pkg/server/app"
 	"github.com/luizalabs/teresa-api/pkg/server/deploy"
+	"github.com/luizalabs/teresa-api/pkg/server/healthcheck"
 	"k8s.io/client-go/pkg/api"
 )
 
@@ -20,6 +21,7 @@ type Config struct {
 type Client interface {
 	app.K8sOperations
 	deploy.K8sOperations
+	healthcheck.K8sOperations
 }
 
 func validateConfig(conf *Config) error {

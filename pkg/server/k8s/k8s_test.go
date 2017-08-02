@@ -14,7 +14,7 @@ func TestValidateConfig(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		conf := &Config{InCluster: false, DefaultServiceType: tc.serviceType}
+		conf := &Config{ConfigFile: "test", DefaultServiceType: tc.serviceType}
 		if err := validateConfig(conf); err != tc.expectedError {
 			t.Errorf("expected %v, got %v", tc.expectedError, err)
 		}

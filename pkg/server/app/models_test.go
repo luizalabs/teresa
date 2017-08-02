@@ -3,7 +3,7 @@ package app
 import (
 	"reflect"
 	"testing"
-//	"fmt"
+	"strings"
 
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
 )
@@ -24,44 +24,6 @@ func deepEqual(x, y interface{}) bool {
 	v2 := reflect.ValueOf(y)
 
 	return deepValueEqual(v1, v2)
-}
-
-func deepListEqual(x, y interface{}) bool {
-	if x == nil || y == nil {
-		return x == y
-	}
-
-	v1 := reflect.ValueOf(x)
-	v2 := reflect.ValueOf(y)
-
-	return deepValueListEqual(v1, v2)
-}
-
-func deepValueListEqual(v1, v2 reflect.Value) bool {
-	if !v1.IsValid() || !v2.IsValid() {
-		return v1.IsValid() == v2.IsValid()
-	}
-
-	switch v1.Kind() {
-	case reflect.Slice:
-		if v1.IsNil() != v2.IsNil() {
-			return false
-		}
-		if v1.Len() != v2.Len() {
-			return false
-		}
-		if v1.Pointer() == v2.Pointer() {
-			return true
-		}
-		for i := 0; i < v1.Len(); i++ {
-			if !deepValueEqual(v1.Index(i), v2.Index(i)) {
-				return false
-			}
-		}
-		return true
-	default:
-		return v1.Interface() == v2.Interface()
-	}
 }
 
 func deepValueEqual(v1, v2 reflect.Value) bool {
@@ -207,15 +169,34 @@ func TestNewListResponse(t *testing.T) {
 		Name:		"teste",
 	}
 	lists = append(lists, list)
-	item := ListTest {
-		team:	list.Team,
-		app:	list.Name,
-		url:	"host1",
+	items := []*appb.ListResponse_App{}
+
+	for _, item := range lists {
+		if item == nil {
+			continue
+		}
+		var tmp []string
+		for _, elt := range item.Addresses {
+			tmp = append(tmp, elt.Hostname)
+		} 
+		addrs := strings.Join(tmp, ",")
+
+		appName := &appb.ListResponse_App{
+			Url:  	addrs,
+			App:  	item.Name,
+			Team: 	item.Team,  
+		}
+		items = append(items, appName)
 	}
+
+	items2 := &appb.ListResponse{
+		Apps:      items,
+	}
+
 	resp := newListResponse(lists)
 
-	if !deepListEqual(item, resp) {
-			t.Errorf("expected %v, got %v", resp, item)
+	if !deepEqual(resp, items2) {
+			t.Errorf("expected %v, got %v", resp, items2)
 		}
 }	
 

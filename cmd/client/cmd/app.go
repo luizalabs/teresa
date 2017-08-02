@@ -190,7 +190,7 @@ func appList(cmd *cobra.Command, args []string) {
 	table.SetAutoWrapText(false)
 	for _, t := range resp.Apps {
 		for _, s := range []string{t.Url} {
-			if s = "" {
+			if s == "" {
 				s = "n/a"
 			}
 			r := []string{t.Team, t.App, s}

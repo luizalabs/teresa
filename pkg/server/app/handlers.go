@@ -3,6 +3,8 @@ package app
 import (
 	"bufio"
 
+	log "github.com/Sirupsen/logrus"
+
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 
@@ -42,6 +44,7 @@ func (s *Service) Logs(req *appb.LogsRequest, stream appb.App_LogsServer) error 
 	return nil
 }
 
+<<<<<<< ca65c361ae0acaeb531bc67b5f6b29b4f8aa7186
 func (s *Service) Info(ctx context.Context, req *appb.InfoRequest) (*appb.InfoResponse, error) {
 	user := ctx.Value("user").(*storage.User)
 
@@ -78,19 +81,13 @@ func (s *Service) List(req *appb.Empty, stream appb.ListResponse) error {
 	ctx := stream.Context()
 	user := ctx.Value("user").(*storage.User)
 
-	rc, err := s.ops.List(user, req.team)
+	list, err := s.ops.List(user)
 	if err != nil {
-		return err
+		log.Errorf("app list failed: %v", err)
+		return nil, grpcErr(err)
 	}
-	defer rc.Close()
 
-	scanner := bufio.NewScanner(rc)
-	for scanner.Scan() {
-		if err := stream.Send(&appb.ListResponse{Text: scanner.Text()}); err != nil {
-			return err
-		}
-	}
-	return nil
+	return newListResponse(list), nil
 }
 
 func (s *Service) RegisterService(grpcServer *grpc.Server) {

@@ -173,9 +173,9 @@ func (m *CreateRequest_AutoScale) GetMin() int32 {
 }
 
 type ListResponse struct {
-	App  string `protobuf:"bytes,1,opt,name=app" json:"app,omitempty"`
-	Team string `protobuf:"bytes,2,opt,name=team" json:"team,omitempty"`
-	Url  string `protobuf:"bytes,3,opt,name=url" json:"url,omitempty"`
+
+	Apps []*ListResponse_App `protobuf:"bytes,1,rep,name=apps" json:"apps,omitempty"`
+
 }
 
 func (m *ListResponse) Reset()                    { *m = ListResponse{} }
@@ -183,21 +183,40 @@ func (m *ListResponse) String() string            { return proto.CompactTextStri
 func (*ListResponse) ProtoMessage()               {}
 func (*ListResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
-func (m *ListResponse) GetApp() string {
+func (m *ListResponse) GetApps() []*ListResponse_App {
 	if m != nil {
-		return m.App
+		return m.Apps
 	}
-	return ""
+	return nil
 }
 
-func (m *ListResponse) GetTeam() string {
+type ListResponse_App struct {
+	Team string `protobuf:"bytes,1,opt,name=team" json:"team,omitempty"`
+	App  string `protobuf:"bytes,2,opt,name=app" json:"app,omitempty"`
+	Url  string `protobuf:"bytes,3,opt,name=url" json:"url,omitempty"`
+}
+
+func (m *ListResponse_App) Reset()                    { *m = ListResponse_App{} }
+func (m *ListResponse_App) String() string            { return proto.CompactTextString(m) }
+func (*ListResponse_App) ProtoMessage()               {}
+func (*ListResponse_App) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1, 0} }
+
+func (m *ListResponse_App) GetTeam() string {
+
 	if m != nil {
 		return m.Team
 	}
 	return ""
 }
 
-func (m *ListResponse) GetUrl() string {
+func (m *ListResponse_App) GetApp() string {
+	if m != nil {
+		return m.App
+	}
+	return ""
+}
+
+func (m *ListResponse_App) GetUrl() string {
 	if m != nil {
 		return m.Url
 	}
@@ -574,11 +593,7 @@ type Empty struct {
 func (m *Empty) Reset()                    { *m = Empty{} }
 func (m *Empty) String() string            { return proto.CompactTextString(m) }
 func (*Empty) ProtoMessage()               {}
-<<<<<<< 75c8b10a9e45b7509ce4baa029e16baab5a49967
-func (*Empty) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
-=======
 func (*Empty) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
->>>>>>> Starting Teresa app list developement
 
 func init() {
 	proto.RegisterType((*CreateRequest)(nil), "app.CreateRequest")
@@ -586,6 +601,7 @@ func init() {
 	proto.RegisterType((*CreateRequest_Limits_LimitRangeQuantity)(nil), "app.CreateRequest.Limits.LimitRangeQuantity")
 	proto.RegisterType((*CreateRequest_AutoScale)(nil), "app.CreateRequest.AutoScale")
 	proto.RegisterType((*ListResponse)(nil), "app.ListResponse")
+	proto.RegisterType((*ListResponse_App)(nil), "app.ListResponse.App")
 	proto.RegisterType((*LogsRequest)(nil), "app.LogsRequest")
 	proto.RegisterType((*LogsResponse)(nil), "app.LogsResponse")
 	proto.RegisterType((*InfoRequest)(nil), "app.InfoRequest")

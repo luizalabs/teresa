@@ -36,9 +36,14 @@ message CreateRequest {
 }
 
 message ListResponse {
-    string app  = 1;
-    string team = 2;
-    string url  = 3;
+    
+    message App {
+        string team = 1;
+        string app  = 2;
+        string url  = 3;    
+    }
+    repeated App apps = 1;
+
 }
 
 message LogsRequest {

@@ -11,7 +11,6 @@ import (
 	"github.com/luizalabs/teresa-api/cmd/client/connection"
 	"github.com/luizalabs/teresa-api/pkg/client"
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
 	"golang.org/x/net/context"
@@ -157,9 +156,57 @@ var appListCmd = &cobra.Command{
 	Short:   "List all apps",
 	Long:    "Return all apps with address and team.",
 	Example: "  $ teresa app list",
+
+	Run: appList,
+}
+
+func appList(cmd *cobra.Command, args []string) {
+	showApps, _ := cmd.Flags().GetBool("show-apps")
+
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
+		return
+	}
+	defer conn.Close()
+
+	cli := appb.NewAppClient(conn)
+	resp, err := cli.List(context.Background(), &appb.Empty{})
+	fmt.Println(resp)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+
+	if len(resp.Apps) == 0 {
+		fmt.Println("You do not belong to any team")
+		return
+	}
+
+	fmt.Println("Apps:")
+	for _, t := range resp.Apps {
+		fmt.Print(color.CyanString(t.Team))
+		fmt.Print(color.CyanString(t.App))
+		for _, s := range []string{t.Url} {
+			if s != "" {
+				fmt.Printf(" - %s", s)
+			}
+		}
+		fmt.Print("\n")
+		if !showApps {
+			continue
+		}
+//for _, u := range t.Apps {
+//	fmt.Printf("- %s (%s)\n", u.Name, u.Url, u.Team
+//}
+	}
+}
+
+/*
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tc := NewTeresa()
 		apps, err := tc.GetApps()
+		fmt.Println(apps)
 		if err != nil {
 			if isNotFound(err) {
 				return newCmdError("You have no apps")
@@ -184,7 +231,9 @@ var appListCmd = &cobra.Command{
 		table.Render()
 		return nil
 	},
+
 }
+*/
 
 var appInfoCmd = &cobra.Command{
 	Use:     "info <name>",
@@ -445,6 +494,8 @@ func init() {
 	// App logs
 	appLogsCmd.Flags().Int64("lines", 10, "number of lines")
 	appLogsCmd.Flags().Bool("follow", false, "follow logs")
+	// App list
+	appListCmd.Flags().Bool("show-apps", false, "Show app(s) from the team")
 }
 
 func appLogs(cmd *cobra.Command, args []string) {

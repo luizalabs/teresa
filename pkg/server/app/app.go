@@ -26,6 +26,7 @@ type Operations interface {
 	HasPermission(user *storage.User, appName string) bool
 	SetEnv(user *storage.User, appName string, evs []*EnvVar) error
 	UnsetEnv(user *storage.User, appName string, evs []string) error
+	List(user *storage.User)  ([]*List, error)
 }
 
 type K8sOperations interface {
@@ -46,6 +47,7 @@ type K8sOperations interface {
 	SetNamespaceAnnotations(namespace string, annotations map[string]string) error
 	DeleteDeployEnvVars(namespace, name string, evNames []string) error
 	CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error
+	FindAppByLabel(label string) ([]string, error)
 }
 
 type AppOperations struct {
@@ -326,6 +328,45 @@ func checkForProtectedEnvVars(evsNames []string) error {
 		}
 	}
 	return nil
+}
+
+func (ops *AppOperations) List(user *storage.User) ([]*List, error) {
+	teams, err := ops.tops.ListByUser(user.Email)
+	if err != nil {
+		log.Errorf("ErrNotFound")
+	}
+	lists := make([]*List, 0)
+	for _, team := range teams {
+		NameApps, err := ops.kops.FindAppByLabel(team.Name)
+		if err != nil {
+			log.Errorf("ErrNotFound")
+		}
+		for _, app := range NameApps {
+			AppAdd, err := ops.kops.AddressList(string(app))
+			if err != nil {
+				log.Errorf("ErrNotFound")
+			}
+			list := &List{
+				Team:      team.Name,
+				Addresses: AppAdd,
+				Name:	  string(app),
+			}
+			lists = append(lists, list)
+		}
+	}
+	return lists, nil
+}
+
+
+func (ops *AppOperations) TeamName(appName string) (string, error) {
+	teamName, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
+	if err != nil {
+		if ops.kops.IsNotFound(err) {
+			return "", newAppErr(ErrNotFound, err)
+		}
+		return "", newAppErr(ErrUnknown, err)
+	}
+	return teamName, nil
 }
 
 func NewOperations(tops team.Operations, kops K8sOperations, st st.Storage) Operations {

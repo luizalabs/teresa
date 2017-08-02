@@ -64,6 +64,7 @@ func (f *FakeOperations) Logs(user *storage.User, appName string, lines int64, f
 	return r, nil
 }
 
+<<<<<<< ca65c361ae0acaeb531bc67b5f6b29b4f8aa7186
 func (f *FakeOperations) Info(user *storage.User, appName string) (*Info, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
@@ -77,6 +78,23 @@ func (f *FakeOperations) Info(user *storage.User, appName string) (*Info, error)
 	}
 
 	return &Info{}, nil
+}
+
+func (f *FakeOperations) List(user *storage.User) ([]*List, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if !hasPerm(user.Email) {
+		return nil, teresa_errors.New(auth.ErrPermissionDenied, fmt.Errorf("error"))
+	}
+
+	if _, found := f.Storage[appName]; !found {
+		return nil, teresa_errors.New(ErrNotFound, fmt.Errorf("error"))
+	}
+
+	var desc []*List
+
+	return desc, nil
 }
 
 func (f *FakeOperations) TeamName(appName string) (string, error) {

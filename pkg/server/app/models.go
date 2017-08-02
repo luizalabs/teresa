@@ -61,16 +61,16 @@ type Info struct {
 	Status    *Status
 	AutoScale *AutoScale
 	Limits    *Limits
-} 
+}
 
 type List struct {
-	Team      string		
+	Team      string
 	Addresses []*Address
-	Name 	   string
+	Name      string
 }
 
 type AppList struct {
-	AppList		string 	
+	AppList string
 }
 
 func newSliceLrq(s []*appb.CreateRequest_Limits_LimitRangeQuantity) []*LimitRangeQuantity {
@@ -255,7 +255,7 @@ func newListResponse(list []*List) *appb.ListResponse {
 		return nil
 	}
 
- 	appNames := []*appb.ListResponse_App{}
+	appNames := []*appb.ListResponse_App{}
 
 	for _, item := range list {
 		if item == nil {
@@ -264,18 +264,18 @@ func newListResponse(list []*List) *appb.ListResponse {
 		var tmp []string
 		for _, elt := range item.Addresses {
 			tmp = append(tmp, elt.Hostname)
-		} 
+		}
 		addrs := strings.Join(tmp, ",")
 
 		appName := &appb.ListResponse_App{
-			Url:  	addrs,
-			App:  	item.Name,
-			Team: 	item.Team,  
+			Url:  addrs,
+			App:  item.Name,
+			Team: item.Team,
 		}
 		appNames = append(appNames, appName)
 	}
 
 	return &appb.ListResponse{
-		Apps:      appNames,
+		Apps: appNames,
 	}
 }

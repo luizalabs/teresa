@@ -6,12 +6,11 @@ import (
 )
 
 var (
-
 	ErrAlreadyExists   = status.Errorf(codes.AlreadyExists, "App already exists")
 	ErrNotFound        = status.Errorf(codes.NotFound, "App not found")
 	ErrProtectedEnvVar = status.Errorf(codes.InvalidArgument, "Can't change protected env vars")
-	ErrTeamNotFound  = status.Errorf(codes.NotFound, "Team not found")
-	ErrUnknown       = status.Errorf(codes.Unknown, "Unknown error")
+	ErrTeamNotFound    = status.Errorf(codes.NotFound, "Team not found")
+	ErrUnknown         = status.Errorf(codes.Unknown, "Unknown error")
 )
 
 func newAppErr(grpc error, err error) error {

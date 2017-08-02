@@ -2,16 +2,16 @@ package app
 
 import (
 	"reflect"
-	"testing"
 	"strings"
+	"testing"
 
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
 )
 
 type ListTest struct {
-	team      string		
-	url  	  string
-	app 	   string
+	team string
+	url  string
+	app  string
 }
 
 // Shamelessly adapted from the standard library
@@ -166,7 +166,7 @@ func TestNewListResponse(t *testing.T) {
 	list := &List{
 		Team:      "luizalabs",
 		Addresses: []*Address{{Hostname: "host1"}},
-		Name:		"teste",
+		Name:      "teste",
 	}
 	lists = append(lists, list)
 	items := []*appb.ListResponse_App{}
@@ -178,27 +178,27 @@ func TestNewListResponse(t *testing.T) {
 		var tmp []string
 		for _, elt := range item.Addresses {
 			tmp = append(tmp, elt.Hostname)
-		} 
+		}
 		addrs := strings.Join(tmp, ",")
 
 		appName := &appb.ListResponse_App{
-			Url:  	addrs,
-			App:  	item.Name,
-			Team: 	item.Team,  
+			Url:  addrs,
+			App:  item.Name,
+			Team: item.Team,
 		}
 		items = append(items, appName)
 	}
 
 	items2 := &appb.ListResponse{
-		Apps:      items,
+		Apps: items,
 	}
 
 	resp := newListResponse(lists)
 
 	if !deepEqual(resp, items2) {
-			t.Errorf("expected %v, got %v", resp, items2)
-		}
-}	
+		t.Errorf("expected %v, got %v", resp, items2)
+	}
+}
 
 func TestSetEnvVars(t *testing.T) {
 	app := &App{Name: "teresa", Team: "luizalabs"}

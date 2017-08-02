@@ -178,7 +178,7 @@ func TestListAppNotFound(t *testing.T) {
 	user := &storage.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	if _, err := s.List(ctx,  &appb.Empty{}); teresa_errors.Get(err) != nil {
+	if _, err := s.List(ctx, &appb.Empty{}); teresa_errors.Get(err) != nil {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }

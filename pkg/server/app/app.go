@@ -26,7 +26,7 @@ type Operations interface {
 	HasPermission(user *storage.User, appName string) bool
 	SetEnv(user *storage.User, appName string, evs []*EnvVar) error
 	UnsetEnv(user *storage.User, appName string, evs []string) error
-	List(user *storage.User)  ([]*List, error)
+	List(user *storage.User) ([]*List, error)
 }
 
 type K8sOperations interface {
@@ -349,7 +349,7 @@ func (ops *AppOperations) List(user *storage.User) ([]*List, error) {
 			list := &List{
 				Team:      team.Name,
 				Addresses: AppAdd,
-				Name:	  string(app),
+				Name:      string(app),
 			}
 			lists = append(lists, list)
 		}

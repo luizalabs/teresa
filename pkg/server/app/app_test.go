@@ -19,8 +19,8 @@ import (
 	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 )
 
-type fakeK8sOperations struct{
-	ErrNotFound        error
+type fakeK8sOperations struct {
+	ErrNotFound error
 }
 
 type errK8sOperations struct {

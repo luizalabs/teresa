@@ -88,8 +88,8 @@ func (f *FakeOperations) List(user *storage.User) ([]*List, error) {
 	}
 
 	descs := make([]*List, 0)
-	desc := &List {
-		Team:	"teresa",
+	desc := &List{
+		Team: "teresa",
 		Addresses: []*Address{
 			&Address{Hostname: "localhost"},
 		},

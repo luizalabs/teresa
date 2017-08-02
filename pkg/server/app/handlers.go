@@ -44,7 +44,6 @@ func (s *Service) Logs(req *appb.LogsRequest, stream appb.App_LogsServer) error 
 	return nil
 }
 
-<<<<<<< ca65c361ae0acaeb531bc67b5f6b29b4f8aa7186
 func (s *Service) Info(ctx context.Context, req *appb.InfoRequest) (*appb.InfoResponse, error) {
 	user := ctx.Value("user").(*storage.User)
 
@@ -75,22 +74,9 @@ func (s *Service) UnsetEnv(ctx context.Context, req *appb.UnsetEnvRequest) (*app
 	}
 
 	return &appb.Empty{}, nil
-
-
-func (s *Service) List(ctx context.Context, _ *appb.Empty) (*appb.ListResponse, error) {
-	user := ctx.Value("user").(*storage.User)
-
-	list, err := s.ops.List(user)
-	if err != nil {
-		log.Errorf("app list failed: %v", err)
-		return nil, grpcErr(err)
-	}
-
-	return newListResponse(list), nil
 }
 
-func (s *Service) List(req *appb.Empty, stream appb.ListResponse) error {
-	ctx := stream.Context()
+func (s *Service) List(ctx context.Context, _ *appb.Empty) (*appb.ListResponse, error) {
 	user := ctx.Value("user").(*storage.User)
 
 	list, err := s.ops.List(user)

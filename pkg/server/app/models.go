@@ -73,16 +73,6 @@ type AppList struct {
 	AppList		string 	
 }
 
-type List struct {
-	Team      string		
-	Addresses []*Address
-	Name 	   string
-}
-
-type AppList struct {
-	AppList		string 	
-}
-
 func newSliceLrq(s []*appb.CreateRequest_Limits_LimitRangeQuantity) []*LimitRangeQuantity {
 	var t []*LimitRangeQuantity
 	for _, tmp := range s {

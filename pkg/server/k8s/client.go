@@ -98,20 +98,6 @@ func (k *k8sClient) PodLogs(namespace string, podName string, lines int64, follo
 	return req.Stream()
 }
 
-func (k k8sClient) FindAppByLabel(label string) ([]string, error) {
-	ls := fmt.Sprintf("teresa.io/team=%s", label)
-	appls, err := k.kc.CoreV1().Namespaces().List(k8sv1.ListOptions{LabelSelector: ls})
-	if err != nil {
-		return nil, err
-	}
-	apps := make([]string, 0)
-	for _, appl := range appls.Items {
-		app := appl.ObjectMeta.Name 
-		apps = append(apps, string(app))
-	}
-	return apps, nil
-}
-
 func newNs(a *app.App, user string) *k8sv1.Namespace {
 	return &k8sv1.Namespace{
 		ObjectMeta: k8sv1.ObjectMeta{
@@ -509,6 +495,20 @@ func (k *k8sClient) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*a
 	}
 
 	return k.patchDeployEnvVars(namespace, name, env)
+}
+
+func (k k8sClient) FindAppByLabel(label string) ([]string, error) {
+	ls := fmt.Sprintf("teresa.io/team=%s", label)
+	appls, err := k.kc.CoreV1().Namespaces().List(k8sv1.ListOptions{LabelSelector: ls})
+	if err != nil {
+		return nil, err
+	}
+	apps := make([]string, 0)
+	for _, appl := range appls.Items {
+		app := appl.ObjectMeta.Name 
+		apps = append(apps, string(app))
+	}
+	return apps, nil
 }
 
 func newInClusterK8sClient(conf *Config) (Client, error) {

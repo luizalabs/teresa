@@ -162,6 +162,9 @@ var appListCmd = &cobra.Command{
 
 func appList(cmd *cobra.Command, args []string) {
 	showApps, _ := cmd.Flags().GetBool("show-apps")
+	if err != nil {
+		return
+	}
 
 	conn, err := connection.New(cfgFile)
 	if err != nil {
@@ -463,7 +466,7 @@ func init() {
 	appLogsCmd.Flags().Int64("lines", 10, "number of lines")
 	appLogsCmd.Flags().Bool("follow", false, "follow logs")
 	// App list
-	appListCmd.Flags().Bool("show-apps", false, "Show app(s) from the team")
+	appListCmd.Flags().Bool("show-apps", false, "Show team's app(s)")
 }
 
 func appLogs(cmd *cobra.Command, args []string) {

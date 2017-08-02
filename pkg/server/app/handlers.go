@@ -82,7 +82,7 @@ func (s *Service) List(ctx context.Context, _ *appb.Empty) (*appb.ListResponse, 
 	list, err := s.ops.List(user)
 	if err != nil {
 		log.Errorf("app list failed: %v", err)
-		return nil, grpcErr(err)
+		return nil, err
 	}
 
 	return newListResponse(list), nil

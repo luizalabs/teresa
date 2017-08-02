@@ -122,8 +122,9 @@ func (*fakeK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, ev
 	return nil
 }
 
-func (*fakeK8sOperations) FindAppByLabel(label string) error {
-	return nil
+func (*fakeK8sOperations) FindAppByLabel(label string) ([]string, error) {
+	return nil, nil
+}
 
 func (e *errK8sOperations) CreateNamespace(app *App, user string) error {
 	return e.NamespaceErr

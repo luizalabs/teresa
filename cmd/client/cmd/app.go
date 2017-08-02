@@ -161,7 +161,7 @@ var appListCmd = &cobra.Command{
 }
 
 func appList(cmd *cobra.Command, args []string) {
-	showApps, _ := cmd.Flags().GetBool("show-apps")
+	showApps, err := cmd.Flags().GetBool("show-apps")
 	if err != nil {
 		return
 	}

@@ -333,18 +333,18 @@ func checkForProtectedEnvVars(evsNames []string) error {
 func (ops *AppOperations) List(user *storage.User) ([]*List, error) {
 	teams, err := ops.tops.ListByUser(user.Email)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	lists := make([]*List, 0)
 	for _, team := range teams {
 		appNames, err := ops.kops.FindAppByLabel(team.Name)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		for _, app := range appNames {
 			appAdd, err := ops.kops.AddressList(string(app))
 			if err != nil {
-				return err
+				return nil, err
 			}
 			list := &List{
 				Team:      team.Name,

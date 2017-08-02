@@ -84,7 +84,7 @@ func (f *FakeOperations) List(user *storage.User) ([]*List, error) {
 	defer f.mutex.Unlock()
 
 	if !hasPerm(user.Email) {
-		return nil, newAppErr(auth.ErrPermissionDenied, fmt.Errorf("error"))
+		return nil, teresa_errors.New(auth.ErrPermissionDenied, fmt.Errorf("error"))
 	}
 
 	descs := make([]*List, 0)

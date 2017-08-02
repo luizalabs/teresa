@@ -188,12 +188,11 @@ func appList(cmd *cobra.Command, args []string) {
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetRowSeparator("-")
 	table.SetAutoWrapText(false)
-	fmt.Println("Apps:")
 	for _, t := range resp.Apps {
 		for _, s := range []string{t.Url} {
-			if s != "" {
-				fmt.Printf(" - %s", s)
-			} else {s = "n/a"}
+			if s = "" {
+				s = "n/a"
+			}
 			r := []string{t.Team, t.App, s}
 			table.Append(r)
 		}

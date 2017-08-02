@@ -87,9 +87,17 @@ func (f *FakeOperations) List(user *storage.User) ([]*List, error) {
 		return nil, newAppErr(auth.ErrPermissionDenied, fmt.Errorf("error"))
 	}
 
-	var desc []*List
+	descs := make([]*List, 0)
+	desc := &List {
+		Team:	"teresa",
+		Addresses: []*Address{
+			&Address{Hostname: "localhost"},
+		},
+		Name: "test",
+	}
+	descs = append(descs, desc)
 
-	return desc, nil
+	return descs, nil
 }
 
 func (f *FakeOperations) TeamName(appName string) (string, error) {

@@ -42,7 +42,7 @@ type Server struct {
 
 func (s *Server) Run() error {
 	m := cmux.New(s.listener)
-	grpcListener := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
+	grpcListener := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"), cmux.TLS())
 	httpListener := m.Match(cmux.HTTP1Fast())
 
 	g := new(errgroup.Group)

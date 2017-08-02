@@ -19,12 +19,11 @@ var log *logrus.Logger
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "teresa",
-	Short: "Teresa cli",
-	Long: `Teresa cli. You can manage teams, users and create and deploy applications with
-it.
+	Short: "Teresa",
+	Long: `Teresa. You can manage teams, users and create and deploy applications with it.
 
-Teresa CLI works by sending HTTP requests to Kubernetes clusters that have a
-Teresa API server running. You can have multiple clusters configured on your
+Teresa works by sending HTTP requests to Kubernetes clusters that have a
+Teresa server running. You can have multiple clusters configured on your
 local box, one for each cloud provider or one for each environment or a mix
 of those.
 
@@ -33,7 +32,13 @@ one to use.
 
 To set a cluster, eg.:
 
-  $ teresa config set-cluster my_cluster_name -s https://mycluster.mydomain.com
+  $ teresa config set-cluster my_cluster_name --server mycluster.mydomain.com
+
+You can also pass extra flags:
+
+  --tls          Use TLS when communicating with the server
+  --tlsinsecure  Don't check the server certificate with the default CA certificate bundle
+  --current      Set this cluster as the current one
 
 To use that cluster:
 

@@ -40,7 +40,6 @@ var defaultTimeout = 30 * time.Minute
 // ParseServerURL parse the server url and ensure its in the format we expect
 func ParseServerURL(s string) (TeresaServer, error) {
 	u, err := url.Parse(s)
-	fmt.Println("teste", u.Scheme)
 	if err != nil {
 		return TeresaServer{}, fmt.Errorf("Failed to parse server: %+v\n", err)
 	}
@@ -61,7 +60,6 @@ func NewTeresa() TeresaClient {
 	tc := TeresaClient{teresa: apiclient.Default}
 	log.Debugf(`Setting new teresa client. server: %s, api suffix: %s`, cluster.Server, suffix)
 	ts, err := ParseServerURL(cluster.Server)
-	fmt.Println(cluster.Server)
 
 	if err != nil {
 		log.Fatal(err)
@@ -89,7 +87,6 @@ func (tc TeresaClient) DeleteTeam(ID int64) error {
 // GetApps return all apps for the token
 func (tc TeresaClient) GetApps() (appList []*models.App, err error) {
 	p := apps.NewGetAppsParams()
-	fmt.Println(p)
 	r, err := tc.teresa.Apps.GetApps(p, tc.apiKeyAuthFunc)
 	if err != nil {
 		return nil, err

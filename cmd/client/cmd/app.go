@@ -163,7 +163,7 @@ var appListCmd = &cobra.Command{
 func appList(cmd *cobra.Command, args []string) {
 	showApps, _ := cmd.Flags().GetBool("show-apps")
 
-	conn, err := connection.New(cfgFile, &connOpts)
+	conn, err := connection.New(cfgFile)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
 		return

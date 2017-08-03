@@ -182,7 +182,7 @@ func TestNewListResponse(t *testing.T) {
 		addrs := strings.Join(tmp, ",")
 
 		appName := &appb.ListResponse_App{
-			Url:  addrs,
+			Urls:  addrs,
 			App:  item.Name,
 			Team: item.Team,
 		}

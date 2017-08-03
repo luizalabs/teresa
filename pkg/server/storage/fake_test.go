@@ -47,3 +47,11 @@ func TestFakeUploadFile(t *testing.T) {
 		t.Errorf("expected no error, got %v", err)
 	}
 }
+
+func TestFakePodEnvVars(t *testing.T) {
+	fake := NewFake()
+	ev := fake.PodEnvVars()
+	if len(ev) != 0 {
+		t.Errorf("expected 0, got %d", len(ev))
+	}
+}

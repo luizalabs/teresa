@@ -51,6 +51,10 @@ func (s *S3) Type() string {
 	return string(S3Type)
 }
 
+func (s *S3) PodEnvVars() map[string]string {
+	return make(map[string]string)
+}
+
 func newS3(conf *Config) Storage {
 	st := &S3{
 		Key:              conf.AwsKey,

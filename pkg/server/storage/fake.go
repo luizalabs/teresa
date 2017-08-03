@@ -32,6 +32,10 @@ func (f *fake) Type() string {
 	return string(FakeType)
 }
 
+func (f *fake) PodEnvVars() map[string]string {
+	return make(map[string]string)
+}
+
 func NewFake() Storage {
 	return &fake{
 		Key:    "key",

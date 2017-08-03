@@ -76,3 +76,11 @@ func TestS3UploadFile(t *testing.T) {
 		t.Errorf("expected no error, got %v", err)
 	}
 }
+
+func TestS3PodEnvVars(t *testing.T) {
+	s3 := newS3(&Config{})
+	ev := s3.PodEnvVars()
+	if len(ev) != 0 {
+		t.Errorf("expected 0, got %d", len(ev))
+	}
+}

@@ -60,6 +60,9 @@ func newPodSpec(name, image string, a *app.App, envVars map[string]string, fileS
 	for _, e := range a.EnvVars {
 		ps.Env[e.Key] = e.Value
 	}
+	for k, v := range fileStorage.PodEnvVars() {
+		ps.Env[k] = v
+	}
 	return ps
 }
 

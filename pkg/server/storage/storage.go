@@ -27,6 +27,7 @@ type Storage interface {
 	AccessData() map[string][]byte
 	UploadFile(path string, file io.ReadSeeker) error
 	Type() string
+	PodEnvVars() map[string]string
 }
 
 func New(conf *Config) (Storage, error) {

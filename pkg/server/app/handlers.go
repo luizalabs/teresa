@@ -1,13 +1,20 @@
 package app
 
 import (
-	"bufio"
+	"time"
 
 	context "golang.org/x/net/context"
+
 	"google.golang.org/grpc"
 
 	"github.com/luizalabs/teresa-api/models/storage"
+	"github.com/luizalabs/teresa-api/pkg/goutil"
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
+)
+
+const (
+	logSeparatorInterval = 30 * time.Second
+	logSeparator         = "----- No logs\n"
 )
 
 type Service struct {
@@ -33,13 +40,24 @@ func (s *Service) Logs(req *appb.LogsRequest, stream appb.App_LogsServer) error 
 	}
 	defer rc.Close()
 
-	scanner := bufio.NewScanner(rc)
-	for scanner.Scan() {
-		if err := stream.Send(&appb.LogsResponse{Text: scanner.Text()}); err != nil {
+	chLogs := goutil.ChannelFromReader(rc, false)
+	var line string
+
+	for {
+		select {
+		case <-time.After(logSeparatorInterval):
+			line = logSeparator
+		case m, ok := <-chLogs:
+			if !ok {
+				return nil
+			}
+			line = m
+		}
+
+		if err := stream.Send(&appb.LogsResponse{Text: line}); err != nil {
 			return err
 		}
 	}
-	return nil
 }
 
 func (s *Service) Info(ctx context.Context, req *appb.InfoRequest) (*appb.InfoResponse, error) {

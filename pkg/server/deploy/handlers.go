@@ -1,15 +1,14 @@
 package deploy
 
 import (
-	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"time"
 
 	"google.golang.org/grpc"
 
 	"github.com/luizalabs/teresa-api/models/storage"
+	"github.com/luizalabs/teresa-api/pkg/goutil"
 	dpb "github.com/luizalabs/teresa-api/pkg/protobuf/deploy"
 )
 
@@ -60,7 +59,7 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 	}
 	defer rc.Close()
 
-	deployMsgs := channelFromReader(rc)
+	deployMsgs := goutil.ChannelFromReader(rc, true)
 	var msg string
 
 	for {
@@ -78,19 +77,6 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 			return err
 		}
 	}
-}
-
-func channelFromReader(r io.Reader) <-chan string {
-	c := make(chan string)
-	go func() {
-		defer close(c)
-		scanner := bufio.NewScanner(r)
-		for scanner.Scan() {
-			c <- fmt.Sprintln(scanner.Text())
-		}
-	}()
-
-	return c
 }
 
 func (s *Service) RegisterService(grpcServer *grpc.Server) {

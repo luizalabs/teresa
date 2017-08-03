@@ -71,13 +71,8 @@ func (dbt *DatabaseOperations) List() ([]*storage.Team, error) {
 		)
 	}
 
-	for _, t := range teams {
-		if err := dbt.DB.Model(t).Association("Users").Find(&t.Users).Error; err != nil {
-			return nil, teresa_errors.New(
-				teresa_errors.ErrInternalServerError,
-				errors.Wrap(err, fmt.Sprintf("associating team %s with its users", t.Name)),
-			)
-		}
+	if err := dbt.findTeamUsers(teams); err != nil {
+		return nil, err
 	}
 	return teams, nil
 }
@@ -95,7 +90,23 @@ func (dbt *DatabaseOperations) ListByUser(userEmail string) ([]*storage.Team, er
 			errors.Wrap(err, fmt.Sprintf("finding teams of user %s", userEmail)),
 		)
 	}
+
+	if err = dbt.findTeamUsers(teams); err != nil {
+		return nil, err
+	}
 	return teams, nil
+}
+
+func (dbt *DatabaseOperations) findTeamUsers(teams []*storage.Team) error {
+	for _, t := range teams {
+		if err := dbt.DB.Model(t).Association("Users").Find(&t.Users).Error; err != nil {
+			return teresa_errors.New(
+				teresa_errors.ErrInternalServerError,
+				errors.Wrap(err, fmt.Sprintf("associating team %s with its users", t.Name)),
+			)
+		}
+	}
+	return nil
 }
 
 func (dbt *DatabaseOperations) getTeam(name string) (*storage.Team, error) {

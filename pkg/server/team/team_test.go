@@ -275,7 +275,10 @@ func TestDatabaseOperationsListByUser(t *testing.T) {
 
 	for _, currentTeam := range teams {
 		if currentTeam.Name != "gophers" && currentTeam.Name != "teresa" {
-			t.Errorf("expecter gophers or teresa, got %s", currentTeam.Name)
+			t.Errorf("expected gophers or teresa, got %s", currentTeam.Name)
+		}
+		if len(currentTeam.Users) != 2 {
+			t.Errorf("expected 2, got %d", len(currentTeam.Users))
 		}
 	}
 }

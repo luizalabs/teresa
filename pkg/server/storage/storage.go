@@ -7,8 +7,9 @@ import (
 type storageType string
 
 const (
-	S3Type   storageType = "s3"
-	FakeType storageType = "fake"
+	S3Type    storageType = "s3"
+	MinioType storageType = "minio"
+	FakeType  storageType = "fake"
 )
 
 type Config struct {
@@ -31,8 +32,12 @@ type Storage interface {
 }
 
 func New(conf *Config) (Storage, error) {
-	if conf.Type != S3Type {
+	switch conf.Type {
+	case S3Type:
+		return newS3(conf), nil
+	case MinioType:
+		return newMinio(conf), nil
+	default:
 		return nil, ErrInvalidStorageType
 	}
-	return newS3(conf), nil
 }

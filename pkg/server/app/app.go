@@ -335,14 +335,14 @@ func (ops *AppOperations) List(user *storage.User) ([]*List, error) {
 	if err != nil {
 		return nil, err
 	}
-	lists := make([]*List, 0)
+	result := make([]*List, 0)
 	for _, team := range teams {
 		appNames, err := ops.kops.FindAppByLabel(team.Name)
 		if err != nil {
 			return nil, err
 		}
 		for _, app := range appNames {
-			appAdd, err := ops.kops.AddressList(string(app))
+			appAdd, err := ops.kops.AddressList(app)
 			if err != nil {
 				return nil, err
 			}
@@ -351,10 +351,10 @@ func (ops *AppOperations) List(user *storage.User) ([]*List, error) {
 				Addresses: appAdd,
 				Name:      string(app),
 			}
-			lists = append(lists, list)
+			result = append(result, list)
 		}
 	}
-	return lists, nil
+	return result, nil
 }
 
 func NewOperations(tops team.Operations, kops K8sOperations, st st.Storage) Operations {

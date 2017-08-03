@@ -40,7 +40,7 @@ message ListResponse {
     message App {
         string team = 1;
         string app  = 2;
-        string url  = 3;    
+        string urls  = 3;    
     }
     repeated App apps = 1;
 

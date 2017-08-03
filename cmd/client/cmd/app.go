@@ -168,8 +168,7 @@ func appList(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error connecting to server:", err)
-		return
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/luizalabs/teresa-api/models/storage"
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
+	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 )
 
 type Service struct {
@@ -82,7 +83,7 @@ func (s *Service) List(ctx context.Context, _ *appb.Empty) (*appb.ListResponse, 
 	list, err := s.ops.List(user)
 	if err != nil {
 		log.Errorf("app list failed: %v", err)
-		return nil, err
+		return nil, teresa_errors.Get(err)
 	}
 
 	return newListResponse(list), nil

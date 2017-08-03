@@ -38,11 +38,17 @@ type Server struct {
 	listener   net.Listener
 	grpcServer *grpc.Server
 	hcServer   *healthcheck.Server
+	opt        *Options
 }
 
 func (s *Server) Run() error {
 	m := cmux.New(s.listener)
-	grpcListener := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"), cmux.TLS())
+
+	grpcMatchers := []cmux.Matcher{cmux.HTTP2HeaderField("content-type", "application/grpc")}
+	if s.opt.TLSCert != nil {
+		grpcMatchers = append(grpcMatchers, cmux.TLS())
+	}
+	grpcListener := m.Match(grpcMatchers...)
 	httpListener := m.Match(cmux.HTTP1Fast())
 
 	g := new(errgroup.Group)
@@ -105,5 +111,5 @@ func New(opt Options) (*Server, error) {
 	registerServices(s, opt, uOps)
 
 	hcServer := healthcheck.New(opt.K8s, opt.DB)
-	return &Server{listener: l, grpcServer: s, hcServer: hcServer}, nil
+	return &Server{listener: l, grpcServer: s, hcServer: hcServer, opt: &opt}, nil
 }

@@ -173,6 +173,7 @@ func TestListSuccess(t *testing.T) {
 	}
 }
 
+/*
 func TestListAppNotFound(t *testing.T) {
 	s := NewService(NewFakeOperations())
 	user := &storage.User{Email: "gopher@luizalabs.com"}
@@ -182,6 +183,7 @@ func TestListAppNotFound(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
+*/
 
 func TestSetEnvSuccess(t *testing.T) {
 	fake := NewFakeOperations()

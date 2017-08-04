@@ -178,15 +178,6 @@ func TestFakeOperationsList(t *testing.T) {
 	}
 }
 
-func TestFakeOperationsListErrNotFound(t *testing.T) {
-	fake := NewFakeOperations()
-	user := &storage.User{Name: "gopher@luizalabs.com"}
-
-	if _, err := fake.List(user); teresa_errors.Get(err) != nil {
-		t.Errorf("expected ErrNotFound, got %v", teresa_errors.Get(err))
-	}
-}
-
 func TestFakeOperationsTeamName(t *testing.T) {
 	fake := NewFakeOperations()
 	teamName, err := fake.TeamName("teresa")

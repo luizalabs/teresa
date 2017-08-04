@@ -47,7 +47,7 @@ type K8sOperations interface {
 	SetNamespaceAnnotations(namespace string, annotations map[string]string) error
 	DeleteDeployEnvVars(namespace, name string, evNames []string) error
 	CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error
-	FindAppByLabel(label string) ([]string, error)
+	ListNamespaceByLabel(label string) ([]string, error)
 }
 
 type AppOperations struct {
@@ -337,7 +337,7 @@ func (ops *AppOperations) List(user *storage.User) ([]*List, error) {
 	}
 	result := make([]*List, 0)
 	for _, team := range teams {
-		appNames, err := ops.kops.FindAppByLabel(team.Name)
+		appNames, err := ops.kops.ListNamespaceByLabel(team.Name)
 		if err != nil {
 			return nil, err
 		}

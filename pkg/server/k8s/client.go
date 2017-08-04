@@ -497,7 +497,7 @@ func (k *k8sClient) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*a
 	return k.patchDeployEnvVars(namespace, name, env)
 }
 
-func (k k8sClient) FindAppByLabel(label string) ([]string, error) {
+func (k k8sClient) ListNamespaceByLabel(label string) ([]string, error) {
 	ls := fmt.Sprintf("teresa.io/team=%s", label)
 	appls, err := k.kc.CoreV1().Namespaces().List(k8sv1.ListOptions{LabelSelector: ls})
 	if err != nil {
@@ -505,7 +505,7 @@ func (k k8sClient) FindAppByLabel(label string) ([]string, error) {
 	}
 	apps := make([]string, 0)
 	for _, appl := range appls.Items {
-		app := appl.ObjectMeta.Name 
+		app := appl.ObjectMeta.Name
 		apps = append(apps, string(app))
 	}
 	return apps, nil

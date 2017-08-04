@@ -176,7 +176,7 @@ func appList(cmd *cobra.Command, args []string) {
 	}
 
 	if len(resp.Apps) == 0 {
-		fmt.Println("You do not belong to any team")
+		fmt.Println("You do not have to any app")
 		return
 	}
 	// rendering app list in a table view

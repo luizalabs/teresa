@@ -122,7 +122,7 @@ func (*fakeK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, ev
 	return nil
 }
 
-func (*fakeK8sOperations) FindAppByLabel(label string) ([]string, error) {
+func (*fakeK8sOperations) ListNamespaceByLabel(label string) ([]string, error) {
 	return nil, nil
 }
 
@@ -194,7 +194,7 @@ func (e *errK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, e
 	return e.Err
 }
 
-func (e *errK8sOperations) FindAppByLabel(label string) ([]string, error) {
+func (e *errK8sOperations) ListNamespaceByLabel(label string) ([]string, error) {
 	return nil, e.Err
 }
 
@@ -494,16 +494,6 @@ func TestAppOperationsList(t *testing.T) {
 		if len(a.Addresses) != 1 { // see fakeK8sOperations.AddressList
 			t.Errorf("expected 2, got %d", len(a.Addresses))
 		}
-	}
-}
-
-func TestAppOperationsListErrNotFound(t *testing.T) {
-	tops := team.NewFakeOperations()
-	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
-
-	if _, err := ops.List(user); teresa_errors.Get(err) != nil {
-		t.Errorf("expected ErrNotFound, got %v", teresa_errors.Get(err))
 	}
 }
 

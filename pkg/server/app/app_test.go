@@ -19,14 +19,18 @@ import (
 	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 )
 
-type fakeK8sOperations struct{}
+type fakeK8sOperations struct {
+	Namespaces map[string]struct{}
+}
 
 type errK8sOperations struct {
-	Err          error
-	NamespaceErr error
-	QuotaErr     error
-	SecretErr    error
-	AutoScaleErr error
+	Err                error
+	NamespaceErr       error
+	QuotaErr           error
+	SecretErr          error
+	AutoScaleErr       error
+	DeleteNamespaceErr error
+	Namespaces         map[string]struct{}
 }
 
 func (*fakeK8sOperations) CreateNamespace(app *App, user string) error {
@@ -120,6 +124,11 @@ func (*fakeK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, ev
 	return nil
 }
 
+func (f *fakeK8sOperations) DeleteNamespace(namespace string) error {
+	delete(f.Namespaces, namespace)
+	return nil
+}
+
 func (e *errK8sOperations) CreateNamespace(app *App, user string) error {
 	return e.NamespaceErr
 }
@@ -188,6 +197,11 @@ func (e *errK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, e
 	return e.Err
 }
 
+func (e *errK8sOperations) DeleteNamespace(namespace string) error {
+	delete(e.Namespaces, namespace)
+	return e.DeleteNamespaceErr
+}
+
 func TestAppOperationsCreate(t *testing.T) {
 	tops := team.NewFakeOperations()
 	fakeSt := st.NewFake()
@@ -218,6 +232,24 @@ func TestAppOperationsCreateErrPermissionDenied(t *testing.T) {
 	}
 }
 
+func TestAppCreateErrPermissionDeniedShouldNotTouchNamespace(t *testing.T) {
+	tops := team.NewFakeOperations()
+	fakeSt := st.NewFake()
+	name := "teresa"
+	fakeK8s := &fakeK8sOperations{Namespaces: map[string]struct{}{name: struct{}{}}}
+	ops := NewOperations(tops, fakeK8s, fakeSt)
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: name, Team: "luizalabs"}
+
+	if err := ops.Create(user, app); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %s", err)
+	}
+
+	if _, ok := fakeK8s.Namespaces[name]; !ok {
+		t.Errorf("expected namespace %s, got none", name)
+	}
+}
+
 func TestAppOperationsCreateErrAppAlreadyExists(t *testing.T) {
 	tops := team.NewFakeOperations()
 	fakeSt := st.NewFake()
@@ -233,6 +265,32 @@ func TestAppOperationsCreateErrAppAlreadyExists(t *testing.T) {
 
 	if err := ops.Create(user, app); err != ErrAlreadyExists {
 		t.Errorf("expected %v got %v", ErrAlreadyExists, err)
+	}
+}
+
+func TestAppCreateErrAppAlreadyExistsShouldNotTouchNamespace(t *testing.T) {
+	tops := team.NewFakeOperations()
+	fakeSt := st.NewFake()
+	name := "teresa"
+	teamName := "luizalabs"
+	errK8s := &errK8sOperations{
+		NamespaceErr: ErrAlreadyExists,
+		Namespaces:   map[string]struct{}{name: struct{}{}},
+	}
+	ops := NewOperations(tops, errK8s, fakeSt)
+	user := &storage.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: name, Team: teamName}
+	tops.(*team.FakeOperations).Storage[teamName] = &storage.Team{
+		Name:  teamName,
+		Users: []storage.User{*user},
+	}
+
+	if err := ops.Create(user, app); err != ErrAlreadyExists {
+		t.Errorf("expected %v got %v", ErrAlreadyExists, err)
+	}
+
+	if _, ok := errK8s.Namespaces[name]; !ok {
+		t.Errorf("expected namespace %s, got none", name)
 	}
 }
 

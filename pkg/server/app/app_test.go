@@ -120,6 +120,10 @@ func (*fakeK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, ev
 	return nil
 }
 
+func (*fakeK8sOperations) DeleteNamespace(namespace string) error {
+	return nil
+}
+
 func (e *errK8sOperations) CreateNamespace(app *App, user string) error {
 	return e.NamespaceErr
 }
@@ -185,6 +189,10 @@ func (e *errK8sOperations) DeleteDeployEnvVars(namespace, name string, evNames [
 }
 
 func (e *errK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error {
+	return e.Err
+}
+
+func (e *errK8sOperations) DeleteNamespace(namespace string) error {
 	return e.Err
 }
 

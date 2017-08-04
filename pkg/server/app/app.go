@@ -46,6 +46,7 @@ type K8sOperations interface {
 	SetNamespaceAnnotations(namespace string, annotations map[string]string) error
 	DeleteDeployEnvVars(namespace, name string, evNames []string) error
 	CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error
+	DeleteNamespace(namespace string) error
 }
 
 type AppOperations struct {
@@ -84,7 +85,7 @@ func (ops *AppOperations) HasPermission(user *storage.User, appName string) bool
 	return ops.hasPerm(user, teamName)
 }
 
-func (ops *AppOperations) Create(user *storage.User, app *App) error {
+func (ops *AppOperations) Create(user *storage.User, app *App) (Err error) {
 	if !ops.hasPerm(user, app.Team) {
 		return auth.ErrPermissionDenied
 	}
@@ -96,8 +97,14 @@ func (ops *AppOperations) Create(user *storage.User, app *App) error {
 		return teresa_errors.NewInternalServerError(err)
 	}
 
+	defer func() {
+		if Err != nil {
+			ops.kops.DeleteNamespace(app.Name)
+		}
+	}()
+
 	if err := ops.kops.CreateQuota(app); err != nil {
-		return teresa_errors.NewInternalServerError(err)
+		return teresa_errors.New(ErrInvalidLimits, err)
 	}
 
 	secretName := ops.st.K8sSecretName()
@@ -107,7 +114,7 @@ func (ops *AppOperations) Create(user *storage.User, app *App) error {
 	}
 
 	if err := ops.kops.CreateAutoScale(app); err != nil {
-		return teresa_errors.NewInternalServerError(err)
+		return teresa_errors.New(ErrInvalidAutoScale, err)
 	}
 
 	return nil

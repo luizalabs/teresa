@@ -497,6 +497,11 @@ func (k *k8sClient) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*a
 	return k.patchDeployEnvVars(namespace, name, env)
 }
 
+func (k *k8sClient) DeleteNamespace(namespace string) error {
+	err := k.kc.CoreV1().Namespaces().Delete(namespace, &k8sv1.DeleteOptions{})
+	return errors.Wrap(err, "delete ns failed")
+}
+
 func newInClusterK8sClient(conf *Config) (Client, error) {
 	k8sConf, err := restclient.InClusterConfig()
 	if err != nil {

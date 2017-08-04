@@ -59,8 +59,8 @@ func NewTeresa() TeresaClient {
 
 	tc := TeresaClient{teresa: apiclient.Default}
 	log.Debugf(`Setting new teresa client. server: %s, api suffix: %s`, cluster.Server, suffix)
-
 	ts, err := ParseServerURL(cluster.Server)
+
 	if err != nil {
 		log.Fatal(err)
 	}

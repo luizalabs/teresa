@@ -162,6 +162,22 @@ func TestFakeOperationsInfoErrNotFound(t *testing.T) {
 	}
 }
 
+func TestFakeOperationsList(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &storage.User{Name: "gopher@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	list, err := fake.List(user)
+	if err != nil {
+		t.Fatal("error getting app info: ", err)
+	}
+
+	if list == nil {
+		t.Fatal("expected a valid info, got nil")
+	}
+}
+
 func TestFakeOperationsTeamName(t *testing.T) {
 	fake := NewFakeOperations()
 	teamName, err := fake.TeamName("teresa")

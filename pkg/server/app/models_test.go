@@ -2,10 +2,17 @@ package app
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
 )
+
+type ListTest struct {
+	team string
+	url  string
+	app  string
+}
 
 // Shamelessly adapted from the standard library
 func deepEqual(x, y interface{}) bool {
@@ -151,6 +158,45 @@ func TestNewInfoResponse(t *testing.T) {
 	resp := newInfoResponse(info)
 	if !deepEqual(info, resp) {
 		t.Errorf("expected %v, got %v", info, resp)
+	}
+}
+
+func TestNewListResponse(t *testing.T) {
+	lists := make([]*List, 0)
+	list := &List{
+		Team:      "luizalabs",
+		Addresses: []*Address{{Hostname: "host1"}},
+		Name:      "teste",
+	}
+	lists = append(lists, list)
+	items := []*appb.ListResponse_App{}
+
+	for _, item := range lists {
+		if item == nil {
+			continue
+		}
+		var tmp []string
+		for _, elt := range item.Addresses {
+			tmp = append(tmp, elt.Hostname)
+		}
+		addrs := strings.Join(tmp, ",")
+
+		appName := &appb.ListResponse_App{
+			Urls:  addrs,
+			App:  item.Name,
+			Team: item.Team,
+		}
+		items = append(items, appName)
+	}
+
+	items2 := &appb.ListResponse{
+		Apps: items,
+	}
+
+	resp := newListResponse(lists)
+
+	if !deepEqual(resp, items2) {
+		t.Errorf("expected %v, got %v", resp, items2)
 	}
 }
 

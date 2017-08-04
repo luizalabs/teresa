@@ -157,14 +157,10 @@ var appListCmd = &cobra.Command{
 	Short:   "List all apps",
 	Long:    "Return all apps with address and team.",
 	Example: "  $ teresa app list",
-	Run: appList,
+	Run:     appList,
 }
 
 func appList(cmd *cobra.Command, args []string) {
-	showApps, err := cmd.Flags().GetBool("show-apps")
-	if err != nil {
-		return
-	}
 
 	conn, err := connection.New(cfgFile)
 	if err != nil {
@@ -191,16 +187,11 @@ func appList(cmd *cobra.Command, args []string) {
 	table.SetRowSeparator("-")
 	table.SetAutoWrapText(false)
 	for _, t := range resp.Apps {
-		for _, s := range []string{t.Urls} {
-			if s == "" {
-				s = "n/a"
-			}
-			r := []string{t.Team, t.App, s}
-			table.Append(r)
+		if t.Urls == "" {
+			t.Urls = "n/a"
 		}
-		if !showApps {
-			continue
-		}
+		r := []string{t.Team, t.App, t.Urls}
+		table.Append(r)
 	}
 	table.Render()
 }

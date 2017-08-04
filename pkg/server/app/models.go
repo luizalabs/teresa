@@ -263,9 +263,6 @@ func newListResponse(list []*List) *appb.ListResponse {
 		}
 		var tmp []string
 		for _, elt := range item.Addresses {
-			if elt.Hostname == "" {
-				elt.Hostname = elt.IP
-			}
 			tmp = append(tmp, elt.Hostname)
 		}
 		addrs := strings.Join(tmp, ",")

@@ -161,9 +161,6 @@ var appListCmd = &cobra.Command{
 		tc := NewTeresa()
 		apps, err := tc.GetApps()
 		if err != nil {
-			if isNotFound(err) {
-				return newCmdError("You have no apps")
-			}
 			return err
 		}
 		// rendering app info in a table view

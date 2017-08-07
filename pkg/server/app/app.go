@@ -26,7 +26,7 @@ type Operations interface {
 	HasPermission(user *storage.User, appName string) bool
 	SetEnv(user *storage.User, appName string, evs []*EnvVar) error
 	UnsetEnv(user *storage.User, appName string, evs []string) error
-	List(user *storage.User) ([]*List, error)
+	List(user *storage.User) ([]*AppListItem, error)
 }
 
 type K8sOperations interface {
@@ -48,7 +48,7 @@ type K8sOperations interface {
 	DeleteDeployEnvVars(namespace, name string, evNames []string) error
 	CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error
 	DeleteNamespace(namespace string) error
-	ListNamespaceByLabel(label string) ([]string, error)
+	NamespaceListByLabel(label, value string) ([]string, error)
 }
 
 type AppOperations struct {
@@ -337,31 +337,30 @@ func checkForProtectedEnvVars(evsNames []string) error {
 	return nil
 }
 
-func (ops *AppOperations) List(user *storage.User) ([]*List, error) {
+func (ops *AppOperations) List(user *storage.User) ([]*AppListItem, error) {
 	teams, err := ops.tops.ListByUser(user.Email)
 	if err != nil {
 		return nil, err
 	}
-	result := make([]*List, 0)
+	items := make([]*AppListItem, 0)
 	for _, team := range teams {
-		appNames, err := ops.kops.ListNamespaceByLabel(team.Name)
+		apps, err := ops.kops.NamespaceListByLabel(TeresaTeamLabel, team.Name)
 		if err != nil {
 			return nil, err
 		}
-		for _, app := range appNames {
-			appAdd, err := ops.kops.AddressList(app)
+		for _, a := range apps {
+			addrs, err := ops.kops.AddressList(a)
 			if err != nil {
 				return nil, err
 			}
-			list := &List{
+			items = append(items, &AppListItem{
 				Team:      team.Name,
-				Addresses: appAdd,
-				Name:      string(app),
-			}
-			result = append(result, list)
+				Name:      a,
+				Addresses: addrs,
+			})
 		}
 	}
-	return result, nil
+	return items, nil
 }
 
 func NewOperations(tops team.Operations, kops K8sOperations, st st.Storage) Operations {

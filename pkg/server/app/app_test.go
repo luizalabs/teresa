@@ -20,8 +20,7 @@ import (
 )
 
 type fakeK8sOperations struct {
-	Namespaces  map[string]struct{}
-	ErrNotFound error
+	Namespaces map[string]struct{}
 }
 
 type errK8sOperations struct {
@@ -130,8 +129,12 @@ func (f *fakeK8sOperations) DeleteNamespace(namespace string) error {
 	return nil
 }
 
-func (*fakeK8sOperations) ListNamespaceByLabel(label string) ([]string, error) {
-	return nil, nil
+func (f *fakeK8sOperations) NamespaceListByLabel(label, value string) ([]string, error) {
+	ns := make([]string, 0)
+	for s, _ := range f.Namespaces {
+		ns = append(ns, s)
+	}
+	return ns, nil
 }
 
 func (e *errK8sOperations) CreateNamespace(app *App, user string) error {
@@ -207,7 +210,7 @@ func (e *errK8sOperations) DeleteNamespace(namespace string) error {
 	return e.DeleteNamespaceErr
 }
 
-func (e *errK8sOperations) ListNamespaceByLabel(label string) ([]string, error) {
+func (e *errK8sOperations) NamespaceListByLabel(label, value string) ([]string, error) {
 	return nil, e.Err
 }
 
@@ -529,27 +532,35 @@ func TestAppOperationsInfoErrNotFound(t *testing.T) {
 
 func TestAppOperationsList(t *testing.T) {
 	tops := team.NewFakeOperations()
-	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	appName := "teresa"
 	teamName := "luizalabs"
+
 	user := &storage.User{Email: "teresa@luizalabs.com"}
-	app := &App{Name: "teresa", Team: teamName}
-	tops.(*team.FakeOperations).Storage[app.Name] = &storage.Team{
+	fk8s := &fakeK8sOperations{Namespaces: map[string]struct{}{appName: struct{}{}}}
+
+	ops := NewOperations(tops, fk8s, nil)
+	tops.(*team.FakeOperations).Storage[appName] = &storage.Team{
 		Name:  teamName,
 		Users: []storage.User{*user},
 	}
 
-	list, err := ops.List(user)
+	apps, err := ops.List(user)
 	if err != nil {
-		t.Fatal("error getting app list: ", err)
+		t.Fatal("error getting app list:", err)
 	}
 
-	for _, a := range list {
+	if len(apps) == 0 {
+		t.Fatal("expected at least one app")
+	}
+	for _, a := range apps {
+		if a.Name != appName {
+			t.Errorf("expected %s, got %s", appName, a.Name)
+		}
 		if a.Team != teamName {
 			t.Errorf("expected %s, got %s", teamName, a.Team)
 		}
-
 		if len(a.Addresses) != 1 { // see fakeK8sOperations.AddressList
-			t.Errorf("expected 2, got %d", len(a.Addresses))
+			t.Errorf("expected 1 address, got %d", len(a.Addresses))
 		}
 	}
 }

@@ -79,22 +79,19 @@ func (f *FakeOperations) Info(user *storage.User, appName string) (*Info, error)
 	return &Info{}, nil
 }
 
-func (f *FakeOperations) List(user *storage.User) ([]*List, error) {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
+func (f *FakeOperations) List(user *storage.User) ([]*AppListItem, error) {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
 
-	if !hasPerm(user.Email) {
-		return nil, teresa_errors.New(auth.ErrPermissionDenied, fmt.Errorf("error"))
+	items := make([]*AppListItem, 0)
+	for k, v := range f.Storage {
+		items = append(items, &AppListItem{
+			Team:      v.Team,
+			Name:      k,
+			Addresses: []*Address{&Address{Hostname: "localhost"}},
+		})
 	}
-
-	return []*List {
-	    &List{
-	        Team: "teresa", 
-	        Name: "test", 
-	        Addresses: []*Address{&Address{Hostname: "localhost"},
-	  		},
-		},
-	}, nil
+	return items, nil
 }
 
 func (f *FakeOperations) TeamName(appName string) (string, error) {

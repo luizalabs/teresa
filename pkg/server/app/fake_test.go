@@ -168,13 +168,17 @@ func TestFakeOperationsList(t *testing.T) {
 	app := &App{Name: "teresa"}
 	fake.(*FakeOperations).Storage[app.Name] = app
 
-	list, err := fake.List(user)
+	apps, err := fake.List(user)
 	if err != nil {
 		t.Fatal("error getting app info: ", err)
 	}
 
-	if list == nil {
-		t.Fatal("expected a valid info, got nil")
+	if len(apps) != 1 {
+		t.Fatal("expected a valid app, got nil")
+	}
+
+	if apps[0].Name != app.Name {
+		t.Errorf("expected test, got %s", apps[0].Name)
 	}
 }
 

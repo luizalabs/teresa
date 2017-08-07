@@ -2,17 +2,10 @@ package app
 
 import (
 	"reflect"
-	"strings"
 	"testing"
 
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
 )
-
-type ListTest struct {
-	team string
-	url  string
-	app  string
-}
 
 // Shamelessly adapted from the standard library
 func deepEqual(x, y interface{}) bool {
@@ -162,41 +155,28 @@ func TestNewInfoResponse(t *testing.T) {
 }
 
 func TestNewListResponse(t *testing.T) {
-	lists := make([]*List, 0)
-	list := &List{
+	items := []*AppListItem{{
 		Team:      "luizalabs",
 		Addresses: []*Address{{Hostname: "host1"}},
 		Name:      "teste",
+	}}
+
+	resp := newListResponse(items)
+	if len(items) != len(resp.Apps) {
+		t.Fatal("expected %d items, got %d", len(items), len(resp.Apps))
 	}
-	lists = append(lists, list)
-	items := []*appb.ListResponse_App{}
-
-	for _, item := range lists {
-		if item == nil {
-			continue
-		}
-		var tmp []string
-		for _, elt := range item.Addresses {
-			tmp = append(tmp, elt.Hostname)
-		}
-		addrs := strings.Join(tmp, ",")
-
-		appName := &appb.ListResponse_App{
-			Urls:  addrs,
-			App:  item.Name,
-			Team: item.Team,
-		}
-		items = append(items, appName)
+	itemExpected := items[0]
+	itemActual := resp.Apps[0]
+	expectedUrl := itemExpected.Addresses[0].Hostname
+	actualUrl := itemActual.Urls[0]
+	if expectedUrl != actualUrl {
+		t.Errorf("expected %s, got %s", expectedUrl, actualUrl)
 	}
-
-	items2 := &appb.ListResponse{
-		Apps: items,
+	if itemExpected.Name != itemActual.Name {
+		t.Errorf("expected %s, got %s", itemExpected.Name, itemActual.Name)
 	}
-
-	resp := newListResponse(lists)
-
-	if !deepEqual(resp, items2) {
-		t.Errorf("expected %v, got %v", resp, items2)
+	if itemExpected.Team != itemActual.Team {
+		t.Errorf("expected %s, got %s", itemExpected.Team, itemActual.Team)
 	}
 }
 

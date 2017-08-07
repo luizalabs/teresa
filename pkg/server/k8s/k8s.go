@@ -1,7 +1,6 @@
 package k8s
 
 import (
-
 	"github.com/luizalabs/teresa-api/pkg/server/app"
 	"github.com/luizalabs/teresa-api/pkg/server/deploy"
 	"github.com/luizalabs/teresa-api/pkg/server/healthcheck"
@@ -15,8 +14,8 @@ var validServiceTypes = map[api.ServiceType]bool{
 }
 
 type Config struct {
-	ConfigFile         string        `split_words:"true"`
-	DefaultServiceType string        `split_words:"true" default:"LoadBalancer"`
+	ConfigFile         string `split_words:"true"`
+	DefaultServiceType string `split_words:"true" default:"LoadBalancer"`
 }
 
 type Client interface {

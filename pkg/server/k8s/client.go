@@ -103,10 +103,10 @@ func newNs(a *app.App, user string) *k8sv1.Namespace {
 		ObjectMeta: k8sv1.ObjectMeta{
 			Name: a.Name,
 			Labels: map[string]string{
-				"teresa.io/team": a.Team,
+				app.TeresaTeamLabel: a.Team,
 			},
 			Annotations: map[string]string{
-				"teresa.io/last-user": user,
+				app.TeresaLastUser: user,
 			},
 		},
 	}
@@ -118,7 +118,7 @@ func addAppToNs(a *app.App, ns *k8sv1.Namespace) error {
 		return err
 	}
 
-	ns.Annotations["teresa.io/app"] = string(b)
+	ns.Annotations[app.TeresaAnnotation] = string(b)
 	return nil
 }
 
@@ -502,18 +502,17 @@ func (k *k8sClient) DeleteNamespace(namespace string) error {
 	return errors.Wrap(err, "delete ns failed")
 }
 
-func (k k8sClient) ListNamespaceByLabel(label string) ([]string, error) {
-	ls := fmt.Sprintf("teresa.io/team=%s", label)
-	appls, err := k.kc.CoreV1().Namespaces().List(k8sv1.ListOptions{LabelSelector: ls})
+func (k k8sClient) NamespaceListByLabel(label, value string) ([]string, error) {
+	labelSelector := fmt.Sprintf("%s=%s", label, value)
+	nl, err := k.kc.CoreV1().Namespaces().List(k8sv1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		return nil, err
 	}
-	apps := make([]string, 0)
-	for _, appl := range appls.Items {
-		app := appl.ObjectMeta.Name
-		apps = append(apps, string(app))
+	namespaces := make([]string, 0)
+	for _, item := range nl.Items {
+		namespaces = append(namespaces, item.ObjectMeta.Name)
 	}
-	return apps, nil
+	return namespaces, nil
 }
 
 func newInClusterK8sClient(conf *Config) (Client, error) {

@@ -173,18 +173,6 @@ func TestListSuccess(t *testing.T) {
 	}
 }
 
-/*
-func TestListAppNotFound(t *testing.T) {
-	s := NewService(NewFakeOperations())
-	user := &storage.User{Email: "gopher@luizalabs.com"}
-	ctx := context.WithValue(context.Background(), "user", user)
-
-	if _, err := s.List(ctx, &appb.Empty{}); teresa_errors.Get(err) != nil {
-		t.Errorf("expected ErrNotFound, got %v", err)
-	}
-}
-*/
-
 func TestSetEnvSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"

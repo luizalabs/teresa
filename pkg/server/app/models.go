@@ -1,10 +1,6 @@
 package app
 
-import (
-	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
-
-	"strings"
-)
+import appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
 
 const (
 	ProcessTypeWeb = "web"
@@ -63,14 +59,10 @@ type Info struct {
 	Limits    *Limits
 }
 
-type List struct {
+type AppListItem struct {
 	Team      string
-	Addresses []*Address
 	Name      string
-}
-
-type AppList struct {
-	AppList string
+	Addresses []*Address
 }
 
 func newSliceLrq(s []*appb.CreateRequest_Limits_LimitRangeQuantity) []*LimitRangeQuantity {
@@ -250,32 +242,23 @@ func unsetEnvVars(app *App, evs []string) {
 	}
 }
 
-func newListResponse(list []*List) *appb.ListResponse {
-	if list == nil {
+func newListResponse(items []*AppListItem) *appb.ListResponse {
+	if items == nil {
 		return nil
 	}
 
-	appNames := []*appb.ListResponse_App{}
-
-	for _, item := range list {
-		if item == nil {
-			continue
+	apps := make([]*appb.ListResponse_App, 0)
+	for _, item := range items {
+		addresses := make([]string, 0)
+		for _, addr := range item.Addresses {
+			addresses = append(addresses, addr.Hostname)
 		}
-		var tmp []string
-		for _, elt := range item.Addresses {
-			tmp = append(tmp, elt.Hostname)
-		}
-		addrs := strings.Join(tmp, ",")
-
-		appName := &appb.ListResponse_App{
-			Urls: addrs,
-			App:  item.Name,
+		apps = append(apps, &appb.ListResponse_App{
+			Urls: addresses,
+			Name: item.Name,
 			Team: item.Team,
-		}
-		appNames = append(appNames, appName)
+		})
 	}
 
-	return &appb.ListResponse{
-		Apps: appNames,
-	}
+	return &appb.ListResponse{Apps: apps}
 }

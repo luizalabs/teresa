@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
+	"strconv"
 
 	"github.com/luizalabs/teresa-api/pkg/client"
 	"github.com/spf13/cobra"
@@ -18,12 +20,16 @@ var configCmd = &cobra.Command{
 To perform any action, you must have at least one cluster setup.
 To add one named "aws-staging", for instance:
 
-	$ teresa config set-cluster aws-staging -s http://mycluster.mydomain.com
+  $ teresa config set-cluster aws-staging --server mycluster.mydomain.com
+
+You can also pass extra flags:
+
+  --port  TCP port to use when communicating with the server
 
 That will add the "aws-staging" cluster to the configuration file,
 but won't set it as the default. To do that, you must run:
 
-	$ teresa config use-cluster aws-staging
+  $ teresa config use-cluster aws-staging
 
 From that point on, teresa will use this cluster until you select
 another via: teresa config use-cluster another-cluster.
@@ -50,7 +56,7 @@ var setClusterCmd = &cobra.Command{
 
 eg.:
 
-	$ teresa config set-cluster aws_staging --server https://staging.mydomain.com
+  $ teresa config set-cluster aws_staging --server staging.mydomain.com
 	`,
 	Run: setCluster,
 }
@@ -76,6 +82,7 @@ func init() {
 	setClusterCmd.Flags().Bool("tls", false, "Enables TLS")
 	setClusterCmd.Flags().Bool("tlsinsecure", false, "Allow insecure TLS connections")
 	setClusterCmd.Flags().Bool("current", false, "Set this server to future use")
+	setClusterCmd.Flags().Int("port", 50051, "Server TCP port")
 	configCmd.AddCommand(setClusterCmd)
 
 	configCmd.AddCommand(useClusterCmd)
@@ -110,6 +117,12 @@ func setCluster(cmd *cobra.Command, args []string) {
 	if server == "" {
 		client.PrintErrorAndExit("Server URI not provided")
 	}
+	port, err := cmd.Flags().GetInt("port")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid port parameter")
+	}
+	server = net.JoinHostPort(server, strconv.Itoa(port))
+
 	useTLS, err := cmd.Flags().GetBool("tls")
 	if err != nil {
 		client.PrintErrorAndExit("Invalid tls parameter")

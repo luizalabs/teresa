@@ -161,7 +161,6 @@ var appListCmd = &cobra.Command{
 }
 
 func appList(cmd *cobra.Command, args []string) {
-
 	conn, err := connection.New(cfgFile)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
@@ -171,12 +170,11 @@ func appList(cmd *cobra.Command, args []string) {
 	cli := appb.NewAppClient(conn)
 	resp, err := cli.List(context.Background(), &appb.Empty{})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 
 	if len(resp.Apps) == 0 {
-		fmt.Println("You do not have to any app")
+		fmt.Println("You don't have any app")
 		return
 	}
 	// rendering app list in a table view
@@ -186,11 +184,12 @@ func appList(cmd *cobra.Command, args []string) {
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetRowSeparator("-")
 	table.SetAutoWrapText(false)
-	for _, t := range resp.Apps {
-		if t.Urls == "" {
-			t.Urls = "n/a"
+	for _, a := range resp.Apps {
+		urls := strings.Join(a.Urls, ",")
+		if urls == "" {
+			urls = "n/a"
 		}
-		r := []string{t.Team, t.App, t.Urls}
+		r := []string{a.Team, a.Name, urls}
 		table.Append(r)
 	}
 	table.Render()
@@ -455,8 +454,6 @@ func init() {
 	// App logs
 	appLogsCmd.Flags().Int64("lines", 10, "number of lines")
 	appLogsCmd.Flags().Bool("follow", false, "follow logs")
-	// App list
-	appListCmd.Flags().Bool("show-apps", false, "Show team's app(s)")
 }
 
 func appLogs(cmd *cobra.Command, args []string) {

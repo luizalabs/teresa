@@ -36,11 +36,11 @@ message CreateRequest {
 }
 
 message ListResponse {
-    
+
     message App {
         string team = 1;
-        string app  = 2;
-        string urls  = 3;    
+        string name  = 2;
+        repeated string urls  = 3;
     }
     repeated App apps = 1;
 

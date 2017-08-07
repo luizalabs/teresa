@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/luizalabs/teresa-api/pkg/client"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +25,7 @@ by brew/ports and changed on your terminal emulator of preference.
     `,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := cmd.Root().GenBashCompletion(os.Stdout); err != nil {
-			log.Fatal(err)
+			client.PrintErrorAndExit(err.Error())
 		}
 	},
 }

@@ -51,19 +51,12 @@ func ParseServerURL(s string) (TeresaServer, error) {
 
 // NewTeresa foo bar
 func NewTeresa() TeresaClient {
-	cluster, err := cli.GetConfig(cfgFile)
-	if err != nil {
-		log.Fatalf("Failed to read config file, err: %+v\n", err)
-	}
+	cluster, _ := cli.GetConfig(cfgFile)
 	suffix := "/v1"
 
 	tc := TeresaClient{teresa: apiclient.Default}
-	log.Debugf(`Setting new teresa client. server: %s, api suffix: %s`, cluster.Server, suffix)
 
-	ts, err := ParseServerURL(cluster.Server)
-	if err != nil {
-		log.Fatal(err)
-	}
+	ts, _ := ParseServerURL(cluster.Server)
 
 	client.DefaultTimeout = defaultTimeout
 	c := client.New(ts.host, suffix, []string{ts.scheme})

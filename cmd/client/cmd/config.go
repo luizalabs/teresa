@@ -78,7 +78,7 @@ func init() {
 
 	configCmd.AddCommand(viewConfigCmd)
 
-	setClusterCmd.Flags().String("server", "", "URI of the server")
+	setClusterCmd.Flags().String("server", "", "Server hostname or IP")
 	setClusterCmd.Flags().Bool("tls", false, "Enables TLS")
 	setClusterCmd.Flags().Bool("tlsinsecure", false, "Allow insecure TLS connections")
 	setClusterCmd.Flags().Bool("current", false, "Set this server to future use")

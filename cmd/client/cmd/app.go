@@ -24,7 +24,7 @@ var appCmd = &cobra.Command{
 
 var appCreateCmd = &cobra.Command{
 	Use:   "create <name>",
-	Short: "Creates a new app.",
+	Short: "Creates a new app",
 	Long: `Creates a new application.
 
 You should provide the unique name for the App and the team name in order to create a new App.
@@ -43,7 +43,7 @@ The app name must follow this rules:
   $ teresa app create foo --team bar --scale-min 2 --scale-max 10 --scale-cpu 70
 
   With specific cpu and memory size...
-  $ teresa create foo --team bar --cpu 200m --max-cpu 1Gi --memory 512Mi --max-memory 1Gi
+  $ teresa create foo --team bar --cpu 200m --max-cpu 500m --memory 512Mi --max-memory 1Gi
 
   With all flags...
   $ teresa app create foo --team bar --cpu 200m --max-cpu 500m --memory 512Mi --max-memory 1Gi --scale-min 2 --scale-max 10 --scale-cpu 70 --process-type web`,
@@ -288,14 +288,14 @@ WARNING:
 }
 
 func appEnvSet(cmd *cobra.Command, args []string) {
-	appName, err := cmd.Flags().GetString("app")
-	if err != nil || appName == "" {
-		client.PrintErrorAndExit("Invalid app parameter")
-	}
-
 	if len(args) == 0 {
 		cmd.Usage()
 		return
+	}
+
+	appName, err := cmd.Flags().GetString("app")
+	if err != nil || appName == "" {
+		client.PrintErrorAndExit("Invalid app parameter")
 	}
 
 	evs := make([]*appb.SetEnvRequest_EnvVar, len(args))
@@ -350,9 +350,7 @@ You can remove one or more environment variables from the application.
 WARNING:
   If you need to unset more than one env var from the application, provide all at once.
   Every time this command is called, the application needs to be restarted.`,
-	Example: `  To add an new env var called "FOO":
-
-To unset an env var called "FOO":
+	Example: `  To unset an env var called "FOO":
 
   $ teresa app env-unset FOO --app myapp
 
@@ -363,14 +361,14 @@ You can also provide more than one env var at a time:
 }
 
 func appEnvUnset(cmd *cobra.Command, args []string) {
-	appName, err := cmd.Flags().GetString("app")
-	if err != nil || appName == "" {
-		client.PrintErrorAndExit("Invalid app parameter")
-	}
-
 	if len(args) == 0 {
 		cmd.Usage()
 		return
+	}
+
+	appName, err := cmd.Flags().GetString("app")
+	if err != nil || appName == "" {
+		client.PrintErrorAndExit("Invalid app parameter")
 	}
 
 	fmt.Printf("Unsetting env vars and %s %s...\n", color.YellowString("restarting"), color.CyanString(`"%s"`, appName))

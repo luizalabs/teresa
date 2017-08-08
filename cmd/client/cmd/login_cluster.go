@@ -55,6 +55,6 @@ func login(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	loginCmd.Flags().StringVar(&userName, "user", "", "username to login with")
+	loginCmd.Flags().StringVar(&userName, "user", "", "e-mail to login with")
 	RootCmd.AddCommand(loginCmd)
 }

@@ -2,11 +2,17 @@ package client
 
 import (
 	"crypto/tls"
+	"errors"
+	"time"
 
 	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+)
+
+const (
+	defaultConnTimeout = 5 * time.Second
 )
 
 type tokenAuth struct {
@@ -24,6 +30,8 @@ func New(cfg ClusterConfig) (*grpc.ClientConn, error) {
 
 	opts := []grpc.DialOption{
 		grpc.WithPerRPCCredentials(&tokenAuth{cfg.Token}),
+		grpc.WithBlock(),
+		grpc.WithTimeout(defaultConnTimeout),
 	}
 	if cfg.UseTLS {
 		if cfg.Insecure {
@@ -35,5 +43,9 @@ func New(cfg ClusterConfig) (*grpc.ClientConn, error) {
 		opts = append(opts, grpc.WithInsecure())
 	}
 
-	return grpc.Dial(cfg.Server, opts...)
+	conn, err := grpc.Dial(cfg.Server, opts...)
+	if err != nil {
+		return nil, errors.New(cfg.Server)
+	}
+	return conn, nil
 }

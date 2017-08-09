@@ -9,8 +9,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"github.com/luizalabs/teresa-api/pkg/server/slug"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/team"
@@ -18,15 +18,15 @@ import (
 )
 
 type Operations interface {
-	Create(user *storage.User, app *App) error
-	Logs(user *storage.User, appName string, lines int64, follow bool) (io.ReadCloser, error)
-	Info(user *storage.User, appName string) (*Info, error)
+	Create(user *database.User, app *App) error
+	Logs(user *database.User, appName string, lines int64, follow bool) (io.ReadCloser, error)
+	Info(user *database.User, appName string) (*Info, error)
 	TeamName(appName string) (string, error)
 	Get(appName string) (*App, error)
-	HasPermission(user *storage.User, appName string) bool
-	SetEnv(user *storage.User, appName string, evs []*EnvVar) error
-	UnsetEnv(user *storage.User, appName string, evs []string) error
-	List(user *storage.User) ([]*AppListItem, error)
+	HasPermission(user *database.User, appName string) bool
+	SetEnv(user *database.User, appName string, evs []*EnvVar) error
+	UnsetEnv(user *database.User, appName string, evs []string) error
+	List(user *database.User) ([]*AppListItem, error)
 }
 
 type K8sOperations interface {
@@ -64,7 +64,7 @@ const (
 	TeresaLastUser   = "teresa.io/last-user"
 )
 
-func (ops *AppOperations) hasPerm(user *storage.User, team string) bool {
+func (ops *AppOperations) hasPerm(user *database.User, team string) bool {
 	teams, err := ops.tops.ListByUser(user.Email)
 	if err != nil {
 		return false
@@ -79,7 +79,7 @@ func (ops *AppOperations) hasPerm(user *storage.User, team string) bool {
 	return found
 }
 
-func (ops *AppOperations) HasPermission(user *storage.User, appName string) bool {
+func (ops *AppOperations) HasPermission(user *database.User, appName string) bool {
 	teamName, err := ops.TeamName(appName)
 	if err != nil {
 		return false
@@ -87,7 +87,7 @@ func (ops *AppOperations) HasPermission(user *storage.User, appName string) bool
 	return ops.hasPerm(user, teamName)
 }
 
-func (ops *AppOperations) Create(user *storage.User, app *App) (Err error) {
+func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 	if !ops.hasPerm(user, app.Team) {
 		return auth.ErrPermissionDenied
 	}
@@ -122,7 +122,7 @@ func (ops *AppOperations) Create(user *storage.User, app *App) (Err error) {
 	return nil
 }
 
-func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, follow bool) (io.ReadCloser, error) {
+func (ops *AppOperations) Logs(user *database.User, appName string, lines int64, follow bool) (io.ReadCloser, error) {
 	team, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
 	if err != nil {
 		if ops.kops.IsNotFound(err) {
@@ -171,7 +171,7 @@ func (ops *AppOperations) Logs(user *storage.User, appName string, lines int64, 
 	return r, nil
 }
 
-func (ops *AppOperations) Info(user *storage.User, appName string) (*Info, error) {
+func (ops *AppOperations) Info(user *database.User, appName string) (*Info, error) {
 	teamName, err := ops.TeamName(appName)
 	if err != nil {
 		return nil, err
@@ -245,7 +245,7 @@ func (ops *AppOperations) Get(appName string) (*App, error) {
 	return a, nil
 }
 
-func (ops *AppOperations) checkPermAndGet(user *storage.User, appName string) (*App, error) {
+func (ops *AppOperations) checkPermAndGet(user *database.User, appName string) (*App, error) {
 	team, err := ops.TeamName(appName)
 	if err != nil {
 		return nil, err
@@ -272,7 +272,7 @@ func (ops *AppOperations) saveApp(app *App, lastUser string) error {
 	return ops.kops.SetNamespaceAnnotations(app.Name, anMap)
 }
 
-func (ops *AppOperations) SetEnv(user *storage.User, appName string, evs []*EnvVar) error {
+func (ops *AppOperations) SetEnv(user *database.User, appName string, evs []*EnvVar) error {
 	evNames := make([]string, len(evs))
 	for i, _ := range evs {
 		evNames[i] = evs[i].Key
@@ -301,7 +301,7 @@ func (ops *AppOperations) SetEnv(user *storage.User, appName string, evs []*EnvV
 	return nil
 }
 
-func (ops *AppOperations) UnsetEnv(user *storage.User, appName string, evNames []string) error {
+func (ops *AppOperations) UnsetEnv(user *database.User, appName string, evNames []string) error {
 	if err := checkForProtectedEnvVars(evNames); err != nil {
 		return err
 	}
@@ -337,7 +337,7 @@ func checkForProtectedEnvVars(evsNames []string) error {
 	return nil
 }
 
-func (ops *AppOperations) List(user *storage.User) ([]*AppListItem, error) {
+func (ops *AppOperations) List(user *database.User) ([]*AppListItem, error) {
 	teams, err := ops.tops.ListByUser(user.Email)
 	if err != nil {
 		return nil, err

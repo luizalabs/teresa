@@ -7,9 +7,9 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/goutil"
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 )
 
 const (
@@ -22,7 +22,7 @@ type Service struct {
 }
 
 func (s *Service) Create(ctx context.Context, req *appb.CreateRequest) (*appb.Empty, error) {
-	user := ctx.Value("user").(*storage.User)
+	user := ctx.Value("user").(*database.User)
 	app := newApp(req)
 	if err := s.ops.Create(user, app); err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func (s *Service) Create(ctx context.Context, req *appb.CreateRequest) (*appb.Em
 
 func (s *Service) Logs(req *appb.LogsRequest, stream appb.App_LogsServer) error {
 	ctx := stream.Context()
-	user := ctx.Value("user").(*storage.User)
+	user := ctx.Value("user").(*database.User)
 
 	rc, err := s.ops.Logs(user, req.Name, req.Lines, req.Follow)
 	if err != nil {
@@ -61,7 +61,7 @@ func (s *Service) Logs(req *appb.LogsRequest, stream appb.App_LogsServer) error 
 }
 
 func (s *Service) Info(ctx context.Context, req *appb.InfoRequest) (*appb.InfoResponse, error) {
-	user := ctx.Value("user").(*storage.User)
+	user := ctx.Value("user").(*database.User)
 
 	info, err := s.ops.Info(user, req.Name)
 	if err != nil {
@@ -72,7 +72,7 @@ func (s *Service) Info(ctx context.Context, req *appb.InfoRequest) (*appb.InfoRe
 }
 
 func (s *Service) SetEnv(ctx context.Context, req *appb.SetEnvRequest) (*appb.Empty, error) {
-	user := ctx.Value("user").(*storage.User)
+	user := ctx.Value("user").(*database.User)
 	evs := newEnvVars(req)
 
 	if err := s.ops.SetEnv(user, req.Name, evs); err != nil {
@@ -83,7 +83,7 @@ func (s *Service) SetEnv(ctx context.Context, req *appb.SetEnvRequest) (*appb.Em
 }
 
 func (s *Service) UnsetEnv(ctx context.Context, req *appb.UnsetEnvRequest) (*appb.Empty, error) {
-	user := ctx.Value("user").(*storage.User)
+	user := ctx.Value("user").(*database.User)
 
 	if err := s.ops.UnsetEnv(user, req.Name, req.EnvVars); err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (s *Service) UnsetEnv(ctx context.Context, req *appb.UnsetEnvRequest) (*app
 }
 
 func (s *Service) List(ctx context.Context, _ *appb.Empty) (*appb.ListResponse, error) {
-	user := ctx.Value("user").(*storage.User)
+	user := ctx.Value("user").(*database.User)
 
 	apps, err := s.ops.List(user)
 	if err != nil {

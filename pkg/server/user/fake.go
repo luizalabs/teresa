@@ -3,13 +3,13 @@ package user
 import (
 	"sync"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 )
 
 type FakeOperations struct {
 	mutex   *sync.RWMutex
-	Storage map[string]*storage.User
+	Storage map[string]*database.User
 }
 
 func (f *FakeOperations) Login(email, password string) (string, error) {
@@ -22,7 +22,7 @@ func (f *FakeOperations) Login(email, password string) (string, error) {
 	return "good token", nil
 }
 
-func (f *FakeOperations) GetUser(email string) (*storage.User, error) {
+func (f *FakeOperations) GetUser(email string) (*database.User, error) {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 
@@ -30,7 +30,7 @@ func (f *FakeOperations) GetUser(email string) (*storage.User, error) {
 	if !found {
 		return nil, ErrNotFound
 	}
-	return &storage.User{Email: user.Email, Password: user.Password}, nil
+	return &database.User{Email: user.Email, Password: user.Password}, nil
 }
 
 func (f *FakeOperations) SetPassword(email, newPassword string) error {
@@ -40,7 +40,7 @@ func (f *FakeOperations) SetPassword(email, newPassword string) error {
 	if _, found := f.Storage[email]; !found {
 		return ErrNotFound
 	}
-	f.Storage[email] = &storage.User{Password: newPassword, Email: email}
+	f.Storage[email] = &database.User{Password: newPassword, Email: email}
 	return nil
 }
 
@@ -62,7 +62,7 @@ func (f *FakeOperations) Create(name, email, pass string, admin bool) error {
 	if _, found := f.Storage[email]; found {
 		return ErrUserAlreadyExists
 	}
-	f.Storage[email] = &storage.User{
+	f.Storage[email] = &database.User{
 		Name:     name,
 		Email:    email,
 		Password: pass,
@@ -74,5 +74,5 @@ func (f *FakeOperations) Create(name, email, pass string, admin bool) error {
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},
-		Storage: make(map[string]*storage.User)}
+		Storage: make(map[string]*database.User)}
 }

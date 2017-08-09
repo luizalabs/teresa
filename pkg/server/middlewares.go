@@ -6,8 +6,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	context "golang.org/x/net/context"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 	"github.com/luizalabs/teresa-api/pkg/server/user"
 	"google.golang.org/grpc"
@@ -59,7 +59,7 @@ func loginUnaryInterceptor(a auth.Auth, uOps user.Operations) grpc.UnaryServerIn
 	}
 }
 
-func authorize(ctx context.Context, a auth.Auth, uOps user.Operations) (*storage.User, error) {
+func authorize(ctx context.Context, a auth.Auth, uOps user.Operations) (*database.User, error) {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
 		return nil, auth.ErrPermissionDenied
@@ -83,7 +83,7 @@ func logUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryS
 	resp, err := handler(ctx, req)
 	if err != nil {
 		logger := log.WithField("route", info.FullMethod).WithField("request", req).WithError(err)
-		u, ok := ctx.Value("user").(*storage.User)
+		u, ok := ctx.Value("user").(*database.User)
 		if ok {
 			logger = logger.WithField("user", u.Email)
 		}
@@ -97,7 +97,7 @@ func logStreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.
 	err := handler(srv, stream)
 	if err != nil {
 		logger := log.WithField("route", info.FullMethod).WithError(err)
-		u, ok := stream.Context().Value("user").(*storage.User)
+		u, ok := stream.Context().Value("user").(*database.User)
 		if ok {
 			logger = logger.WithField("user", u.Email)
 		}

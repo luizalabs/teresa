@@ -3,13 +3,13 @@ package team
 import (
 	"sync"
 
-	"github.com/luizalabs/teresa-api/models/storage"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"github.com/luizalabs/teresa-api/pkg/server/user"
 )
 
 type FakeOperations struct {
 	mutex   *sync.RWMutex
-	Storage map[string]*storage.Team
+	Storage map[string]*database.Team
 
 	UserOps user.Operations
 }
@@ -22,7 +22,7 @@ func (f *FakeOperations) Create(name, email, url string) error {
 		return ErrTeamAlreadyExists
 	}
 
-	f.Storage[name] = &storage.Team{Name: name, Email: email, URL: url}
+	f.Storage[name] = &database.Team{Name: name, Email: email, URL: url}
 	return nil
 }
 
@@ -50,16 +50,16 @@ func (f *FakeOperations) AddUser(name, userEmail string) error {
 	return nil
 }
 
-func (f *FakeOperations) List() ([]*storage.Team, error) {
-	var teams []*storage.Team
+func (f *FakeOperations) List() ([]*database.Team, error) {
+	var teams []*database.Team
 	for _, v := range f.Storage {
 		teams = append(teams, v)
 	}
 	return teams, nil
 }
 
-func (f *FakeOperations) ListByUser(userEmail string) ([]*storage.Team, error) {
-	var teams []*storage.Team
+func (f *FakeOperations) ListByUser(userEmail string) ([]*database.Team, error) {
+	var teams []*database.Team
 	for _, v := range f.Storage {
 		for _, u := range v.Users {
 			if u.Email == userEmail {
@@ -73,6 +73,6 @@ func (f *FakeOperations) ListByUser(userEmail string) ([]*storage.Team, error) {
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},
-		Storage: make(map[string]*storage.Team),
+		Storage: make(map[string]*database.Team),
 		UserOps: user.NewFakeOperations()}
 }

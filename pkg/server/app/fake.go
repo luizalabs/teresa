@@ -6,8 +6,8 @@ import (
 	"math/rand"
 	"sync"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 )
 
@@ -20,11 +20,11 @@ func hasPerm(email string) bool {
 	return email != "bad-user@luizalabs.com"
 }
 
-func (f *FakeOperations) HasPermission(user *storage.User, appName string) bool {
+func (f *FakeOperations) HasPermission(user *database.User, appName string) bool {
 	return hasPerm(user.Email)
 }
 
-func (f *FakeOperations) Create(user *storage.User, app *App) error {
+func (f *FakeOperations) Create(user *database.User, app *App) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -39,7 +39,7 @@ func (f *FakeOperations) Create(user *storage.User, app *App) error {
 	return nil
 }
 
-func (f *FakeOperations) Logs(user *storage.User, appName string, lines int64, follow bool) (io.ReadCloser, error) {
+func (f *FakeOperations) Logs(user *database.User, appName string, lines int64, follow bool) (io.ReadCloser, error) {
 	if _, found := f.Storage[appName]; !found {
 		return nil, ErrNotFound
 	}
@@ -64,7 +64,7 @@ func (f *FakeOperations) Logs(user *storage.User, appName string, lines int64, f
 	return r, nil
 }
 
-func (f *FakeOperations) Info(user *storage.User, appName string) (*Info, error) {
+func (f *FakeOperations) Info(user *database.User, appName string) (*Info, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -79,7 +79,7 @@ func (f *FakeOperations) Info(user *storage.User, appName string) (*Info, error)
 	return &Info{}, nil
 }
 
-func (f *FakeOperations) List(user *storage.User) ([]*AppListItem, error) {
+func (f *FakeOperations) List(user *database.User) ([]*AppListItem, error) {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 
@@ -109,7 +109,7 @@ func (f *FakeOperations) Get(appName string) (*App, error) {
 	return a, nil
 }
 
-func (f *FakeOperations) SetEnv(user *storage.User, appName string, envVars []*EnvVar) error {
+func (f *FakeOperations) SetEnv(user *database.User, appName string, envVars []*EnvVar) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -124,7 +124,7 @@ func (f *FakeOperations) SetEnv(user *storage.User, appName string, envVars []*E
 	return nil
 }
 
-func (f *FakeOperations) UnsetEnv(user *storage.User, appName string, envVars []string) error {
+func (f *FakeOperations) UnsetEnv(user *database.User, appName string, envVars []string) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 

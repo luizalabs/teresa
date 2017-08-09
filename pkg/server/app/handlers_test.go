@@ -7,9 +7,9 @@ import (
 
 	"testing"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 )
 
@@ -30,7 +30,7 @@ func (lsw *LogsStreamWrapper) Send(msg *appb.LogsResponse) error {
 
 func TestCreateSuccess(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Email: "gopher@luizalabs.com"}
+	user := &database.User{Email: "gopher@luizalabs.com"}
 	s := NewService(fake)
 	ctx := context.WithValue(context.Background(), "user", user)
 
@@ -46,7 +46,7 @@ func TestCreateSuccess(t *testing.T) {
 func TestCreateErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	s := NewService(fake)
-	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
 	_, err := s.Create(
@@ -60,7 +60,7 @@ func TestCreateErrPermissionDenied(t *testing.T) {
 
 func TestCreateErrAppAlreadyExists(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Email: "gopher@luizalabs.com"}
+	user := &database.User{Email: "gopher@luizalabs.com"}
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
 	s := NewService(fake)
@@ -77,7 +77,7 @@ func TestCreateErrAppAlreadyExists(t *testing.T) {
 
 func TestLogsSuccess(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Email: "gopher@luizalabs.com"}
+	user := &database.User{Email: "gopher@luizalabs.com"}
 
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
@@ -94,7 +94,7 @@ func TestLogsSuccess(t *testing.T) {
 
 func TestLogsAppNotFound(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Email: "gopher@luizalabs.com"}
+	user := &database.User{Email: "gopher@luizalabs.com"}
 
 	s := NewService(fake)
 
@@ -109,7 +109,7 @@ func TestLogsAppNotFound(t *testing.T) {
 
 func TestLogsPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	user := &database.User{Email: "bad-user@luizalabs.com"}
 
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
@@ -129,7 +129,7 @@ func TestInfoSuccess(t *testing.T) {
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
 	s := NewService(fake)
-	user := &storage.User{Email: "gopher@luizalabs.com"}
+	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
 	if _, err := s.Info(ctx, &appb.InfoRequest{Name: name}); err != nil {
@@ -139,7 +139,7 @@ func TestInfoSuccess(t *testing.T) {
 
 func TestInfoAppNotFound(t *testing.T) {
 	s := NewService(NewFakeOperations())
-	user := &storage.User{Email: "gopher@luizalabs.com"}
+	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
 	if _, err := s.Info(ctx, &appb.InfoRequest{Name: "teresa"}); teresa_errors.Get(err) != ErrNotFound {
@@ -152,7 +152,7 @@ func TestInfoPermissionDenied(t *testing.T) {
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
 	s := NewService(fake)
-	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
 	if _, err := s.Info(ctx, &appb.InfoRequest{Name: name}); teresa_errors.Get(err) != auth.ErrPermissionDenied {
@@ -165,7 +165,7 @@ func TestListSuccess(t *testing.T) {
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
 	s := NewService(fake)
-	user := &storage.User{Email: "gopher@luizalabs.com"}
+	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
 	if _, err := s.List(ctx, &appb.Empty{}); err != nil {
@@ -178,7 +178,7 @@ func TestSetEnvSuccess(t *testing.T) {
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
 	s := NewService(fake)
-	user := &storage.User{Email: "gopher@luizalabs.com"}
+	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
 	if _, err := s.SetEnv(ctx, &appb.SetEnvRequest{Name: name}); err != nil {
@@ -188,7 +188,7 @@ func TestSetEnvSuccess(t *testing.T) {
 
 func TestSetEnvAppNotFound(t *testing.T) {
 	s := NewService(NewFakeOperations())
-	user := &storage.User{Email: "gopher@luizalabs.com"}
+	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
 	if _, err := s.SetEnv(ctx, &appb.SetEnvRequest{Name: "teresa"}); err != ErrNotFound {
@@ -201,7 +201,7 @@ func TestSetEnvPermissionDenied(t *testing.T) {
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
 	s := NewService(fake)
-	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
 	if _, err := s.SetEnv(ctx, &appb.SetEnvRequest{Name: name}); err != auth.ErrPermissionDenied {
@@ -214,7 +214,7 @@ func TestUnsetEnvSuccess(t *testing.T) {
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
 	s := NewService(fake)
-	user := &storage.User{Email: "gopher@luizalabs.com"}
+	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
 	if _, err := s.UnsetEnv(ctx, &appb.UnsetEnvRequest{Name: name}); err != nil {
@@ -224,7 +224,7 @@ func TestUnsetEnvSuccess(t *testing.T) {
 
 func TestUnsetEnvAppNotFound(t *testing.T) {
 	s := NewService(NewFakeOperations())
-	user := &storage.User{Email: "gopher@luizalabs.com"}
+	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
 	if _, err := s.UnsetEnv(ctx, &appb.UnsetEnvRequest{Name: "teresa"}); err != ErrNotFound {
@@ -237,7 +237,7 @@ func TestUnsetEnvPermissionDenied(t *testing.T) {
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
 	s := NewService(fake)
-	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
 	if _, err := s.UnsetEnv(ctx, &appb.UnsetEnvRequest{Name: name}); err != auth.ErrPermissionDenied {

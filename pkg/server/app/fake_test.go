@@ -4,15 +4,15 @@ import (
 	"bufio"
 	"testing"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 )
 
 func TestFakeOperationsCreate(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	user := &storage.User{Name: "gopher@luizalabs.com"}
+	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: name}
 
 	err := fake.Create(user, app)
@@ -31,7 +31,7 @@ func TestFakeOperationsCreate(t *testing.T) {
 
 func TestFakeOperationsCreateErrAppAlreadyExists(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Email: "gopher@luizalabs.com"}
+	user := &database.User{Email: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
 	fake.(*FakeOperations).Storage["teresa"] = app
 
@@ -42,7 +42,7 @@ func TestFakeOperationsCreateErrAppAlreadyExists(t *testing.T) {
 
 func TestFakeOperationsCreateErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
 
 	if err := fake.Create(user, app); err != auth.ErrPermissionDenied {
@@ -52,7 +52,7 @@ func TestFakeOperationsCreateErrPermissionDenied(t *testing.T) {
 
 func TestFakeOperationsLogs(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Name: "gopher@luizalabs.com"}
+	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
 
 	fake.(*FakeOperations).Storage[app.Name] = app
@@ -80,7 +80,7 @@ func TestFakeOperationsLogs(t *testing.T) {
 
 func TestFakeOperationsLogsFollow(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Name: "gopher@luizalabs.com"}
+	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
 
 	fake.(*FakeOperations).Storage[app.Name] = app
@@ -107,7 +107,7 @@ func TestFakeOperationsLogsFollow(t *testing.T) {
 
 func TestFakeOperationsLogsErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
 	fake.(*FakeOperations).Storage[app.Name] = app
 
@@ -118,7 +118,7 @@ func TestFakeOperationsLogsErrPermissionDenied(t *testing.T) {
 
 func TestFakeOperationsLogsErrNotFound(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Email: "gopher-user@luizalabs.com"}
+	user := &database.User{Email: "gopher-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
 
 	if _, err := fake.Logs(user, app.Name, 1, false); err != ErrNotFound {
@@ -128,7 +128,7 @@ func TestFakeOperationsLogsErrNotFound(t *testing.T) {
 
 func TestFakeOperationsInfo(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Name: "gopher@luizalabs.com"}
+	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
 	fake.(*FakeOperations).Storage[app.Name] = app
 
@@ -144,7 +144,7 @@ func TestFakeOperationsInfo(t *testing.T) {
 
 func TestFakeOperationsInfoErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
 	fake.(*FakeOperations).Storage[app.Name] = app
 
@@ -155,7 +155,7 @@ func TestFakeOperationsInfoErrPermissionDenied(t *testing.T) {
 
 func TestFakeOperationsInfoErrNotFound(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Name: "gopher@luizalabs.com"}
+	user := &database.User{Name: "gopher@luizalabs.com"}
 
 	if _, err := fake.Info(user, "teresa"); teresa_errors.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", teresa_errors.Get(err))
@@ -164,7 +164,7 @@ func TestFakeOperationsInfoErrNotFound(t *testing.T) {
 
 func TestFakeOperationsList(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Name: "gopher@luizalabs.com"}
+	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
 	fake.(*FakeOperations).Storage[app.Name] = app
 
@@ -215,7 +215,7 @@ func TestFakeHasPermission(t *testing.T) {
 	fake := NewFakeOperations()
 
 	for _, tc := range testCases {
-		actual := fake.HasPermission(&storage.User{Email: tc.email}, "teresa")
+		actual := fake.HasPermission(&database.User{Email: tc.email}, "teresa")
 		if actual != tc.expected {
 			t.Errorf("expected %v, got %v", tc.expected, actual)
 		}
@@ -224,7 +224,7 @@ func TestFakeHasPermission(t *testing.T) {
 
 func TestFakeOperationsSetEnv(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Name: "gopher@luizalabs.com"}
+	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
 	fake.(*FakeOperations).Storage[app.Name] = app
 
@@ -235,7 +235,7 @@ func TestFakeOperationsSetEnv(t *testing.T) {
 
 func TestFakeOperationsSetEnvErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
 	fake.(*FakeOperations).Storage[app.Name] = app
 
@@ -246,7 +246,7 @@ func TestFakeOperationsSetEnvErrPermissionDenied(t *testing.T) {
 
 func TestFakeOperationsSetEnvErrNotFound(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Name: "gopher@luizalabs.com"}
+	user := &database.User{Name: "gopher@luizalabs.com"}
 
 	if err := fake.SetEnv(user, "teresa", nil); err != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
@@ -255,7 +255,7 @@ func TestFakeOperationsSetEnvErrNotFound(t *testing.T) {
 
 func TestFakeOperationsUnsetEnv(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Name: "gopher@luizalabs.com"}
+	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
 	fake.(*FakeOperations).Storage[app.Name] = app
 
@@ -266,7 +266,7 @@ func TestFakeOperationsUnsetEnv(t *testing.T) {
 
 func TestFakeOperationsUnsetEnvErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Email: "bad-user@luizalabs.com"}
+	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
 	fake.(*FakeOperations).Storage[app.Name] = app
 
@@ -277,7 +277,7 @@ func TestFakeOperationsUnsetEnvErrPermissionDenied(t *testing.T) {
 
 func TestFakeOperationsUnsetEnvErrNotFound(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &storage.User{Name: "gopher@luizalabs.com"}
+	user := &database.User{Name: "gopher@luizalabs.com"}
 
 	if err := fake.UnsetEnv(user, "teresa", nil); err != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)

@@ -1,0 +1,17 @@
+{{- if .Values.db.password }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ template "fullname". }}-database
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    component: "server"
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": pre-install
+type: Opaque
+data:
+  db_password: {{ .Values.db.password | b64enc }}
+{{- end }}

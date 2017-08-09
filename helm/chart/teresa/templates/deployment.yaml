@@ -1,0 +1,86 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "fullname" . }}
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: {{ template "name" . }}
+        chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+        component: "server"
+        heritage: {{ .Release.Service }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ template "name" . }}
+        image: "{{ .Values.docker.registry }}/{{ .Values.docker.image }}:{{ .Values.docker.tag }}"
+        {{- if .Values.tls.crt }}
+        args: ["run", "--tls"]
+        {{- end}}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 50051
+        env:
+        - name: TERESA_DB_DATABASE
+          value: {{ .Values.db.name }}
+        {{- if .Values.db.hostname }}
+        - name: TERESA_DB_HOSTNAME
+          value: {{ .Values.db.hostname }}
+        {{- end }}
+        {{- if .Values.db.password }}
+        - name: TERESA_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "fullname" . }}-database
+              key: db_password
+        {{- end }}
+        {{- if .Values.db.username }}
+        - name: TERESA_DB_USERNAME
+          value: {{ .Values.db.username }}
+        {{- end }}
+        - name: TERESA_SECRETS_PRIVATE_KEY
+          value: /etc/teresa-keys/teresa.rsa
+        - name: TERESA_SECRETS_PUBLIC_KEY
+          value: /etc/teresa-keys/teresa.rsa.pub
+        - name: TERESA_STORAGE_AWS_BUCKET
+          value: {{ .Values.aws.s3.bucket }}
+        - name: TERESA_STORAGE_AWS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "fullname" . }}-aws
+              key: access_key
+        - name: TERESA_STORAGE_AWS_REGION
+          value: {{ .Values.aws.region }}
+        - name: TERESA_STORAGE_AWS_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "fullname" . }}-aws
+              key: secret_key
+        {{- if .Values.tls.crt }}
+        - name: TERESA_SECRETS_TLS_CERT
+          value: /etc/teresa/server.crt
+        - name: TERESA_SECRETS_TLS_KEY
+          value: /etc/teresa/server.key
+        {{- end }}
+        volumeMounts:
+        {{- if .Values.tls.crt }}
+        - mountPath: /etc/teresa
+          name: {{ template "fullname" . }}-tls
+          readOnly: true
+        {{- end }}
+        - mountPath: /etc/teresa-keys
+          name: {{ template "fullname" . }}-keys
+          readOnly: true
+      volumes:
+      {{- if .Values.tls.crt }}
+      - name: {{ template "fullname" . }}-tls
+        secret:
+          defaultMode: 420
+          secretName: {{ template "fullname" . }}-tls
+      {{- end }}
+      - name: {{ template "fullname" . }}-keys
+        secret:
+          defaultMode: 420
+          secretName: {{ template "fullname" . }}-keys

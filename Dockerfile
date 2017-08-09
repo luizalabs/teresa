@@ -6,5 +6,5 @@ COPY . /go/src/github.com/luizalabs/teresa-api
 
 RUN make build-server
 
-CMD ["./teresa-server", "run", "--port", "8080"]
-EXPOSE 8080
+ENTRYPOINT ["./teresa-server"]
+EXPOSE 50051

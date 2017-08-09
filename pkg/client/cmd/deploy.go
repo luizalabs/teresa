@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/luizalabs/teresa-api/cmd/client/connection"
-	"github.com/luizalabs/teresa-api/cmd/client/tar"
 	"github.com/luizalabs/teresa-api/pkg/client"
+	"github.com/luizalabs/teresa-api/pkg/client/connection"
+	"github.com/luizalabs/teresa-api/pkg/client/tar"
 	dpb "github.com/luizalabs/teresa-api/pkg/protobuf/deploy"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"

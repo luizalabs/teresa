@@ -4,7 +4,8 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/luizalabs/teresa-api/cmd/client/cmd"
+	"github.com/luizalabs/teresa-api/pkg/client"
+	"github.com/luizalabs/teresa-api/pkg/client/cmd"
 
 	"google.golang.org/grpc/grpclog"
 )
@@ -14,5 +15,7 @@ func init() {
 }
 
 func main() {
-	cmd.Execute()
+	if err := cmd.RootCmd.Execute(); err != nil {
+		client.PrintErrorAndExit(err.Error())
+	}
 }

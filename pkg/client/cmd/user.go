@@ -5,8 +5,8 @@ import (
 
 	context "golang.org/x/net/context"
 
-	"github.com/luizalabs/teresa-api/cmd/client/connection"
 	"github.com/luizalabs/teresa-api/pkg/client"
+	"github.com/luizalabs/teresa-api/pkg/client/connection"
 	_ "github.com/prometheus/common/log"
 	"github.com/spf13/cobra"
 

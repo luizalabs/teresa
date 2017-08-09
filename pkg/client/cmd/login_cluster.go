@@ -4,8 +4,8 @@ import (
 	context "golang.org/x/net/context"
 
 	"github.com/fatih/color"
-	"github.com/luizalabs/teresa-api/cmd/client/connection"
 	"github.com/luizalabs/teresa-api/pkg/client"
+	"github.com/luizalabs/teresa-api/pkg/client/connection"
 	"github.com/spf13/cobra"
 
 	userpb "github.com/luizalabs/teresa-api/pkg/protobuf/user"

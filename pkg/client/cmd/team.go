@@ -8,8 +8,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
-	"github.com/luizalabs/teresa-api/cmd/client/connection"
 	"github.com/luizalabs/teresa-api/pkg/client"
+	"github.com/luizalabs/teresa-api/pkg/client/connection"
 	teampb "github.com/luizalabs/teresa-api/pkg/protobuf/team"
 )
 

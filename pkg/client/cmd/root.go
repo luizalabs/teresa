@@ -46,14 +46,6 @@ view the whole configuration anytime by running:
 	`,
 }
 
-// Execute adds all child commands to the root command sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if _, err := RootCmd.ExecuteC(); err != nil {
-		client.PrintErrorAndExit(err.Error())
-	}
-}
-
 func init() {
 	// the config is only loaded if the command is valid,
 	// that is why we use OnInitialize

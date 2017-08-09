@@ -5,9 +5,9 @@ import (
 
 	"testing"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	userpb "github.com/luizalabs/teresa-api/pkg/protobuf/user"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 )
 
 func TestUserLoginSuccess(t *testing.T) {
@@ -15,7 +15,7 @@ func TestUserLoginSuccess(t *testing.T) {
 
 	expectedEmail := "teresa@luizalabs.com"
 	expectedPassword := "123456"
-	fake.(*FakeOperations).Storage[expectedEmail] = &storage.User{
+	fake.(*FakeOperations).Storage[expectedEmail] = &database.User{
 		Password: expectedPassword,
 		Email:    expectedEmail,
 	}
@@ -50,13 +50,13 @@ func TestSetPasswordSuccess(t *testing.T) {
 
 	expectedEmail := "teresa@luizalabs.com"
 	expectedPassword := "123456"
-	fake.(*FakeOperations).Storage[expectedEmail] = &storage.User{
+	fake.(*FakeOperations).Storage[expectedEmail] = &database.User{
 		Password: "gopher",
 		Email:    expectedEmail,
 	}
 
 	s := NewService(fake)
-	ctx := context.WithValue(context.Background(), "user", &storage.User{Email: expectedEmail})
+	ctx := context.WithValue(context.Background(), "user", &database.User{Email: expectedEmail})
 	_, err := s.SetPassword(
 		ctx,
 		&userpb.SetPasswordRequest{Password: expectedPassword},
@@ -69,12 +69,12 @@ func TestSetPasswordSuccess(t *testing.T) {
 func TestDeleteSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 
-	admin := &storage.User{
+	admin := &database.User{
 		Email:   "admin@luizalabs.com",
 		IsAdmin: true,
 	}
 	email := "teresa@luizalabs.com"
-	fake.(*FakeOperations).Storage[email] = &storage.User{
+	fake.(*FakeOperations).Storage[email] = &database.User{
 		Password: "gopher",
 		Email:    email,
 	}
@@ -93,11 +93,11 @@ func TestDeleteSuccess(t *testing.T) {
 func TestDeletePermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 
-	fakeAdmin := &storage.User{
+	fakeAdmin := &database.User{
 		Email: "admin@luizalabs.com",
 	}
 	email := "teresa@luizalabs.com"
-	fake.(*FakeOperations).Storage[email] = &storage.User{
+	fake.(*FakeOperations).Storage[email] = &database.User{
 		Password: "gopher",
 		Email:    email,
 	}
@@ -116,7 +116,7 @@ func TestDeletePermissionDenied(t *testing.T) {
 func TestCreateSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 
-	admin := &storage.User{
+	admin := &database.User{
 		Email:   "admin@luizalabs.com",
 		IsAdmin: true,
 	}
@@ -138,7 +138,7 @@ func TestCreateSuccess(t *testing.T) {
 func TestCreateErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 
-	fakeAdmin := &storage.User{
+	fakeAdmin := &database.User{
 		Email: "admin@luizalabs.com",
 	}
 	email := "teresa@luizalabs.com"
@@ -157,13 +157,13 @@ func TestCreateErrPermissionDenied(t *testing.T) {
 func TestCreateErrUserAlreadyExists(t *testing.T) {
 	fake := NewFakeOperations()
 
-	admin := &storage.User{
+	admin := &database.User{
 		Email:   "admin@luizalabs.com",
 		IsAdmin: true,
 	}
 	name := "teresa"
 	email := "teresa@luizalabs.com"
-	fake.(*FakeOperations).Storage[email] = &storage.User{
+	fake.(*FakeOperations).Storage[email] = &database.User{
 		Email: email,
 		Name:  name,
 	}

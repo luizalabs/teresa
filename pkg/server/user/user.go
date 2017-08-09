@@ -7,8 +7,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/jinzhu/gorm"
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 	"github.com/luizalabs/teresa-api/pkg/server/validations"
 )
@@ -19,7 +19,7 @@ const (
 
 type Operations interface {
 	Login(email, password string) (string, error)
-	GetUser(email string) (*storage.User, error)
+	GetUser(email string) (*database.User, error)
 	SetPassword(email, newPassword string) error
 	Delete(email string) error
 	Create(name, email, pass string, admin bool) error
@@ -52,9 +52,9 @@ func (dbu *DatabaseOperations) Login(email, password string) (string, error) {
 	return token, nil
 }
 
-func (dbu *DatabaseOperations) GetUser(email string) (*storage.User, error) {
-	u := new(storage.User)
-	if dbu.DB.Where(&storage.User{Email: email}).First(u).RecordNotFound() {
+func (dbu *DatabaseOperations) GetUser(email string) (*database.User, error) {
+	u := new(database.User)
+	if dbu.DB.Where(&database.User{Email: email}).First(u).RecordNotFound() {
 		return nil, ErrNotFound
 	}
 	return u, nil
@@ -104,8 +104,8 @@ func (dbu *DatabaseOperations) Create(name, email, pass string, admin bool) erro
 		return ErrInvalidPassword
 	}
 
-	u := new(storage.User)
-	if !dbu.DB.Where(&storage.User{Email: email}).First(u).RecordNotFound() {
+	u := new(database.User)
+	if !dbu.DB.Where(&database.User{Email: email}).First(u).RecordNotFound() {
 		return ErrUserAlreadyExists
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
@@ -129,6 +129,6 @@ func (dbu *DatabaseOperations) Create(name, email, pass string, admin bool) erro
 }
 
 func NewDatabaseOperations(db *gorm.DB, a auth.Auth) Operations {
-	db.AutoMigrate(&storage.User{})
+	db.AutoMigrate(&database.User{})
 	return &DatabaseOperations{DB: db, auth: a}
 }

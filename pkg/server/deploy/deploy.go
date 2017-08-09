@@ -6,9 +6,9 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/app"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 	"github.com/pborman/uuid"
@@ -17,7 +17,7 @@ import (
 const ProcfileReleaseCmd = "release"
 
 type Operations interface {
-	Deploy(user *storage.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, error)
+	Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, error)
 }
 
 type K8sOperations interface {
@@ -33,7 +33,7 @@ type DeployOperations struct {
 	k8s         K8sOperations
 }
 
-func (ops *DeployOperations) Deploy(user *storage.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, error) {
+func (ops *DeployOperations) Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, error) {
 	a, err := ops.appOps.Get(appName)
 	if err != nil {
 		return nil, err

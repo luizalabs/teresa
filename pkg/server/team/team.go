@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jinzhu/gorm"
-	"github.com/luizalabs/teresa-api/models/storage"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 	"github.com/luizalabs/teresa-api/pkg/server/user"
 	"github.com/pkg/errors"
@@ -13,8 +13,8 @@ import (
 type Operations interface {
 	Create(name, email, url string) error
 	AddUser(name, userEmail string) error
-	List() ([]*storage.Team, error)
-	ListByUser(userEmail string) ([]*storage.Team, error)
+	List() ([]*database.Team, error)
+	ListByUser(userEmail string) ([]*database.Team, error)
 }
 
 type DatabaseOperations struct {
@@ -23,8 +23,8 @@ type DatabaseOperations struct {
 }
 
 func (dbt *DatabaseOperations) Create(name, email, url string) error {
-	t := new(storage.Team)
-	if !dbt.DB.Where(&storage.Team{Name: name}).First(t).RecordNotFound() {
+	t := new(database.Team)
+	if !dbt.DB.Where(&database.Team{Name: name}).First(t).RecordNotFound() {
 		return ErrTeamAlreadyExists
 	}
 
@@ -51,7 +51,7 @@ func (dbt *DatabaseOperations) AddUser(name, userEmail string) error {
 		return err
 	}
 
-	usersOfTeam := []storage.User{}
+	usersOfTeam := []database.User{}
 	dbt.DB.Model(t).Association("Users").Find(&usersOfTeam)
 	for _, userOfTeam := range usersOfTeam {
 		if userOfTeam.Email == userEmail {
@@ -62,8 +62,8 @@ func (dbt *DatabaseOperations) AddUser(name, userEmail string) error {
 	return dbt.DB.Model(t).Association("Users").Append(u).Error
 }
 
-func (dbt *DatabaseOperations) List() ([]*storage.Team, error) {
-	var teams []*storage.Team
+func (dbt *DatabaseOperations) List() ([]*database.Team, error) {
+	var teams []*database.Team
 	if err := dbt.DB.Find(&teams).Error; err != nil {
 		return nil, teresa_errors.New(
 			teresa_errors.ErrInternalServerError,
@@ -77,13 +77,13 @@ func (dbt *DatabaseOperations) List() ([]*storage.Team, error) {
 	return teams, nil
 }
 
-func (dbt *DatabaseOperations) ListByUser(userEmail string) ([]*storage.Team, error) {
+func (dbt *DatabaseOperations) ListByUser(userEmail string) ([]*database.Team, error) {
 	u, err := dbt.UserOps.GetUser(userEmail)
 	if err != nil {
 		return nil, err
 	}
 
-	var teams []*storage.Team
+	var teams []*database.Team
 	if err = dbt.DB.Model(u).Association("Teams").Find(&teams).Error; err != nil {
 		return nil, teresa_errors.New(
 			teresa_errors.ErrInternalServerError,
@@ -97,7 +97,7 @@ func (dbt *DatabaseOperations) ListByUser(userEmail string) ([]*storage.Team, er
 	return teams, nil
 }
 
-func (dbt *DatabaseOperations) findTeamUsers(teams []*storage.Team) error {
+func (dbt *DatabaseOperations) findTeamUsers(teams []*database.Team) error {
 	for _, t := range teams {
 		if err := dbt.DB.Model(t).Association("Users").Find(&t.Users).Error; err != nil {
 			return teresa_errors.New(
@@ -109,15 +109,15 @@ func (dbt *DatabaseOperations) findTeamUsers(teams []*storage.Team) error {
 	return nil
 }
 
-func (dbt *DatabaseOperations) getTeam(name string) (*storage.Team, error) {
-	t := new(storage.Team)
-	if dbt.DB.Where(&storage.Team{Name: name}).First(t).RecordNotFound() {
+func (dbt *DatabaseOperations) getTeam(name string) (*database.Team, error) {
+	t := new(database.Team)
+	if dbt.DB.Where(&database.Team{Name: name}).First(t).RecordNotFound() {
 		return nil, ErrNotFound
 	}
 	return t, nil
 }
 
 func NewDatabaseOperations(db *gorm.DB, uOps user.Operations) Operations {
-	db.AutoMigrate(&storage.Team{})
+	db.AutoMigrate(&database.Team{})
 	return &DatabaseOperations{DB: db, UserOps: uOps}
 }

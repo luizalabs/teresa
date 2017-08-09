@@ -4,9 +4,9 @@ import (
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	userpb "github.com/luizalabs/teresa-api/pkg/protobuf/user"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 )
 
 type Service struct {
@@ -22,7 +22,7 @@ func (s *Service) Login(ctx context.Context, request *userpb.LoginRequest) (*use
 }
 
 func (s *Service) SetPassword(ctx context.Context, request *userpb.SetPasswordRequest) (*userpb.Empty, error) {
-	u := ctx.Value("user").(*storage.User)
+	u := ctx.Value("user").(*database.User)
 	if err := s.ops.SetPassword(u.Email, request.Password); err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (s *Service) SetPassword(ctx context.Context, request *userpb.SetPasswordRe
 }
 
 func (s *Service) Delete(ctx context.Context, request *userpb.DeleteRequest) (*userpb.Empty, error) {
-	u := ctx.Value("user").(*storage.User)
+	u := ctx.Value("user").(*database.User)
 	if !u.IsAdmin {
 		return nil, auth.ErrPermissionDenied
 	}
@@ -41,7 +41,7 @@ func (s *Service) Delete(ctx context.Context, request *userpb.DeleteRequest) (*u
 }
 
 func (s *Service) Create(ctx context.Context, request *userpb.CreateRequest) (*userpb.Empty, error) {
-	u := ctx.Value("user").(*storage.User)
+	u := ctx.Value("user").(*database.User)
 	if !u.IsAdmin {
 		return nil, auth.ErrPermissionDenied
 	}

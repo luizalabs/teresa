@@ -7,8 +7,8 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 )
 
 func createFakeUser(db *gorm.DB, email, password string) error {
@@ -16,7 +16,7 @@ func createFakeUser(db *gorm.DB, email, password string) error {
 	if err != nil {
 		return err
 	}
-	u := &storage.User{
+	u := &database.User{
 		Name:     "Test",
 		Email:    email,
 		Password: string(p),

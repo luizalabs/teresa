@@ -14,8 +14,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
 	"github.com/luizalabs/teresa-api/pkg/server/user"
 )
@@ -38,18 +38,18 @@ func TestAuthorize(t *testing.T) {
 	}
 
 	uOps := user.NewFakeOperations()
-	uOps.(*user.FakeOperations).Storage[validEmail] = &storage.User{
+	uOps.(*user.FakeOperations).Storage[validEmail] = &database.User{
 		Password: "secret",
 		Email:    validEmail,
 	}
 
 	var testCases = []struct {
 		token          string
-		testResultFunc func(*storage.User, error)
+		testResultFunc func(*database.User, error)
 	}{
 		{
 			validToken,
-			func(u *storage.User, err error) {
+			func(u *database.User, err error) {
 				if err != nil {
 					t.Fatal("error on validate token: ", err)
 				}
@@ -60,7 +60,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			"invalidToken",
-			func(u *storage.User, err error) {
+			func(u *database.User, err error) {
 				if err != auth.ErrPermissionDenied {
 					t.Errorf("expected ErrPermissionDenied, got %v", err)
 				}
@@ -68,7 +68,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			tokenForInvalidUser,
-			func(u *storage.User, err error) {
+			func(u *database.User, err error) {
 				if err != user.ErrNotFound {
 					t.Errorf("expected user.ErrNotFound, got %v", err)
 				}
@@ -97,7 +97,7 @@ func TestLoginUnaryInterceptorIgnoreLoginRoute(t *testing.T) {
 func TestLoginUnaryInterceptor(t *testing.T) {
 	expectedUserEmail := "gopher@luizalabs.com"
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		u, ok := ctx.Value("user").(*storage.User)
+		u, ok := ctx.Value("user").(*database.User)
 		if !ok {
 			return false, errors.New("Context without User")
 		}
@@ -109,7 +109,7 @@ func TestLoginUnaryInterceptor(t *testing.T) {
 	info := &grpc.UnaryServerInfo{FullMethod: "Test"}
 
 	uOps := user.NewFakeOperations()
-	uOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{
+	uOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{
 		Password: "secret",
 		Email:    expectedUserEmail,
 	}
@@ -140,7 +140,7 @@ func TestLoginStreamInterceptor(t *testing.T) {
 	expectedUserEmail := "gopher@luizalabs.com"
 	handler := func(srv interface{}, stream grpc.ServerStream) error {
 		ctx := stream.Context()
-		u, ok := ctx.Value("user").(*storage.User)
+		u, ok := ctx.Value("user").(*database.User)
 		if !ok {
 			return errors.New("Context without User")
 		}
@@ -152,7 +152,7 @@ func TestLoginStreamInterceptor(t *testing.T) {
 	info := &grpc.StreamServerInfo{FullMethod: "Test"}
 
 	uOps := user.NewFakeOperations()
-	uOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{
+	uOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{
 		Password: "secret",
 		Email:    expectedUserEmail,
 	}

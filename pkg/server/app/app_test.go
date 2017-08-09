@@ -11,8 +11,8 @@ import (
 
 	"k8s.io/client-go/pkg/api"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"github.com/luizalabs/teresa-api/pkg/server/slug"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/team"
@@ -219,11 +219,11 @@ func TestAppOperationsCreate(t *testing.T) {
 	fakeSt := st.NewFake()
 	ops := NewOperations(tops, &fakeK8sOperations{}, fakeSt)
 	name := "luizalabs"
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: name}
-	tops.(*team.FakeOperations).Storage[name] = &storage.Team{
+	tops.(*team.FakeOperations).Storage[name] = &database.Team{
 		Name:  name,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 
 	if err := ops.Create(user, app); err != nil {
@@ -236,7 +236,7 @@ func TestAppOperationsCreateErrPermissionDenied(t *testing.T) {
 	fakeSt := st.NewFake()
 	ops := NewOperations(tops, &fakeK8sOperations{}, fakeSt)
 	name := "luizalabs"
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: name}
 
 	if err := ops.Create(user, app); err != auth.ErrPermissionDenied {
@@ -250,7 +250,7 @@ func TestAppCreateErrPermissionDeniedShouldNotTouchNamespace(t *testing.T) {
 	name := "teresa"
 	fakeK8s := &fakeK8sOperations{Namespaces: map[string]struct{}{name: struct{}{}}}
 	ops := NewOperations(tops, fakeK8s, fakeSt)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: name, Team: "luizalabs"}
 
 	if err := ops.Create(user, app); err != auth.ErrPermissionDenied {
@@ -267,11 +267,11 @@ func TestAppOperationsCreateErrAppAlreadyExists(t *testing.T) {
 	fakeSt := st.NewFake()
 	ops := NewOperations(tops, &fakeK8sOperations{}, fakeSt)
 	name := "luizalabs"
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: name}
-	tops.(*team.FakeOperations).Storage[name] = &storage.Team{
+	tops.(*team.FakeOperations).Storage[name] = &database.Team{
 		Name:  name,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 	ops.(*AppOperations).kops = &errK8sOperations{NamespaceErr: ErrAlreadyExists}
 
@@ -290,11 +290,11 @@ func TestAppCreateErrAppAlreadyExistsShouldNotTouchNamespace(t *testing.T) {
 		Namespaces:   map[string]struct{}{name: struct{}{}},
 	}
 	ops := NewOperations(tops, errK8s, fakeSt)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: name, Team: teamName}
-	tops.(*team.FakeOperations).Storage[teamName] = &storage.Team{
+	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
 		Name:  teamName,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 
 	if err := ops.Create(user, app); err != ErrAlreadyExists {
@@ -335,10 +335,10 @@ func TestAppOperationsHasPermission(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	teamName := "luizalabs"
-	user := &storage.User{Email: goodUserEmail}
-	tops.(*team.FakeOperations).Storage[teamName] = &storage.Team{
+	user := &database.User{Email: goodUserEmail}
+	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
 		Name:  teamName,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 
 	var testCases = []struct {
@@ -350,7 +350,7 @@ func TestAppOperationsHasPermission(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		u := &storage.User{Email: tc.email}
+		u := &database.User{Email: tc.email}
 		actual := ops.HasPermission(u, appName)
 		if tc.expected != actual {
 			t.Errorf("expected %v, got %v", tc.expected, actual)
@@ -362,11 +362,11 @@ func TestAppOperationsLogs(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	name := "luizalabs"
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: name}
-	tops.(*team.FakeOperations).Storage[name] = &storage.Team{
+	tops.(*team.FakeOperations).Storage[name] = &database.Team{
 		Name:  name,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 
 	rc, err := ops.Logs(user, app.Name, 10, false)
@@ -396,7 +396,7 @@ func TestAppOperationsLogs(t *testing.T) {
 func TestAppOperationsLogsErrPermissionDenied(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 
 	if _, err := ops.Logs(user, "teresa", 10, false); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %s", err)
@@ -406,7 +406,7 @@ func TestAppOperationsLogsErrPermissionDenied(t *testing.T) {
 func TestAppOperationsLogsErrNotFound(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 
 	if _, err := ops.Logs(user, "teresa", 10, false); err != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
@@ -418,11 +418,11 @@ func TestAppOperationsCreateErrQuota(t *testing.T) {
 	fakeSt := st.NewFake()
 	ops := NewOperations(tops, &fakeK8sOperations{}, fakeSt)
 	name := "luizalabs"
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: name}
-	tops.(*team.FakeOperations).Storage[name] = &storage.Team{
+	tops.(*team.FakeOperations).Storage[name] = &database.Team{
 		Name:  name,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 	ops.(*AppOperations).kops = &errK8sOperations{QuotaErr: errors.New("Quota Error")}
 
@@ -436,11 +436,11 @@ func TestAppOperationsCreateErrSecret(t *testing.T) {
 	fakeSt := st.NewFake()
 	ops := NewOperations(tops, &fakeK8sOperations{}, fakeSt)
 	name := "luizalabs"
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: name}
-	tops.(*team.FakeOperations).Storage[name] = &storage.Team{
+	tops.(*team.FakeOperations).Storage[name] = &database.Team{
 		Name:  name,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 	ops.(*AppOperations).kops = &errK8sOperations{SecretErr: errors.New("Secret Error")}
 
@@ -454,11 +454,11 @@ func TestAppOperationsCreateErrAutoScale(t *testing.T) {
 	fakeSt := st.NewFake()
 	ops := NewOperations(tops, &fakeK8sOperations{}, fakeSt)
 	name := "luizalabs"
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: name}
-	tops.(*team.FakeOperations).Storage[name] = &storage.Team{
+	tops.(*team.FakeOperations).Storage[name] = &database.Team{
 		Name:  name,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 	ops.(*AppOperations).kops = &errK8sOperations{AutoScaleErr: errors.New("AutoScale Error")}
 
@@ -471,11 +471,11 @@ func TestAppOperationsInfo(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	teamName := "luizalabs"
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: teamName}
-	tops.(*team.FakeOperations).Storage[app.Name] = &storage.Team{
+	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
 		Name:  teamName,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 
 	info, err := ops.Info(user, app.Name)
@@ -513,7 +513,7 @@ func TestAppOperationsInfo(t *testing.T) {
 func TestAppOperationsInfoErrPermissionDenied(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 
 	if _, err := ops.Info(user, "teresa"); teresa_errors.Get(err) != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", teresa_errors.Get(err))
@@ -523,7 +523,7 @@ func TestAppOperationsInfoErrPermissionDenied(t *testing.T) {
 func TestAppOperationsInfoErrNotFound(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 
 	if _, err := ops.Info(user, "teresa"); teresa_errors.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", teresa_errors.Get(err))
@@ -535,13 +535,13 @@ func TestAppOperationsList(t *testing.T) {
 	appName := "teresa"
 	teamName := "luizalabs"
 
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	fk8s := &fakeK8sOperations{Namespaces: map[string]struct{}{appName: struct{}{}}}
 
 	ops := NewOperations(tops, fk8s, nil)
-	tops.(*team.FakeOperations).Storage[appName] = &storage.Team{
+	tops.(*team.FakeOperations).Storage[appName] = &database.Team{
 		Name:  teamName,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 
 	apps, err := ops.List(user)
@@ -568,11 +568,11 @@ func TestAppOperationsList(t *testing.T) {
 func TestAppOperationsSetEnv(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &storage.Team{
+	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
 		Name:  app.Team,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 	evs := []*EnvVar{
 		{Key: "key1", Value: "value1"},
@@ -587,7 +587,7 @@ func TestAppOperationsSetEnv(t *testing.T) {
 func TestAppOperationsSetEnvErrPermissionDenied(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 
 	if err := ops.SetEnv(user, "teresa", nil); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
@@ -597,7 +597,7 @@ func TestAppOperationsSetEnvErrPermissionDenied(t *testing.T) {
 func TestAppOperationsSetEnvErrNotFound(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 
 	if err := ops.SetEnv(user, "teresa", nil); teresa_errors.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
@@ -607,11 +607,11 @@ func TestAppOperationsSetEnvErrNotFound(t *testing.T) {
 func TestAppOperationsUnsetEnv(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &storage.Team{
+	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
 		Name:  app.Team,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 	evs := []string{"key1", "key2"}
 
@@ -623,7 +623,7 @@ func TestAppOperationsUnsetEnv(t *testing.T) {
 func TestAppOperationsUnsetEnvErrPermissionDenied(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 
 	if err := ops.UnsetEnv(user, "teresa", nil); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
@@ -633,7 +633,7 @@ func TestAppOperationsUnsetEnvErrPermissionDenied(t *testing.T) {
 func TestAppOperationsUnsetEnvErrNotFound(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 
 	if err := ops.UnsetEnv(user, "teresa", nil); teresa_errors.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
@@ -643,11 +643,11 @@ func TestAppOperationsUnsetEnvErrNotFound(t *testing.T) {
 func TestAppOperationsSetEnvProtectedVar(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &storage.Team{
+	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
 		Name:  app.Team,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 	evs := make([]*EnvVar, len(slug.ProtectedEnvVars))
 	for i, _ := range evs {
@@ -662,11 +662,11 @@ func TestAppOperationsSetEnvProtectedVar(t *testing.T) {
 func TestAppOperationsUnSetEnvProtectedVar(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
-	user := &storage.User{Email: "teresa@luizalabs.com"}
+	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &storage.Team{
+	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
 		Name:  app.Team,
-		Users: []storage.User{*user},
+		Users: []database.User{*user},
 	}
 
 	if err := ops.UnsetEnv(user, app.Name, slug.ProtectedEnvVars[:]); err == nil {

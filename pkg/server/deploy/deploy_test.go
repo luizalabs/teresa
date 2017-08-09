@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/app"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	st "github.com/luizalabs/teresa-api/pkg/server/storage"
 )
 
@@ -60,7 +60,7 @@ func TestDeployPermissionDenied(t *testing.T) {
 		&fakeK8sOperations{},
 		st.NewFake(),
 	)
-	u := &storage.User{Email: "bad-user@luizalabs.com"}
+	u := &database.User{Email: "bad-user@luizalabs.com"}
 	if _, err := ops.Deploy(u, "teresa", &fakeReadSeeker{}, "test", &Options{}); err != auth.ErrPermissionDenied {
 		t.Errorf("expecter ErrPermissionDenied, got %v", err)
 	}
@@ -87,7 +87,7 @@ func TestDeploy(t *testing.T) {
 		fakeK8s,
 		st.NewFake(),
 	)
-	u := &storage.User{Email: "gopher@luizalabs.com"}
+	u := &database.User{Email: "gopher@luizalabs.com"}
 	r, err := ops.Deploy(u, "teresa", tarBall, "test", &Options{})
 	if err != nil {
 		t.Fatal("error making deploy:", err)

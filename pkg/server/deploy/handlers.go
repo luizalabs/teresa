@@ -7,9 +7,9 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/goutil"
 	dpb "github.com/luizalabs/teresa-api/pkg/protobuf/deploy"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 )
 
 const (
@@ -33,7 +33,7 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 	content := new(bytes.Buffer)
 
 	ctx := stream.Context()
-	u := ctx.Value("user").(*storage.User)
+	u := ctx.Value("user").(*database.User)
 
 	for {
 		in, err := stream.Recv()

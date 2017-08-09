@@ -3,8 +3,8 @@ package user
 import (
 	"testing"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 )
 
 func TestFakeOperationsLogin(t *testing.T) {
@@ -12,7 +12,7 @@ func TestFakeOperationsLogin(t *testing.T) {
 
 	expectedEmail := "teresa@luizalabs.com"
 	expectedPassword := "123456"
-	fake.(*FakeOperations).Storage[expectedEmail] = &storage.User{
+	fake.(*FakeOperations).Storage[expectedEmail] = &database.User{
 		Password: expectedPassword,
 		Email:    expectedEmail,
 	}
@@ -39,7 +39,7 @@ func TestFakeOperationsGetUser(t *testing.T) {
 	fake := NewFakeOperations()
 
 	expectedEmail := "teresa@luizalabs.com"
-	fake.(*FakeOperations).Storage[expectedEmail] = &storage.User{
+	fake.(*FakeOperations).Storage[expectedEmail] = &database.User{
 		Password: "foo",
 		Email:    expectedEmail,
 	}
@@ -65,7 +65,7 @@ func TestFakeOperationsSetPassword(t *testing.T) {
 
 	expectedEmail := "teresa@luizalabs.com"
 	expectedPassword := "123456"
-	fake.(*FakeOperations).Storage[expectedEmail] = &storage.User{
+	fake.(*FakeOperations).Storage[expectedEmail] = &database.User{
 		Password: "gopher",
 		Email:    expectedEmail,
 	}
@@ -92,7 +92,7 @@ func TestFakeOperationsDelete(t *testing.T) {
 	fake := NewFakeOperations()
 
 	email := "teresa@luizalabs.com"
-	fake.(*FakeOperations).Storage[email] = &storage.User{
+	fake.(*FakeOperations).Storage[email] = &database.User{
 		Password: "gopher",
 		Email:    email,
 	}
@@ -148,7 +148,7 @@ func TestFakeOperationsCreateErrUserAlreadyExists(t *testing.T) {
 	fake := NewFakeOperations()
 
 	email := "teresa@luizalabs.com"
-	fake.(*FakeOperations).Storage[email] = &storage.User{Email: email}
+	fake.(*FakeOperations).Storage[email] = &database.User{Email: email}
 
 	if err := fake.Create("", email, "", false); err != ErrUserAlreadyExists {
 		t.Errorf("expected ErrUserAlreadyExists, got %v", err)

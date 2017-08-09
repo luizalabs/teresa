@@ -3,7 +3,7 @@ package team
 import (
 	"testing"
 
-	"github.com/luizalabs/teresa-api/models/storage"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"github.com/luizalabs/teresa-api/pkg/server/user"
 )
 
@@ -38,7 +38,7 @@ func TestFakeOperationsCreateTeamAlreadyExists(t *testing.T) {
 	fake := NewFakeOperations()
 
 	teamName := "teresa"
-	fake.(*FakeOperations).Storage[teamName] = &storage.Team{Name: teamName}
+	fake.(*FakeOperations).Storage[teamName] = &database.Team{Name: teamName}
 
 	if err := fake.Create(teamName, "", ""); err != ErrTeamAlreadyExists {
 		t.Errorf("expected ErrTeamAlreadyExists, got %v", err)
@@ -49,7 +49,7 @@ func TestFakeOperationsAddUser(t *testing.T) {
 	fake := NewFakeOperations()
 
 	expectedUserEmail := "gopher"
-	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{Email: expectedUserEmail}
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
 
 	expectedTeam := "teresa"
 	if err := fake.Create(expectedTeam, "", ""); err != nil {
@@ -87,10 +87,10 @@ func TestFakeOperationsAddUserUserAlreadyInTeam(t *testing.T) {
 
 	expectedUserEmail := "gopher"
 	expectedName := "teresa"
-	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{Email: expectedUserEmail}
-	fake.(*FakeOperations).Storage[expectedName] = &storage.Team{
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
+	fake.(*FakeOperations).Storage[expectedName] = &database.Team{
 		Name:  expectedName,
-		Users: []storage.User{storage.User{Email: expectedUserEmail}},
+		Users: []database.User{database.User{Email: expectedUserEmail}},
 	}
 
 	if err := fake.AddUser(expectedName, expectedUserEmail); err != ErrUserAlreadyInTeam {
@@ -109,9 +109,9 @@ func TestFakeOperationsList(t *testing.T) {
 
 	fake := NewFakeOperations()
 	for _, tc := range testData {
-		fakeTeam := &storage.Team{Name: tc.teamName}
+		fakeTeam := &database.Team{Name: tc.teamName}
 		for _, email := range tc.usersEmail {
-			fakeTeam.Users = append(fakeTeam.Users, storage.User{Email: email})
+			fakeTeam.Users = append(fakeTeam.Users, database.User{Email: email})
 		}
 		fake.(*FakeOperations).Storage[tc.teamName] = fakeTeam
 	}
@@ -153,9 +153,9 @@ func TestFakeOperationsListByUser(t *testing.T) {
 
 	fake := NewFakeOperations()
 	for _, tc := range testData {
-		fakeTeam := &storage.Team{Name: tc.teamName}
+		fakeTeam := &database.Team{Name: tc.teamName}
 		for _, email := range tc.usersEmail {
-			fakeTeam.Users = append(fakeTeam.Users, storage.User{Email: email})
+			fakeTeam.Users = append(fakeTeam.Users, database.User{Email: email})
 		}
 		fake.(*FakeOperations).Storage[tc.teamName] = fakeTeam
 	}

@@ -3,9 +3,9 @@ package team
 import (
 	context "golang.org/x/net/context"
 
-	"github.com/luizalabs/teresa-api/models/storage"
 	teampb "github.com/luizalabs/teresa-api/pkg/protobuf/team"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"google.golang.org/grpc"
 )
 
@@ -14,7 +14,7 @@ type Service struct {
 }
 
 func (s *Service) Create(ctx context.Context, request *teampb.CreateRequest) (*teampb.Empty, error) {
-	u := ctx.Value("user").(*storage.User)
+	u := ctx.Value("user").(*database.User)
 	if !u.IsAdmin {
 		return nil, auth.ErrPermissionDenied
 	}
@@ -25,7 +25,7 @@ func (s *Service) Create(ctx context.Context, request *teampb.CreateRequest) (*t
 }
 
 func (s *Service) AddUser(ctx context.Context, request *teampb.AddUserRequest) (*teampb.Empty, error) {
-	u := ctx.Value("user").(*storage.User)
+	u := ctx.Value("user").(*database.User)
 	if !u.IsAdmin {
 		return nil, auth.ErrPermissionDenied
 	}
@@ -37,11 +37,11 @@ func (s *Service) AddUser(ctx context.Context, request *teampb.AddUserRequest) (
 
 func (s *Service) List(ctx context.Context, _ *teampb.Empty) (*teampb.ListResponse, error) {
 	var (
-		teams []*storage.Team
+		teams []*database.Team
 		err   error
 	)
 
-	u := ctx.Value("user").(*storage.User)
+	u := ctx.Value("user").(*database.User)
 	if u.IsAdmin {
 		teams, err = s.ops.List()
 	} else {

@@ -4,13 +4,13 @@ import (
 	"testing"
 
 	"github.com/jinzhu/gorm"
-	"github.com/luizalabs/teresa-api/models/storage"
 	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa-api/pkg/server/database"
 	"github.com/luizalabs/teresa-api/pkg/server/user"
 )
 
 func createFakeTeam(db *gorm.DB, name, email, url string) error {
-	t := &storage.Team{
+	t := &database.Team{
 		Name:  name,
 		Email: email,
 		URL:   url}
@@ -74,13 +74,13 @@ func TestDatabaseOperationsAddUser(t *testing.T) {
 	if err != nil {
 		t.Fatal("error on open in memory database ", err)
 	}
-	db.AutoMigrate(&storage.User{})
+	db.AutoMigrate(&database.User{})
 	defer db.Close()
 
 	expectedUserEmail := "gopher"
 
 	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
-	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{Email: expectedUserEmail}
+	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
 
 	expectedTeam := "teresa"
 	if err := dbt.Create(expectedTeam, "", ""); err != nil {
@@ -110,7 +110,7 @@ func TestDatabaseOperationsAddUserUserNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatal("error on open in memory database ", err)
 	}
-	db.AutoMigrate(&storage.User{})
+	db.AutoMigrate(&database.User{})
 	defer db.Close()
 
 	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
@@ -130,13 +130,13 @@ func TestDatabaseOperationsAddUserUserAlreadyInTeam(t *testing.T) {
 	if err != nil {
 		t.Fatal("error on open in memory database ", err)
 	}
-	db.AutoMigrate(&storage.User{})
+	db.AutoMigrate(&database.User{})
 	defer db.Close()
 
 	expectedUserEmail := "gopher"
 
 	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
-	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &storage.User{Email: expectedUserEmail}
+	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
 
 	expectedTeam := "teresa"
 	if err := dbt.Create(expectedTeam, "", ""); err != nil {

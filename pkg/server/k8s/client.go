@@ -25,17 +25,33 @@ const (
 )
 
 type k8sClient struct {
-	kc                 *kubernetes.Clientset
+	conf               *restclient.Config
 	defaultServiceType string
 }
 
+func (k *k8sClient) buildClient() (*kubernetes.Clientset, error) {
+	c, err := kubernetes.NewForConfig(k.conf)
+	if err != nil {
+		return nil, errors.Wrap(err, "create k8s client failed")
+	}
+	return c, nil
+}
+
 func (k *k8sClient) HealthCheck() error {
-	_, err := k.kc.CoreV1().Namespaces().List(k8sv1.ListOptions{})
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+	_, err = kc.CoreV1().Namespaces().List(k8sv1.ListOptions{})
 	return err
 }
 
 func (k *k8sClient) getNamespace(namespace string) (*k8sv1.Namespace, error) {
-	ns, err := k.kc.CoreV1().Namespaces().Get(namespace)
+	kc, err := k.buildClient()
+	if err != nil {
+		return nil, err
+	}
+	ns, err := kc.CoreV1().Namespaces().Get(namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +77,11 @@ func (k k8sClient) NamespaceLabel(namespace, label string) (string, error) {
 }
 
 func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {
-	podList, err := k.kc.CoreV1().Pods(namespace).List(k8sv1.ListOptions{})
+	kc, err := k.buildClient()
+	if err != nil {
+		return nil, err
+	}
+	podList, err := kc.CoreV1().Pods(namespace).List(k8sv1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +107,11 @@ func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {
 }
 
 func (k *k8sClient) PodLogs(namespace string, podName string, lines int64, follow bool) (io.ReadCloser, error) {
-	req := k.kc.CoreV1().Pods(namespace).GetLogs(
+	kc, err := k.buildClient()
+	if err != nil {
+		return nil, err
+	}
+	req := kc.CoreV1().Pods(namespace).GetLogs(
 		podName,
 		&k8sv1.PodLogOptions{
 			Follow:    follow,
@@ -187,26 +211,41 @@ func newHPA(a *app.App) *asv1.HorizontalPodAutoscaler {
 }
 
 func (k *k8sClient) CreateNamespace(a *app.App, user string) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+
 	ns := newNs(a, user)
 	if err := addAppToNs(a, ns); err != nil {
 		return err
 	}
 
-	_, err := k.kc.CoreV1().Namespaces().Create(ns)
+	_, err = kc.CoreV1().Namespaces().Create(ns)
 	return err
 }
 
 func (k *k8sClient) CreateQuota(a *app.App) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+
 	lr, err := newLimitRange(a)
 	if err != nil {
 		return err
 	}
 
-	_, err = k.kc.CoreV1().LimitRanges(a.Name).Create(lr)
+	_, err = kc.CoreV1().LimitRanges(a.Name).Create(lr)
 	return err
 }
 
 func (k *k8sClient) CreateSecret(appName, secretName string, data map[string][]byte) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+
 	s := &k8sv1.Secret{
 		Type: k8sv1.SecretTypeOpaque,
 		ObjectMeta: k8sv1.ObjectMeta{
@@ -216,19 +255,29 @@ func (k *k8sClient) CreateSecret(appName, secretName string, data map[string][]b
 		Data: data,
 	}
 
-	_, err := k.kc.CoreV1().Secrets(appName).Create(s)
+	_, err = kc.CoreV1().Secrets(appName).Create(s)
 	return err
 }
 
 func (k *k8sClient) CreateAutoScale(a *app.App) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+
 	hpa := newHPA(a)
 
-	_, err := k.kc.AutoscalingV1().HorizontalPodAutoscalers(a.Name).Create(hpa)
+	_, err = kc.AutoscalingV1().HorizontalPodAutoscalers(a.Name).Create(hpa)
 	return err
 }
 
 func (k *k8sClient) AddressList(namespace string) ([]*app.Address, error) {
-	srvs, err := k.kc.CoreV1().Services(namespace).List(k8sv1.ListOptions{})
+	kc, err := k.buildClient()
+	if err != nil {
+		return nil, err
+	}
+
+	srvs, err := kc.CoreV1().Services(namespace).List(k8sv1.ListOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "get addr list failed")
 	}
@@ -247,7 +296,12 @@ func (k *k8sClient) AddressList(namespace string) ([]*app.Address, error) {
 }
 
 func (k *k8sClient) Status(namespace string) (*app.Status, error) {
-	hpa, err := k.kc.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(namespace)
+	kc, err := k.buildClient()
+	if err != nil {
+		return nil, err
+	}
+
+	hpa, err := kc.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "get status failed")
 	}
@@ -270,7 +324,12 @@ func (k *k8sClient) Status(namespace string) (*app.Status, error) {
 }
 
 func (k *k8sClient) AutoScale(namespace string) (*app.AutoScale, error) {
-	hpa, err := k.kc.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(namespace)
+	kc, err := k.buildClient()
+	if err != nil {
+		return nil, err
+	}
+
+	hpa, err := kc.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "get autoscale failed")
 	}
@@ -292,7 +351,12 @@ func (k *k8sClient) AutoScale(namespace string) (*app.AutoScale, error) {
 }
 
 func (k *k8sClient) Limits(namespace, name string) (*app.Limits, error) {
-	lr, err := k.kc.CoreV1().LimitRanges(namespace).Get(name)
+	kc, err := k.buildClient()
+	if err != nil {
+		return nil, err
+	}
+
+	lr, err := kc.CoreV1().LimitRanges(namespace).Get(name)
 	if err != nil {
 		return nil, errors.Wrap(err, "get limits failed")
 	}
@@ -323,18 +387,28 @@ func (k *k8sClient) Limits(namespace, name string) (*app.Limits, error) {
 }
 
 func (k *k8sClient) CreateOrUpdateDeploy(deploySpec *deploy.DeploySpec) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+
 	replicas := k.currentPodReplicasFromDeploy(deploySpec.Namespace, deploySpec.Name)
 	deployYaml := deploySpecToK8sDeploy(deploySpec, replicas)
-	_, err := k.kc.Deployments(deploySpec.Namespace).Update(deployYaml)
+	_, err = kc.Deployments(deploySpec.Namespace).Update(deployYaml)
 	if k.IsNotFound(err) {
-		_, err = k.kc.Deployments(deploySpec.Namespace).Create(deployYaml)
+		_, err = kc.Deployments(deploySpec.Namespace).Create(deployYaml)
 	}
 	return err
 }
 
 func (k *k8sClient) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, error) {
+	kc, err := k.buildClient()
+	if err != nil {
+		return nil, nil, err
+	}
+
 	podYaml := podSpecToK8sPod(podSpec)
-	pod, err := k.kc.Pods(podSpec.Namespace).Create(podYaml)
+	pod, err := kc.Pods(podSpec.Namespace).Create(podYaml)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "pod create failed")
 	}
@@ -372,7 +446,11 @@ func (k *k8sClient) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, 
 }
 
 func (k *k8sClient) HasService(namespace, appName string) (bool, error) {
-	_, err := k.kc.CoreV1().Services(namespace).Get(appName)
+	kc, err := k.buildClient()
+	if err != nil {
+		return false, err
+	}
+	_, err = kc.CoreV1().Services(namespace).Get(appName)
 	if err != nil {
 		if k.IsNotFound(err) {
 			return false, nil
@@ -383,17 +461,29 @@ func (k *k8sClient) HasService(namespace, appName string) (bool, error) {
 }
 
 func (k *k8sClient) CreateService(namespace, appName string) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
 	srvSpec := serviceSpec(namespace, appName, k.defaultServiceType)
-	_, err := k.kc.CoreV1().Services(namespace).Create(srvSpec)
+	_, err = kc.CoreV1().Services(namespace).Create(srvSpec)
 	return errors.Wrap(err, "create service failed")
 }
 
 func (k *k8sClient) killPod(pod *k8sv1.Pod) error {
-	return k.kc.Pods(pod.Namespace).Delete(pod.Name, &k8sv1.DeleteOptions{})
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+	return kc.Pods(pod.Namespace).Delete(pod.Name, &k8sv1.DeleteOptions{})
 }
 
 func (k *k8sClient) waitPodStart(pod *k8sv1.Pod, checkInterval, timeout time.Duration) error {
-	podsClient := k.kc.Pods(pod.Namespace)
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+	podsClient := kc.Pods(pod.Namespace)
 	return wait.PollImmediate(checkInterval, timeout, func() (bool, error) {
 		p, err := podsClient.Get(pod.Name)
 		if err != nil {
@@ -408,7 +498,11 @@ func (k *k8sClient) waitPodStart(pod *k8sv1.Pod, checkInterval, timeout time.Dur
 }
 
 func (k *k8sClient) waitPodEnd(pod *k8sv1.Pod, checkInterval, timeout time.Duration) error {
-	podsClient := k.kc.Pods(pod.Namespace)
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+	podsClient := kc.Pods(pod.Namespace)
 	return wait.PollImmediate(checkInterval, timeout, func() (bool, error) {
 		p, err := podsClient.Get(pod.Name)
 		if err != nil {
@@ -420,7 +514,12 @@ func (k *k8sClient) waitPodEnd(pod *k8sv1.Pod, checkInterval, timeout time.Durat
 }
 
 func (k *k8sClient) podExitCode(pod *k8sv1.Pod) (int, error) {
-	p, err := k.kc.Pods(pod.Namespace).Get(pod.Name)
+	kc, err := k.buildClient()
+	if err != nil {
+		return 1, err
+	}
+
+	p, err := kc.Pods(pod.Namespace).Get(pod.Name)
 	if err != nil {
 		return 1, err
 	}
@@ -435,7 +534,12 @@ func (k *k8sClient) podExitCode(pod *k8sv1.Pod) (int, error) {
 }
 
 func (k *k8sClient) currentPodReplicasFromDeploy(namespace, appName string) int32 {
-	d, err := k.kc.Deployments(namespace).Get(appName)
+	kc, err := k.buildClient()
+	if err != nil {
+		return 1
+	}
+
+	d, err := kc.Deployments(namespace).Get(appName)
 	if err != nil || d.Status.Replicas < 1 {
 		return 1
 	}
@@ -443,6 +547,11 @@ func (k *k8sClient) currentPodReplicasFromDeploy(namespace, appName string) int3
 }
 
 func (k *k8sClient) SetNamespaceAnnotations(namespace string, annotations map[string]string) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+
 	ns, err := k.getNamespace(namespace)
 	if err != nil {
 		return err
@@ -451,18 +560,22 @@ func (k *k8sClient) SetNamespaceAnnotations(namespace string, annotations map[st
 	for key, value := range annotations {
 		ns.Annotations[key] = value
 	}
-	_, err = k.kc.CoreV1().Namespaces().Update(ns)
+	_, err = kc.CoreV1().Namespaces().Update(ns)
 	return err
 }
 
 func (k *k8sClient) patchDeployEnvVars(namespace, name string, v interface{}) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
 	b, err := json.Marshal(v)
 	if err != nil {
 		return errors.Wrap(err, "failed to json encode env vars")
 	}
 	data := fmt.Sprintf(patchDeployEnvVarsTmpl, name, string(b))
 
-	_, err = k.kc.ExtensionsV1beta1().Deployments(namespace).Patch(
+	_, err = kc.ExtensionsV1beta1().Deployments(namespace).Patch(
 		name,
 		api.StrategicMergePatchType,
 		[]byte(data),
@@ -498,13 +611,21 @@ func (k *k8sClient) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*a
 }
 
 func (k *k8sClient) DeleteNamespace(namespace string) error {
-	err := k.kc.CoreV1().Namespaces().Delete(namespace, &k8sv1.DeleteOptions{})
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+	err = kc.CoreV1().Namespaces().Delete(namespace, &k8sv1.DeleteOptions{})
 	return errors.Wrap(err, "delete ns failed")
 }
 
 func (k k8sClient) NamespaceListByLabel(label, value string) ([]string, error) {
+	kc, err := k.buildClient()
+	if err != nil {
+		return nil, err
+	}
 	labelSelector := fmt.Sprintf("%s=%s", label, value)
-	nl, err := k.kc.CoreV1().Namespaces().List(k8sv1.ListOptions{LabelSelector: labelSelector})
+	nl, err := kc.CoreV1().Namespaces().List(k8sv1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		return nil, err
 	}
@@ -520,12 +641,8 @@ func newInClusterK8sClient(conf *Config) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	kc, err := kubernetes.NewForConfig(k8sConf)
-	if err != nil {
-		return nil, err
-	}
 	return &k8sClient{
-		kc: kc, defaultServiceType: conf.DefaultServiceType,
+		conf: k8sConf, defaultServiceType: conf.DefaultServiceType,
 	}, nil
 }
 
@@ -534,11 +651,7 @@ func newOutOfClusterK8sClient(conf *Config) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	kc, err := kubernetes.NewForConfig(k8sConf)
-	if err != nil {
-		return nil, err
-	}
 	return &k8sClient{
-		kc: kc, defaultServiceType: conf.DefaultServiceType,
+		conf: k8sConf, defaultServiceType: conf.DefaultServiceType,
 	}, nil
 }

@@ -1,0 +1,23 @@
+name: teresa
+db:
+  name: teresa.sqlite
+  hostname:
+  username:
+  password:
+rsa:
+  private: teresa.rsa
+  public: teresa.rsa.pub
+tls:
+  crt:
+  key:
+aws:
+  s3:
+    bucket: 
+  region: us-east-1
+  key:
+    access:
+    secret:
+docker:
+  registry: luizalabs
+  image: teresa
+  tag: v0.5.0

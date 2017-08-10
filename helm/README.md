@@ -73,7 +73,10 @@ Parameter | Description | Default
 `db.hostname`| (Optional) Database hostname, if defined use mysql instead of sqlite| `""`
 `db.username` | (Optional) Database username | `""`
 `db.password` | (Optional) Database password | `""`
+`storage.type` | Type of storage | `s3`
+`aws.s3.force_path_style` | To force path style instead of subdomain-style | `false`
 `aws.s3.bucket` | S3 bucket path | `""`
+`aws.s3.endpoint` | (Optional) AWS Endpoint | `""`
 `aws.region` | AWS Region | `us-east-1`
 `aws.key.access` | AWS Access Key | `""`
 `aws.key.secret` | AWS Secret Key | `""`

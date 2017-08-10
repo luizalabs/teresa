@@ -10,9 +10,13 @@ rsa:
 tls:
   crt:
   key:
+storage:
+  type: s3
 aws:
   s3:
-    bucket: 
+    bucket:
+    endpoint:
+    force_path_style: false
   region: us-east-1
   key:
     access:

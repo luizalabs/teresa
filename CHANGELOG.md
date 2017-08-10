@@ -2,6 +2,34 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.5.0] - Release Date
+### Changed
+- Use gRPC instead of go-swagger
+- Changed project structure to be more k8s like
+- Standardize error messages format and server logs
+- 'app create' command doesn't create a welcome deploy anymore
+- [client] Refactored config and bash completion
+- [server] Delete build pod after deploy on success
+
+### Added
+- Unit tests
+- Travis CI
+- 'set-password' command
+- Builtin TLS (thanks gRPC)
+- Versioning by git tag
+- [server] 'create-super-user' command
+- [server] added so called 'release' command, which allows developers to run a
+  command right after the build is finished
+- [server] Healthcheck
+- [server] Support for minio storage
+- [server] Added deploy drain timeout in teresa.yaml, which makes the POD sleep
+  for a configurable amount of time before receiving SIGTERM
+
+### Fixed
+- [server] Don't return stale app data to the user
+- [server] Every deploy has at least one replica
+- [server] 'app logs' command timeouts
+
 ## [0.3.2] - 2017-05-09
 ### Fixed
 - Finish the merge with `teresa-cli` by removing all references to the old repo

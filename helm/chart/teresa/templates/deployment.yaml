@@ -44,8 +44,16 @@ spec:
           value: /etc/teresa-keys/teresa.rsa
         - name: TERESA_SECRETS_PUBLIC_KEY
           value: /etc/teresa-keys/teresa.rsa.pub
+        - name: TERESA_STORAGE_TYPE
+          value: {{ .Values.storage.type }}
+        {{ if .Values.aws.s3.endpoint }}
+        - name: TERESA_STORAGE_AWS_ENDPOINT
+          value: {{ quote .Values.aws.s3.endpoint }}
+        {{ - end }}
         - name: TERESA_STORAGE_AWS_BUCKET
           value: {{ .Values.aws.s3.bucket }}
+        - name: TERESA_STORAGE_AWS_S3_FORCE_PATH_STYLE
+          value: {{ quote .Values.aws.s3.force_path_style }}
         - name: TERESA_STORAGE_AWS_KEY
           valueFrom:
             secretKeyRef:

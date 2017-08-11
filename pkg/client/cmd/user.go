@@ -47,6 +47,9 @@ func setPassword(cmd *cobra.Command, args []string) {
 	if err != nil {
 		client.PrintErrorAndExit("Error trying to get the user password: %v", err)
 	}
+	if err = client.EnsurePasswordLength(p); err != nil {
+		client.PrintErrorAndExit(err.Error())
+	}
 
 	conn, err := connection.New(cfgFile)
 	if err != nil {

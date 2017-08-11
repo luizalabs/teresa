@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"testing"
 
-	"github.com/luizalabs/teresa-api/pkg/server/auth"
-	"github.com/luizalabs/teresa-api/pkg/server/database"
-	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
+	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 )
 
 func TestFakeOperationsCreate(t *testing.T) {

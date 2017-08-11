@@ -1,6 +1,6 @@
 # Teresa
-[![Build Status](https://travis-ci.org/luizalabs/teresa-api.svg)](https://travis-ci.org/luizalabs/teresa-api)
-[![codecov](https://codecov.io/gh/luizalabs/teresa-api/branch/master/graph/badge.svg)](https://codecov.io/gh/luizalabs/teresa-api)
+[![Build Status](https://travis-ci.org/luizalabs/teresa.svg)](https://travis-ci.org/luizalabs/teresa)
+[![codecov](https://codecov.io/gh/luizalabs/teresa/branch/master/graph/badge.svg)](https://codecov.io/gh/luizalabs/teresa)
 
 Teresa is an extremely simple platform as a service that runs on top of [Kubernetes](https://github.com/kubernetes/kubernetes).  
 It uses a client-server model: the client sends high level commands (create application, deploy, etc.) to the server, which translates them to the Kubernetes API.
@@ -56,7 +56,7 @@ server is running (often a Kubernetes POD):
 
 Now you can start creating other users and teams. First, you need to get the
 Teresa endpoint created by Kubernetes and configure the client (get it
-[here](https://github.com/luizalabs/teresa-api/releases/latest)):
+[here](https://github.com/luizalabs/teresa/releases/latest)):
 
     $ teresa config set-cluster mycluster --server <teresa-endpoint>
 

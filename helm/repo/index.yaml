@@ -7,7 +7,7 @@ entries:
     digest: e90338d98a90b3e5726d293becd6ce0ff945bd1fbfc043c93aee7346c0c5208c
     name: teresa
     sources:
-    - https://github.com/luizalabs/teresa-api
+    - https://github.com/luizalabs/teresa
     urls:
     - http://helm.k8s.magazineluiza.com/teresa-0.2.0.tgz
     version: 0.2.0

@@ -3,8 +3,8 @@ package team
 import (
 	"testing"
 
-	"github.com/luizalabs/teresa-api/pkg/server/database"
-	"github.com/luizalabs/teresa-api/pkg/server/user"
+	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/user"
 )
 
 func TestFakeOperationsCreate(t *testing.T) {

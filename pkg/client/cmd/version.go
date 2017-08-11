@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/luizalabs/teresa-api/pkg/version"
+	"github.com/luizalabs/teresa/pkg/version"
 	"github.com/spf13/cobra"
 )
 

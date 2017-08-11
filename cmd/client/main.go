@@ -4,8 +4,8 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/luizalabs/teresa-api/pkg/client"
-	"github.com/luizalabs/teresa-api/pkg/client/cmd"
+	"github.com/luizalabs/teresa/pkg/client"
+	"github.com/luizalabs/teresa/pkg/client/cmd"
 
 	"google.golang.org/grpc/grpclog"
 )

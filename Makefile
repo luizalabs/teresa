@@ -7,7 +7,7 @@ DOCKER_SECRETS_PUBLIC_KEY = /teresa.rsa.pub
 IMAGE_INSTANCE = default
 TERESA_DOCKER_PORT ?= 50051
 BUILD_VERSION ?= $(shell git describe --always --tags)
-BUILD_HOME = github.com/luizalabs/teresa-api
+BUILD_HOME = github.com/luizalabs/teresa
 
 DOCKER_RUN_CMD=docker run \
 	-e TERESA_SECRETS_PRIVATE_KEY=$(DOCKER_SECRETS_PRIVATE_KEY) \

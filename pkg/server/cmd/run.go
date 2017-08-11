@@ -5,12 +5,12 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/luizalabs/teresa-api/pkg/server"
-	"github.com/luizalabs/teresa-api/pkg/server/auth"
-	"github.com/luizalabs/teresa-api/pkg/server/deploy"
-	"github.com/luizalabs/teresa-api/pkg/server/k8s"
-	"github.com/luizalabs/teresa-api/pkg/server/secrets"
-	"github.com/luizalabs/teresa-api/pkg/server/storage"
+	"github.com/luizalabs/teresa/pkg/server"
+	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/deploy"
+	"github.com/luizalabs/teresa/pkg/server/k8s"
+	"github.com/luizalabs/teresa/pkg/server/secrets"
+	"github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/spf13/cobra"
 )
 

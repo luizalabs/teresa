@@ -5,9 +5,9 @@ import (
 
 	"testing"
 
-	userpb "github.com/luizalabs/teresa-api/pkg/protobuf/user"
-	"github.com/luizalabs/teresa-api/pkg/server/auth"
-	"github.com/luizalabs/teresa-api/pkg/server/database"
+	userpb "github.com/luizalabs/teresa/pkg/protobuf/user"
+	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/database"
 )
 
 func TestUserLoginSuccess(t *testing.T) {

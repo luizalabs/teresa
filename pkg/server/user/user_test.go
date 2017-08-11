@@ -7,8 +7,8 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/luizalabs/teresa-api/pkg/server/auth"
-	"github.com/luizalabs/teresa-api/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/database"
 )
 
 func createFakeUser(db *gorm.DB, email, password string) error {

@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/luizalabs/teresa-api/pkg/client"
-	"github.com/luizalabs/teresa-api/pkg/server/auth"
-	"github.com/luizalabs/teresa-api/pkg/server/user"
+	"github.com/luizalabs/teresa/pkg/client"
+	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/user"
 	"github.com/spf13/cobra"
 )
 

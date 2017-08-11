@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/luizalabs/teresa-api/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/auth"
 )
 
 func TestGetErrorMsg(t *testing.T) {

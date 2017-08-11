@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/jinzhu/gorm"
-	"github.com/luizalabs/teresa-api/pkg/server/auth"
-	"github.com/luizalabs/teresa-api/pkg/server/database"
-	"github.com/luizalabs/teresa-api/pkg/server/user"
+	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/user"
 )
 
 func createFakeTeam(db *gorm.DB, name, email, url string) error {

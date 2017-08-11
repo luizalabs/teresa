@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/luizalabs/teresa-api/pkg/client"
+	"github.com/luizalabs/teresa/pkg/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

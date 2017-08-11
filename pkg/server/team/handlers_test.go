@@ -5,10 +5,10 @@ import (
 
 	context "golang.org/x/net/context"
 
-	teampb "github.com/luizalabs/teresa-api/pkg/protobuf/team"
-	"github.com/luizalabs/teresa-api/pkg/server/auth"
-	"github.com/luizalabs/teresa-api/pkg/server/database"
-	"github.com/luizalabs/teresa-api/pkg/server/user"
+	teampb "github.com/luizalabs/teresa/pkg/protobuf/team"
+	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/user"
 )
 
 func TestTeamCreateSuccess(t *testing.T) {

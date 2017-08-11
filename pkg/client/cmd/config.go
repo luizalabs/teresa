@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/luizalabs/teresa-api/pkg/client"
+	"github.com/luizalabs/teresa/pkg/client"
 	"github.com/spf13/cobra"
 )
 

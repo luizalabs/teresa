@@ -7,9 +7,9 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/luizalabs/teresa-api/pkg/goutil"
-	dpb "github.com/luizalabs/teresa-api/pkg/protobuf/deploy"
-	"github.com/luizalabs/teresa-api/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/goutil"
+	dpb "github.com/luizalabs/teresa/pkg/protobuf/deploy"
+	"github.com/luizalabs/teresa/pkg/server/database"
 )
 
 const (

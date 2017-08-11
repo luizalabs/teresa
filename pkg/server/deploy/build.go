@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/luizalabs/teresa-api/pkg/server/app"
-	st "github.com/luizalabs/teresa-api/pkg/server/storage"
+	"github.com/luizalabs/teresa/pkg/server/app"
+	st "github.com/luizalabs/teresa/pkg/server/storage"
 )
 
 const (

@@ -1,6 +1,6 @@
 # Teresa
 
-[Teresa](https://github.com/luizalabs/teresa-api) is an extremely simple platform as a service that runs on top of [Kubernetes](https://github.com/kubernetes/kubernetes).
+[Teresa](https://github.com/luizalabs/teresa) is an extremely simple platform as a service that runs on top of [Kubernetes](https://github.com/kubernetes/kubernetes).
 
 ## TL;DR;
 
@@ -20,7 +20,7 @@ $ helm install luizalabs/teresa \
 
 ## Introduction
 
-This chart bootstraps a [Teresa](https://github.com/luizalabs/teresa-api) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+This chart bootstraps a [Teresa](https://github.com/luizalabs/teresa) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
 
 ## Installing the Chart

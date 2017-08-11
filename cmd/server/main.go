@@ -3,7 +3,7 @@ package main
 import (
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/luizalabs/teresa-api/pkg/server/cmd"
+	"github.com/luizalabs/teresa/pkg/server/cmd"
 )
 
 func main() {

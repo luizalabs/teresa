@@ -5,7 +5,7 @@ import (
 
 	"k8s.io/client-go/pkg/util/intstr"
 
-	"github.com/luizalabs/teresa-api/pkg/server/deploy"
+	"github.com/luizalabs/teresa/pkg/server/deploy"
 )
 
 func TestPodSpecToK8sContainer(t *testing.T) {

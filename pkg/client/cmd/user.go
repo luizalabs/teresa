@@ -5,12 +5,12 @@ import (
 
 	context "golang.org/x/net/context"
 
-	"github.com/luizalabs/teresa-api/pkg/client"
-	"github.com/luizalabs/teresa-api/pkg/client/connection"
+	"github.com/luizalabs/teresa/pkg/client"
+	"github.com/luizalabs/teresa/pkg/client/connection"
 	_ "github.com/prometheus/common/log"
 	"github.com/spf13/cobra"
 
-	userpb "github.com/luizalabs/teresa-api/pkg/protobuf/user"
+	userpb "github.com/luizalabs/teresa/pkg/protobuf/user"
 )
 
 // userCmd represents the user command

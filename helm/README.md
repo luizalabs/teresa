@@ -9,7 +9,7 @@ $ openssl genrsa -out teresa.rsa
 $ export TERESA_RSA_PRIVATE=`cat teresa.rsa | base64`
 $ openssl rsa -in teresa.rsa -pubout > teresa.rsa.pub
 $ export TERESA_RSA_PUBLIC=`cat teresa.rsa.pub | base64`
-$ helm add repo luizalabs http://helm.k8s.magazineluiza.com
+$ helm repo add luizalabs http://helm.k8s.magazineluiza.com
 $ helm install luizalabs/teresa \
   --set rsa.private=$TERESA_RSA_PRIVATE \
   --set rsa.public=$TERESA_RSA_PUBLIC \
@@ -37,7 +37,7 @@ $ export TERESA_RSA_PUBLIC=`cat teresa.rsa.pub | base64`
 This create a rsa cert and export it in base64 to environment variables.
 
 ```console
-$ helm add repo luizalabs http://helm.k8s.magazineluiza.com
+$ helm repo add luizalabs http://helm.k8s.magazineluiza.com
 $ helm install luizalabs/teresa \
   --name my-release \
   --namespace my-teresa \

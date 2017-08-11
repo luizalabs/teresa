@@ -1,9 +1,9 @@
 package k8s
 
 import (
-	"github.com/luizalabs/teresa-api/pkg/server/app"
-	"github.com/luizalabs/teresa-api/pkg/server/deploy"
-	"github.com/luizalabs/teresa-api/pkg/server/healthcheck"
+	"github.com/luizalabs/teresa/pkg/server/app"
+	"github.com/luizalabs/teresa/pkg/server/deploy"
+	"github.com/luizalabs/teresa/pkg/server/healthcheck"
 	"k8s.io/client-go/pkg/api"
 )
 

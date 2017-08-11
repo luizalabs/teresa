@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
+	appb "github.com/luizalabs/teresa/pkg/protobuf/app"
 )
 
 // Shamelessly adapted from the standard library

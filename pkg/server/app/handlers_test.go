@@ -7,10 +7,10 @@ import (
 
 	"testing"
 
-	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
-	"github.com/luizalabs/teresa-api/pkg/server/auth"
-	"github.com/luizalabs/teresa-api/pkg/server/database"
-	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
+	appb "github.com/luizalabs/teresa/pkg/protobuf/app"
+	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 )
 
 type LogsStreamWrapper struct {

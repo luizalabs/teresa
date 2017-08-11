@@ -6,8 +6,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/luizalabs/teresa-api/pkg/server/app"
-	"github.com/luizalabs/teresa-api/pkg/server/deploy"
+	"github.com/luizalabs/teresa/pkg/server/app"
+	"github.com/luizalabs/teresa/pkg/server/deploy"
 	"github.com/pkg/errors"
 
 	"k8s.io/client-go/kubernetes"

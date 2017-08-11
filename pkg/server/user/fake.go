@@ -3,8 +3,8 @@ package user
 import (
 	"sync"
 
-	"github.com/luizalabs/teresa-api/pkg/server/auth"
-	"github.com/luizalabs/teresa-api/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/database"
 )
 
 type FakeOperations struct {

@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/jinzhu/gorm"
-	"github.com/luizalabs/teresa-api/pkg/server/database"
-	"github.com/luizalabs/teresa-api/pkg/server/teresa_errors"
-	"github.com/luizalabs/teresa-api/pkg/server/user"
+	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	"github.com/luizalabs/teresa/pkg/server/user"
 	"github.com/pkg/errors"
 )
 

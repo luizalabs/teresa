@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/luizalabs/teresa-api/pkg/server/app"
-	"github.com/luizalabs/teresa-api/pkg/server/auth"
-	"github.com/luizalabs/teresa-api/pkg/server/database"
-	st "github.com/luizalabs/teresa-api/pkg/server/storage"
+	"github.com/luizalabs/teresa/pkg/server/app"
+	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/database"
+	st "github.com/luizalabs/teresa/pkg/server/storage"
 )
 
 type fakeReadSeeker struct{}

@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/luizalabs/teresa-api/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/database"
 )
 
 func getDB() (*gorm.DB, error) {

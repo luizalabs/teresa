@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/luizalabs/teresa-api/pkg/client"
-	"github.com/luizalabs/teresa-api/pkg/client/connection"
-	appb "github.com/luizalabs/teresa-api/pkg/protobuf/app"
+	"github.com/luizalabs/teresa/pkg/client"
+	"github.com/luizalabs/teresa/pkg/client/connection"
+	appb "github.com/luizalabs/teresa/pkg/protobuf/app"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 

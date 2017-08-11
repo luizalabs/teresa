@@ -3,7 +3,7 @@ package k8s
 import (
 	"strconv"
 
-	"github.com/luizalabs/teresa-api/pkg/server/deploy"
+	"github.com/luizalabs/teresa/pkg/server/deploy"
 	"k8s.io/client-go/pkg/api/unversioned"
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
 	k8s_extensions "k8s.io/client-go/pkg/apis/extensions/v1beta1"

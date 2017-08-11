@@ -1,7 +1,7 @@
 package connection
 
 import (
-	"github.com/luizalabs/teresa-api/pkg/client"
+	"github.com/luizalabs/teresa/pkg/client"
 	"google.golang.org/grpc"
 )
 

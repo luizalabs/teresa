@@ -14,7 +14,7 @@ func TestCheckPassword(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		if err := checkPassword(tc.pass); (err != nil && !tc.expectError) || (err == nil && tc.expectError) {
+		if err := EnsurePasswordLength(tc.pass); (err != nil && !tc.expectError) || (err == nil && tc.expectError) {
 			t.Errorf("expect error %v, got error %v", tc.expectError, err)
 		}
 	}

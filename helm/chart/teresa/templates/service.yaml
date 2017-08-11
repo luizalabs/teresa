@@ -10,7 +10,11 @@ metadata:
     release: {{ .Release.Name }}
 spec:
   selector:
-    app: {{ template "fullname" . }}
+    app: {{ template "name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    component: "server"
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
   type: LoadBalancer
   ports:
     - protocol: TCP

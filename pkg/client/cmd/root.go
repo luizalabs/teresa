@@ -34,6 +34,7 @@ You can also pass extra flags:
   --tls          Use TLS when communicating with the server
   --tlsinsecure  Don't check the server certificate with the default CA certificate bundle
   --current      Set this cluster as the current one
+  --port         TCP port to use when communicating with the server
 
 To use that cluster:
 

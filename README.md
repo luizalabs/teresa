@@ -23,9 +23,9 @@ The recommended installation method uses the [helm](https://github.com/kubernete
 for instance to install using S3 and MySQL (recommended):
 
     $ openssl genrsa -out teresa.rsa
-    $ export TERESA_RSA_PRIVATE=`cat teresa.rsa | base64`
+    $ export TERESA_RSA_PRIVATE=`base64 teresa.rsa`  # use base64 -w0 on Linux
     $ openssl rsa -in teresa.rsa -pubout > teresa.rsa.pub
-    $ export TERESA_RSA_PUBLIC=`cat teresa.rsa.pub | base64`
+    $ export TERESA_RSA_PUBLIC=`base64 teresa.rsa.pub`
     $ helm repo add luizalabs http://helm.k8s.magazineluiza.com
     $ helm install luizalabs/teresa \
         --set rsa.private=$TERESA_RSA_PRIVATE \

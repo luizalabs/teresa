@@ -5,7 +5,9 @@ go:
   - tip
 
 before_script:
-  - 'if [ "$TRAVIS_PULL_REQUEST != "false"] then ./.download-helm.sh; fi'
+  - wget https://storage.googleapis.com/kubernetes-helm/helm-v2.5.1-linux-amd64.tar.gz /tmp/helm.tar.gz
+  - tar -xcf /tmp/helm.tar.gz
+  - export PATH=$PATH:$PWD/linux-amd64
 
 script:
   - ./.tests-run.sh

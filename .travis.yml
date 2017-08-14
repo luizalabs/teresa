@@ -4,8 +4,12 @@ go:
   - 1.8
   - tip
 
+before_script:
+  - 'if [ "$TRAVIS_PULL_REQUEST != "false"] then ./.download-helm.sh; fi'
+
 script:
   - ./.tests-run.sh
+  - 'if [ "$TRAVIS_PULL_REQUEST != "false" && $TRAVIS_GO_VERSION == "1.8" ]; then helm lint helm/chart/teresa; fi'
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

@@ -49,7 +49,7 @@ spec:
         {{ if .Values.aws.s3.endpoint }}
         - name: TERESA_STORAGE_AWS_ENDPOINT
           value: {{ quote .Values.aws.s3.endpoint }}
-        {{ - end }}
+        {{- end }}
         - name: TERESA_STORAGE_AWS_BUCKET
           value: {{ .Values.aws.s3.bucket }}
         - name: TERESA_STORAGE_AWS_S3_FORCE_PATH_STYLE

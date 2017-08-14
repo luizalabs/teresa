@@ -9,6 +9,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Standardize error messages format and server logs
 - 'app create' command doesn't create a welcome deploy anymore
 - [client] Refactored config and bash completion
+- [client] Flag --admin removed, admin users are only created with the
+  'create-super-user' server command
 - [server] Delete build pod after deploy on success
 
 ### Added

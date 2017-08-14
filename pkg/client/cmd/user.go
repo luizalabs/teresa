@@ -100,10 +100,6 @@ func createUser(cmd *cobra.Command, args []string) {
 	if err != nil {
 		client.PrintErrorAndExit("Invalid password parameter: %v", err)
 	}
-	admin, err := cmd.Flags().GetBool("admin")
-	if err != nil {
-		client.PrintErrorAndExit("Invalid admin parameter: %v", err)
-	}
 	if email == "" || name == "" || pass == "" {
 		cmd.Usage()
 		return
@@ -121,7 +117,7 @@ func createUser(cmd *cobra.Command, args []string) {
 			Name:     name,
 			Email:    email,
 			Password: pass,
-			Admin:    admin,
+			Admin:    false,
 		},
 	)
 	if err != nil {
@@ -135,7 +131,6 @@ func init() {
 	userCmd.Flags().String("name", "", "user name [required]")
 	userCmd.Flags().String("email", "", "user email [required]")
 	userCmd.Flags().String("password", "", "user password [required]")
-	userCmd.Flags().Bool("admin", false, "admin privileges")
 
 	deleteCmd.AddCommand(deleteUserCmd)
 	deleteUserCmd.Flags().String("email", "", "user email [required]")

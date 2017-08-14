@@ -127,6 +127,7 @@ func (ops *DeployOperations) buildApp(tarBall io.ReadSeeker, a *app.App, deployI
 	tarBall.Seek(0, 0)
 	tarBallLocation := fmt.Sprintf("deploys/%s/%s/in/app.tar.gz", a.Name, deployId)
 	if err := ops.fileStorage.UploadFile(tarBallLocation, tarBall); err != nil {
+		fmt.Fprintln(stream, "The Deploy failed to upload the tarBall to slug storage")
 		return err
 	}
 	buildSpec := newBuildSpec(a, deployId, tarBallLocation, buildDest, ops.fileStorage, opts)

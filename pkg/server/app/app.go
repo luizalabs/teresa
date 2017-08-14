@@ -288,7 +288,7 @@ func (ops *AppOperations) SetEnv(user *database.User, appName string, evs []*Env
 
 	setEnvVars(app, evs)
 
-	if err := ops.saveApp(app, user.Name); err != nil {
+	if err := ops.saveApp(app, user.Email); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
 
@@ -313,7 +313,7 @@ func (ops *AppOperations) UnsetEnv(user *database.User, appName string, evNames 
 
 	unsetEnvVars(app, evNames)
 
-	if err := ops.saveApp(app, user.Name); err != nil {
+	if err := ops.saveApp(app, user.Email); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
 

@@ -4,12 +4,16 @@ go:
   - 1.8
   - tip
 
-script:
-  - ./.tests-run.sh
-
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
-  - test -n "$TRAVIS_TAG" -a "$TRAVIS_GO_VERSION" = "1.8" && ./.ci-docker.sh
-
-services:
-  - docker
+jobs:
+  include:
+    - stage: helm lint
+      before_script:
+        - ./.helm-test.sh download
+      script:
+        - ./.helm-test.sh lint
+    - stage: test
+      script:
+         - ./.tests-run.sh
+      after_success:
+        - bash <(curl -s https://codecov.io/bashl)
+        - test -n "$TRAVIS_TAG" -a "$TRAVIS_GO_VERSION" = "1.8" && ./.ci-docker.sh

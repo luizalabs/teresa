@@ -4,7 +4,13 @@ go:
   - 1.8
   - tip
 
+before_script:
+  - wget https://storage.googleapis.com/kubernetes-helm/helm-v2.5.1-linux-amd64.tar.gz
+  - tar -xf helm-v2.5.1-linux-amd64.tar.gz
+  - export PATH=$PATH:$PWD/linux-amd64
+
 script:
+  - test -n $TRAVIS_PULL_REQUEST && helm lint helm/chart/teresa
   - ./.tests-run.sh
 
 after_success:

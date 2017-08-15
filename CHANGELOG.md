@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.5.0] - Release Date
+## [0.5.0] - 2017-08-15
 ### Changed
 - Use gRPC instead of go-swagger
 - Changed project structure to be more k8s like
@@ -10,7 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - 'app create' command doesn't create a welcome deploy anymore
 - [client] Refactored config and bash completion
 - [client] Flag --admin removed, admin users are only created with the
-  'create-super-user' server command
+- [server] 'create-super-user' command
 - [server] Delete build pod after deploy on success
 
 ### Added

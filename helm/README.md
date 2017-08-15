@@ -86,7 +86,7 @@ Parameter | Description | Default
 `tls.key` | (Optional) TLS Certificate Key | `""`
 `docker.registry` | Docker Registry | `luizalabs` 
 `docker.image` | Docker Image | `teresa`
-`docker.tag` | Docker Tag | `v.0.x`
+`docker.tag` | Docker Tag | `0.5.0`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 

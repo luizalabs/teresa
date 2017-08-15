@@ -9,7 +9,7 @@ script:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
-  - if [ -n "$TRAVIS_TAG" && "$TRAVIS_GO_VERSION" == "1.8" ]; then ./.ci-docker.sh; fi
+  - test -n "$TRAVIS_TAG" -a "$TRAVIS_GO_VERSION" = "1.8" && ./.ci-docker.sh
 
 services:
   - docker

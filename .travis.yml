@@ -16,4 +16,7 @@ jobs:
          - ./.tests-run.sh
       after_success:
         - bash <(curl -s https://codecov.io/bashl)
+    - stage: build docker image
+      script:
         - test -n "$TRAVIS_TAG" -a "$TRAVIS_GO_VERSION" = "1.8" && ./.ci-docker.sh
+

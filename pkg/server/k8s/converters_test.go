@@ -3,6 +3,8 @@ package k8s
 import (
 	"testing"
 
+	"k8s.io/client-go/pkg/api/resource"
+	k8sv1 "k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/util/intstr"
 
 	"github.com/luizalabs/teresa/pkg/server/deploy"
@@ -16,6 +18,10 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 		Args:  []string{"start", "release"},
 		VolumeMounts: []*deploy.PodVolumeMountsSpec{
 			&deploy.PodVolumeMountsSpec{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
+		},
+		ContainerLimits: &deploy.ContainerLimits{
+			CPU:    "800m",
+			Memory: "1Gi",
 		},
 	}
 	c := podSpecToK8sContainer(ps)
@@ -49,6 +55,29 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 		if c.Args[idx] != arg {
 			t.Errorf("expected %s, got %s", arg, c.Args[idx])
 		}
+	}
+
+	expectedCPU, err := resource.ParseQuantity(ps.ContainerLimits.CPU)
+	if err != nil {
+		t.Fatal("error in default cpu limit:", err)
+	}
+	if c.Resources.Limits[k8sv1.ResourceCPU] != expectedCPU {
+		t.Errorf(
+			"expected %s, got %s",
+			expectedCPU,
+			c.Resources.Limits[k8sv1.ResourceCPU],
+		)
+	}
+	expectedMemory, err := resource.ParseQuantity(ps.ContainerLimits.Memory)
+	if err != nil {
+		t.Fatal("error in default memory limit:", err)
+	}
+	if c.Resources.Limits[k8sv1.ResourceMemory] != expectedMemory {
+		t.Errorf(
+			"expected %s, got %s",
+			expectedMemory,
+			c.Resources.Limits[k8sv1.ResourceMemory],
+		)
 	}
 }
 

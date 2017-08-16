@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/luizalabs/teresa/pkg/server/deploy"
+	"k8s.io/client-go/pkg/api/resource"
 	"k8s.io/client-go/pkg/api/unversioned"
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
 	k8s_extensions "k8s.io/client-go/pkg/apis/extensions/v1beta1"
@@ -15,6 +16,19 @@ func podSpecToK8sContainer(podSpec *deploy.PodSpec) k8sv1.Container {
 		Name:            podSpec.Name,
 		ImagePullPolicy: k8sv1.PullIfNotPresent,
 		Image:           podSpec.Image,
+	}
+
+	if podSpec.ContainerLimits != nil {
+		//FIXME: check those errors
+		cpu, _ := resource.ParseQuantity(podSpec.ContainerLimits.CPU)
+		memory, _ := resource.ParseQuantity(podSpec.ContainerLimits.Memory)
+
+		c.Resources = k8sv1.ResourceRequirements{
+			Limits: k8sv1.ResourceList{
+				k8sv1.ResourceCPU:    cpu,
+				k8sv1.ResourceMemory: memory,
+			},
+		}
 	}
 
 	for _, arg := range podSpec.Args {

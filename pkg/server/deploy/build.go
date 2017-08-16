@@ -8,9 +8,12 @@ import (
 	st "github.com/luizalabs/teresa/pkg/server/storage"
 )
 
-const (
-	DefaultPort = 5000
-)
+const DefaultPort = 5000
+
+type ContainerLimits struct {
+	CPU    string
+	Memory string
+}
 
 type PodVolumeMountsSpec struct {
 	Name      string
@@ -24,13 +27,14 @@ type PodVolumeSpec struct {
 }
 
 type PodSpec struct {
-	Name         string
-	Namespace    string
-	Image        string
-	Env          map[string]string
-	VolumeMounts []*PodVolumeMountsSpec
-	Volume       []*PodVolumeSpec
-	Args         []string
+	Name            string
+	Namespace       string
+	Image           string
+	ContainerLimits *ContainerLimits
+	Env             map[string]string
+	VolumeMounts    []*PodVolumeMountsSpec
+	Volume          []*PodVolumeSpec
+	Args            []string
 }
 
 type DeploySpec struct {
@@ -67,7 +71,7 @@ func newPodSpec(name, image string, a *app.App, envVars map[string]string, fileS
 }
 
 func newBuildSpec(a *app.App, deployId, tarBallLocation, buildDest string, fileStorage st.Storage, opts *Options) *PodSpec {
-	return newPodSpec(
+	ps := newPodSpec(
 		fmt.Sprintf("build-%s", deployId),
 		opts.SlugBuilderImage,
 		a,
@@ -78,6 +82,11 @@ func newBuildSpec(a *app.App, deployId, tarBallLocation, buildDest string, fileS
 		},
 		fileStorage,
 	)
+	ps.ContainerLimits = &ContainerLimits{
+		CPU:    opts.BuildLimitCPU,
+		Memory: opts.BuildLimitMemory,
+	}
+	return ps
 }
 
 func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, description, slugURL, processType string, opts *Options) *DeploySpec {
@@ -127,5 +136,9 @@ func newRunCommandSpec(a *app.App, deployId, command, slugURL string, fileStorag
 		fileStorage,
 	)
 	ps.Args = []string{"start", command}
+	ps.ContainerLimits = &ContainerLimits{
+		CPU:    opts.BuildLimitCPU,
+		Memory: opts.BuildLimitMemory,
+	}
 	return ps
 }

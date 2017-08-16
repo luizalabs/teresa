@@ -49,7 +49,11 @@ func TestNewBuildSpec(t *testing.T) {
 	expectedDeployId := "123"
 	expectedTarBallLocation := "narnia"
 	expectedBuildDest := "nowhere"
-	opts := &Options{SlugBuilderImage: "image"}
+	opts := &Options{
+		SlugBuilderImage: "image",
+		BuildLimitCPU:    "800m",
+		BuildLimitMemory: "1Gi",
+	}
 
 	ps := newBuildSpec(
 		&app.App{},
@@ -77,6 +81,13 @@ func TestNewBuildSpec(t *testing.T) {
 			t.Errorf("expected %s, got %s for key %s", v, ps.Env[k], k)
 		}
 	}
+
+	if ps.ContainerLimits.CPU != opts.BuildLimitCPU {
+		t.Errorf("expected %s, got %s", opts.BuildLimitCPU, ps.ContainerLimits.CPU)
+	}
+	if ps.ContainerLimits.Memory != opts.BuildLimitMemory {
+		t.Errorf("expected %s, got %s", opts.BuildLimitMemory, ps.ContainerLimits.Memory)
+	}
 }
 
 func TestNewCommandRunSpec(t *testing.T) {
@@ -85,7 +96,11 @@ func TestNewCommandRunSpec(t *testing.T) {
 	expectedBuildId := "1234"
 	a := &app.App{Name: "teresa"}
 	s := st.NewFake()
-	opts := &Options{SlugRunnerImage: "image"}
+	opts := &Options{
+		SlugRunnerImage:  "image",
+		BuildLimitCPU:    "800m",
+		BuildLimitMemory: "1Gi",
+	}
 
 	ps := newRunCommandSpec(a, expectedBuildId, expectedCommand, expectedSlugURL, s, opts)
 	if !strings.HasSuffix(ps.Name, fmt.Sprintf("%s-%s", a.Name, expectedBuildId)) {
@@ -104,6 +119,13 @@ func TestNewCommandRunSpec(t *testing.T) {
 		if ps.Env[k] != v {
 			t.Errorf("expected %s, got %s for key %s", v, ps.Env[k], k)
 		}
+	}
+
+	if ps.ContainerLimits.CPU != opts.BuildLimitCPU {
+		t.Errorf("expected %s, got %s", opts.BuildLimitCPU, ps.ContainerLimits.CPU)
+	}
+	if ps.ContainerLimits.Memory != opts.BuildLimitMemory {
+		t.Errorf("expected %s, got %s", opts.BuildLimitMemory, ps.ContainerLimits.Memory)
 	}
 }
 

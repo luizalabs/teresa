@@ -56,6 +56,9 @@ func createApp(cmd *cobra.Command, args []string) {
 		return
 	}
 	name := args[0]
+	if len(name) > 63 {
+		client.PrintErrorAndExit("Invalid app name (max 63 characters)")
+	}
 
 	team, err := cmd.Flags().GetString("team")
 	if err != nil || team == "" {

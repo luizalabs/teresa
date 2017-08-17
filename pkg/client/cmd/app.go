@@ -17,6 +17,9 @@ import (
 	"golang.org/x/net/context"
 )
 
+//Service name component must be a valid RFC 1035 name
+const appNameLimit = 63
+
 var appCmd = &cobra.Command{
 	Use:   "app",
 	Short: "Everything about apps",
@@ -56,6 +59,9 @@ func createApp(cmd *cobra.Command, args []string) {
 		return
 	}
 	name := args[0]
+	if len(name) > appNameLimit {
+		client.PrintErrorAndExit("Invalid app name (max %d characters)", appNameLimit)
+	}
 
 	team, err := cmd.Flags().GetString("team")
 	if err != nil || team == "" {

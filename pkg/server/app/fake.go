@@ -153,6 +153,7 @@ func (f *FakeOperations) SetAutoScale(user *database.User, appName string, as *A
 
 	return nil
 }
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

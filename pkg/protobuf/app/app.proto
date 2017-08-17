@@ -9,7 +9,7 @@ service App {
     rpc SetEnv(SetEnvRequest) returns (Empty);
     rpc UnsetEnv(UnsetEnvRequest) returns (Empty);
     rpc List(Empty) returns (ListResponse);
-	rpc SetAutoScale(SetAutoScaleRequest) returns (Empty);
+    rpc SetAutoScale(SetAutoScaleRequest) returns (Empty);
 }
 
 message CreateRequest {

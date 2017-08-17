@@ -19,6 +19,7 @@ import (
 
 //Service name component must be a valid RFC 1035 name
 const appNameLimit = 63
+const flagNotDefined = -1
 
 var appCmd = &cobra.Command{
 	Use:   "app",
@@ -429,6 +430,90 @@ WARNING:
 	Run: appLogs,
 }
 
+var appAutoScaleSetCmd = &cobra.Command{
+	Use:   "autoscale <name> [flags]",
+	Short: "Set autoscale parameters for the app",
+	Long: `Set auto scaling parameters for the application.
+
+You can configure the autoscale parameters for the application. (i.e. the minimum and maximum number of replicas)
+
+	Example:   To set the number minimum of replicas to 2:
+
+  $ teresa app autoscale myapp --min 2`,
+	Run: appAutoScaleSet,
+}
+
+func appAutoScaleSet(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		cmd.Usage()
+		return
+	}
+
+	name := args[0]
+
+	min, err := cmd.Flags().GetInt32("min")
+	if err != nil {
+		client.PrintErrorAndExit("invalid min parameter")
+	}
+
+	max, err := cmd.Flags().GetInt32("max")
+	if err != nil {
+		client.PrintErrorAndExit("invalid max parameter")
+	}
+
+	cpu, err := cmd.Flags().GetInt32("cpu-percent")
+	if err != nil {
+		client.PrintErrorAndExit("invalid cpu-percent parameter")
+	}
+
+	if msg, isValid := validateFlags(min, max); isValid != true {
+		client.PrintErrorAndExit(msg)
+	}
+
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %s", err)
+	}
+	defer conn.Close()
+
+	as := &appb.SetAutoScaleRequest_AutoScale{
+		Min:                  min,
+		Max:                  max,
+		CpuTargetUtilization: cpu,
+	}
+	req := &appb.SetAutoScaleRequest{
+		Name:      name,
+		AutoScale: as,
+	}
+	cli := appb.NewAppClient(conn)
+	if _, err := cli.SetAutoScale(context.Background(), req); err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+	fmt.Println("Autoscale updated with success")
+}
+
+func validateFlags(min, max int32) (msg string, isValid bool) {
+	isValid = true
+
+	if max == flagNotDefined || min == flagNotDefined {
+		isValid = false
+		msg = "--min and --max is required"
+	} else {
+		if max < 1 {
+			isValid = false
+			msg = fmt.Sprintf("--max=MAXPODS must be at least 1, max: %d", max)
+		} else if max < min {
+			isValid = false
+			msg = fmt.Sprintf("--max=MAXPODS must be larger or equal to --min=MINPODS, max: %d, min: %d", max, min)
+		} else if min < 0 {
+			isValid = false
+			msg = fmt.Sprintf("--min=MINPODS must be at least 1, min: %d", min)
+		}
+	}
+
+	return
+}
+
 func init() {
 	// add AppCmd
 	RootCmd.AddCommand(appCmd)
@@ -439,6 +524,7 @@ func init() {
 	appCmd.AddCommand(appEnvSetCmd)
 	appCmd.AddCommand(appEnvUnSetCmd)
 	appCmd.AddCommand(appLogsCmd)
+	appCmd.AddCommand(appAutoScaleSetCmd)
 
 	appCreateCmd.Flags().String("team", "", "team owner of the app")
 	appCreateCmd.Flags().Int32("scale-min", 1, "auto scale min size")
@@ -458,6 +544,10 @@ func init() {
 	// App logs
 	appLogsCmd.Flags().Int64("lines", 10, "number of lines")
 	appLogsCmd.Flags().Bool("follow", false, "follow logs")
+	// App autoscale
+	appAutoScaleSetCmd.Flags().Int32("min", -1, "Auto scale min size.")
+	appAutoScaleSetCmd.Flags().Int32("max", -1, "Auto scale max size.")
+	appAutoScaleSetCmd.Flags().Int32("cpu-percent", -1, "The target average CPU utilization (represented as a percent of requested CPU) over all the pods. If it's not specified or negative, the current autoscaling policy will be used.")
 }
 
 func appLogs(cmd *cobra.Command, args []string) {

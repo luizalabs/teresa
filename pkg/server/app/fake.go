@@ -139,6 +139,20 @@ func (f *FakeOperations) UnsetEnv(user *database.User, appName string, envVars [
 	return nil
 }
 
+func (f *FakeOperations) SetAutoScale(user *database.User, appName string, as *AutoScale) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if !hasPerm(user.Email) {
+		return auth.ErrPermissionDenied
+	}
+
+	if _, found := f.Storage[appName]; !found {
+		return ErrNotFound
+	}
+
+	return nil
+}
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

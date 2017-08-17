@@ -262,3 +262,30 @@ func newListResponse(items []*AppListItem) *appb.ListResponse {
 
 	return &appb.ListResponse{Apps: apps}
 }
+
+func newAutoScale(req *appb.SetAutoScaleRequest) *AutoScale {
+	return &AutoScale{
+		Max: req.AutoScale.Max,
+		Min: req.AutoScale.Min,
+	}
+}
+
+func updateAutoScale(app *App, old, new *AutoScale) {
+	if !(new.Max != -1 && new.Min != -1) {
+		if new.Max != -1 {
+			if (new.Max >= old.Max) || (new.Max >= old.Min) {
+				new.Min = old.Min
+			} else {
+				new.Min = new.Max
+			}
+		} else {
+			if new.Min <= old.Max {
+				new.Max = old.Max
+			} else {
+				new.Max = new.Min
+			}
+		}
+	}
+	new.CPUTargetUtilization = old.CPUTargetUtilization
+	app.AutoScale = new
+}

@@ -259,7 +259,7 @@ func (k *k8sClient) CreateSecret(appName, secretName string, data map[string][]b
 	return err
 }
 
-func (k *k8sClient) CreateAutoScale(a *app.App) error {
+func (k *k8sClient) CreateOrUpdateAutoScale(a *app.App) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -267,7 +267,10 @@ func (k *k8sClient) CreateAutoScale(a *app.App) error {
 
 	hpa := newHPA(a)
 
-	_, err = kc.AutoscalingV1().HorizontalPodAutoscalers(a.Name).Create(hpa)
+	_, err = kc.AutoscalingV1().HorizontalPodAutoscalers(a.Name).Update(hpa)
+	if k.IsNotFound(err) {
+		_, err = kc.AutoscalingV1().HorizontalPodAutoscalers(a.Name).Create(hpa)
+	}
 	return err
 }
 

@@ -423,6 +423,71 @@ WARNING:
 	Run: appLogs,
 }
 
+var appAutoScaleSetCmd = &cobra.Command{
+	Use:   "autoscale <name> [flags]",
+	Short: "Set autoscale parameters for the app",
+	Long: `Set auto scaling parameters for the application.
+
+You can configure the autoscale parameters from the application. (i.e. the minimum and maximum number of replicas)
+
+	Example:   To set the number minimum of replicas to 2:
+
+  $ teresa app autoscale myapp --min 2`,
+	Run: appAutoScaleSet,
+}
+
+func appAutoScaleSet(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		cmd.Usage()
+		return
+	}
+
+	name := args[0]
+
+	min, err := cmd.Flags().GetInt32("min")
+	if err != nil {
+		client.PrintErrorAndExit("invalid min parameter")
+	}
+
+	max, err := cmd.Flags().GetInt32("max")
+	if err != nil {
+		client.PrintErrorAndExit("invalid max parameter")
+	}
+
+	if max != -1 {
+		if max < 1 {
+			client.PrintErrorAndExit(fmt.Sprintf("--max=MAXPODS must be at least 1, max: %d", max))
+		}
+
+		if min != -1 && min > max {
+			client.PrintErrorAndExit(fmt.Sprintf("--max=MAXPODS must be larger or equal to --min=MINPODS, max: %d, min: %d", max, min))
+		}
+	} else if min == -1 {
+		client.PrintErrorAndExit("at least 1 flag is required")
+	}
+
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %s", err)
+	}
+	defer conn.Close()
+
+	as := &appb.SetAutoScaleRequest_AutoScale{
+		Min: min,
+		Max: max,
+	}
+	req := &appb.SetAutoScaleRequest{
+		Name:      name,
+		AutoScale: as,
+	}
+	cli := appb.NewAppClient(conn)
+	if _, err := cli.SetAutoScale(context.Background(), req); err != nil {
+		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
+		return
+	}
+	fmt.Println("Autoscale updated with success")
+}
+
 func init() {
 	// add AppCmd
 	RootCmd.AddCommand(appCmd)
@@ -433,6 +498,7 @@ func init() {
 	appCmd.AddCommand(appEnvSetCmd)
 	appCmd.AddCommand(appEnvUnSetCmd)
 	appCmd.AddCommand(appLogsCmd)
+	appCmd.AddCommand(appAutoScaleSetCmd)
 
 	appCreateCmd.Flags().String("team", "", "team owner of the app")
 	appCreateCmd.Flags().Int32("scale-min", 1, "auto scale min size")
@@ -452,6 +518,9 @@ func init() {
 	// App logs
 	appLogsCmd.Flags().Int64("lines", 10, "number of lines")
 	appLogsCmd.Flags().Bool("follow", false, "follow logs")
+	// App autoscale
+	appAutoScaleSetCmd.Flags().Int32("min", -1, "Auto scale min size. If it's not specified or negative, the server will keep the current value.")
+	appAutoScaleSetCmd.Flags().Int32("max", -1, "Auto scale max size. If it's not specified or negative, the server will keep the current value.")
 }
 
 func appLogs(cmd *cobra.Command, args []string) {

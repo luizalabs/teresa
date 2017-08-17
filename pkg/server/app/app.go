@@ -370,18 +370,21 @@ func (ops *AppOperations) SetAutoScale(user *database.User, appName string, as *
 		return err
 	}
 
-	if err := ops.saveApp(app, user.Email); err != nil {
-		return teresa_errors.NewInternalServerError(err)
-	}
-
 	old, err := ops.kops.AutoScale(appName)
 	if err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
 
-	updateAutoScale(app, old, as)
+	if c := as.CPUTargetUtilization; c < 0 || c > 100 {
+		as.CPUTargetUtilization = old.CPUTargetUtilization
+	}
+	app.AutoScale = as
 
 	if err := ops.kops.CreateOrUpdateAutoScale(app); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	if err := ops.saveApp(app, user.Email); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
 

@@ -27,6 +27,7 @@ type Operations interface {
 	SetEnv(user *database.User, appName string, evs []*EnvVar) error
 	UnsetEnv(user *database.User, appName string, evs []string) error
 	List(user *database.User) ([]*AppListItem, error)
+	SetAutoScale(user *database.User, appName string, as *AutoScale) error
 }
 
 type K8sOperations interface {
@@ -37,7 +38,7 @@ type K8sOperations interface {
 	CreateNamespace(app *App, userEmail string) error
 	CreateQuota(app *App) error
 	CreateSecret(appName, secretName string, data map[string][]byte) error
-	CreateAutoScale(app *App) error
+	CreateOrUpdateAutoScale(app *App) error
 	AddressList(namespace string) ([]*Address, error)
 	Status(namespace string) (*Status, error)
 	AutoScale(namespace string) (*AutoScale, error)
@@ -115,7 +116,7 @@ func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 		return teresa_errors.NewInternalServerError(err)
 	}
 
-	if err := ops.kops.CreateAutoScale(app); err != nil {
+	if err := ops.kops.CreateOrUpdateAutoScale(app); err != nil {
 		return teresa_errors.New(ErrInvalidAutoScale, err)
 	}
 
@@ -361,6 +362,30 @@ func (ops *AppOperations) List(user *database.User) ([]*AppListItem, error) {
 		}
 	}
 	return items, nil
+}
+
+func (ops *AppOperations) SetAutoScale(user *database.User, appName string, as *AutoScale) error {
+	app, err := ops.checkPermAndGet(user, appName)
+	if err != nil {
+		return err
+	}
+
+	if err := ops.saveApp(app, user.Email); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	old, err := ops.kops.AutoScale(appName)
+	if err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	updateAutoScale(app, old, as)
+
+	if err := ops.kops.CreateOrUpdateAutoScale(app); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	return nil
 }
 
 func NewOperations(tops team.Operations, kops K8sOperations, st st.Storage) Operations {

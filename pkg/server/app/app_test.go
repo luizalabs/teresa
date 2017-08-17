@@ -67,7 +67,7 @@ func (*fakeK8sOperations) NamespaceLabel(namespace, label string) (string, error
 	return "luizalabs", nil
 }
 
-func (*fakeK8sOperations) CreateAutoScale(app *App) error {
+func (*fakeK8sOperations) CreateOrUpdateAutoScale(app *App) error {
 	return nil
 }
 
@@ -150,7 +150,7 @@ func (e *errK8sOperations) CreateSecret(appName, secretName string, data map[str
 	return e.SecretErr
 }
 
-func (e *errK8sOperations) CreateAutoScale(app *App) error {
+func (e *errK8sOperations) CreateOrUpdateAutoScale(app *App) error {
 	return e.AutoScaleErr
 }
 

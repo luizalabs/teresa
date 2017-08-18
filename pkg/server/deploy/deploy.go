@@ -49,7 +49,7 @@ func (ops *DeployOperations) Deploy(user *database.User, appName string, tarBall
 		return nil, auth.ErrPermissionDenied
 	}
 
-	confFiles, err := getDeployConfigFilesFromTarBall(tarBall)
+	confFiles, err := getDeployConfigFilesFromTarBall(tarBall, a.ProcessType)
 	if err != nil {
 		return nil, teresa_errors.New(ErrInvalidTeresaYamlFile, err)
 	}

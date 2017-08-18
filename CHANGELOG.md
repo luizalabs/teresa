@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Added
 - [client] App name length validation
+- [server] Support for Teresa yaml per process type
 
 ### Changed
 - [server] Specific CPU and Memory limits for both deploy and release pods

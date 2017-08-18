@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Added
 - [client] App name length validation
+- [client] Remove `max-cpu` and `max-memory` flags of create app command
 
 ## [0.5.0] - 2017-08-15
 ### Changed

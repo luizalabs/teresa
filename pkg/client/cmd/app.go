@@ -46,10 +46,10 @@ The app name must follow this rules:
   $ teresa app create foo --team bar --scale-min 2 --scale-max 10 --scale-cpu 70
 
   With specific cpu and memory size...
-  $ teresa create foo --team bar --cpu 200m --max-cpu 500m --memory 512Mi --max-memory 1Gi
+  $ teresa create foo --team bar --cpu 200m --memory 512Mi
 
   With all flags...
-  $ teresa app create foo --team bar --cpu 200m --max-cpu 500m --memory 512Mi --max-memory 1Gi --scale-min 2 --scale-max 10 --scale-cpu 70 --process-type web`,
+  $ teresa app create foo --team bar --cpu 200m --memory 512Mi --scale-min 2 --scale-max 10 --scale-cpu 70 --process-type web`,
 	Run: createApp,
 }
 
@@ -93,16 +93,6 @@ func createApp(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid memory parameter")
 	}
 
-	maxCPU, err := cmd.Flags().GetString("max-cpu")
-	if err != nil {
-		client.PrintErrorAndExit("Invalid max-cpu parameter")
-	}
-
-	maxMemory, err := cmd.Flags().GetString("max-memory")
-	if err != nil {
-		client.PrintErrorAndExit("Invalid max-memory parameter")
-	}
-
 	processType, err := cmd.Flags().GetString("process-type")
 	if err != nil {
 		client.PrintErrorAndExit("Invalid process-type parameter")
@@ -118,11 +108,11 @@ func createApp(cmd *cobra.Command, args []string) {
 		Default: []*appb.CreateRequest_Limits_LimitRangeQuantity{
 			&appb.CreateRequest_Limits_LimitRangeQuantity{
 				Resource: "cpu",
-				Quantity: maxCPU,
+				Quantity: cpu,
 			},
 			&appb.CreateRequest_Limits_LimitRangeQuantity{
 				Resource: "memory",
-				Quantity: maxMemory,
+				Quantity: memory,
 			},
 		},
 		DefaultRequest: []*appb.CreateRequest_Limits_LimitRangeQuantity{
@@ -446,8 +436,6 @@ func init() {
 	appCreateCmd.Flags().Int32("scale-cpu", 70, "auto scale target cpu percentage to scale")
 	appCreateCmd.Flags().String("cpu", "200m", "allocated pod cpu")
 	appCreateCmd.Flags().String("memory", "512Mi", "allocated pod memory")
-	appCreateCmd.Flags().String("max-cpu", "500m", "when set, allows the pod to burst cpu usage up to 'max-cpu'")
-	appCreateCmd.Flags().String("max-memory", "512Mi", "when set, allows the pod to burst memory usage up to 'max-memory'")
 	appCreateCmd.Flags().String("process-type", "", "app process type")
 
 	appEnvSetCmd.Flags().String("app", "", "app name")

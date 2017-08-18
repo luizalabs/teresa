@@ -393,7 +393,11 @@ func (k *k8sClient) CreateOrUpdateDeploy(deploySpec *deploy.DeploySpec) error {
 	}
 
 	replicas := k.currentPodReplicasFromDeploy(deploySpec.Namespace, deploySpec.Name)
-	deployYaml := deploySpecToK8sDeploy(deploySpec, replicas)
+	deployYaml, err := deploySpecToK8sDeploy(deploySpec, replicas)
+	if err != nil {
+		return err
+	}
+
 	_, err = kc.Deployments(deploySpec.Namespace).Update(deployYaml)
 	if k.IsNotFound(err) {
 		_, err = kc.Deployments(deploySpec.Namespace).Create(deployYaml)
@@ -407,7 +411,10 @@ func (k *k8sClient) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, 
 		return nil, nil, err
 	}
 
-	podYaml := podSpecToK8sPod(podSpec)
+	podYaml, err := podSpecToK8sPod(podSpec)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "define build pod spec failed")
+	}
 	pod, err := kc.Pods(podSpec.Namespace).Create(podYaml)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "pod create failed")

@@ -11,18 +11,22 @@ import (
 	"k8s.io/client-go/pkg/util/intstr"
 )
 
-func podSpecToK8sContainer(podSpec *deploy.PodSpec) k8sv1.Container {
-	c := k8sv1.Container{
+func podSpecToK8sContainer(podSpec *deploy.PodSpec) (*k8sv1.Container, error) {
+	c := &k8sv1.Container{
 		Name:            podSpec.Name,
 		ImagePullPolicy: k8sv1.PullIfNotPresent,
 		Image:           podSpec.Image,
 	}
 
 	if podSpec.ContainerLimits != nil {
-		//FIXME: check those errors
-		cpu, _ := resource.ParseQuantity(podSpec.ContainerLimits.CPU)
-		memory, _ := resource.ParseQuantity(podSpec.ContainerLimits.Memory)
-
+		cpu, err := resource.ParseQuantity(podSpec.ContainerLimits.CPU)
+		if err != nil {
+			return nil, err
+		}
+		memory, err := resource.ParseQuantity(podSpec.ContainerLimits.Memory)
+		if err != nil {
+			return nil, err
+		}
 		c.Resources = k8sv1.ResourceRequirements{
 			Limits: k8sv1.ResourceList{
 				k8sv1.ResourceCPU:    cpu,
@@ -45,7 +49,7 @@ func podSpecToK8sContainer(podSpec *deploy.PodSpec) k8sv1.Container {
 			ReadOnly:  vm.ReadOnly,
 		})
 	}
-	return c
+	return c, nil
 }
 
 func podSpecVolumesToK8sVolumes(vols []*deploy.PodVolumeSpec) []k8sv1.Volume {
@@ -60,13 +64,16 @@ func podSpecVolumesToK8sVolumes(vols []*deploy.PodVolumeSpec) []k8sv1.Volume {
 	return volumes
 }
 
-func podSpecToK8sPod(podSpec *deploy.PodSpec) *k8sv1.Pod {
-	c := podSpecToK8sContainer(podSpec)
+func podSpecToK8sPod(podSpec *deploy.PodSpec) (*k8sv1.Pod, error) {
+	c, err := podSpecToK8sContainer(podSpec)
+	if err != nil {
+		return nil, err
+	}
 	volumes := podSpecVolumesToK8sVolumes(podSpec.Volume)
 
 	ps := k8sv1.PodSpec{
 		RestartPolicy: k8sv1.RestartPolicyNever,
-		Containers:    []k8sv1.Container{c},
+		Containers:    []k8sv1.Container{*c},
 		Volumes:       volumes,
 	}
 
@@ -78,11 +85,14 @@ func podSpecToK8sPod(podSpec *deploy.PodSpec) *k8sv1.Pod {
 		},
 		Spec: ps,
 	}
-	return pod
+	return pod, nil
 }
 
-func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) *k8s_extensions.Deployment {
-	c := podSpecToK8sContainer(&deploySpec.PodSpec)
+func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) (*k8s_extensions.Deployment, error) {
+	c, err := podSpecToK8sContainer(&deploySpec.PodSpec)
+	if err != nil {
+		return nil, err
+	}
 	volumes := podSpecVolumesToK8sVolumes(deploySpec.Volume)
 
 	if deploySpec.HealthCheck != nil {
@@ -100,7 +110,7 @@ func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) *k8s_e
 
 	ps := k8sv1.PodSpec{
 		RestartPolicy: k8sv1.RestartPolicyAlways,
-		Containers:    []k8sv1.Container{c},
+		Containers:    []k8sv1.Container{*c},
 		Volumes:       volumes,
 	}
 
@@ -143,7 +153,7 @@ func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) *k8s_e
 			RevisionHistoryLimit: &rhl,
 		},
 	}
-	return d
+	return d, nil
 }
 
 func rollingUpdateToK8sRollingUpdate(ru *deploy.RollingUpdate) (maxSurge, maxUnavailable intstr.IntOrString) {

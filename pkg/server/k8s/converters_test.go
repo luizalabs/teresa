@@ -24,7 +24,10 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 			Memory: "1Gi",
 		},
 	}
-	c := podSpecToK8sContainer(ps)
+	c, err := podSpecToK8sContainer(ps)
+	if err != nil {
+		t.Fatal("error to convert spec", err)
+	}
 
 	if c.Name != ps.Name {
 		t.Errorf("expected %s, got %s", ps.Name, c.Name)
@@ -106,7 +109,10 @@ func TestPodSpecToK8sPod(t *testing.T) {
 			&deploy.PodVolumeMountsSpec{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
 		},
 	}
-	pod := podSpecToK8sPod(ps)
+	pod, err := podSpecToK8sPod(ps)
+	if err != nil {
+		t.Fatal("error to convert spec", err)
+	}
 	if pod.ObjectMeta.Name != ps.Name {
 		t.Errorf("expected %s, got %s", ps.Name, pod.ObjectMeta.Name)
 	}
@@ -176,8 +182,10 @@ func TestDeploySpecToK8sDeploy(t *testing.T) {
 	}
 
 	var expectedReplicas int32 = 5
-	k8sDeploy := deploySpecToK8sDeploy(ds, expectedReplicas)
-
+	k8sDeploy, err := deploySpecToK8sDeploy(ds, expectedReplicas)
+	if err != nil {
+		t.Fatal("error to convert spec", err)
+	}
 	if len(k8sDeploy.Spec.Template.Spec.Containers) != 1 {
 		t.Fatal("expected 1 container, got %d", len(k8sDeploy.Spec.Template.Spec.Containers))
 	}

@@ -17,9 +17,11 @@ import (
 	"golang.org/x/net/context"
 )
 
-//Service name component must be a valid RFC 1035 name
-const appNameLimit = 63
-const flagNotDefined = -1
+const (
+	//Service name component must be a valid RFC 1035 name
+	appNameLimit   = 63
+	flagNotDefined = -1
+)
 
 var appCmd = &cobra.Command{
 	Use:   "app",
@@ -466,7 +468,7 @@ func appAutoScaleSet(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("invalid cpu-percent parameter")
 	}
 
-	if msg, isValid := validateFlags(min, max); isValid != true {
+	if msg, isValid := validateFlags(min, max); !isValid {
 		client.PrintErrorAndExit(msg)
 	}
 
@@ -492,26 +494,21 @@ func appAutoScaleSet(cmd *cobra.Command, args []string) {
 	fmt.Println("Autoscale updated with success")
 }
 
-func validateFlags(min, max int32) (msg string, isValid bool) {
-	isValid = true
-
+func validateFlags(min, max int32) (string, bool) {
 	if max == flagNotDefined || min == flagNotDefined {
-		isValid = false
-		msg = "--min and --max is required"
-	} else {
-		if max < 1 {
-			isValid = false
-			msg = fmt.Sprintf("--max=MAXPODS must be at least 1, max: %d", max)
-		} else if max < min {
-			isValid = false
-			msg = fmt.Sprintf("--max=MAXPODS must be larger or equal to --min=MINPODS, max: %d, min: %d", max, min)
-		} else if min < 0 {
-			isValid = false
-			msg = fmt.Sprintf("--min=MINPODS must be at least 1, min: %d", min)
-		}
+		return "--min and --max are required", false
+	}
+	if max < 1 {
+		return fmt.Sprintf("--max=MAXPODS must be at least 1, max: %d", max), false
+	}
+	if max < min {
+		return fmt.Sprintf("--max=MAXPODS must be larger or equal to --min=MINPODS, max: %d, min: %d", max, min), false
+	}
+	if min < 1 {
+		return fmt.Sprintf("--min=MINPODS must be at least 1, min: %d", min), false
 	}
 
-	return
+	return "", true
 }
 
 func init() {
@@ -545,9 +542,9 @@ func init() {
 	appLogsCmd.Flags().Int64("lines", 10, "number of lines")
 	appLogsCmd.Flags().Bool("follow", false, "follow logs")
 	// App autoscale
-	appAutoScaleSetCmd.Flags().Int32("min", -1, "Auto scale min size.")
-	appAutoScaleSetCmd.Flags().Int32("max", -1, "Auto scale max size.")
-	appAutoScaleSetCmd.Flags().Int32("cpu-percent", -1, "The target average CPU utilization (represented as a percent of requested CPU) over all the pods. If it's not specified or negative, the current autoscaling policy will be used.")
+	appAutoScaleSetCmd.Flags().Int32("min", flagNotDefined, "Auto scale min size.")
+	appAutoScaleSetCmd.Flags().Int32("max", flagNotDefined, "Auto scale max size.")
+	appAutoScaleSetCmd.Flags().Int32("cpu-percent", flagNotDefined, "The target average CPU utilization (represented as a percent of requested CPU) over all the pods. If it's not specified or negative, the current autoscaling policy will be used.")
 }
 
 func appLogs(cmd *cobra.Command, args []string) {

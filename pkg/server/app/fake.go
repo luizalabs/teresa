@@ -140,8 +140,8 @@ func (f *FakeOperations) UnsetEnv(user *database.User, appName string, envVars [
 }
 
 func (f *FakeOperations) SetAutoScale(user *database.User, appName string, as *AutoScale) error {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
 
 	if !hasPerm(user.Email) {
 		return auth.ErrPermissionDenied

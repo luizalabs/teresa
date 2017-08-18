@@ -243,3 +243,24 @@ func TestUnsetEnvVars(t *testing.T) {
 		}
 	}
 }
+
+func cmpAutoScaleWithSetAutoScaleRequest(as *AutoScale, req *appb.SetAutoScaleRequest) bool {
+	var tmp = struct {
+		A string
+		B *AutoScale
+	}{
+		"teresa",
+		as,
+	}
+
+	return deepEqual(&tmp, req)
+}
+
+func TestNewAutoScale(t *testing.T) {
+	req := newAutoScaleRequest("teresa")
+	as := newAutoScale(req)
+
+	if !cmpAutoScaleWithSetAutoScaleRequest(as, req) {
+		t.Errorf("expected %v, got %v", req, as)
+	}
+}

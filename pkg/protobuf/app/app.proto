@@ -122,13 +122,13 @@ message UnsetEnvRequest {
 
 message SetAutoScaleRequest {
     string name = 1;
-	
+
 	message AutoScale {
         int32 cpu_target_utilization = 1;
-        int32 max = 2;
-        int32 min = 3;
-    }
-	AutoScale auto_scale = 2;
+		int32 max = 2;
+		int32 min = 3;
+    	}
+    AutoScale auto_scale = 2;
 }
 
 message Empty {}

@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Added
+- [client] App name length validation
+
 ## [0.5.0] - 2017-08-15
 ### Changed
 - Use gRPC instead of go-swagger
@@ -10,7 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - 'app create' command doesn't create a welcome deploy anymore
 - [client] Refactored config and bash completion
 - [client] Flag --admin removed, admin users are only created with the
-- [server] 'create-super-user' command
+  'create-super-user' command
 - [server] Delete build pod after deploy on success
 
 ### Added

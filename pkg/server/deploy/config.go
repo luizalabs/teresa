@@ -11,6 +11,8 @@ import (
 )
 
 const (
+	ProcfileFileName       = "Procfile"
+	teresaYamlFileNameTmpl = "teresa%s%s.yaml"
 	maxDrainTimeoutSeconds = 30
 )
 
@@ -54,10 +56,13 @@ type DeployConfigFiles struct {
 	Procfile   Procfile
 }
 
-const (
-	TeresaYamlFileName = "teresa.yaml"
-	ProcfileFileName   = "Procfile"
-)
+func (d *DeployConfigFiles) fillTeresaYaml(r io.Reader) error {
+	d.TeresaYaml = new(TeresaYaml)
+	if err := readFileFromTarBall(r, d.TeresaYaml); err != nil {
+		return err
+	}
+	return validateTeresaYaml(d.TeresaYaml)
+}
 
 func readFileFromTarBall(r io.Reader, t interface{}) error {
 	b, err := ioutil.ReadAll(r)
@@ -67,13 +72,15 @@ func readFileFromTarBall(r io.Reader, t interface{}) error {
 	return yaml.Unmarshal(b, t)
 }
 
-func getDeployConfigFilesFromTarBall(tarBall io.ReadSeeker) (*DeployConfigFiles, error) {
+func getDeployConfigFilesFromTarBall(tarBall io.ReadSeeker, processType string) (*DeployConfigFiles, error) {
 	gReader, err := gzip.NewReader(tarBall)
 	if err != nil {
 		return nil, err
 	}
 	defer gReader.Close()
 
+	tYamlFilename := fmt.Sprintf(teresaYamlFileNameTmpl, "", "")
+	tYamlProcessTypeFileName := fmt.Sprintf(teresaYamlFileNameTmpl, "-", processType)
 	deployFiles := new(DeployConfigFiles)
 	tarReader := tar.NewReader(gReader)
 	for {
@@ -85,27 +92,25 @@ func getDeployConfigFilesFromTarBall(tarBall io.ReadSeeker) (*DeployConfigFiles,
 			return nil, err
 		}
 
-		if hdr.Name != TeresaYamlFileName && hdr.Name != ProcfileFileName {
+		if hdr.Name != tYamlFilename && hdr.Name != tYamlProcessTypeFileName && hdr.Name != ProcfileFileName {
 			continue
 		}
 
-		if hdr.Name == TeresaYamlFileName {
-			deployFiles.TeresaYaml = new(TeresaYaml)
-			if err := readFileFromTarBall(tarReader, deployFiles.TeresaYaml); err != nil {
-				return nil, err
-			}
-			if err := validateTeresaYaml(deployFiles.TeresaYaml); err != nil {
-				return nil, err
+		if hdr.Name == tYamlFilename || hdr.Name == tYamlProcessTypeFileName {
+			if hdr.Name == tYamlProcessTypeFileName {
+				if err := deployFiles.fillTeresaYaml(tarReader); err != nil {
+					return nil, err
+				}
+			} else if deployFiles.TeresaYaml == nil {
+				if err := deployFiles.fillTeresaYaml(tarReader); err != nil {
+					return nil, err
+				}
 			}
 		} else {
 			deployFiles.Procfile = make(map[string]string)
 			if err := readFileFromTarBall(tarReader, deployFiles.Procfile); err != nil {
 				return nil, err
 			}
-		}
-
-		if deployFiles.TeresaYaml != nil && deployFiles.Procfile != nil {
-			return deployFiles, nil
 		}
 	}
 

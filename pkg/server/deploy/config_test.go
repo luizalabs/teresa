@@ -13,7 +13,7 @@ func TestGetTeresaYamlFromDeployTarBall(t *testing.T) {
 	}
 	defer tarBall.Close()
 
-	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall)
+	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test")
 	if err != nil {
 		t.Fatal("error getting deploy config file from tarball:", err)
 	}
@@ -35,7 +35,7 @@ func TestGetTeresaYamlFromDeployTarBallConfigFiles(t *testing.T) {
 	}
 	defer tarBall.Close()
 
-	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall)
+	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test")
 	if err != nil {
 		t.Fatal("error getting deploy config file from tarball:", err)
 	}
@@ -54,7 +54,7 @@ func TestGetTeresaYamlFromDeployTarBallInvalidYaml(t *testing.T) {
 	}
 	defer tarBall.Close()
 
-	if _, err := getDeployConfigFilesFromTarBall(tarBall); err == nil {
+	if _, err := getDeployConfigFilesFromTarBall(tarBall, "test"); err == nil {
 		t.Error("expected error, got nil")
 	}
 }
@@ -66,7 +66,7 @@ func TestGetProcfileFromDeployTarBall(t *testing.T) {
 	}
 	defer tarBall.Close()
 
-	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall)
+	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test")
 	if err != nil {
 		t.Fatal("error getting deploy config file from tarball:", err)
 	}
@@ -88,7 +88,7 @@ func TestGetDeployConfigFromTarBall(t *testing.T) {
 	}
 	defer tarBall.Close()
 
-	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall)
+	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test")
 	if err != nil {
 		t.Fatal("error getting deploy config file from tarball:", err)
 	}
@@ -107,6 +107,29 @@ func TestGetDeployConfigFromTarBall(t *testing.T) {
 	}
 	expectedText = "/healthcheck/"
 	actual = deployConfig.TeresaYaml.HealthCheck.Liveness.Path
+	if actual != expectedText {
+		t.Errorf("expected %s, got %s", expectedText, actual)
+	}
+}
+
+func TestGetTeresaYamlForProcessTypeFromDeployTarBall(t *testing.T) {
+	tarBall, err := os.Open(filepath.Join("testdata", "teresaYamlTestProcessType.tgz"))
+	if err != nil {
+		t.Fatal("error getting tarBall:", err)
+	}
+	defer tarBall.Close()
+
+	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test")
+	if err != nil {
+		t.Fatal("error getting deploy config file from tarball:", err)
+	}
+
+	if deployConfig.TeresaYaml == nil {
+		t.Fatal("expected a valid TeresaYaml struct, got nil")
+	}
+
+	expectedText := "/test-healthcheck/"
+	actual := deployConfig.TeresaYaml.HealthCheck.Liveness.Path
 	if actual != expectedText {
 		t.Errorf("expected %s, got %s", expectedText, actual)
 	}

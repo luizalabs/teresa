@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Added
 - [client] App name length validation
+- autoscale command
 
 ### Changed
 - [server] Specific CPU and Memory limits for both deploy and release pods

@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - [server] Specific CPU and Memory limits for both deploy and release pods
+- [client] Change default `max-cpu` to `200m` (instead of `500m`) in command `create app`
 
 ## [0.5.0] - 2017-08-15
 ### Changed

@@ -4,6 +4,9 @@ go:
   - 1.8
   - tip
 
+script:
+  - ./.tests-run.sh
+
 jobs:
   include:
     - stage: helm
@@ -13,9 +16,6 @@ jobs:
         - ./.helm.sh lint
       after_success:
         - ./.helm.sh deploy
-    - stage: test
-      script:
-         - ./.tests-run.sh
       after_success:
         - bash <(curl -s https://codecov.io/bashl)
     - stage: build docker image

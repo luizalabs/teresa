@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/luizalabs/teresa/pkg/client"
@@ -252,7 +253,8 @@ func appInfo(cmd *cobra.Command, args []string) {
 		fmt.Printf("  %s %d%%\n", bold("cpu:"), info.Status.Cpu)
 		fmt.Printf("  %s %d\n", bold("pods:"), len(info.Status.Pods))
 		for _, pod := range info.Status.Pods {
-			fmt.Printf("    %s %s  %s %s\n", "Name:", pod.Name, "State:", pod.State)
+			age := shortHumanDuration(time.Duration(pod.Age))
+			fmt.Printf("    Name: %s  State: %s  Age: %s  Restarts: %d\n", pod.Name, pod.State, age, pod.Restarts)
 		}
 	}
 	if info.AutoScale != nil {
@@ -580,4 +582,24 @@ func appLogs(cmd *cobra.Command, args []string) {
 		}
 		fmt.Println(msg.Text)
 	}
+}
+
+// Shamelessly copied from Kubernetes
+func shortHumanDuration(d time.Duration) string {
+	// Allow deviation no more than 2 seconds(excluded) to tolerate machine time
+	// inconsistence, it can be considered as almost now.
+	if seconds := int(d.Seconds()); seconds < -1 {
+		return fmt.Sprintf("<invalid>")
+	} else if seconds < 0 {
+		return fmt.Sprintf("0s")
+	} else if seconds < 60 {
+		return fmt.Sprintf("%ds", seconds)
+	} else if minutes := int(d.Minutes()); minutes < 60 {
+		return fmt.Sprintf("%dm", minutes)
+	} else if hours := int(d.Hours()); hours < 24 {
+		return fmt.Sprintf("%dh", hours)
+	} else if hours < 24*365 {
+		return fmt.Sprintf("%dd", hours/24)
+	}
+	return fmt.Sprintf("%dy", int(d.Hours()/24/365))
 }

@@ -89,6 +89,7 @@ func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {
 	pods := make([]*app.Pod, 0)
 	for _, pod := range podList.Items {
 		p := &app.Pod{Name: pod.Name}
+		p.Age = int64(time.Now().Sub(pod.Status.StartTime.Time))
 		for _, status := range pod.Status.ContainerStatuses {
 			if status.State.Waiting != nil {
 				p.State = status.State.Waiting.Reason
@@ -100,6 +101,7 @@ func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {
 			if p.State != "" {
 				break
 			}
+			p.Restarts = status.RestartCount
 		}
 		pods = append(pods, p)
 	}

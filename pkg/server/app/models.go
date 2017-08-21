@@ -37,8 +37,10 @@ type App struct {
 }
 
 type Pod struct {
-	Name  string
-	State string
+	Name     string
+	State    string
+	Age      int64
+	Restarts int32
 }
 
 type Address struct {
@@ -161,8 +163,10 @@ func newInfoResponse(info *Info) *appb.InfoResponse {
 				continue
 			}
 			pod := &appb.InfoResponse_Status_Pod{
-				Name:  item.Name,
-				State: item.State,
+				Name:     item.Name,
+				State:    item.State,
+				Age:      item.Age,
+				Restarts: item.Restarts,
 			}
 			pods = append(pods, pod)
 		}

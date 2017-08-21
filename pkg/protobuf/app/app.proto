@@ -79,6 +79,8 @@ message InfoResponse {
         message Pod {
             string name = 1;
             string state = 2;
+            int64 age = 3;
+            int32 restarts = 4;
         }
 
         int32 cpu = 1;

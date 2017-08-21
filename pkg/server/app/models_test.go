@@ -139,7 +139,7 @@ func TestNewInfoResponse(t *testing.T) {
 		},
 		Status: &Status{
 			CPU:  42,
-			Pods: []*Pod{{Name: "pod 1", State: "Running"}},
+			Pods: []*Pod{{Name: "pod 1", State: "Running", Age: 1000, Restarts: 42}},
 		},
 		AutoScale: &AutoScale{CPUTargetUtilization: 33, Max: 10, Min: 1},
 		Limits: &Limits{

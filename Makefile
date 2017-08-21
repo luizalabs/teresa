@@ -101,3 +101,14 @@ gen-grpc-stubs:
 	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/team/*.proto
 	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/app/*.proto
 	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/deploy/*.proto
+
+helm-lint:
+	@helm lint helm/chart/teresa
+
+update-chart: helm-lint
+	@helm package helm/chart/teresa
+	@mkdir repo
+	@mv teresa-*.tgz repo
+	@helm repo index repo --url http://helm.k8s.magazineluiza.com
+	@aws s3 sync repo s3://helm.k8s.magazineluiza.com --delete
+	@rm -rf repo

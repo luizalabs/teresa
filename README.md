@@ -80,3 +80,62 @@ Teresa has an extensive help builtin, you can access it with:
 
 Check out some examples [here](https://github.com/luizalabs/hello-teresa) to
 make sure that your application is ready for Teresa.
+
+## FAQ
+
+### Config
+
+**Q: How to list the available clusters (aka environments)?**  
+
+    $ teresa config view
+
+**Q: How to add/update a cluster?**  
+
+    $ teresa config set-cluster <cluster-name> --server <cluster-endpoint>
+
+**Q: How to start using a cluster?**  
+
+    $ teresa config use-cluster <cluster-name>
+    $ teresa login --user <email>
+
+### App
+
+**Q: How to create an app?**  
+
+    $ teresa app create <app-name> --team <team-name>
+
+**Q: How to create an app without a load balancer (a worker for example) ?**  
+
+    $ teresa app create <app-name> --team <team-name> --process-type worker
+
+You also have to adjust the `Procfile` to have a corresponding `worker` key.  
+There's nothing special with the name `worker`, it can be anything different
+from `web` with a matching `Procfile` line.
+
+**Q: How to get info about an app?**  
+
+    $ teresa app info <app-name>
+
+**Q: How to get the list of apps I have access to?**  
+
+    $ teresa app list
+
+**Q: How to get app logs?**  
+
+    $ teresa app logs <app-name>
+
+**Q: How to set an environment variable?**  
+
+    $ teresa app env-set KEY=VALUE --app <app-name>
+
+**Q: How to unset an environment variable?**  
+
+    $ teresa app env-unset KEY --app <app-name>
+
+**Q: How to deploy an app?**  
+
+    $ teresa deploy /path/to/project --app <app-name> --description "version 1.0"
+
+**Q: How to set up Kubernetes health checks?**  
+
+Take a look at [here](https://github.com/luizalabs/hello-teresa#teresayaml).

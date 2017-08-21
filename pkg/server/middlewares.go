@@ -82,9 +82,11 @@ func recFunc(p interface{}) (err error) {
 func logUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	resp, err := handler(ctx, req)
 	if err != nil {
-		logger := log.WithField("route", info.FullMethod).WithField("request", req).WithError(err)
-		u, ok := ctx.Value("user").(*database.User)
-		if ok {
+		logger := log.WithField("route", info.FullMethod)
+		if !strings.HasSuffix(info.FullMethod, "Login") {
+			logger = logger.WithField("request", req).WithError(err)
+		}
+		if u, ok := ctx.Value("user").(*database.User); ok {
 			logger = logger.WithField("user", u.Email)
 		}
 		logger.Error("Log Interceptor got an Error")

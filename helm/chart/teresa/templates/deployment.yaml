@@ -72,6 +72,10 @@ spec:
         - name: TERESA_SECRETS_TLS_KEY
           value: /etc/teresa/server.key
         {{- end }}
+        - name: TERESA_DEPLOY_BUILD_LIMIT_CPU
+          value: {{ .Values.build.limits.cpu }}
+        - name: TERESA_DEPLOY_BUILD_LIMIT_MEMORY
+          value: {{ .Values.build.limits.memory }}
         volumeMounts:
         {{- if .Values.tls.crt }}
         - mountPath: /etc/teresa

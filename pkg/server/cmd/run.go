@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"crypto/tls"
+	"os"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/kelseyhightower/envconfig"
@@ -75,6 +76,8 @@ func runServer(cmd *cobra.Command, args []string) {
 		log.Fatal("Error getting deploy configuration:", err)
 	}
 
+	debug := len(os.Getenv("TERESA_SERVER_DEBUG")) > 0
+
 	s, err := server.New(server.Options{
 		Port:      port,
 		Auth:      a,
@@ -83,6 +86,7 @@ func runServer(cmd *cobra.Command, args []string) {
 		Storage:   st,
 		K8s:       k8s,
 		DeployOpt: deployOpt,
+		Debug:     debug,
 	})
 	if err != nil {
 		log.WithError(err).Fatal("failed to create server")

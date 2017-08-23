@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/luizalabs/teresa.svg)](https://travis-ci.org/luizalabs/teresa)
 [![codecov](https://codecov.io/gh/luizalabs/teresa/branch/master/graph/badge.svg)](https://codecov.io/gh/luizalabs/teresa)
 
-Teresa is an extremely simple platform as a service that runs on top of [Kubernetes](https://github.com/kubernetes/kubernetes).  
+Teresa is an extremely simple platform as a service that runs on top of [Kubernetes](https://github.com/kubernetes/kubernetes).
 It uses a client-server model: the client sends high level commands (create application, deploy, etc.) to the server, which translates them to the Kubernetes API.
 
 ## Installation
@@ -85,57 +85,67 @@ make sure that your application is ready for Teresa.
 
 ### Config
 
-**Q: How to list the available clusters (aka environments)?**  
+**Q: How to list the available clusters (aka environments)?**
 
     $ teresa config view
 
-**Q: How to add/update a cluster?**  
+**Q: How to add/update a cluster?**
 
     $ teresa config set-cluster <cluster-name> --server <cluster-endpoint>
 
-**Q: How to start using a cluster?**  
+**Q: How to start using a cluster?**
 
     $ teresa config use-cluster <cluster-name>
     $ teresa login --user <email>
 
 ### App
 
-**Q: How to create an app?**  
+**Q: How to create an app?**
 
     $ teresa app create <app-name> --team <team-name>
 
-**Q: How to create an app without a load balancer (a worker for example) ?**  
+**Q: How to create an app without a load balancer (a worker for example) ?**
 
     $ teresa app create <app-name> --team <team-name> --process-type worker
 
-You also have to adjust the `Procfile` to have a corresponding `worker` key.  
+You also have to adjust the `Procfile` to have a corresponding `worker` key.
 There's nothing special with the name `worker`, it can be anything different
 from `web` with a matching `Procfile` line.
 
-**Q: How to get info about an app?**  
+**Q: How to get info about an app?**
 
     $ teresa app info <app-name>
 
-**Q: How to get the list of apps I have access to?**  
+**Q: How to get the list of apps I have access to?**
 
     $ teresa app list
 
-**Q: How to get app logs?**  
+**Q: How to get app logs?**
 
     $ teresa app logs <app-name>
 
-**Q: How to set an environment variable?**  
+**Q: How to set an environment variable?**
 
     $ teresa app env-set KEY=VALUE --app <app-name>
 
-**Q: How to unset an environment variable?**  
+**Q: How to unset an environment variable?**
 
     $ teresa app env-unset KEY --app <app-name>
 
-**Q: How to deploy an app?**  
+**Q: How to deploy an app?**
 
     $ teresa deploy /path/to/project --app <app-name> --description "version 1.0"
 
-**Q: How to set up Kubernetes health checks?**  
+**Q: How to set up Kubernetes health checks?**
 
 Take a look at [here](https://github.com/luizalabs/hello-teresa#teresayaml).
+
+
+## Homebrew Teresa Client
+
+Run the following in your command-line:
+
+```sh
+$ brew tap luizalabs/teresa
+$ brew install teresa
+```

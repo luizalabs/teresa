@@ -32,6 +32,7 @@ type Options struct {
 	Storage   st.Storage
 	K8s       k8s.Client
 	DeployOpt *deploy.Options
+	Debug     bool
 }
 
 type Server struct {
@@ -61,7 +62,7 @@ func (s *Server) Run() error {
 
 func createSeverOps(opt Options, uOps user.Operations) []grpc.ServerOption {
 	recOpts := []grpc_recovery.Option{
-		grpc_recovery.WithRecoveryHandler(recFunc),
+		grpc_recovery.WithRecoveryHandler(buildRecFunc(opt.Debug)),
 	}
 	sOpts := []grpc.ServerOption{
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(

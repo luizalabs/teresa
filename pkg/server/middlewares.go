@@ -1,6 +1,7 @@
 package server
 
 import (
+	"runtime/debug"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -74,9 +75,14 @@ func authorize(ctx context.Context, a auth.Auth, uOps user.Operations) (*databas
 	return uOps.GetUser(email)
 }
 
-func recFunc(p interface{}) (err error) {
-	log.WithField("panic", p).Error("teresa-server recovered")
-	return status.Errorf(codes.Unknown, "Internal Server Error")
+func buildRecFunc(dbg bool) func(p interface{}) error {
+	return func(p interface{}) error {
+		if dbg {
+			log.Error(string(debug.Stack()))
+		}
+		log.WithField("panic", p).Error("teresa-server recovered")
+		return status.Errorf(codes.Unknown, "Internal Server Error")
+	}
 }
 
 func logUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {

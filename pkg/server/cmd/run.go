@@ -24,6 +24,7 @@ func init() {
 	RootCmd.AddCommand(runCmd)
 	runCmd.Flags().String("port", "50051", "TCP port to create a listener")
 	runCmd.Flags().Bool("tls", false, "enable TLS")
+	runCmd.Flags().Bool("debug", false, "enable debug mode")
 }
 
 func runServer(cmd *cobra.Command, args []string) {
@@ -35,6 +36,11 @@ func runServer(cmd *cobra.Command, args []string) {
 	useTLS, err := cmd.Flags().GetBool("tls")
 	if err != nil {
 		log.WithError(err).Fatal("invalid tls parameter")
+	}
+
+	debug, err := cmd.Flags().GetBool("debug")
+	if err != nil {
+		log.WithError(err).Fatal("invalid debug parameter")
 	}
 
 	db, err := getDB()
@@ -83,6 +89,7 @@ func runServer(cmd *cobra.Command, args []string) {
 		Storage:   st,
 		K8s:       k8s,
 		DeployOpt: deployOpt,
+		Debug:     debug,
 	})
 	if err != nil {
 		log.WithError(err).Fatal("failed to create server")

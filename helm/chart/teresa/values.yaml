@@ -25,3 +25,7 @@ docker:
   registry: luizalabs
   image: teresa
   tag: v0.5.0
+build:
+  limits:
+    cpu: 500m
+    memory: 1024Mi

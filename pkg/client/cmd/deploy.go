@@ -64,7 +64,7 @@ func createTempArchiveToUpload(appName, source string) (path string, err error) 
 func createArchive(source, target string) error {
 	dir, err := os.Stat(source)
 	if err != nil {
-		return fmt.Errorf("Dir not found to create an archive. %s", err)
+		return fmt.Errorf("Dir not found to create an archive: %s", err)
 	} else if !dir.IsDir() {
 		return errors.New("Path to create the app archive isn't a directory")
 	}
@@ -221,6 +221,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 }
 
 func sendAppTarball(appName, appFolder string, stream dpb.Deploy_MakeClient) error {
+	defer stream.CloseSend()
 	fmt.Println("Generating tarball of:", appFolder)
 	tarPath, err := createTempArchiveToUpload(appName, appFolder)
 	if err != nil {
@@ -234,7 +235,6 @@ func sendAppTarball(appName, appFolder string, stream dpb.Deploy_MakeClient) err
 		return err
 	}
 	defer f.Close()
-	defer stream.CloseSend()
 
 	r := bufio.NewReader(f)
 	for {

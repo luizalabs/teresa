@@ -12,6 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - [server] Restart count on 'app info' output
 - [client] Validate 'deploy' command parameters
+- [client] Fix hanging deploys when the app dir doesn't exist
 
 ## [0.6.0] - 2017-08-23
 ### Added

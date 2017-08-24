@@ -350,8 +350,7 @@ func appEnvSet(cmd *cobra.Command, args []string) {
 	cli := appb.NewAppClient(conn)
 	req := &appb.SetEnvRequest{Name: appName, EnvVars: evs}
 	if _, err := cli.SetEnv(context.Background(), req); err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 	fmt.Println("Env vars updated with success")
 }
@@ -419,8 +418,7 @@ func appEnvUnset(cmd *cobra.Command, args []string) {
 	cli := appb.NewAppClient(conn)
 	req := &appb.UnsetEnvRequest{Name: appName, EnvVars: args}
 	if _, err := cli.UnsetEnv(context.Background(), req); err != nil {
-		fmt.Fprintln(os.Stderr, client.GetErrorMsg(err))
-		return
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 	fmt.Println("Env vars updated with success")
 }

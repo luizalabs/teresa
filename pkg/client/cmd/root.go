@@ -58,6 +58,7 @@ func init() {
 	// change the suggestion distance of the commands
 	RootCmd.SuggestionsMinimumDistance = 3
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
+	RootCmd.PersistentFlags().StringVar(&cfgContext, "context", "", "teresa context")
 	RootCmd.PersistentFlags().BoolVar(&debugFlag, "debug", false, "debug mode")
 	RootCmd.PersistentFlags().MarkHidden("debug")
 }
@@ -86,6 +87,7 @@ func initConfig() {
 	viper.SetConfigFile(cfgFile)
 	// defaults
 	viper.SetDefault("debug", debugFlag)
+	viper.Set("currentCluster", cfgContext)
 	// get from ENV
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err != nil && !os.IsNotExist(err) {

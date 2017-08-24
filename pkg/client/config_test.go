@@ -56,7 +56,7 @@ func TestReadConfigFileForValidFile(t *testing.T) {
 }
 
 func TestGetConfigForInvalidFile(t *testing.T) {
-	_, err := GetConfig(filepath.Join("testdata", "invalidConfigFile.yaml"))
+	_, err := GetConfig(filepath.Join("testdata", "invalidConfigFile.yaml"), "")
 	if err != ErrInvalidConfigFile {
 		t.Error("expected ErrInvalidConfigFile, got ", err)
 	}
@@ -72,7 +72,7 @@ func TestGetConfigForValidFiles(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		c, err := GetConfig(filepath.Join("testdata", tc.file))
+		c, err := GetConfig(filepath.Join("testdata", tc.file), "")
 		if err != nil {
 			t.Fatalf("error trying to get config of file %s: %s", tc.file, err)
 		}
@@ -112,7 +112,7 @@ func TestSaveConfigFile(t *testing.T) {
 		}
 		defer tc.removeFunc(tc.pathToRemove)
 
-		c, err := GetConfig(tc.path)
+		c, err := GetConfig(tc.path, "")
 		if err != nil {
 			t.Fatalf("error trying to get config of file %s: %s", tc.path, err)
 		}
@@ -163,7 +163,7 @@ func TestSaveToken(t *testing.T) {
 		t.Fatal("error trying to save token: ", err)
 	}
 
-	c, err := GetConfig(confPath)
+	c, err := GetConfig(confPath, "")
 	if err != nil {
 		t.Fatal("error trying to get config: ", err)
 	}

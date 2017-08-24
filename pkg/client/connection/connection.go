@@ -5,8 +5,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-func New(cfgFile string) (*grpc.ClientConn, error) {
-	cfg, err := client.GetConfig(cfgFile)
+func New(cfgFile, cfgContext string) (*grpc.ClientConn, error) {
+	cfg, err := client.GetConfig(cfgFile, cfgContext)
 	if err != nil {
 		return nil, err
 	}

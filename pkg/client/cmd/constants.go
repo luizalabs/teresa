@@ -3,6 +3,7 @@ package cmd
 // variables used to capture the cli flags
 var (
 	cfgFile         string
+	cfgContext      string
 	debugFlag       bool
 	teamIDFlag      int64
 	teamNameFlag    string

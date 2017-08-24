@@ -71,7 +71,7 @@ func createTeam(cmd *cobra.Command, args []string) {
 	email, _ := cmd.Flags().GetString("email")
 	url, _ := cmd.Flags().GetString("url")
 
-	conn, err := connection.New(cfgFile)
+	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
@@ -99,7 +99,7 @@ func teamAddUser(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	conn, err := connection.New(cfgFile)
+	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
@@ -116,7 +116,7 @@ func teamAddUser(cmd *cobra.Command, args []string) {
 func teamList(cmd *cobra.Command, args []string) {
 	showUsers, _ := cmd.Flags().GetBool("show-users")
 
-	conn, err := connection.New(cfgFile)
+	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}

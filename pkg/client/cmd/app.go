@@ -112,7 +112,7 @@ func createApp(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid process-type parameter")
 	}
 
-	conn, err := connection.New(cfgFile)
+	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
@@ -171,7 +171,7 @@ var appListCmd = &cobra.Command{
 }
 
 func appList(cmd *cobra.Command, args []string) {
-	conn, err := connection.New(cfgFile)
+	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
@@ -220,7 +220,7 @@ func appInfo(cmd *cobra.Command, args []string) {
 	}
 	name := args[0]
 
-	conn, err := connection.New(cfgFile)
+	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
@@ -341,7 +341,7 @@ func appEnvSet(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	conn, err := connection.New(cfgFile)
+	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %s", err)
 	}
@@ -409,7 +409,7 @@ func appEnvUnset(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	conn, err := connection.New(cfgFile)
+	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %s", err)
 	}
@@ -483,7 +483,7 @@ func appAutoscaleSet(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit(msg)
 	}
 
-	conn, err := connection.New(cfgFile)
+	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %s", err)
 	}
@@ -567,7 +567,7 @@ func appLogs(cmd *cobra.Command, args []string) {
 	lines, _ := cmd.Flags().GetInt64("lines")
 	follow, _ := cmd.Flags().GetBool("follow")
 
-	conn, err := connection.New(cfgFile)
+	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}

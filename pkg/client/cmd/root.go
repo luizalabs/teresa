@@ -58,6 +58,7 @@ func init() {
 	// change the suggestion distance of the commands
 	RootCmd.SuggestionsMinimumDistance = 3
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
+	RootCmd.PersistentFlags().StringVar(&cfgCluster, "cluster", "", "teresa cluster")
 	RootCmd.PersistentFlags().BoolVar(&debugFlag, "debug", false, "debug mode")
 	RootCmd.PersistentFlags().MarkHidden("debug")
 }

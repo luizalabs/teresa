@@ -74,10 +74,13 @@ func SaveConfigFile(path string, cfg *Config) error {
 	return ioutil.WriteFile(path, b, 0600)
 }
 
-func GetConfig(cfgFile string) (*ClusterConfig, error) {
+func GetConfig(cfgFile, cfgCluster string) (*ClusterConfig, error) {
 	cfg, err := ReadConfigFile(cfgFile)
 	if err != nil {
 		return nil, err
+	}
+	if cfgCluster != "" {
+		cfg.CurrentCluster = cfgCluster
 	}
 	currentClusterConfig, ok := cfg.Clusters[cfg.CurrentCluster]
 	if !ok {

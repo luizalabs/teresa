@@ -102,10 +102,10 @@ func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {
 			} else if status.State.Running != nil {
 				p.State = string(api.PodRunning)
 			}
+			p.Restarts = status.RestartCount
 			if p.State != "" {
 				break
 			}
-			p.Restarts = status.RestartCount
 		}
 		pods = append(pods, p)
 	}

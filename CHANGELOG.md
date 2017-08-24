@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - [server] Add --debug flag. For now only print the stack trace on panic/recover.
 
+### Changed
+- [client] Commands 'env-set' and 'env-unset' show the current cluster.
+
 ## [0.6.0] - 2017-08-23
 ### Added
 - [client] App name length validation

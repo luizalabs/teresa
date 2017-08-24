@@ -9,7 +9,7 @@ service App {
     rpc SetEnv(SetEnvRequest) returns (Empty);
     rpc UnsetEnv(UnsetEnvRequest) returns (Empty);
     rpc List(Empty) returns (ListResponse);
-    rpc SetAutoScale(SetAutoScaleRequest) returns (Empty);
+    rpc SetAutoscale(SetAutoscaleRequest) returns (Empty);
 }
 
 message CreateRequest {
@@ -28,12 +28,12 @@ message CreateRequest {
     }
     Limits limits = 4;
 
-    message AutoScale {
+    message Autoscale {
         int32 cpu_target_utilization = 1;
         int32 max = 2;
         int32 min = 3;
     }
-    AutoScale auto_scale = 5;
+    Autoscale autoscale = 5;
 }
 
 message ListResponse {
@@ -88,12 +88,12 @@ message InfoResponse {
     }
     Status status = 4;
 
-    message AutoScale {
+    message Autoscale {
         int32 cpu_target_utilization = 1;
         int32 max = 2;
         int32 min = 3;
     }
-    AutoScale auto_scale = 5;
+    Autoscale autoscale = 5;
 
     message Limits {
         message LimitRangeQuantity {
@@ -122,15 +122,15 @@ message UnsetEnvRequest {
     repeated string env_vars = 2;
 }
 
-message SetAutoScaleRequest {
+message SetAutoscaleRequest {
     string name = 1;
 
-	message AutoScale {
+	message Autoscale {
         int32 cpu_target_utilization = 1;
 		int32 max = 2;
 		int32 min = 3;
     	}
-    AutoScale auto_scale = 2;
+    Autoscale autoscale = 2;
 }
 
 message Empty {}

@@ -140,7 +140,7 @@ func createApp(cmd *cobra.Command, args []string) {
 			},
 		},
 	}
-	as := &appb.CreateRequest_AutoScale{
+	as := &appb.CreateRequest_Autoscale{
 		CpuTargetUtilization: targetCPU,
 		Min:                  scaleMin,
 		Max:                  scaleMax,
@@ -153,7 +153,7 @@ func createApp(cmd *cobra.Command, args []string) {
 			Team:        team,
 			ProcessType: processType,
 			Limits:      lim,
-			AutoScale:   as,
+			Autoscale:   as,
 		},
 	)
 	if err != nil {
@@ -257,11 +257,11 @@ func appInfo(cmd *cobra.Command, args []string) {
 			fmt.Printf("    Name: %s  State: %s  Age: %s  Restarts: %d\n", pod.Name, pod.State, age, pod.Restarts)
 		}
 	}
-	if info.AutoScale != nil {
+	if info.Autoscale != nil {
 		fmt.Println(bold("autoscale:"))
-		fmt.Printf("  %s %d%%\n", bold("cpu:"), info.AutoScale.CpuTargetUtilization)
-		fmt.Printf("  %s %d\n", bold("max:"), info.AutoScale.Max)
-		fmt.Printf("  %s %d\n", bold("min:"), info.AutoScale.Min)
+		fmt.Printf("  %s %d%%\n", bold("cpu:"), info.Autoscale.CpuTargetUtilization)
+		fmt.Printf("  %s %d\n", bold("max:"), info.Autoscale.Max)
+		fmt.Printf("  %s %d\n", bold("min:"), info.Autoscale.Min)
 	}
 	fmt.Println(bold("limits:"))
 	if len(info.Limits.Default) > 0 {
@@ -434,7 +434,7 @@ WARNING:
 	Run: appLogs,
 }
 
-var appAutoScaleSetCmd = &cobra.Command{
+var appAutoscaleSetCmd = &cobra.Command{
 	Use:   "autoscale <name> [flags]",
 	Short: "Set autoscale parameters for the app",
 	Long: `Set application's autoscaling.
@@ -445,10 +445,10 @@ target CPU utilization to trigger the autoscaler.
 	Example:   To set the number minimum of replicas to 2:
 
   $ teresa app autoscale myapp --min 2`,
-	Run: appAutoScaleSet,
+	Run: appAutoscaleSet,
 }
 
-func appAutoScaleSet(cmd *cobra.Command, args []string) {
+func appAutoscaleSet(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		cmd.Usage()
 		return
@@ -481,17 +481,17 @@ func appAutoScaleSet(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
-	as := &appb.SetAutoScaleRequest_AutoScale{
+	as := &appb.SetAutoscaleRequest_Autoscale{
 		Min:                  min,
 		Max:                  max,
 		CpuTargetUtilization: cpu,
 	}
-	req := &appb.SetAutoScaleRequest{
+	req := &appb.SetAutoscaleRequest{
 		Name:      name,
-		AutoScale: as,
+		Autoscale: as,
 	}
 	cli := appb.NewAppClient(conn)
-	if _, err := cli.SetAutoScale(context.Background(), req); err != nil {
+	if _, err := cli.SetAutoscale(context.Background(), req); err != nil {
 		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 	fmt.Println("Autoscale updated with success")
@@ -524,7 +524,7 @@ func init() {
 	appCmd.AddCommand(appEnvSetCmd)
 	appCmd.AddCommand(appEnvUnSetCmd)
 	appCmd.AddCommand(appLogsCmd)
-	appCmd.AddCommand(appAutoScaleSetCmd)
+	appCmd.AddCommand(appAutoscaleSetCmd)
 
 	appCreateCmd.Flags().String("team", "", "team owner of the app")
 	appCreateCmd.Flags().Int32("scale-min", 1, "minimium number of replicas")
@@ -545,9 +545,9 @@ func init() {
 	appLogsCmd.Flags().Int64("lines", 10, "number of lines")
 	appLogsCmd.Flags().Bool("follow", false, "follow logs")
 	// App autoscale
-	appAutoScaleSetCmd.Flags().Int32("min", flagNotDefined, "Minimium number of replicas")
-	appAutoScaleSetCmd.Flags().Int32("max", flagNotDefined, "Maximum number of replicas")
-	appAutoScaleSetCmd.Flags().Int32("cpu-percent", flagNotDefined, "The target average CPU utilization (represented as a percent of requested CPU) over all the pods. If it's not specified or negative, the current autoscaling policy will be used.")
+	appAutoscaleSetCmd.Flags().Int32("min", flagNotDefined, "Minimium number of replicas")
+	appAutoscaleSetCmd.Flags().Int32("max", flagNotDefined, "Maximum number of replicas")
+	appAutoscaleSetCmd.Flags().Int32("cpu-percent", flagNotDefined, "The target average CPU utilization (represented as a percent of requested CPU) over all the pods. If it's not specified or negative, the current autoscaling policy will be used.")
 }
 
 func appLogs(cmd *cobra.Command, args []string) {

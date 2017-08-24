@@ -245,20 +245,20 @@ func TestUnsetEnvPermissionDenied(t *testing.T) {
 	}
 }
 
-func newAutoScaleRequest(name string) *appb.SetAutoScaleRequest {
-	as := &appb.SetAutoScaleRequest_AutoScale{
+func newAutoscaleRequest(name string) *appb.SetAutoscaleRequest {
+	as := &appb.SetAutoscaleRequest_Autoscale{
 		Min:                  1,
 		Max:                  2,
 		CpuTargetUtilization: 10,
 	}
 
-	return &appb.SetAutoScaleRequest{
+	return &appb.SetAutoscaleRequest{
 		Name:      name,
-		AutoScale: as,
+		Autoscale: as,
 	}
 }
 
-func TestSetAutoScaleSuccess(t *testing.T) {
+func TestSetAutoscaleSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
@@ -266,25 +266,25 @@ func TestSetAutoScaleSuccess(t *testing.T) {
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	req := newAutoScaleRequest(name)
-	if _, err := s.SetAutoScale(ctx, req); err != nil {
+	req := newAutoscaleRequest(name)
+	if _, err := s.SetAutoscale(ctx, req); err != nil {
 		t.Error("Got error on autoscale: ", err)
 	}
 }
 
-func TestSetAutoScaleAppNotFound(t *testing.T) {
+func TestSetAutoscaleAppNotFound(t *testing.T) {
 	name := "teresa"
 	s := NewService(NewFakeOperations())
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	req := newAutoScaleRequest(name)
-	if _, err := s.SetAutoScale(ctx, req); err != ErrNotFound {
+	req := newAutoscaleRequest(name)
+	if _, err := s.SetAutoscale(ctx, req); err != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
 
-func TestSetAutoScalePermissionDenied(t *testing.T) {
+func TestSetAutoscalePermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
@@ -292,9 +292,9 @@ func TestSetAutoScalePermissionDenied(t *testing.T) {
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	req := newAutoScaleRequest(name)
+	req := newAutoscaleRequest(name)
 
-	if _, err := s.SetAutoScale(ctx, req); err != auth.ErrPermissionDenied {
+	if _, err := s.SetAutoscale(ctx, req); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }

@@ -65,13 +65,13 @@ func cmpAppWithCreateRequest(app *App, req *appb.CreateRequest) bool {
 		B string
 		C string
 		D *Limits
-		E *AutoScale
+		E *Autoscale
 	}{
 		app.Name,
 		app.Team,
 		app.ProcessType,
 		app.Limits,
-		app.AutoScale,
+		app.Autoscale,
 	}
 
 	return deepEqual(&tmp, req)
@@ -104,7 +104,7 @@ func newCreateRequest() *appb.CreateRequest {
 			lrq4,
 		},
 	}
-	as := &appb.CreateRequest_AutoScale{
+	as := &appb.CreateRequest_Autoscale{
 		CpuTargetUtilization: 42,
 		Max:                  666,
 		Min:                  1,
@@ -113,7 +113,7 @@ func newCreateRequest() *appb.CreateRequest {
 		Name:        "name",
 		Team:        "team",
 		ProcessType: "process_type",
-		AutoScale:   as,
+		Autoscale:   as,
 		Limits:      lim,
 	}
 }
@@ -141,7 +141,7 @@ func TestNewInfoResponse(t *testing.T) {
 			CPU:  42,
 			Pods: []*Pod{{Name: "pod 1", State: "Running", Age: 1000, Restarts: 42}},
 		},
-		AutoScale: &AutoScale{CPUTargetUtilization: 33, Max: 10, Min: 1},
+		Autoscale: &Autoscale{CPUTargetUtilization: 33, Max: 10, Min: 1},
 		Limits: &Limits{
 			Default:        []*LimitRangeQuantity{lrq1},
 			DefaultRequest: []*LimitRangeQuantity{lrq2},
@@ -244,10 +244,10 @@ func TestUnsetEnvVars(t *testing.T) {
 	}
 }
 
-func cmpAutoScaleWithSetAutoScaleRequest(as *AutoScale, req *appb.SetAutoScaleRequest) bool {
+func cmpAutoscaleWithSetAutoscaleRequest(as *Autoscale, req *appb.SetAutoscaleRequest) bool {
 	var tmp = struct {
 		A string
-		B *AutoScale
+		B *Autoscale
 	}{
 		"teresa",
 		as,
@@ -256,11 +256,11 @@ func cmpAutoScaleWithSetAutoScaleRequest(as *AutoScale, req *appb.SetAutoScaleRe
 	return deepEqual(&tmp, req)
 }
 
-func TestNewAutoScale(t *testing.T) {
-	req := newAutoScaleRequest("teresa")
-	as := newAutoScale(req)
+func TestNewAutoscale(t *testing.T) {
+	req := newAutoscaleRequest("teresa")
+	as := newAutoscale(req)
 
-	if !cmpAutoScaleWithSetAutoScaleRequest(as, req) {
+	if !cmpAutoscaleWithSetAutoscaleRequest(as, req) {
 		t.Errorf("expected %v, got %v", req, as)
 	}
 }

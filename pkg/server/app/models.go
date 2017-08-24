@@ -16,7 +16,7 @@ type Limits struct {
 	DefaultRequest []*LimitRangeQuantity
 }
 
-type AutoScale struct {
+type Autoscale struct {
 	CPUTargetUtilization int32
 	Max                  int32
 	Min                  int32
@@ -32,7 +32,7 @@ type App struct {
 	Team        string     `json:"-"`
 	ProcessType string     `json:"processType"`
 	Limits      *Limits    `json:"-"`
-	AutoScale   *AutoScale `json:"-"`
+	Autoscale   *Autoscale `json:"-"`
 	EnvVars     []*EnvVar  `json:"envVars"`
 }
 
@@ -57,7 +57,7 @@ type Info struct {
 	Addresses []*Address
 	EnvVars   []*EnvVar
 	Status    *Status
-	AutoScale *AutoScale
+	Autoscale *Autoscale
 	Limits    *Limits
 }
 
@@ -101,12 +101,12 @@ func newApp(req *appb.CreateRequest) *App {
 		defReq = newSliceLrq(req.Limits.DefaultRequest)
 	}
 
-	var as *AutoScale
-	if req.AutoScale != nil {
-		as = &AutoScale{
-			CPUTargetUtilization: req.AutoScale.CpuTargetUtilization,
-			Max:                  req.AutoScale.Max,
-			Min:                  req.AutoScale.Min,
+	var as *Autoscale
+	if req.Autoscale != nil {
+		as = &Autoscale{
+			CPUTargetUtilization: req.Autoscale.CpuTargetUtilization,
+			Max:                  req.Autoscale.Max,
+			Min:                  req.Autoscale.Min,
 		}
 	}
 
@@ -116,7 +116,7 @@ func newApp(req *appb.CreateRequest) *App {
 	}
 
 	app := &App{
-		AutoScale: as,
+		Autoscale: as,
 		Limits: &Limits{
 			Default:        def,
 			DefaultRequest: defReq,
@@ -176,12 +176,12 @@ func newInfoResponse(info *Info) *appb.InfoResponse {
 		}
 	}
 
-	var as *appb.InfoResponse_AutoScale
-	if info.AutoScale != nil {
-		as = &appb.InfoResponse_AutoScale{
-			CpuTargetUtilization: info.AutoScale.CPUTargetUtilization,
-			Max:                  info.AutoScale.Max,
-			Min:                  info.AutoScale.Min,
+	var as *appb.InfoResponse_Autoscale
+	if info.Autoscale != nil {
+		as = &appb.InfoResponse_Autoscale{
+			CpuTargetUtilization: info.Autoscale.CPUTargetUtilization,
+			Max:                  info.Autoscale.Max,
+			Min:                  info.Autoscale.Min,
 		}
 	}
 
@@ -200,7 +200,7 @@ func newInfoResponse(info *Info) *appb.InfoResponse {
 		Addresses: addrs,
 		EnvVars:   evs,
 		Status:    stat,
-		AutoScale: as,
+		Autoscale: as,
 		Limits:    lim,
 	}
 }
@@ -267,10 +267,10 @@ func newListResponse(items []*AppListItem) *appb.ListResponse {
 	return &appb.ListResponse{Apps: apps}
 }
 
-func newAutoScale(req *appb.SetAutoScaleRequest) *AutoScale {
-	return &AutoScale{
-		CPUTargetUtilization: req.AutoScale.CpuTargetUtilization,
-		Max:                  req.AutoScale.Max,
-		Min:                  req.AutoScale.Min,
+func newAutoscale(req *appb.SetAutoscaleRequest) *Autoscale {
+	return &Autoscale{
+		CPUTargetUtilization: req.Autoscale.CpuTargetUtilization,
+		Max:                  req.Autoscale.Max,
+		Min:                  req.Autoscale.Min,
 	}
 }

@@ -195,8 +195,8 @@ func newLimitRange(a *app.App) (*k8sv1.LimitRange, error) {
 }
 
 func newHPA(a *app.App) *asv1.HorizontalPodAutoscaler {
-	tcpu := a.AutoScale.CPUTargetUtilization
-	minr := a.AutoScale.Min
+	tcpu := a.Autoscale.CPUTargetUtilization
+	minr := a.Autoscale.Min
 
 	return &asv1.HorizontalPodAutoscaler{
 		ObjectMeta: k8sv1.ObjectMeta{
@@ -210,7 +210,7 @@ func newHPA(a *app.App) *asv1.HorizontalPodAutoscaler {
 				Name:       a.Name,
 			},
 			TargetCPUUtilizationPercentage: &tcpu,
-			MaxReplicas:                    a.AutoScale.Max,
+			MaxReplicas:                    a.Autoscale.Max,
 			MinReplicas:                    &minr,
 		},
 	}
@@ -265,7 +265,7 @@ func (k *k8sClient) CreateSecret(appName, secretName string, data map[string][]b
 	return err
 }
 
-func (k *k8sClient) CreateOrUpdateAutoScale(a *app.App) error {
+func (k *k8sClient) CreateOrUpdateAutoscale(a *app.App) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -332,7 +332,7 @@ func (k *k8sClient) Status(namespace string) (*app.Status, error) {
 	return stat, nil
 }
 
-func (k *k8sClient) AutoScale(namespace string) (*app.AutoScale, error) {
+func (k *k8sClient) Autoscale(namespace string) (*app.Autoscale, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return nil, err
@@ -351,7 +351,7 @@ func (k *k8sClient) AutoScale(namespace string) (*app.AutoScale, error) {
 		min = *hpa.Spec.MinReplicas
 	}
 
-	as := &app.AutoScale{
+	as := &app.Autoscale{
 		CPUTargetUtilization: cpu,
 		Min:                  min,
 		Max:                  hpa.Spec.MaxReplicas,

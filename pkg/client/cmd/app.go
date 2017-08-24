@@ -318,7 +318,12 @@ func appEnvSet(cmd *cobra.Command, args []string) {
 		evs[i] = &appb.SetEnvRequest_EnvVar{Key: tmp[0], Value: tmp[1]}
 	}
 
-	fmt.Printf("Setting env vars and %s %s...\n", color.YellowString("restarting"), color.CyanString(`"%s"`, appName))
+	currentClusterName, err := getCurrentClusterName()
+	if err != nil {
+		client.PrintErrorAndExit("error reading config file: %v", err)
+	}
+
+	fmt.Printf("Setting env vars and %s %s on %s...\n", color.YellowString("restarting"), color.CyanString(`"%s"`, appName), color.YellowString(`"%s"`, currentClusterName))
 	for _, ev := range evs {
 		fmt.Printf("  %s: %s\n", ev.Key, ev.Value)
 	}
@@ -382,7 +387,12 @@ func appEnvUnset(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid app parameter")
 	}
 
-	fmt.Printf("Unsetting env vars and %s %s...\n", color.YellowString("restarting"), color.CyanString(`"%s"`, appName))
+	currentClusterName, err := getCurrentClusterName()
+	if err != nil {
+		client.PrintErrorAndExit("error reading config file: %v", err)
+	}
+
+	fmt.Printf("Unsetting env vars and %s %s on %s...\n", color.YellowString("restarting"), color.CyanString(`"%s"`, appName), color.YellowString(`"%s"`, currentClusterName))
 	for _, ev := range args {
 		fmt.Printf("  %s\n", ev)
 	}

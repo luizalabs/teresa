@@ -158,9 +158,21 @@ func deployApp(cmd *cobra.Command, args []string) {
 		return
 	}
 	appFolder := args[0]
-	appName, _ := cmd.Flags().GetString("app")
-	deployDescription, _ := cmd.Flags().GetString("description")
-	noInput, _ := cmd.Flags().GetBool("no-input")
+
+	appName, err := cmd.Flags().GetString("app")
+	if err != nil || appName == "" {
+		client.PrintErrorAndExit("Invalid app parameter")
+	}
+
+	deployDescription, err := cmd.Flags().GetString("description")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid description parameter")
+	}
+
+	noInput, err := cmd.Flags().GetBool("no-input")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid no-input parameter")
+	}
 
 	currentClusterName, err := getCurrentClusterName()
 	if err != nil {

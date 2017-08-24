@@ -16,9 +16,13 @@ spec:
       containers:
       - name: {{ template "name" . }}
         image: "{{ .Values.docker.registry }}/{{ .Values.docker.image }}:{{ .Values.docker.tag }}"
-        {{- if .Values.tls.crt }}
+        {{- if and .Values.tls.crt .Values.debug }}
+        args: ["run", "--tls", "--debug"]
+        {{- else if .Values.tls.crt }}
         args: ["run", "--tls"]
-        {{- end}}
+        {{- else if .Values.debug }}
+        args: ["run", "--debug"]
+        {{- end }}
         imagePullPolicy: Always
         ports:
         - containerPort: 50051

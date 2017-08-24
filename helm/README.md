@@ -89,6 +89,7 @@ Parameter | Description | Default
 `docker.tag` | Docker Tag | `0.5.0`
 `build.limits.cpu` | CPU limit used by build POD  | `500m`
 `build.limits.memory` | Memory limit used by build POD | `1024Mi`
+`debug` | If true, print the stack trace on every panic/recover. | `false`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 

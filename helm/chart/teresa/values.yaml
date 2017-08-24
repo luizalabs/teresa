@@ -29,3 +29,4 @@ build:
   limits:
     cpu: 500m
     memory: 1024Mi
+debug: false

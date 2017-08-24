@@ -10,5 +10,5 @@ var (
 	ErrNotFound         = status.Errorf(codes.NotFound, "App not found")
 	ErrProtectedEnvVar  = status.Errorf(codes.InvalidArgument, "Can't change protected env vars")
 	ErrInvalidLimits    = status.Errorf(codes.InvalidArgument, "Invalid Limits")
-	ErrInvalidAutoScale = status.Errorf(codes.InvalidArgument, "Invalid AutoScale")
+	ErrInvalidAutoscale = status.Errorf(codes.InvalidArgument, "Invalid Autoscale")
 )

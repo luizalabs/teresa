@@ -28,7 +28,7 @@ type errK8sOperations struct {
 	NamespaceErr               error
 	QuotaErr                   error
 	SecretErr                  error
-	AutoScaleErr               error
+	AutoscaleErr               error
 	DeleteNamespaceErr         error
 	SetNamespaceAnnotationsErr error
 	Namespaces                 map[string]struct{}
@@ -67,7 +67,7 @@ func (*fakeK8sOperations) NamespaceLabel(namespace, label string) (string, error
 	return "luizalabs", nil
 }
 
-func (*fakeK8sOperations) CreateOrUpdateAutoScale(app *App) error {
+func (*fakeK8sOperations) CreateOrUpdateAutoscale(app *App) error {
 	return nil
 }
 
@@ -88,8 +88,8 @@ func (*fakeK8sOperations) Status(namespace string) (*Status, error) {
 	return stat, nil
 }
 
-func (*fakeK8sOperations) AutoScale(namespace string) (*AutoScale, error) {
-	as := &AutoScale{CPUTargetUtilization: 42, Max: 10, Min: 1}
+func (*fakeK8sOperations) Autoscale(namespace string) (*Autoscale, error) {
+	as := &Autoscale{CPUTargetUtilization: 42, Max: 10, Min: 1}
 	return as, nil
 }
 
@@ -150,8 +150,8 @@ func (e *errK8sOperations) CreateSecret(appName, secretName string, data map[str
 	return e.SecretErr
 }
 
-func (e *errK8sOperations) CreateOrUpdateAutoScale(app *App) error {
-	return e.AutoScaleErr
+func (e *errK8sOperations) CreateOrUpdateAutoscale(app *App) error {
+	return e.AutoscaleErr
 }
 
 func (e *errK8sOperations) PodList(namespace string) ([]*Pod, error) {
@@ -178,7 +178,7 @@ func (e *errK8sOperations) Status(namespace string) (*Status, error) {
 	return nil, e.Err
 }
 
-func (e *errK8sOperations) AutoScale(namespace string) (*AutoScale, error) {
+func (e *errK8sOperations) Autoscale(namespace string) (*Autoscale, error) {
 	return nil, e.Err
 }
 
@@ -450,7 +450,7 @@ func TestAppOperationsCreateErrSecret(t *testing.T) {
 	}
 }
 
-func TestAppOperationsCreateErrAutoScale(t *testing.T) {
+func TestAppOperationsCreateErrAutoscale(t *testing.T) {
 	tops := team.NewFakeOperations()
 	fakeSt := st.NewFake()
 	ops := NewOperations(tops, &fakeK8sOperations{}, fakeSt)
@@ -461,8 +461,7 @@ func TestAppOperationsCreateErrAutoScale(t *testing.T) {
 		Name:  name,
 		Users: []database.User{*user},
 	}
-	ops.(*AppOperations).kops = &errK8sOperations{AutoScaleErr: errors.New("AutoScale Error")}
-
+	ops.(*AppOperations).kops = &errK8sOperations{AutoscaleErr: errors.New("Autoscale Error")}
 	if ops.Create(user, app) == nil {
 		t.Errorf("expected error, got nil")
 	}
@@ -496,8 +495,8 @@ func TestAppOperationsInfo(t *testing.T) {
 		t.Errorf("expected 33, got %d", info.Status.CPU)
 	}
 
-	if info.AutoScale.CPUTargetUtilization != 42 { // see fakeK8sOperations.AutoScale
-		t.Errorf("expected 42, got %d", info.AutoScale.CPUTargetUtilization)
+	if info.Autoscale.CPUTargetUtilization != 42 { // see fakeK8sOperations.Autoscale
+		t.Errorf("expected 42, got %d", info.Autoscale.CPUTargetUtilization)
 	}
 
 	ndef := len(info.Limits.Default)
@@ -705,7 +704,7 @@ func TestAppOperationsUnsetEnvErrInternalServerErrorOnSaveApp(t *testing.T) {
 	}
 }
 
-func TestAppOperationsSetAutoScale(t *testing.T) {
+func TestAppOperationsSetAutoscale(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
@@ -714,35 +713,35 @@ func TestAppOperationsSetAutoScale(t *testing.T) {
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
-	req := newAutoScaleRequest("teresa")
-	as := newAutoScale(req)
+	req := newAutoscaleRequest("teresa")
+	as := newAutoscale(req)
 
-	if err := ops.SetAutoScale(user, app.Name, as); err != nil {
+	if err := ops.SetAutoscale(user, app.Name, as); err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
 }
 
-func TestAppOperationsSetAutoScaleErrPermissionDenied(t *testing.T) {
+func TestAppOperationsSetAutoscaleErrPermissionDenied(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 
-	if err := ops.SetAutoScale(user, "teresa", nil); err != auth.ErrPermissionDenied {
+	if err := ops.SetAutoscale(user, "teresa", nil); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }
 
-func TestAppOperationsSetAutoScaleErrNotFound(t *testing.T) {
+func TestAppOperationsSetAutoscaleErrNotFound(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 
-	if err := ops.SetAutoScale(user, "teresa", nil); teresa_errors.Get(err) != ErrNotFound {
+	if err := ops.SetAutoscale(user, "teresa", nil); teresa_errors.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
 
-func TestAppOperationsSetAutoScaleErrInternalServerErrorOnSaveApp(t *testing.T) {
+func TestAppOperationsSetAutoscaleErrInternalServerErrorOnSaveApp(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &errK8sOperations{SetNamespaceAnnotationsErr: errors.New("test")}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
@@ -751,10 +750,10 @@ func TestAppOperationsSetAutoScaleErrInternalServerErrorOnSaveApp(t *testing.T) 
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
-	req := newAutoScaleRequest("teresa")
-	as := newAutoScale(req)
+	req := newAutoscaleRequest("teresa")
+	as := newAutoscale(req)
 
-	if err := ops.SetAutoScale(user, app.Name, as); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
+	if err := ops.SetAutoscale(user, app.Name, as); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
 		t.Errorf("expected ErrInternalServerError, got %v", err)
 	}
 }

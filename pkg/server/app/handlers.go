@@ -103,11 +103,11 @@ func (s *Service) List(ctx context.Context, _ *appb.Empty) (*appb.ListResponse, 
 	return newListResponse(apps), nil
 }
 
-func (s *Service) SetAutoScale(ctx context.Context, req *appb.SetAutoScaleRequest) (*appb.Empty, error) {
+func (s *Service) SetAutoscale(ctx context.Context, req *appb.SetAutoscaleRequest) (*appb.Empty, error) {
 	user := ctx.Value("user").(*database.User)
-	as := newAutoScale(req)
+	as := newAutoscale(req)
 
-	if err := s.ops.SetAutoScale(user, req.Name, as); err != nil {
+	if err := s.ops.SetAutoscale(user, req.Name, as); err != nil {
 		return nil, err
 	}
 

@@ -139,7 +139,7 @@ func (f *FakeOperations) UnsetEnv(user *database.User, appName string, envVars [
 	return nil
 }
 
-func (f *FakeOperations) SetAutoScale(user *database.User, appName string, as *AutoScale) error {
+func (f *FakeOperations) SetAutoscale(user *database.User, appName string, as *Autoscale) error {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 

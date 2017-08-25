@@ -1,5 +1,4 @@
 TERESA_IMAGE_NAME ?= teresa
-TERESA_IMAGE_VERSION ?= latest
 TERESA_K8S_CONFIG_FILE ?= ~/.kube/config
 DOCKER_K8S_CONFIG_FILE = /config
 DOCKER_SECRETS_PRIVATE_KEY = /teresa.rsa
@@ -8,6 +7,20 @@ IMAGE_INSTANCE = default
 TERESA_DOCKER_PORT ?= 50051
 BUILD_VERSION ?= $(shell git describe --always --tags)
 BUILD_HOME = github.com/luizalabs/teresa
+TERESA_SECRETS_PRIVATE_KEY ?= $(shell pwd)/pkg/server/secrets/testdata/fake.rsa
+TERESA_SECRETS_PUBLIC_KEY ?= $(shell pwd)/pkg/server/secrets/testdata/fake.rsa.pub
+
+ifdef DOCKER_REGISTRY
+	TERESA_DOCKER_REGISTRY = $(DOCKER_REGISTRY)/
+else
+	TERESA_DOCKER_REGISTRY = ""
+endif
+
+ifdef TRAVIS_TAG
+	TERESA_IMAGE_VERSION = $(TRAVIS_TAG)
+else
+	TERESA_IMAGE_VERSION = latest
+endif
 
 DOCKER_RUN_CMD=docker run \
 	-e TERESA_SECRETS_PRIVATE_KEY=$(DOCKER_SECRETS_PRIVATE_KEY) \
@@ -24,19 +37,19 @@ DOCKER_RUN_CMD=docker run \
 
 help:
 	@echo "Targets are:\n"
-	@echo "build"
+	@echo "docker-build"
 	@echo " build the teresa server docker image"
 	@echo
-	@echo "run"
+	@echo "docker-run"
 	@echo " run the teresa server docker image"
 	@echo
-	@echo "start"
+	@echo "docker-start"
 	@echo " run the teresa server docker image as a daemon"
 	@echo
-	@echo "stop"
+	@echo "docker-stop"
 	@echo " stop the teresa server docker image"
 	@echo
-	@echo "shell"
+	@echo "docker-shell"
 	@echo " run a bash shell on the docker image"
 	@echo
 	@echo "run-server"
@@ -57,12 +70,12 @@ help:
 	@echo "	TERESA_STORAGE_AWS_SECRET"
 	@echo "	TERESA_STORAGE_AWS_REGION"
 	@echo "	TERESA_STORAGE_AWS_BUCKET"
-	@echo "	TERESA_SECRETS_PUBLIC_KEY"
-	@echo "	TERESA_SECRETS_PRIVATE_KEY"
-	@echo "	TERESA_K8S_CONFIG_FILE - optional, default to ~/.kube/config"
-	@echo "	TERESA_DOCKER_PORT     - optional, defaults to 50051"
-	@echo "	TERESA_IMAGE_NAME      - optional, defaults to teresa"
-	@echo "	TERESA_IMAGE_VERSION   - optional, defaults to latest"
+	@echo "	TERESA_SECRETS_PUBLIC_KEY  - optional, defaults to fake public key"
+	@echo "	TERESA_SECRETS_PRIVATE_KEY - optional, defaults to fake private key"
+	@echo "	TERESA_K8S_CONFIG_FILE     - optional, default to ~/.kube/config"
+	@echo "	TERESA_DOCKER_PORT         - optional, defaults to 50051"
+	@echo "	TERESA_IMAGE_NAME          - optional, defaults to teresa"
+	@echo "	TERESA_IMAGE_VERSION       - optional, defaults to latest"
 	@echo
 	@echo "To build the server docker image the following env variables are used:"
 	@echo
@@ -72,19 +85,25 @@ help:
 
 all: help
 
-build:
-	@docker build -t $(TERESA_IMAGE_NAME):$(TERESA_IMAGE_VERSION) .
+docker-login:
+	@docker login -u "$(DOCKER_USER)" -p "$(DOCKER_PASS)"
 
-run:
+docker-build:
+	@docker build -t $(TERESA_DOCKER_REGISTRY)$(TERESA_IMAGE_NAME):$(TERESA_IMAGE_VERSION) .
+
+docker-push:
+	@docker push -t $(TERESA_DOCKER_REGISTRY)$(TERESA_IMAGE_NAME):$(TERESA_IMAGE_VERSION)
+
+docker-run:
 	@$(DOCKER_RUN_CMD) --rm --name $(TERESA_IMAGE_NAME)-$(IMAGE_INSTANCE) $(TERESA_IMAGE_NAME):$(TERESA_IMAGE_VERSION)
 
-start:
+docker-start:
 	@$(DOCKER_RUN_CMD) -d $(TERESA_IMAGE_NAME):$(TERESA_IMAGE_VERSION)
 
-stop:
+docker-stop:
 	@docker stop $(TERESA_IMAGE_NAME)-$(IMAGE_INSTANCE)
 
-shell:
+docker-shell:
 	@docker run --rm -it --name $(TERESA_IMAGE_NAME)-$(IMAGE_INSTANCE) $(TERESA_IMAGE_NAME):$(TERESA_IMAGE_VERSION) /bin/bash
 
 run-server:

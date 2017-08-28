@@ -30,6 +30,7 @@ type Operations interface {
 	SetAutoscale(user *database.User, appName string, as *Autoscale) error
 	CheckPermAndGet(user *database.User, appName string) (*App, error)
 	SaveApp(app *App, lastUser string) error
+	Delete(user *database.User, appName string) error
 }
 
 type K8sOperations interface {
@@ -387,6 +388,19 @@ func (ops *AppOperations) SetAutoscale(user *database.User, appName string, as *
 	}
 
 	if err := ops.SaveApp(app, user.Email); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	return nil
+}
+
+func (ops *AppOperations) Delete(user *database.User, appName string) error {
+	app, err := ops.CheckPermAndGet(user, appName)
+	if err != nil {
+		return err
+	}
+
+	if err := ops.kops.DeleteNamespace(app.Name); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
 

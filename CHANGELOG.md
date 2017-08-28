@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Next Release] - Release Date
 ### Added
 - [server] Add --debug flag. For now only print the stack trace on panic/recover.
+- [client] --cluster flag. To use a cluster different of current-cluster.
 
 ### Changed
 - [client] Commands 'env-set' and 'env-unset' show the current cluster.

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -205,6 +204,52 @@ func appList(cmd *cobra.Command, args []string) {
 	table.Render()
 }
 
+var appDelCmd = &cobra.Command{
+	Use:     "delete <name>",
+	Short:   "Delete app",
+	Long:    "Delete app.",
+	Example: "  $ teresa app delete foo",
+	Run:     appDel,
+}
+
+func appDel(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		cmd.Usage()
+		return
+	}
+	name := args[0]
+
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
+
+	cli := appb.NewAppClient(conn)
+	if err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+
+	fmt.Print()
+	s, _ := client.GetInput("Are you sure? (yes/NO)? ")
+	if s != "yes" {
+		fmt.Println("Delete process aborted!")
+		return
+	}
+
+	resp, _ := client.GetInput("Please re type the app name: ")
+	if resp != name {
+		fmt.Println("Delete process aborted!")
+		return
+	}
+	_, err = cli.Delete(context.Background(), &appb.DeleteRequest{Name: name})
+	if err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+		return
+	}
+	fmt.Printf("App %s deleted!\n", name)
+}
+
 var appInfoCmd = &cobra.Command{
 	Use:     "info <name>",
 	Short:   "All infos about the app",
@@ -339,9 +384,7 @@ func appEnvSet(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid no-input parameter")
 	}
 	if !noinput {
-		fmt.Print("Are you sure? (yes/NO)? ")
-		s, _ := bufio.NewReader(os.Stdin).ReadString('\n')
-		s = strings.ToLower(strings.TrimRight(s, "\r\n"))
+		s, _ := client.GetInput("Are you sure? (yes/NO)? ")
 		if s != "yes" {
 			return
 		}
@@ -410,9 +453,7 @@ func appEnvUnset(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid no-input parameter")
 	}
 	if !noinput {
-		fmt.Print("Are you sure? (yes/NO)? ")
-		s, _ := bufio.NewReader(os.Stdin).ReadString('\n')
-		s = strings.ToLower(strings.TrimRight(s, "\r\n"))
+		s, _ := client.GetInput("Are you sure? (yes/NO)? ")
 		if s != "yes" {
 			return
 		}
@@ -537,6 +578,7 @@ func init() {
 	// App commands
 	appCmd.AddCommand(appCreateCmd)
 	appCmd.AddCommand(appListCmd)
+	appCmd.AddCommand(appDelCmd)
 	appCmd.AddCommand(appInfoCmd)
 	appCmd.AddCommand(appEnvSetCmd)
 	appCmd.AddCommand(appEnvUnSetCmd)

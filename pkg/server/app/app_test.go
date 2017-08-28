@@ -757,3 +757,38 @@ func TestAppOperationsSetAutoscaleErrInternalServerErrorOnSaveApp(t *testing.T) 
 		t.Errorf("expected ErrInternalServerError, got %v", err)
 	}
 }
+
+func TestAppOperationsDelete(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.Delete(user, app.Name); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func TestAppOperationsDeleteErrPermissionDenied(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+
+	if err := ops.Delete(user, ""); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestAppOperationsDeleteErrNotFound(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+
+	if err := ops.Delete(user, "teresa"); teresa_errors.Get(err) != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}

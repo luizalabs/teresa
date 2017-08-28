@@ -28,6 +28,7 @@ type Operations interface {
 	UnsetEnv(user *database.User, appName string, evs []string) error
 	List(user *database.User) ([]*AppListItem, error)
 	SetAutoscale(user *database.User, appName string, as *Autoscale) error
+	Delete(user *database.User, appName string) error
 }
 
 type K8sOperations interface {
@@ -385,6 +386,31 @@ func (ops *AppOperations) SetAutoscale(user *database.User, appName string, as *
 	}
 
 	if err := ops.saveApp(app, user.Email); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	return nil
+}
+
+func (ops *AppOperations) Delete(user *database.User, appName string) error {
+	app, err := ops.checkPermAndGet(user, appName)
+	if err != nil {
+		return err
+	}
+
+	team, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
+	if err != nil {
+		if ops.kops.IsNotFound(err) {
+			return ErrNotFound
+		}
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	if !ops.hasPerm(user, team) {
+		return auth.ErrPermissionDenied
+	}
+
+	if err := ops.kops.DeleteNamespace(app.Name); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
 

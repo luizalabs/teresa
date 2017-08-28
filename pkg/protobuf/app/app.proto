@@ -10,6 +10,7 @@ service App {
     rpc UnsetEnv(UnsetEnvRequest) returns (Empty);
     rpc List(Empty) returns (ListResponse);
     rpc SetAutoscale(SetAutoscaleRequest) returns (Empty);
+    rpc Delete (DeleteRequest) returns (Empty);
 }
 
 message CreateRequest {
@@ -131,6 +132,10 @@ message SetAutoscaleRequest {
 		int32 min = 3;
     	}
     Autoscale autoscale = 2;
+}
+
+message DeleteRequest {
+    string name = 1;
 }
 
 message Empty {}

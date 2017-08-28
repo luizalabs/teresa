@@ -205,6 +205,58 @@ func appList(cmd *cobra.Command, args []string) {
 	table.Render()
 }
 
+var appDelCmd = &cobra.Command{
+	Use:     "delete <name>",
+	Short:   "Delete app",
+	Long:    "Delete app.",
+	Example: "  $ teresa app delete foo",
+	Run:     appDel,
+}
+
+func appDel(cmd *cobra.Command, args []string) {
+	conn, err := connection.New(cfgFile)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
+
+	if len(args) == 0 || len(args) > 1 {
+		cmd.Usage()
+		return
+	}
+
+	name := args[0]
+
+	cli := appb.NewAppClient(conn)
+	if err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+
+	fmt.Print("Are you sure? (yes/NO)? ")
+	s, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+	s = strings.ToLower(strings.TrimRight(s, "\r\n"))
+	if s != "yes" {
+		fmt.Println("Delete process aborted!")
+		return
+	}
+
+	fmt.Print("Please re type the app name: ")
+	resp, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+	resp = strings.ToLower(strings.TrimRight(resp, "\r\n"))
+	if resp != name {
+		fmt.Println("Delete process aborted!")
+		return
+	} else {
+		_, err := cli.Delete(context.Background(), &appb.DeleteRequest{Name: name})
+		if err != nil {
+			fmt.Println(err)
+			//client.PrintErrorAndExit(client.GetErrorMsg(err), err)
+			return
+		}
+		fmt.Printf("App %s deleted!\n", name)
+	}
+}
+
 var appInfoCmd = &cobra.Command{
 	Use:     "info <name>",
 	Short:   "All infos about the app",
@@ -537,6 +589,7 @@ func init() {
 	// App commands
 	appCmd.AddCommand(appCreateCmd)
 	appCmd.AddCommand(appListCmd)
+	appCmd.AddCommand(appDelCmd)
 	appCmd.AddCommand(appInfoCmd)
 	appCmd.AddCommand(appEnvSetCmd)
 	appCmd.AddCommand(appEnvUnSetCmd)
@@ -558,6 +611,8 @@ func init() {
 	// App unset env vars
 	appEnvUnSetCmd.Flags().String("app", "", "app name")
 	appEnvUnSetCmd.Flags().Bool("no-input", false, "unset env vars without warning")
+	// App Delete
+	appDelCmd.Flags().String("app", "", "app name")
 	// App logs
 	appLogsCmd.Flags().Int64("lines", 10, "number of lines")
 	appLogsCmd.Flags().Bool("follow", false, "follow logs")

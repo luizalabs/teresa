@@ -317,3 +317,34 @@ func TestFakeOperationsSetAutoscaletErrNotFound(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
+
+func TestFakeOperationsDelete(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	if err := fake.Delete(user, app.Name); err != nil {
+		t.Error("error on Delete: ", err)
+	}
+}
+
+func TestFakeOperationsDeletePermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	if err := fake.Delete(user, app.Name); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestFakeOperationsDeleteErrNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+
+	if err := fake.Delete(user, "teresa"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}

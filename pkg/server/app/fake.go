@@ -94,6 +94,10 @@ func (f *FakeOperations) List(user *database.User) ([]*AppListItem, error) {
 	return items, nil
 }
 
+func (f *FakeOperations) Delete(user *database.User, appName string) error {
+	return nil
+}
+
 func (f *FakeOperations) TeamName(appName string) (string, error) {
 	return "luizalabs", nil
 }

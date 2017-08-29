@@ -11,6 +11,10 @@ import (
 	"k8s.io/client-go/pkg/util/intstr"
 )
 
+const (
+	changeCauseAnnotation = "kubernetes.io/change-cause"
+)
+
 func podSpecToK8sContainer(podSpec *deploy.PodSpec) (*k8sv1.Container, error) {
 	c := &k8sv1.Container{
 		Name:            podSpec.Name,
@@ -131,8 +135,8 @@ func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) (*k8s_
 			Namespace: deploySpec.Namespace,
 			Labels:    map[string]string{"run": deploySpec.Name},
 			Annotations: map[string]string{
-				"kubernetes.io/change-cause": deploySpec.Description,
-				"teresa.io/slug":             deploySpec.SlugURL,
+				changeCauseAnnotation: deploySpec.Description,
+				"teresa.io/slug":      deploySpec.SlugURL,
 			},
 		},
 		Spec: k8s_extensions.DeploymentSpec{

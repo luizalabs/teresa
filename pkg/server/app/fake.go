@@ -99,6 +99,10 @@ func (f *FakeOperations) TeamName(appName string) (string, error) {
 }
 
 func (f *FakeOperations) Get(appName string) (*App, error) {
+	if appName != "teresa" {
+		return nil, ErrNotFound
+	}
+
 	a := &App{
 		Name:        "teresa",
 		ProcessType: "web",

@@ -22,6 +22,7 @@ import (
 
 const (
 	patchDeployEnvVarsTmpl = `{"spec":{"template":{"spec":{"containers":[{"name": "%s", "env":%s}]}}}}`
+	revisionAnnotation     = "deployment.kubernetes.io/revision"
 )
 
 type k8sClient struct {
@@ -650,6 +651,32 @@ func (k k8sClient) NamespaceListByLabel(label, value string) ([]string, error) {
 		namespaces = append(namespaces, item.ObjectMeta.Name)
 	}
 	return namespaces, nil
+}
+
+func (k *k8sClient) ReplicaSetListByLabel(namespace, label, value string) ([]*deploy.ReplicaSetListItem, error) {
+	cli, err := k.buildClient()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to build client")
+	}
+
+	labelSelector := fmt.Sprintf("%s=%s", label, value)
+	opts := k8sv1.ListOptions{LabelSelector: labelSelector}
+	rs, err := cli.ExtensionsV1beta1().ReplicaSets(namespace).List(opts)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get replicasets")
+	}
+
+	resp := make([]*deploy.ReplicaSetListItem, len(rs.Items))
+	for i, item := range rs.Items {
+		resp[i] = &deploy.ReplicaSetListItem{
+			Revision:    item.Annotations[revisionAnnotation],
+			Age:         int64(time.Now().Sub(item.CreationTimestamp.Time)),
+			Current:     item.Status.ReadyReplicas > 0,
+			Description: item.Annotations[changeCauseAnnotation],
+		}
+	}
+
+	return resp, nil
 }
 
 func newInClusterK8sClient(conf *Config) (Client, error) {

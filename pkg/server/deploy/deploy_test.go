@@ -13,6 +13,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
+	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 )
 
 type fakeReadSeeker struct{}
@@ -26,14 +27,15 @@ func (f *fakeReadSeeker) Seek(offset int64, whence int) (int64, error) {
 }
 
 type fakeK8sOperations struct {
-	lastDeploySpec         *DeploySpec
-	createDeployReturn     error
-	hasSrvReturn           bool
-	hasSrvErr              error
-	createServiceWasCalled bool
-	podRunReadCloser       io.ReadCloser
-	podRunExitCodeChan     chan int
-	podRunErr              error
+	lastDeploySpec           *DeploySpec
+	createDeployReturn       error
+	hasSrvReturn             bool
+	hasSrvErr                error
+	createServiceWasCalled   bool
+	podRunReadCloser         io.ReadCloser
+	podRunExitCodeChan       chan int
+	podRunErr                error
+	replicaSetListByLabelErr error
 }
 
 func (f *fakeK8sOperations) PodRun(podSpec *PodSpec) (io.ReadCloser, <-chan int, error) {
@@ -52,6 +54,24 @@ func (f *fakeK8sOperations) HasService(namespace string, name string) (bool, err
 func (f *fakeK8sOperations) CreateService(namespace string, name string) error {
 	f.createServiceWasCalled = true
 	return nil
+}
+
+func (f *fakeK8sOperations) ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error) {
+	items := []*ReplicaSetListItem{
+		{
+			Revision:    "1",
+			Description: "Test 1",
+			Age:         1,
+			Current:     false,
+		},
+		{
+			Revision:    "2",
+			Description: "Test 2",
+			Age:         2,
+			Current:     true,
+		},
+	}
+	return items, f.replicaSetListByLabelErr
 }
 
 func TestDeployPermissionDenied(t *testing.T) {
@@ -286,5 +306,81 @@ func TestGenDeployId(t *testing.T) {
 			t.Fatal("collision detected")
 			generatedIds[gId] = true
 		}
+	}
+}
+
+func TestDeployListSuccess(t *testing.T) {
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		&fakeK8sOperations{},
+		st.NewFake(),
+	)
+	user := &database.User{Email: "gopher@luizalabs.com"}
+
+	items, err := ops.List(user, "teresa")
+	if err != nil {
+		t.Fatal("got error listing replicasets: ", err)
+	}
+
+	// see fakeK8sOperations
+	count := len(items)
+	if count != 2 {
+		t.Errorf("expected 2, got %d", count)
+	}
+
+	item := items[1]
+	if item.Revision != "2" {
+		t.Errorf("expected '2', got %s", item.Revision)
+	}
+
+	if item.Description != "Test 2" {
+		t.Errorf("expected 'Test 2', got %s", item.Description)
+	}
+
+	if item.Age != 2 {
+		t.Errorf("expected 2, got %d", item.Age)
+	}
+
+	if !item.Current {
+		t.Error("expected true, got false")
+	}
+}
+
+func TestDeployListErrPermissionDenied(t *testing.T) {
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		&fakeK8sOperations{},
+		st.NewFake(),
+	)
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+
+	if _, err := ops.List(user, "teresa"); err != auth.ErrPermissionDenied {
+		t.Errorf("expected auth.ErrPermissionDenied, got %s", err)
+	}
+}
+
+func TestDeployListErrNotFound(t *testing.T) {
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		&fakeK8sOperations{},
+		st.NewFake(),
+	)
+	user := &database.User{Email: "gopher@luizalabs.com"}
+
+	if _, err := ops.List(user, "app"); err != app.ErrNotFound {
+		t.Errorf("expected app.ErrNotFound, got %s", err)
+	}
+}
+
+func TestDeployListInternalServerError(t *testing.T) {
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		&fakeK8sOperations{replicaSetListByLabelErr: errors.New("test")},
+		st.NewFake(),
+	)
+	user := &database.User{Email: "gopher@luizalabs.com"}
+
+	if _, err := ops.List(user, "teresa"); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
+		t.Errorf("expected ErrInternalServerError, got %s", err)
 	}
 }

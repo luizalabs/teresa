@@ -14,10 +14,14 @@ import (
 	"github.com/pborman/uuid"
 )
 
-const ProcfileReleaseCmd = "release"
+const (
+	ProcfileReleaseCmd = "release"
+	runLabel           = "run"
+)
 
 type Operations interface {
 	Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, error)
+	List(user *database.User, appName string) ([]*ReplicaSetListItem, error)
 }
 
 type K8sOperations interface {
@@ -25,6 +29,7 @@ type K8sOperations interface {
 	CreateOrUpdateDeploy(deploySpec *DeploySpec) error
 	HasService(namespace, name string) (bool, error)
 	CreateService(namespace, name string) error
+	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
 }
 
 type DeployOperations struct {
@@ -153,6 +158,23 @@ func (ops *DeployOperations) podRun(podSpec *PodSpec, stream io.Writer) error {
 		return ErrPodRunFail
 	}
 	return nil
+}
+
+func (ops *DeployOperations) List(user *database.User, appName string) ([]*ReplicaSetListItem, error) {
+	if _, err := ops.appOps.Get(appName); err != nil {
+		return nil, err
+	}
+
+	if !ops.appOps.HasPermission(user, appName) {
+		return nil, auth.ErrPermissionDenied
+	}
+
+	items, err := ops.k8s.ReplicaSetListByLabel(appName, runLabel, appName)
+	if err != nil {
+		return nil, teresa_errors.NewInternalServerError(err)
+	}
+
+	return items, nil
 }
 
 func genDeployId() string {

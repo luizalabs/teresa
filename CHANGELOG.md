@@ -2,9 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Next Release] - Release Date
+## [0.7.0] - 2017-08-29
 ### Added
-- [server] Add --debug flag. For now only print the stack trace on panic/recover.
+- [server] --debug flag. For now only print the stack trace on panic/recover.
 - [client] --cluster flag. To use a cluster different of current-cluster.
 
 ### Changed
@@ -13,7 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - [server] Restart count on 'app info' output
 - [client] Validate 'deploy' command parameters
-- [client] Fix hanging deploys when the app dir doesn't exist
+- [client] Hanging deploys when the app dir doesn't exist
 
 ## [0.6.0] - 2017-08-23
 ### Added

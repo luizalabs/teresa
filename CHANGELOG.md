@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Next Version] - Release Date
+### Added
+- Command 'deploy list'
+
+### Changed
+- Deploys are now performed using the 'deploy create' command
+
 ## [0.7.0] - 2017-08-29
 ### Added
 - [server] --debug flag. For now only print the stack trace on panic/recover.

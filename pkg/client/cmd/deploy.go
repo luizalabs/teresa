@@ -7,18 +7,46 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/luizalabs/teresa/pkg/client"
 	"github.com/luizalabs/teresa/pkg/client/connection"
 	"github.com/luizalabs/teresa/pkg/client/tar"
 	dpb "github.com/luizalabs/teresa/pkg/protobuf/deploy"
+	"github.com/olekukonko/tablewriter"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 	context "golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
 )
+
+type ByRevision []*dpb.ListResponse_Deploy
+
+func (s ByRevision) Len() int {
+	return len(s)
+}
+
+func (s ByRevision) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s ByRevision) Less(i, j int) bool {
+	k, err := strconv.Atoi(s[i].Revision)
+	if err != nil {
+		return false
+	}
+
+	l, err := strconv.Atoi(s[j].Revision)
+	if err != nil {
+		return false
+	}
+
+	return k < l
+}
 
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
@@ -40,6 +68,14 @@ var deployCreateCmd = &cobra.Command{
 	  $ teresa deploy create . --app webapi --description "release 1.2 with new checkout"
 	`,
 	Run: deployApp,
+}
+
+var deployListCmd = &cobra.Command{
+	Use:     "list",
+	Short:   "List app deploys",
+	Long:    "Return all deploys from a given app.",
+	Example: "  $ teresa deploy list --app myapp",
+	Run:     deployList,
 }
 
 func getCurrentClusterName() (string, error) {
@@ -151,11 +187,13 @@ func addFiles(source string, tar tar.Writer, ignorePatterns []string) error {
 func init() {
 	RootCmd.AddCommand(deployCmd)
 	deployCmd.AddCommand(deployCreateCmd)
+	deployCmd.AddCommand(deployListCmd)
 
 	deployCreateCmd.Flags().String("app", "", "app name (required)")
 	deployCreateCmd.Flags().String("description", "", "deploy description (required)")
 	deployCreateCmd.Flags().Bool("no-input", false, "deploy app without warning")
 
+	deployListCmd.Flags().String("app", "", "app name (required)")
 }
 
 func deployApp(cmd *cobra.Command, args []string) {
@@ -277,4 +315,47 @@ func streamServerMsgs(stream dpb.Deploy_MakeClient) error {
 		fmt.Print(msg.Text)
 	}
 	return nil
+}
+
+func deployList(cmd *cobra.Command, args []string) {
+	appName, err := cmd.Flags().GetString("app")
+	if err != nil || appName == "" {
+		client.PrintErrorAndExit("Invalid app parameter")
+	}
+
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
+
+	cli := dpb.NewDeployClient(conn)
+	resp, err := cli.List(context.Background(), &dpb.ListRequest{AppName: appName})
+	if err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+
+	if len(resp.Deploys) == 0 {
+		fmt.Println("App doesn't have any deploys")
+		return
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"REVISION", "CURRENT", "AGE", "DESCRIPTION"})
+	table.SetRowLine(true)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetRowSeparator("-")
+	table.SetAutoWrapText(false)
+
+	sort.Sort(ByRevision(resp.Deploys))
+	for _, d := range resp.Deploys {
+		r := []string{
+			d.Revision,
+			fmt.Sprintf("%t", d.Current),
+			shortHumanDuration(time.Duration(d.Age)),
+			d.Description,
+		}
+		table.Append(r)
+	}
+	table.Render()
 }

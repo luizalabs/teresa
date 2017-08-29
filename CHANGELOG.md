@@ -6,9 +6,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - [server] Add --debug flag. For now only print the stack trace on panic/recover.
 - [client] --cluster flag. To use a cluster different of current-cluster.
+- Command 'deploy list'
 
 ### Changed
 - [client] Commands 'env-set' and 'env-unset' show the current cluster.
+- Deploys are now performed using the 'deploy create' command
 
 ### Fixed
 - [server] Restart count on 'app info' output

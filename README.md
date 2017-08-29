@@ -134,12 +134,27 @@ from `web` with a matching `Procfile` line.
 
 **Q: How to deploy an app?**
 
-    $ teresa deploy /path/to/project --app <app-name> --description "version 1.0"
+    $ teresa deploy create /path/to/project --app <app-name> --description "version 1.0"
 
 **Q: How to set up Kubernetes health checks?**
 
 Take a look at [here](https://github.com/luizalabs/hello-teresa#teresayaml).
 
+**Q: I need one `teresa.yaml` per process type, how to proceed?**
+
+If a file named `teresa-processtype.yaml` is found it is used instead of
+`teresa.yaml`.
+
+**Q: How to drain connections on shutdown?**
+
+You can make the pods wait a fixed amount of seconds (maximum 30) before
+receiving the *SIGTERM* signal by adding this lines to `teresa.yaml`:
+
+```yaml
+lifecycle:
+  preStop:
+    drainTimeoutSeconds: 10
+```
 
 ## Homebrew Teresa Client
 

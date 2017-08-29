@@ -21,7 +21,12 @@ import (
 )
 
 var deployCmd = &cobra.Command{
-	Use:   "deploy <app folder>",
+	Use:   "deploy",
+	Short: "Everything about deploys",
+}
+
+var deployCreateCmd = &cobra.Command{
+	Use:   "create <app folder>",
 	Short: "Deploy an app",
 	Long: `Deploy an application.
 	
@@ -32,7 +37,7 @@ var deployCmd = &cobra.Command{
 	
 	eg.:
 	
-	  $ teresa deploy . --app webapi --description "release 1.2 with new checkout"
+	  $ teresa deploy create . --app webapi --description "release 1.2 with new checkout"
 	`,
 	Run: deployApp,
 }
@@ -145,10 +150,11 @@ func addFiles(source string, tar tar.Writer, ignorePatterns []string) error {
 
 func init() {
 	RootCmd.AddCommand(deployCmd)
+	deployCmd.AddCommand(deployCreateCmd)
 
-	deployCmd.Flags().String("app", "", "app name (required)")
-	deployCmd.Flags().String("description", "", "deploy description (required)")
-	deployCmd.Flags().Bool("no-input", false, "deploy app without warning")
+	deployCreateCmd.Flags().String("app", "", "app name (required)")
+	deployCreateCmd.Flags().String("description", "", "deploy description (required)")
+	deployCreateCmd.Flags().Bool("no-input", false, "deploy app without warning")
 
 }
 

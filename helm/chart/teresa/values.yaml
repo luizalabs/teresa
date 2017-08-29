@@ -30,3 +30,10 @@ build:
     cpu: 500m
     memory: 1024Mi
 debug: false
+useMinio: false
+minio:
+  serviceType: ClusterIP
+  bucketDefault:
+    enabled: true
+    name: teresa
+    policy: public

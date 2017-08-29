@@ -51,26 +51,43 @@ spec:
           value: /etc/teresa-keys/teresa.rsa.pub
         - name: TERESA_STORAGE_TYPE
           value: {{ .Values.storage.type }}
-        {{ if .Values.aws.s3.endpoint }}
+        {{- if .Values.useMinio }}
+        - name: TERESA_STORAGE_AWS_ENDPOINT
+          value: {{ template "minio.fullname" . }}
+        {{- else if .Values.aws.s3.endpoint }}
         - name: TERESA_STORAGE_AWS_ENDPOINT
           value: {{ quote .Values.aws.s3.endpoint }}
         {{- end }}
         - name: TERESA_STORAGE_AWS_BUCKET
+          {{- if .Values.useMinio }}
+          value: {{ .Values.minio.defaultBucket.name }}
+          {{- else }}
           value: {{ .Values.aws.s3.bucket }}
+          {{- end }}
         - name: TERESA_STORAGE_AWS_S3_FORCE_PATH_STYLE
           value: {{ quote .Values.aws.s3.force_path_style }}
         - name: TERESA_STORAGE_AWS_KEY
           valueFrom:
             secretKeyRef:
+              {{- if .Values.useMinio }}
+              name: {{ template "minio.fullname" . }}-user
+              key: accesskey
+              {{- else }}
               name: {{ template "fullname" . }}-aws
               key: access_key
-        - name: TERESA_STORAGE_AWS_REGION
-          value: {{ .Values.aws.region }}
+              {{- end }}
         - name: TERESA_STORAGE_AWS_SECRET
           valueFrom:
             secretKeyRef:
+              {{- if .Values.useMinio }}
+              name: {{ template "minio.fullname" . }}-user
+              key: secretkey
+              {{- else }}
               name: {{ template "fullname" . }}-aws
               key: secret_key
+              {{- end }}
+        - name: TERESA_STORAGE_AWS_REGION
+          value: {{ .Values.aws.region }}
         {{- if .Values.tls.crt }}
         - name: TERESA_SECRETS_TLS_CERT
           value: /etc/teresa/server.crt

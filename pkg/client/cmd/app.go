@@ -318,9 +318,12 @@ func appEnvSet(cmd *cobra.Command, args []string) {
 		evs[i] = &appb.SetEnvRequest_EnvVar{Key: tmp[0], Value: tmp[1]}
 	}
 
-	currentClusterName, err := getCurrentClusterName()
-	if err != nil {
-		client.PrintErrorAndExit("error reading config file: %v", err)
+	currentClusterName := cfgCluster
+	if currentClusterName == "" {
+		currentClusterName, err = getCurrentClusterName()
+		if err != nil {
+			client.PrintErrorAndExit("error reading config file: %v", err)
+		}
 	}
 
 	fmt.Printf("Setting env vars and %s %s on %s...\n", color.YellowString("restarting"), color.CyanString(`"%s"`, appName), color.YellowString(`"%s"`, currentClusterName))
@@ -341,7 +344,7 @@ func appEnvSet(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	conn, err := connection.New(cfgFile, cfgCluster)
+	conn, err := connection.New(cfgFile, currentClusterName)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %s", err)
 	}
@@ -386,9 +389,12 @@ func appEnvUnset(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid app parameter")
 	}
 
-	currentClusterName, err := getCurrentClusterName()
-	if err != nil {
-		client.PrintErrorAndExit("error reading config file: %v", err)
+	currentClusterName := cfgCluster
+	if currentClusterName == "" {
+		currentClusterName, err = getCurrentClusterName()
+		if err != nil {
+			client.PrintErrorAndExit("error reading config file: %v", err)
+		}
 	}
 
 	fmt.Printf("Unsetting env vars and %s %s on %s...\n", color.YellowString("restarting"), color.CyanString(`"%s"`, appName), color.YellowString(`"%s"`, currentClusterName))
@@ -409,7 +415,7 @@ func appEnvUnset(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	conn, err := connection.New(cfgFile, cfgCluster)
+	conn, err := connection.New(cfgFile, currentClusterName)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %s", err)
 	}

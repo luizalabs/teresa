@@ -174,9 +174,12 @@ func deployApp(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid no-input parameter")
 	}
 
-	currentClusterName, err := getCurrentClusterName()
-	if err != nil {
-		client.PrintErrorAndExit("error reading config file: %v", err)
+	currentClusterName := cfgCluster
+	if currentClusterName == "" {
+		currentClusterName, err = getCurrentClusterName()
+		if err != nil {
+			client.PrintErrorAndExit("error reading config file: %v", err)
+		}
 	}
 
 	fmt.Printf("Deploying app %s to the cluster %s...\n", color.CyanString(`"%s"`, appName), color.YellowString(`"%s"`, currentClusterName))
@@ -189,7 +192,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	conn, err := connection.New(cfgFile, cfgCluster)
+	conn, err := connection.New(cfgFile, currentClusterName)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}

@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Next Release] - Release Date
+### Added
+- [helm] minio as dependency
+
 ## [0.7.0] - 2017-08-29
 ### Added
 - [server] --debug flag. For now only print the stack trace on panic/recover.

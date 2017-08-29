@@ -90,6 +90,7 @@ Parameter | Description | Default
 `build.limits.cpu` | CPU limit used by build POD  | `500m`
 `build.limits.memory` | Memory limit used by build POD | `1024Mi`
 `debug` | If true, print the stack trace on every panic/recover. | `false`
+`useMinio` | If true, use minio instead of s3. | `false`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 

@@ -5,6 +5,8 @@ import (
 	"io"
 	"time"
 
+	context "golang.org/x/net/context"
+
 	"google.golang.org/grpc"
 
 	"github.com/luizalabs/teresa/pkg/goutil"
@@ -79,6 +81,17 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 			return err
 		}
 	}
+}
+
+func (s *Service) List(ctx context.Context, req *dpb.ListRequest) (*dpb.ListResponse, error) {
+	user := ctx.Value("user").(*database.User)
+
+	items, err := s.ops.List(user, req.AppName)
+	if err != nil {
+		return nil, err
+	}
+
+	return newListResponse(items), nil
 }
 
 func (s *Service) RegisterService(grpcServer *grpc.Server) {

@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Next Version] - Release Date
 ### Added
 - Pod readiness to the `app info` output
+- [helm] minio as dependency
 
 ## [0.9.0] - 2017-10-26
 ### Fixed

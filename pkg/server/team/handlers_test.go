@@ -223,3 +223,77 @@ func TestTeamList(t *testing.T) {
 		t.Errorf("expected 2, got %d", len(resp.Teams))
 	}
 }
+
+func TestRemoveUserSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+	expectedTeam := "teresa"
+	expectedUserEmail := "gopher@luizalabs.com"
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
+	fake.(*FakeOperations).Storage[expectedTeam] = &database.Team{
+		Name:  expectedTeam,
+		Users: []database.User{database.User{Email: expectedUserEmail}},
+	}
+	srv := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &database.User{Email: "gopher@luizalabs.com", IsAdmin: true})
+	req := &teampb.RemoveUserRequest{Team: expectedTeam, User: expectedUserEmail}
+
+	if _, err := srv.RemoveUser(ctx, req); err != nil {
+		t.Fatal("got error on RemoveUser: ", err)
+	}
+
+	teamWithoutUser := fake.(*FakeOperations).Storage[expectedTeam]
+
+	if len(teamWithoutUser.Users) != 0 {
+		t.Errorf("RemoveUser didn't remove user from team")
+	}
+}
+
+func TestRemoveUserTeamNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	srv := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &database.User{Email: "gopher", IsAdmin: true})
+	req := &teampb.RemoveUserRequest{Team: "teresa", User: "gopher"}
+
+	if _, err := srv.RemoveUser(ctx, req); err != ErrNotFound {
+		t.Errorf("expected error ErrNotFound, got %v", err)
+	}
+}
+
+func TestRemoveUserNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	expectedTeam := "teresa"
+	fake.(*FakeOperations).Storage[expectedTeam] = &database.Team{Name: expectedTeam}
+	srv := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &database.User{Email: "gopher", IsAdmin: true})
+	req := &teampb.RemoveUserRequest{Team: "teresa", User: "gopher"}
+
+	if _, err := srv.RemoveUser(ctx, req); err != user.ErrNotFound {
+		t.Errorf("expected error user.ErrNotFound, got %v", err)
+	}
+}
+
+func TestRemoveUserNotInTeam(t *testing.T) {
+	fake := NewFakeOperations()
+	expectedTeam := "teresa"
+	expectedUserEmail := "gopher@luizalabs.com"
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
+	fake.(*FakeOperations).Storage[expectedTeam] = &database.Team{Name: expectedTeam}
+	srv := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &database.User{Email: "gopher@luizalabs.com", IsAdmin: true})
+	req := &teampb.RemoveUserRequest{Team: expectedTeam, User: expectedUserEmail}
+
+	if _, err := srv.RemoveUser(ctx, req); err != ErrUserNotInTeam {
+		t.Errorf("expected error ErrUserNotInTeam, got %v", err)
+	}
+}
+
+func TestRemoveUserPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	srv := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &database.User{IsAdmin: false})
+	req := &teampb.RemoveUserRequest{Team: "teresa", User: "gopher"}
+
+	if _, err := srv.RemoveUser(ctx, req); err != auth.ErrPermissionDenied {
+		t.Errorf("expected auth.ErrPermissionDenied, got %v", err)
+	}
+}

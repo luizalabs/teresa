@@ -65,6 +65,19 @@ func (s *Service) List(ctx context.Context, _ *teampb.Empty) (*teampb.ListRespon
 	return resp, nil
 }
 
+func (s *Service) RemoveUser(ctx context.Context, request *teampb.RemoveUserRequest) (*teampb.Empty, error) {
+	u := ctx.Value("user").(*database.User)
+	if !u.IsAdmin {
+		return nil, auth.ErrPermissionDenied
+	}
+
+	if err := s.ops.RemoveUser(request.Team, request.User); err != nil {
+		return nil, err
+	}
+
+	return &teampb.Empty{}, nil
+}
+
 func (s *Service) RegisterService(grpcServer *grpc.Server) {
 	teampb.RegisterTeamServer(grpcServer, s)
 }

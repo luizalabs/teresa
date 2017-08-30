@@ -18,6 +18,10 @@ jobs:
         - ./.helm.sh lint
       after_success:
         - ./.helm.sh deploy
+      on:
+        tags: true
     - stage: build docker image
       script:
         - ./.ci-docker.sh
+      on:
+        tags: true

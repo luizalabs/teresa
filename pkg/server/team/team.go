@@ -15,6 +15,7 @@ type Operations interface {
 	AddUser(name, userEmail string) error
 	List() ([]*database.Team, error)
 	ListByUser(userEmail string) ([]*database.Team, error)
+	RemoveUser(name, userEmail string) error
 }
 
 type DatabaseOperations struct {
@@ -115,6 +116,10 @@ func (dbt *DatabaseOperations) getTeam(name string) (*database.Team, error) {
 		return nil, ErrNotFound
 	}
 	return t, nil
+}
+
+func (dbt *DatabaseOperations) RemoveUser(name, userEmail string) error {
+	return nil
 }
 
 func NewDatabaseOperations(db *gorm.DB, uOps user.Operations) Operations {

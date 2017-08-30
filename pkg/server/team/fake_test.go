@@ -187,3 +187,53 @@ func TestFakeOperationsListByUserWithoutTeams(t *testing.T) {
 		t.Errorf("expected 0, got %d", len(teams))
 	}
 }
+
+func TestFakeOpsRemoveUserSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+	expectedUserEmail := "gopher"
+	expectedTeam := "teresa"
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
+	fake.(*FakeOperations).Storage[expectedTeam] = &database.Team{
+		Name:  expectedTeam,
+		Users: []database.User{database.User{Email: expectedUserEmail}},
+	}
+
+	if err := fake.RemoveUser(expectedTeam, expectedUserEmail); err != nil {
+		t.Fatal("error trying to remove user from team: ", err)
+	}
+
+	team := fake.(*FakeOperations).Storage[expectedTeam]
+	if len(team.Users) != 0 {
+		t.Errorf("expected 0, got %d", len(team.Users))
+	}
+}
+
+func TestFakeOpsRemoveUserTeamNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+
+	if err := fake.RemoveUser("teresa", "gopher"); err != ErrNotFound {
+		t.Error("expected error ErrNotFound, got ", err)
+	}
+}
+
+func TestFakeOpsRemoveUserNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	expectedTeam := "teresa"
+	fake.(*FakeOperations).Storage[expectedTeam] = &database.Team{Name: expectedTeam}
+
+	if err := fake.RemoveUser(expectedTeam, "gopher"); err != user.ErrNotFound {
+		t.Error("expected error user.ErrNotFound, got ", err)
+	}
+}
+
+func TestFakeOpsRemoveUserNotInTeam(t *testing.T) {
+	fake := NewFakeOperations()
+	expectedUserEmail := "gopher"
+	expectedTeam := "teresa"
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
+	fake.(*FakeOperations).Storage[expectedTeam] = &database.Team{Name: expectedTeam}
+
+	if err := fake.RemoveUser(expectedTeam, expectedUserEmail); err != ErrUserNotInTeam {
+		t.Error("expected error ErrUserNotInTeam, got ", err)
+	}
+}

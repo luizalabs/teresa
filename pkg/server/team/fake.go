@@ -70,6 +70,36 @@ func (f *FakeOperations) ListByUser(userEmail string) ([]*database.Team, error) 
 	return teams, nil
 }
 
+func (f *FakeOperations) RemoveUser(name, userEmail string) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	t, found := f.Storage[name]
+	if !found {
+		return ErrNotFound
+	}
+
+	if _, err := f.UserOps.GetUser(userEmail); err != nil {
+		return err
+	}
+
+	idx := -1
+	for i, userOfTeam := range t.Users {
+		if userOfTeam.Email == userEmail {
+			idx = i
+			break
+		}
+	}
+
+	if idx < 0 {
+		return ErrUserNotInTeam
+	}
+
+	t.Users = append(t.Users[:idx], t.Users[idx+1:]...)
+
+	return nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

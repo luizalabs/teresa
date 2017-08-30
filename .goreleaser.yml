@@ -1,0 +1,12 @@
+# .goreleaser.yml
+# Build customization
+builds:
+  - 
+    main: cmd/client/main.go
+    binary: teresa
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64

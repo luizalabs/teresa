@@ -113,7 +113,7 @@ build-server:
 	@go build -ldflags "-X $(BUILD_HOME)/pkg/version.Version=$(BUILD_VERSION)" -o teresa-server $(BUILD_HOME)/cmd/server
 
 build-client:
-	@go build -ldflags "-X $(BUILD_HOME)/pkg/version.version=$(BUILD_VERSION)" -o teresa $(BUILD_HOME)/cmd/client
+	@go build -ldflags "-X $(BUILD_HOME)/pkg/version.Version=$(BUILD_VERSION)" -o teresa $(BUILD_HOME)/cmd/client
 
 gen-grpc-stubs:
 	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/user/*.proto
@@ -131,14 +131,3 @@ update-chart: helm-lint
 	@helm repo index repo --url http://helm.k8s.magazineluiza.com
 	@aws s3 sync repo s3://helm.k8s.magazineluiza.com --delete
 	@rm -rf repo
-
-###Build Client in all Platforms
-PLATFORMS := windows linux darwin
-os = $(word 1, $@)
-
-.PHONY: $(PLATFORMS)
-$(PLATFORMS):
-	GOOS=$(os) go build -ldflags "-X $(BUILD_HOME)/pkg/version.version=$(BUILD_VERSION)" -o teresa-$(os) $(BUILD_HOME)/cmd/client
-
-.PHONY: build-all-client
-build-all-client: windows linux darwin

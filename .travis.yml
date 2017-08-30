@@ -1,23 +1,32 @@
 language: go
-
 go:
-  - 1.8
-  - tip
-
+- 1.8
+- tip
 script:
-  - ./.tests-run.sh
+- ./.tests-run.sh
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
-
+- bash <(curl -s https://codecov.io/bash)
+before_deploy:
+- make build-all-client
+deploy:
+  provider: releases
+  api_key: $GITHUB_OAUTH_TOKEN
+  file:
+  - teresa-linux
+  - teresa-darwin
+  - teresa-windows
+  skip_cleanup: true
+  on:
+    tags: true
 jobs:
   include:
-    - stage: helm
-      before_script:
-        - ./.helm.sh download
-      script:
-        - ./.helm.sh lint
-      after_success:
-        - ./.helm.sh deploy
-    - stage: build docker image
-      script:
-        - ./.ci-docker.sh
+  - stage: helm
+    before_script:
+    - ./.helm.sh download
+    script:
+    - ./.helm.sh lint
+    after_success:
+    - ./.helm.sh deploy
+  - stage: build docker image
+    script:
+    - ./.ci-docker.sh

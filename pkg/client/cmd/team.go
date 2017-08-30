@@ -45,12 +45,25 @@ You need to create a user before use this command.`,
 	Run: teamAddUser,
 }
 
+var teamRemoveUserCmd = &cobra.Command{
+	Use:   "remove-user",
+	Short: "Remove a member of a team",
+	Long: `Remove a member of a team.
+
+You can remove an user of a team with:
+
+  $ teresa team remove-user --user john.doe@foodomain.com --team foo
+`,
+	Run: teamRemoveUser,
+}
+
 func init() {
 	RootCmd.AddCommand(teamCmd)
 	// Commands
 	teamCmd.AddCommand(teamListCmd)
 	teamCmd.AddCommand(teamCreateCmd)
 	teamCmd.AddCommand(teamAddUserCmd)
+	teamCmd.AddCommand(teamRemoveUserCmd)
 
 	teamListCmd.Flags().Bool("show-users", false, "show members of team")
 
@@ -60,6 +73,8 @@ func init() {
 	teamAddUserCmd.Flags().String("user", "", "user email")
 	teamAddUserCmd.Flags().String("team", "", "team name")
 
+	teamRemoveUserCmd.Flags().String("user", "", "user email")
+	teamRemoveUserCmd.Flags().String("team", "", "team name")
 }
 
 func createTeam(cmd *cobra.Command, args []string) {
@@ -149,4 +164,35 @@ func teamList(cmd *cobra.Command, args []string) {
 			fmt.Printf("- %s (%s)\n", u.Name, u.Email)
 		}
 	}
+}
+
+func teamRemoveUser(cmd *cobra.Command, args []string) {
+	team, err := cmd.Flags().GetString("team")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid team parameter")
+	}
+
+	user, err := cmd.Flags().GetString("user")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid user parameter")
+	}
+
+	if team == "" || user == "" {
+		cmd.Usage()
+		return
+	}
+
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
+
+	cli := teampb.NewTeamClient(conn)
+	req := &teampb.RemoveUserRequest{Team: team, User: user}
+	if _, err := cli.RemoveUser(context.Background(), req); err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+
+	fmt.Printf("User %s has been removed from the team %s\n", color.CyanString(user), color.CyanString(team))
 }

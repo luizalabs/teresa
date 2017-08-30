@@ -5,6 +5,7 @@ package deploy;
 service Deploy {
     rpc Make(stream DeployRequest) returns (stream DeployResponse);
     rpc List(ListRequest) returns (ListResponse);
+    rpc Rollback(RollbackRequest) returns (Empty);
 }
 
 message DeployRequest {
@@ -41,3 +42,10 @@ message ListResponse {
     }
     repeated Deploy deploys = 1;
 }
+
+message RollbackRequest {
+        string app_name = 1;
+        string revision = 2;
+}
+
+message Empty {}

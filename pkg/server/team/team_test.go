@@ -307,3 +307,80 @@ func TestDatabaseOperationsListByUserWithoutTeams(t *testing.T) {
 		t.Errorf("expected 0, got %d", len(teams))
 	}
 }
+
+func TestDatabaseOpsRemoveUserSuccess(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error opening in memory database ", err)
+	}
+	db.AutoMigrate(&database.User{})
+	defer db.Close()
+
+	expectedUserEmail := "gopher"
+	expectedTeam := "teresa"
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
+	if err := dbt.Create(expectedTeam, "", ""); err != nil {
+		t.Fatal("error creating team: ", err)
+	}
+	if err := dbt.AddUser(expectedTeam, expectedUserEmail); err != nil {
+		t.Fatal("error trying to add user to team: ", err)
+	}
+
+	if err := dbt.RemoveUser(expectedTeam, expectedUserEmail); err != nil {
+		t.Error("error trying to remove user from team: ", err)
+	}
+}
+
+func TestDatabaseOpsRemoveUserTeamNotFound(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error opening in memory database ", err)
+	}
+	defer db.Close()
+
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+	if err := dbt.RemoveUser("teresa", "gopher"); err != ErrNotFound {
+		t.Errorf("expected error ErrNotFound, got %v", err)
+	}
+}
+
+func TestDatabaseOpsRemoveUserNotFound(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error opening in memory database ", err)
+	}
+	db.AutoMigrate(&database.User{})
+	defer db.Close()
+
+	expectedTeam := "teresa"
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+	if err := dbt.Create(expectedTeam, "", ""); err != nil {
+		t.Fatal("error creating team:", err)
+	}
+
+	if err := dbt.RemoveUser(expectedTeam, "gopher"); err != user.ErrNotFound {
+		t.Errorf("expected error user.ErrNotFound, got %v", err)
+	}
+}
+
+func TestDatabaseOpsRemoveUserNotInTeam(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error opening in memory database ", err)
+	}
+	db.AutoMigrate(&database.User{})
+	defer db.Close()
+
+	expectedUserEmail := "gopher"
+	expectedTeam := "teresa"
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
+	if err := dbt.Create(expectedTeam, "", ""); err != nil {
+		t.Fatal("error creating team: ", err)
+	}
+
+	if err := dbt.RemoveUser(expectedTeam, expectedUserEmail); err != ErrUserNotInTeam {
+		t.Errorf("expected error ErrUserNotInTeam, got %v", err)
+	}
+}

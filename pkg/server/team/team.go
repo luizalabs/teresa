@@ -119,6 +119,24 @@ func (dbt *DatabaseOperations) getTeam(name string) (*database.Team, error) {
 }
 
 func (dbt *DatabaseOperations) RemoveUser(name, userEmail string) error {
+	t, err := dbt.getTeam(name)
+	if err != nil {
+		return err
+	}
+
+	u, err := dbt.UserOps.GetUser(userEmail)
+	if err != nil {
+		return err
+	}
+
+	if err := dbt.DB.Model(t).Association("Users").Find(u).Error; err != nil {
+		return ErrUserNotInTeam
+	}
+
+	if err := dbt.DB.Model(t).Association("Users").Delete(u).Error; err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
 	return nil
 }
 

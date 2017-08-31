@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Deploys are now performed using the 'deploy create' command
 
+### Fixed
+- App info don't print pod without status
+
 ## [0.7.0] - 2017-08-29
 ### Added
 - [server] --debug flag. For now only print the stack trace on panic/recover.

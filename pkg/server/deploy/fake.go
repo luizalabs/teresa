@@ -37,6 +37,21 @@ func (f *FakeOperations) Deploy(user *database.User, appName string, tarBall io.
 	return nil, nil
 }
 
+func (f *FakeOperations) Rollback(user *database.User, rollback *Rollback) error {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	if !hasPerm(user.Email) {
+		return auth.ErrPermissionDenied
+	}
+
+	if _, found := f.Storage[rollback.AppName]; !found {
+		return app.ErrNotFound
+	}
+
+	return nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{mutex: &sync.RWMutex{}, Storage: make(map[string]bool)}
 }

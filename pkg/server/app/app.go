@@ -28,6 +28,7 @@ type Operations interface {
 	UnsetEnv(user *database.User, appName string, evs []string) error
 	List(user *database.User) ([]*AppListItem, error)
 	SetAutoscale(user *database.User, appName string, as *Autoscale) error
+	CheckPermAndGet(user *database.User, appName string) (*App, error)
 }
 
 type K8sOperations interface {
@@ -246,7 +247,7 @@ func (ops *AppOperations) Get(appName string) (*App, error) {
 	return a, nil
 }
 
-func (ops *AppOperations) checkPermAndGet(user *database.User, appName string) (*App, error) {
+func (ops *AppOperations) CheckPermAndGet(user *database.User, appName string) (*App, error) {
 	team, err := ops.TeamName(appName)
 	if err != nil {
 		return nil, err
@@ -282,7 +283,7 @@ func (ops *AppOperations) SetEnv(user *database.User, appName string, evs []*Env
 		return err
 	}
 
-	app, err := ops.checkPermAndGet(user, appName)
+	app, err := ops.CheckPermAndGet(user, appName)
 	if err != nil {
 		return err
 	}
@@ -307,7 +308,7 @@ func (ops *AppOperations) UnsetEnv(user *database.User, appName string, evNames 
 		return err
 	}
 
-	app, err := ops.checkPermAndGet(user, appName)
+	app, err := ops.CheckPermAndGet(user, appName)
 	if err != nil {
 		return err
 	}
@@ -365,7 +366,7 @@ func (ops *AppOperations) List(user *database.User) ([]*AppListItem, error) {
 }
 
 func (ops *AppOperations) SetAutoscale(user *database.User, appName string, as *Autoscale) error {
-	app, err := ops.checkPermAndGet(user, appName)
+	app, err := ops.CheckPermAndGet(user, appName)
 	if err != nil {
 		return err
 	}

@@ -158,6 +158,25 @@ func (f *FakeOperations) SetAutoscale(user *database.User, appName string, as *A
 	return nil
 }
 
+func (f *FakeOperations) CheckPermAndGet(user *database.User, appName string) (*App, error) {
+	if !hasPerm(user.Email) {
+		return nil, auth.ErrPermissionDenied
+	}
+
+	if appName != "teresa" {
+		return nil, ErrNotFound
+	}
+
+	a := &App{
+		Name:        "teresa",
+		ProcessType: "web",
+		EnvVars: []*EnvVar{
+			&EnvVar{Key: "KEY", Value: "Value"},
+		},
+	}
+	return a, nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

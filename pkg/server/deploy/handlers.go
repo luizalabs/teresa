@@ -94,6 +94,19 @@ func (s *Service) List(ctx context.Context, req *dpb.ListRequest) (*dpb.ListResp
 	return newListResponse(items), nil
 }
 
+func (s *Service) Rollback(ctx context.Context, req *dpb.RollbackRequest) (*dpb.Empty, error) {
+	user := ctx.Value("user").(*database.User)
+
+	rb := newRollback(req)
+
+	err := s.ops.Rollback(user, rb)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dpb.Empty{}, nil
+}
+
 func (s *Service) RegisterService(grpcServer *grpc.Server) {
 	dpb.RegisterDeployServer(grpcServer, s)
 }

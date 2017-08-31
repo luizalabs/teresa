@@ -22,6 +22,7 @@ const (
 type Operations interface {
 	Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, error)
 	List(user *database.User, appName string) ([]*ReplicaSetListItem, error)
+	Rollback(user *database.User, rollback *Rollback) error
 }
 
 type K8sOperations interface {
@@ -175,6 +176,15 @@ func (ops *DeployOperations) List(user *database.User, appName string) ([]*Repli
 	}
 
 	return items, nil
+}
+
+func (ops *DeployOperations) Rollback(user *database.User, rollback *Rollback) error {
+	_, err := ops.appOps.CheckPermAndGet(user, rollback.AppName)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func genDeployId() string {

@@ -317,3 +317,34 @@ func TestFakeOperationsSetAutoscaletErrNotFound(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
+
+func TestFakeOperationsCheckPermAndGet(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	if _, err := fake.CheckPermAndGet(user, app.Name); err != nil {
+		t.Fatal("error CheckPermAndGet: ", err)
+	}
+}
+
+func TestFakeOperationsCheckPermAndGetPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	if _, err := fake.CheckPermAndGet(user, app.Name); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestFakeOperationsCheckPermAndGetErrNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+
+	if _, err := fake.CheckPermAndGet(user, "app"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}

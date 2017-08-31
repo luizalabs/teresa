@@ -283,3 +283,37 @@ func TestFakeOperationsUnsetEnvErrNotFound(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
+
+func TestFakeOperationsSetAutoscale(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	req := newAutoscaleRequest("teresa")
+	as := newAutoscale(req)
+
+	if err := fake.SetAutoscale(user, app.Name, as); err != nil {
+		t.Fatal("error on SetautoScale: ", err)
+	}
+}
+
+func TestFakeOperationsSetAutoscalePermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.(*FakeOperations).Storage[app.Name] = app
+
+	if err := fake.SetAutoscale(user, app.Name, nil); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestFakeOperationsSetAutoscaletErrNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+
+	if err := fake.SetAutoscale(user, "teresa", nil); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}

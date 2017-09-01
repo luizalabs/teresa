@@ -8,19 +8,10 @@ script:
   - ./.tests-run.sh
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+  - test -n "$TRAVIS_TAG" && curl -sL https://git.io/goreleaser | bash
 
 before_deploy:
   - make build-all-client
-deploy:
-  provider: releases
-  api_key: $GITHUB_OAUTH_TOKEN
-  file:
-  - teresa-linux
-  - teresa-darwin
-  - teresa-windows
-  skip_cleanup: true
-  on:
-    tags: true
 
 jobs:
   include:

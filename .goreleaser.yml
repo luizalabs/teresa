@@ -1,0 +1,13 @@
+# .goreleaser.yml
+# Build customization
+builds:
+  - 
+    main: github.com/luizalabs/teresa/cmd/client
+    ldflags: -X github.com/luizalabs/teresa/pkg/version.Version=$(shell git describe --always --tags)
+    binary: teresa
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64

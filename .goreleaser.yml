@@ -3,7 +3,6 @@
 builds:
   - 
     main: cmd/client/main.go
-    ldflags: -X pkg/version.Version=$(shell git describe --always --tags)
     binary: teresa
     goos:
       - windows

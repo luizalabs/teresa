@@ -161,6 +161,6 @@ lifecycle:
 Run the following in your command-line:
 
 ```sh
-$ brew tap luizalabs/teresa
+$ brew tap luizalabs/teresa-cli
 $ brew install teresa
 ```

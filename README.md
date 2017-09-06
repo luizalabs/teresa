@@ -156,6 +156,25 @@ lifecycle:
     drainTimeoutSeconds: 10
 ```
 
+**Q: What's the deployment strategy?**
+
+Teresa creates a rolling update deployment, which updates a fixed number of
+pods at a time. Take a look [here](https://github.com/luizalabs/hello-teresa#rolling-update)
+on how to configure the rolling update process.
+
+**Q: How to perform tasks before a new release is deployed?**
+
+There's a special kind of process called **release**, which is executed right
+after the build process and before the rolling update. It is useful for tasks
+such as sending javascript to a CDN or running database schema migrations. For
+example, if you are running a django based application you may configure
+automatic migrations by adding this line to the `Procfile`:
+
+    release: python django/manage.py migrate
+
+Note that a failing release will prevent the rolling update from happening, so
+you have to keep compatibility with old code.
+
 ## Homebrew Teresa Client
 
 Run the following in your command-line:

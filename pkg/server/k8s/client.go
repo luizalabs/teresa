@@ -22,7 +22,7 @@ import (
 
 const (
 	patchDeployEnvVarsTmpl            = `{"spec":{"template":{"spec":{"containers":[{"name": "%s", "env":%s}]}}}}`
-	patchDeployRollbackToRevisionTmpl = `{"spec":{"rollbackTo":{"revision": "%s"}}}`
+	patchDeployRollbackToRevisionTmpl = `{"spec":{"rollbackTo":{"revision": %s}}}`
 	revisionAnnotation                = "deployment.kubernetes.io/revision"
 )
 
@@ -680,7 +680,7 @@ func (k *k8sClient) ReplicaSetListByLabel(namespace, label, value string) ([]*de
 	return resp, nil
 }
 
-func (k *k8sClient) DeployRollbackToRevision(namespace, name, revision, string) error {
+func (k *k8sClient) DeployRollbackToRevision(namespace, name, revision string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err

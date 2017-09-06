@@ -31,6 +31,7 @@ type K8sOperations interface {
 	HasService(namespace, name string) (bool, error)
 	CreateService(namespace, name string) error
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
+	DeployRollbackToRevision(namespace, name, revision, string) error
 }
 
 type DeployOperations struct {

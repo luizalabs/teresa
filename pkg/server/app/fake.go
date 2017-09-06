@@ -177,6 +177,14 @@ func (f *FakeOperations) CheckPermAndGet(user *database.User, appName string) (*
 	return a, nil
 }
 
+func (f *FakeOperations) SaveApp(app *App, lastUser string) error {
+	if app.Name != "teresa" {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

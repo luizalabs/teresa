@@ -29,6 +29,7 @@ type Operations interface {
 	List(user *database.User) ([]*AppListItem, error)
 	SetAutoscale(user *database.User, appName string, as *Autoscale) error
 	CheckPermAndGet(user *database.User, appName string) (*App, error)
+	SaveApp(app *App, lastUser string) error
 }
 
 type K8sOperations interface {
@@ -260,7 +261,7 @@ func (ops *AppOperations) CheckPermAndGet(user *database.User, appName string) (
 	return ops.Get(appName)
 }
 
-func (ops *AppOperations) saveApp(app *App, lastUser string) error {
+func (ops *AppOperations) SaveApp(app *App, lastUser string) error {
 	b, err := json.Marshal(app)
 	if err != nil {
 		return fmt.Errorf("marshal app failed: %v", err)
@@ -290,7 +291,7 @@ func (ops *AppOperations) SetEnv(user *database.User, appName string, evs []*Env
 
 	setEnvVars(app, evs)
 
-	if err := ops.saveApp(app, user.Email); err != nil {
+	if err := ops.SaveApp(app, user.Email); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
 
@@ -315,7 +316,7 @@ func (ops *AppOperations) UnsetEnv(user *database.User, appName string, evNames 
 
 	unsetEnvVars(app, evNames)
 
-	if err := ops.saveApp(app, user.Email); err != nil {
+	if err := ops.SaveApp(app, user.Email); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
 
@@ -385,7 +386,7 @@ func (ops *AppOperations) SetAutoscale(user *database.User, appName string, as *
 		return teresa_errors.NewInternalServerError(err)
 	}
 
-	if err := ops.saveApp(app, user.Email); err != nil {
+	if err := ops.SaveApp(app, user.Email); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
 

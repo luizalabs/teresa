@@ -31,7 +31,7 @@ type K8sOperations interface {
 	HasService(namespace, name string) (bool, error)
 	CreateService(namespace, name string) error
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
-	DeployRollbackToRevision(namespace, name, revision, string) error
+	DeployRollbackToRevision(namespace, name, revision string) error
 }
 
 type DeployOperations struct {
@@ -180,9 +180,17 @@ func (ops *DeployOperations) List(user *database.User, appName string) ([]*Repli
 }
 
 func (ops *DeployOperations) Rollback(user *database.User, rollback *Rollback) error {
-	_, err := ops.appOps.CheckPermAndGet(user, rollback.AppName)
+	app, err := ops.appOps.CheckPermAndGet(user, rollback.AppName)
 	if err != nil {
 		return err
+	}
+
+	if err = ops.k8s.DeployRollbackToRevision(app.Name, app.Name, rollback.Revision); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	if err := ops.appOps.SaveApp(app, user.Email); err != nil {
+		return teresa_errors.NewInternalServerError(err)
 	}
 
 	return nil

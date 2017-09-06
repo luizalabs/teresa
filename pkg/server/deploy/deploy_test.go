@@ -74,6 +74,10 @@ func (f *fakeK8sOperations) ReplicaSetListByLabel(namespace, label, value string
 	return items, f.replicaSetListByLabelErr
 }
 
+func (f *fakeK8sOperations) DeployRollbackToRevision(namespace, name, revision string) error {
+	return nil
+}
+
 func TestDeployPermissionDenied(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
@@ -382,5 +386,47 @@ func TestDeployListInternalServerError(t *testing.T) {
 
 	if _, err := ops.List(user, "teresa"); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
 		t.Errorf("expected ErrInternalServerError, got %s", err)
+	}
+}
+
+func TestRollbackOpsSuccess(t *testing.T) {
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		&fakeK8sOperations{},
+		st.NewFake(),
+	)
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	rb := &Rollback{AppName: "teresa"}
+
+	if err := ops.Rollback(user, rb); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func TestRollbackOpsErrPermissionDenied(t *testing.T) {
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		&fakeK8sOperations{},
+		st.NewFake(),
+	)
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+	rb := &Rollback{AppName: "teresa"}
+
+	if err := ops.Rollback(user, rb); err != auth.ErrPermissionDenied {
+		t.Errorf("expected auth.ErrPermissionDenied, got %s", err)
+	}
+}
+
+func TestRollbackOpsErrNotFound(t *testing.T) {
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		&fakeK8sOperations{},
+		st.NewFake(),
+	)
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	rb := &Rollback{AppName: "app"}
+
+	if err := ops.Rollback(user, rb); err != app.ErrNotFound {
+		t.Errorf("expected app.ErrNotFound, got %s", err)
 	}
 }

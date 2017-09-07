@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - Command 'deploy list'
 - Command 'team remove-user'
+- Command 'deploy rollback'
 
 ### Changed
 - Deploys are now performed using the 'deploy create' command

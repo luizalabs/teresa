@@ -54,6 +54,14 @@ var deployListCmd = &cobra.Command{
 	Run:     deployList,
 }
 
+var deployRollbackCmd = &cobra.Command{
+	Use:     "rollback",
+	Short:   "rollback app to a given revision",
+	Long:    "Rollback an application to a given revision.",
+	Example: "  $ teresa deploy rollback myapp --revision 1",
+	Run:     deployRollback,
+}
+
 func getCurrentClusterName() (string, error) {
 	cfg, err := client.ReadConfigFile(cfgFile)
 	if err != nil {
@@ -164,12 +172,15 @@ func init() {
 	RootCmd.AddCommand(deployCmd)
 	deployCmd.AddCommand(deployCreateCmd)
 	deployCmd.AddCommand(deployListCmd)
+	deployCmd.AddCommand(deployRollbackCmd)
 
 	deployCreateCmd.Flags().String("app", "", "app name (required)")
 	deployCreateCmd.Flags().String("description", "", "deploy description (required)")
 	deployCreateCmd.Flags().Bool("no-input", false, "deploy app without warning")
 
 	deployListCmd.Flags().String("app", "", "app name (required)")
+
+	deployRollbackCmd.Flags().String("revision", "", "app revision (required)")
 }
 
 func deployApp(cmd *cobra.Command, args []string) {
@@ -337,4 +348,35 @@ func deployList(cmd *cobra.Command, args []string) {
 		table.Append(r)
 	}
 	table.Render()
+}
+
+func deployRollback(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		cmd.Usage()
+		return
+	}
+	appName := args[0]
+
+	revision, err := cmd.Flags().GetString("revision")
+	if err != nil || revision == "" {
+		client.PrintErrorAndExit("invalid revision parameter")
+	}
+
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
+
+	req := &dpb.RollbackRequest{
+		AppName:  appName,
+		Revision: revision,
+	}
+	cli := dpb.NewDeployClient(conn)
+	_, err = cli.Rollback(context.Background(), req)
+	if err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+
+	fmt.Println("rollback done")
 }

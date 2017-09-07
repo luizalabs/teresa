@@ -350,17 +350,19 @@ func TestFakeOperationsCheckPermAndGetErrNotFound(t *testing.T) {
 }
 
 func TestFakeOperationsSaveApp(t *testing.T) {
+	fake := NewFakeOperations()
 	app := &App{Name: "teresa"}
 
-	if _, err := fake.SaveApp(app, "gopher@luizalabs.com"); err != nil {
+	if err := fake.SaveApp(app, "gopher@luizalabs.com"); err != nil {
 		t.Fatal("error SaveApp: ", err)
 	}
 }
 
 func TestFakeOperationsSaveAppErrNotFound(t *testing.T) {
+	fake := NewFakeOperations()
 	app := &App{Name: "bad-app"}
 
-	if _, err := fake.SaveApp(app, "gopher@luizalabs.com"); err != ErrNotFound {
+	if err := fake.SaveApp(app, "gopher@luizalabs.com"); err != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }

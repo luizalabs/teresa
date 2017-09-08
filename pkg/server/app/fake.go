@@ -95,6 +95,17 @@ func (f *FakeOperations) List(user *database.User) ([]*AppListItem, error) {
 }
 
 func (f *FakeOperations) Delete(user *database.User, appName string) error {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	if !hasPerm(user.Email) {
+		return auth.ErrPermissionDenied
+	}
+
+	if _, found := f.Storage[appName]; !found {
+		return ErrNotFound
+	}
+
 	return nil
 }
 

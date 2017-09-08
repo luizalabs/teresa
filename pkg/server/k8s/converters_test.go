@@ -17,7 +17,7 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 		Env:   map[string]string{"ENV-KEY": "ENV-VALUE"},
 		Args:  []string{"start", "release"},
 		VolumeMounts: []*deploy.PodVolumeMountsSpec{
-			&deploy.PodVolumeMountsSpec{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
+			{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
 		},
 		ContainerLimits: &deploy.ContainerLimits{
 			CPU:    "800m",
@@ -86,7 +86,7 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 
 func TestPodSpecVolumesToK8sVolumes(t *testing.T) {
 	vols := []*deploy.PodVolumeSpec{
-		&deploy.PodVolumeSpec{Name: "Vol-Test", SecretName: "Bond"},
+		{Name: "Vol-Test", SecretName: "Bond"},
 	}
 	k8sVols := podSpecVolumesToK8sVolumes(vols)
 
@@ -106,7 +106,7 @@ func TestPodSpecToK8sPod(t *testing.T) {
 		Image: "luizalabs/teresa:0.0.1",
 		Env:   map[string]string{"ENV-KEY": "ENV-VALUE"},
 		VolumeMounts: []*deploy.PodVolumeMountsSpec{
-			&deploy.PodVolumeMountsSpec{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
+			{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
 		},
 	}
 	pod, err := podSpecToK8sPod(ps)

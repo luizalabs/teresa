@@ -278,7 +278,7 @@ func (ops *AppOperations) SaveApp(app *App, lastUser string) error {
 
 func (ops *AppOperations) SetEnv(user *database.User, appName string, evs []*EnvVar) error {
 	evNames := make([]string, len(evs))
-	for i, _ := range evs {
+	for i := range evs {
 		evNames[i] = evs[i].Key
 	}
 	if err := checkForProtectedEnvVars(evNames); err != nil {

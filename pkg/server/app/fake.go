@@ -88,7 +88,7 @@ func (f *FakeOperations) List(user *database.User) ([]*AppListItem, error) {
 		items = append(items, &AppListItem{
 			Team:      v.Team,
 			Name:      k,
-			Addresses: []*Address{&Address{Hostname: "localhost"}},
+			Addresses: []*Address{{Hostname: "localhost"}},
 		})
 	}
 	return items, nil
@@ -123,7 +123,7 @@ func (f *FakeOperations) Get(appName string) (*App, error) {
 		Name:        "teresa",
 		ProcessType: "web",
 		EnvVars: []*EnvVar{
-			&EnvVar{Key: "KEY", Value: "Value"},
+			{Key: "KEY", Value: "Value"},
 		},
 	}
 	return a, nil
@@ -187,7 +187,7 @@ func (f *FakeOperations) CheckPermAndGet(user *database.User, appName string) (*
 		Name:        "teresa",
 		ProcessType: "web",
 		EnvVars: []*EnvVar{
-			&EnvVar{Key: "KEY", Value: "Value"},
+			{Key: "KEY", Value: "Value"},
 		},
 	}
 	return a, nil

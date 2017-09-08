@@ -119,21 +119,21 @@ func createApp(cmd *cobra.Command, args []string) {
 
 	lim := &appb.CreateRequest_Limits{
 		Default: []*appb.CreateRequest_Limits_LimitRangeQuantity{
-			&appb.CreateRequest_Limits_LimitRangeQuantity{
+			{
 				Resource: "cpu",
 				Quantity: maxCPU,
 			},
-			&appb.CreateRequest_Limits_LimitRangeQuantity{
+			{
 				Resource: "memory",
 				Quantity: maxMemory,
 			},
 		},
 		DefaultRequest: []*appb.CreateRequest_Limits_LimitRangeQuantity{
-			&appb.CreateRequest_Limits_LimitRangeQuantity{
+			{
 				Resource: "cpu",
 				Quantity: cpu,
 			},
-			&appb.CreateRequest_Limits_LimitRangeQuantity{
+			{
 				Resource: "memory",
 				Quantity: memory,
 			},

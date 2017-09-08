@@ -608,7 +608,7 @@ func (k *k8sClient) DeleteDeployEnvVars(namespace, name string, evNames []string
 		Patch string `json:"$patch"`
 	}
 	env := make([]*EnvVar, len(evNames))
-	for i, _ := range evNames {
+	for i := range evNames {
 		env[i] = &EnvVar{Name: evNames[i], Patch: "delete"}
 	}
 
@@ -621,7 +621,7 @@ func (k *k8sClient) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*a
 		Value string `json:"value"`
 	}
 	env := make([]*EnvVar, len(evs))
-	for i, _ := range evs {
+	for i := range evs {
 		env[i] = &EnvVar{Name: evs[i].Key, Value: evs[i].Value}
 	}
 

@@ -396,9 +396,9 @@ func TestRollbackOpsSuccess(t *testing.T) {
 		st.NewFake(),
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
-	rb := &Rollback{AppName: "teresa"}
+	name := "teresa"
 
-	if err := ops.Rollback(user, rb); err != nil {
+	if err := ops.Rollback(user, name, ""); err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
 }
@@ -410,9 +410,9 @@ func TestRollbackOpsErrPermissionDenied(t *testing.T) {
 		st.NewFake(),
 	)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
-	rb := &Rollback{AppName: "teresa"}
+	name := "teresa"
 
-	if err := ops.Rollback(user, rb); err != auth.ErrPermissionDenied {
+	if err := ops.Rollback(user, name, ""); err != auth.ErrPermissionDenied {
 		t.Errorf("expected auth.ErrPermissionDenied, got %s", err)
 	}
 }
@@ -424,9 +424,9 @@ func TestRollbackOpsErrNotFound(t *testing.T) {
 		st.NewFake(),
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
-	rb := &Rollback{AppName: "app"}
+	name := "bad-app"
 
-	if err := ops.Rollback(user, rb); err != app.ErrNotFound {
+	if err := ops.Rollback(user, name, ""); err != app.ErrNotFound {
 		t.Errorf("expected app.ErrNotFound, got %s", err)
 	}
 }

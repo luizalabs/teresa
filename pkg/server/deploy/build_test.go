@@ -14,7 +14,7 @@ func TestNewPodSpec(t *testing.T) {
 	a := &app.App{
 		Name: expectedAppName,
 		EnvVars: []*app.EnvVar{
-			&app.EnvVar{Key: "APP-ENV-KEY", Value: "APP-ENV-VALUE"},
+			{Key: "APP-ENV-KEY", Value: "APP-ENV-VALUE"},
 		},
 	}
 	ev := map[string]string{"ENV-KEY": "ENV-VALUE"}

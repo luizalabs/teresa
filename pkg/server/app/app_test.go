@@ -132,7 +132,7 @@ func (f *fakeK8sOperations) DeleteNamespace(namespace string) error {
 
 func (f *fakeK8sOperations) NamespaceListByLabel(label, value string) ([]string, error) {
 	ns := make([]string, 0)
-	for s, _ := range f.Namespaces {
+	for s := range f.Namespaces {
 		ns = append(ns, s)
 	}
 	return ns, nil
@@ -249,7 +249,7 @@ func TestAppCreateErrPermissionDeniedShouldNotTouchNamespace(t *testing.T) {
 	tops := team.NewFakeOperations()
 	fakeSt := st.NewFake()
 	name := "teresa"
-	fakeK8s := &fakeK8sOperations{Namespaces: map[string]struct{}{name: struct{}{}}}
+	fakeK8s := &fakeK8sOperations{Namespaces: map[string]struct{}{name: {}}}
 	ops := NewOperations(tops, fakeK8s, fakeSt)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: name, Team: "luizalabs"}
@@ -288,7 +288,7 @@ func TestAppCreateErrAppAlreadyExistsShouldNotTouchNamespace(t *testing.T) {
 	teamName := "luizalabs"
 	errK8s := &errK8sOperations{
 		NamespaceErr: ErrAlreadyExists,
-		Namespaces:   map[string]struct{}{name: struct{}{}},
+		Namespaces:   map[string]struct{}{name: {}},
 	}
 	ops := NewOperations(tops, errK8s, fakeSt)
 	user := &database.User{Email: "teresa@luizalabs.com"}
@@ -536,7 +536,7 @@ func TestAppOperationsList(t *testing.T) {
 	teamName := "luizalabs"
 
 	user := &database.User{Email: "teresa@luizalabs.com"}
-	fk8s := &fakeK8sOperations{Namespaces: map[string]struct{}{appName: struct{}{}}}
+	fk8s := &fakeK8sOperations{Namespaces: map[string]struct{}{appName: {}}}
 
 	ops := NewOperations(tops, fk8s, nil)
 	tops.(*team.FakeOperations).Storage[appName] = &database.Team{
@@ -665,7 +665,7 @@ func TestAppOperationsSetEnvProtectedVar(t *testing.T) {
 		Users: []database.User{*user},
 	}
 	evs := make([]*EnvVar, len(slug.ProtectedEnvVars))
-	for i, _ := range evs {
+	for i := range evs {
 		evs[i] = &EnvVar{Key: slug.ProtectedEnvVars[i], Value: "test"}
 	}
 

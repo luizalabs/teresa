@@ -222,7 +222,7 @@ func serviceSpec(namespace, name, srvType string) *k8sv1.Service {
 				"run": name,
 			},
 			Ports: []k8sv1.ServicePort{
-				k8sv1.ServicePort{
+				{
 					Port:       80,
 					Protocol:   k8sv1.ProtocolTCP,
 					TargetPort: intstr.FromInt(deploy.DefaultPort),

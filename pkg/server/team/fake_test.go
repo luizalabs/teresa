@@ -90,7 +90,7 @@ func TestFakeOperationsAddUserUserAlreadyInTeam(t *testing.T) {
 	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
 	fake.(*FakeOperations).Storage[expectedName] = &database.Team{
 		Name:  expectedName,
-		Users: []database.User{database.User{Email: expectedUserEmail}},
+		Users: []database.User{{Email: expectedUserEmail}},
 	}
 
 	if err := fake.AddUser(expectedName, expectedUserEmail); err != ErrUserAlreadyInTeam {
@@ -195,7 +195,7 @@ func TestFakeOpsRemoveUserSuccess(t *testing.T) {
 	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
 	fake.(*FakeOperations).Storage[expectedTeam] = &database.Team{
 		Name:  expectedTeam,
-		Users: []database.User{database.User{Email: expectedUserEmail}},
+		Users: []database.User{{Email: expectedUserEmail}},
 	}
 
 	if err := fake.RemoveUser(expectedTeam, expectedUserEmail); err != nil {

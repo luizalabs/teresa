@@ -118,7 +118,7 @@ func TestTeamAddUserUserAlreadyInTeam(t *testing.T) {
 	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
 	fake.(*FakeOperations).Storage[expectedName] = &database.Team{
 		Name:  expectedName,
-		Users: []database.User{database.User{Email: expectedUserEmail}},
+		Users: []database.User{{Email: expectedUserEmail}},
 	}
 
 	s := NewService(fake)
@@ -231,7 +231,7 @@ func TestRemoveUserSuccess(t *testing.T) {
 	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
 	fake.(*FakeOperations).Storage[expectedTeam] = &database.Team{
 		Name:  expectedTeam,
-		Users: []database.User{database.User{Email: expectedUserEmail}},
+		Users: []database.User{{Email: expectedUserEmail}},
 	}
 	srv := NewService(fake)
 	ctx := context.WithValue(context.Background(), "user", &database.User{Email: "gopher@luizalabs.com", IsAdmin: true})

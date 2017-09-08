@@ -37,7 +37,7 @@ func (f *FakeOperations) Deploy(user *database.User, appName string, tarBall io.
 	return nil, nil
 }
 
-func (f *FakeOperations) Rollback(user *database.User, rollback *Rollback) error {
+func (f *FakeOperations) Rollback(user *database.User, appName, revision string) error {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 
@@ -45,7 +45,7 @@ func (f *FakeOperations) Rollback(user *database.User, rollback *Rollback) error
 		return auth.ErrPermissionDenied
 	}
 
-	if _, found := f.Storage[rollback.AppName]; !found {
+	if _, found := f.Storage[appName]; !found {
 		return app.ErrNotFound
 	}
 

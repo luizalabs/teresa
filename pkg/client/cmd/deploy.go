@@ -373,8 +373,7 @@ func deployRollback(cmd *cobra.Command, args []string) {
 		Revision: revision,
 	}
 	cli := dpb.NewDeployClient(conn)
-	_, err = cli.Rollback(context.Background(), req)
-	if err != nil {
+	if _, err = cli.Rollback(context.Background(), req); err != nil {
 		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 

@@ -22,7 +22,7 @@ const (
 type Operations interface {
 	Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, error)
 	List(user *database.User, appName string) ([]*ReplicaSetListItem, error)
-	Rollback(user *database.User, rollback *Rollback) error
+	Rollback(user *database.User, appName, revision string) error
 }
 
 type K8sOperations interface {
@@ -179,13 +179,13 @@ func (ops *DeployOperations) List(user *database.User, appName string) ([]*Repli
 	return items, nil
 }
 
-func (ops *DeployOperations) Rollback(user *database.User, rollback *Rollback) error {
-	app, err := ops.appOps.CheckPermAndGet(user, rollback.AppName)
+func (ops *DeployOperations) Rollback(user *database.User, appName, revision string) error {
+	app, err := ops.appOps.CheckPermAndGet(user, appName)
 	if err != nil {
 		return err
 	}
 
-	if err = ops.k8s.DeployRollbackToRevision(app.Name, app.Name, rollback.Revision); err != nil {
+	if err = ops.k8s.DeployRollbackToRevision(appName, appName, revision); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
 

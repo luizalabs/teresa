@@ -97,9 +97,7 @@ func (s *Service) List(ctx context.Context, req *dpb.ListRequest) (*dpb.ListResp
 func (s *Service) Rollback(ctx context.Context, req *dpb.RollbackRequest) (*dpb.Empty, error) {
 	user := ctx.Value("user").(*database.User)
 
-	rb := newRollback(req)
-
-	err := s.ops.Rollback(user, rb)
+	err := s.ops.Rollback(user, req.AppName, req.Revision)
 	if err != nil {
 		return nil, err
 	}

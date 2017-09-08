@@ -298,3 +298,44 @@ func TestSetAutoscalePermissionDenied(t *testing.T) {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }
+
+func TestDeleteSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	req := &appb.DeleteRequest{Name: name}
+	if _, err := s.Delete(ctx, req); err != nil {
+		t.Error("Got error on delete: ", err)
+	}
+}
+
+func TestDeleteAppNotFound(t *testing.T) {
+	name := "teresa"
+	s := NewService(NewFakeOperations())
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	req := &appb.DeleteRequest{Name: name}
+	if _, err := s.Delete(ctx, req); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestDeletePermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	req := &appb.DeleteRequest{Name: name}
+
+	if _, err := s.Delete(ctx, req); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}

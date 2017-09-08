@@ -214,18 +214,18 @@ var appDelCmd = &cobra.Command{
 }
 
 func appDel(cmd *cobra.Command, args []string) {
-	conn, err := connection.New(cfgFile)
-	if err != nil {
-		client.PrintErrorAndExit("Error connecting to server: %v", err)
-	}
-	defer conn.Close()
-
 	if len(args) == 0 || len(args) > 1 {
 		cmd.Usage()
 		return
 	}
 
 	name := args[0]
+
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
 
 	cli := appb.NewAppClient(conn)
 	if err != nil {
@@ -249,8 +249,7 @@ func appDel(cmd *cobra.Command, args []string) {
 	} else {
 		_, err := cli.Delete(context.Background(), &appb.DeleteRequest{Name: name})
 		if err != nil {
-			fmt.Println(err)
-			//client.PrintErrorAndExit(client.GetErrorMsg(err), err)
+			client.PrintErrorAndExit(client.GetErrorMsg(err))
 			return
 		}
 		fmt.Printf("App %s deleted!\n", name)

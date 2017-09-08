@@ -49,10 +49,10 @@ administrative users, which are just regular users with an admin flag set up and
 only them can do user and team management.
 
 To create an admin user you need access to the environment where the Teresa
-server is running (often a Kubernetes POD):
+server is running (often a Kubernetes POD in namespace `teresa`):
 
     $ export POD_NAME=$(kubectl get pods --namespace teresa -l "app=teresa" -o jsonpath="{.items[0].metadata.name}")
-    $ kubectl exec $POD_NAME -it teresa-server create-super-user --email admin_email --password xxxxxxxx -namespace teresa
+    $ kubectl exec $POD_NAME -it teresa-server create-super-user --email admin_email --password xxxxxxxx --namespace teresa
 
 Now you can start creating other users and teams. First, you need to get the
 Teresa endpoint created by Kubernetes and configure the client (get it

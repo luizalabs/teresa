@@ -1,0 +1,17 @@
+To create an admin user, run the below commands:
+
+  1. export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "fullname" . }}" -o jsonpath="{.items[0].metadata.name}")
+  2. kubectl exec $POD_NAME -it teresa-server create-super-user --email admin_email --password xxxxxxxx --namespace {{ .Release.Namespace }}
+
+You can access teresa server with the teresa client
+
+  1. Download the client on https://github.com/luizalabs/teresa/releases
+    If you use osx you can install with homebrew, running:
+
+    brew tap luizalabs/teresa-cli
+    brew install teresa
+
+  2. Get the service external IP address by: kubectl get svc --namespace {{ .Release.Namespace }} -l app={{ template "fullname" . }} -o wide
+
+  3. Configure the Teresa client
+    teresa config set-cluster <cluster-name> --server <cluster-endpoint> --current

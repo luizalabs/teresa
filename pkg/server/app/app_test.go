@@ -16,7 +16,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/slug"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/team"
-	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	te "github.com/luizalabs/teresa/pkg/server/errors"
 )
 
 type fakeK8sOperations struct {
@@ -515,8 +515,8 @@ func TestAppOperationsInfoErrPermissionDenied(t *testing.T) {
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 
-	if _, err := ops.Info(user, "teresa"); teresa_errors.Get(err) != auth.ErrPermissionDenied {
-		t.Errorf("expected ErrPermissionDenied, got %v", teresa_errors.Get(err))
+	if _, err := ops.Info(user, "teresa"); te.Get(err) != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", te.Get(err))
 	}
 }
 
@@ -525,8 +525,8 @@ func TestAppOperationsInfoErrNotFound(t *testing.T) {
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 
-	if _, err := ops.Info(user, "teresa"); teresa_errors.Get(err) != ErrNotFound {
-		t.Errorf("expected ErrNotFound, got %v", teresa_errors.Get(err))
+	if _, err := ops.Info(user, "teresa"); te.Get(err) != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", te.Get(err))
 	}
 }
 
@@ -599,7 +599,7 @@ func TestAppOperationsSetEnvErrNotFound(t *testing.T) {
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 
-	if err := ops.SetEnv(user, "teresa", nil); teresa_errors.Get(err) != ErrNotFound {
+	if err := ops.SetEnv(user, "teresa", nil); te.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
@@ -614,7 +614,7 @@ func TestAppOperationsSetEnvErrInternalServerErrorOnSaveApp(t *testing.T) {
 		Users: []database.User{*user},
 	}
 
-	if err := ops.SetEnv(user, app.Name, nil); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
+	if err := ops.SetEnv(user, app.Name, nil); te.Get(err) != te.ErrInternalServerError {
 		t.Errorf("expected ErrInternalServerError, got %v", err)
 	}
 }
@@ -650,7 +650,7 @@ func TestAppOperationsUnsetEnvErrNotFound(t *testing.T) {
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 
-	if err := ops.UnsetEnv(user, "teresa", nil); teresa_errors.Get(err) != ErrNotFound {
+	if err := ops.UnsetEnv(user, "teresa", nil); te.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
@@ -699,7 +699,7 @@ func TestAppOperationsUnsetEnvErrInternalServerErrorOnSaveApp(t *testing.T) {
 		Users: []database.User{*user},
 	}
 
-	if err := ops.UnsetEnv(user, app.Name, nil); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
+	if err := ops.UnsetEnv(user, app.Name, nil); te.Get(err) != te.ErrInternalServerError {
 		t.Errorf("expected ErrInternalServerError, got %v", err)
 	}
 }
@@ -736,7 +736,7 @@ func TestAppOperationsSetAutoscaleErrNotFound(t *testing.T) {
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 
-	if err := ops.SetAutoscale(user, "teresa", nil); teresa_errors.Get(err) != ErrNotFound {
+	if err := ops.SetAutoscale(user, "teresa", nil); te.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
@@ -753,7 +753,7 @@ func TestAppOperationsSetAutoscaleErrInternalServerErrorOnSaveApp(t *testing.T) 
 	req := newAutoscaleRequest("teresa")
 	as := newAutoscale(req)
 
-	if err := ops.SetAutoscale(user, app.Name, as); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
+	if err := ops.SetAutoscale(user, app.Name, as); te.Get(err) != te.ErrInternalServerError {
 		t.Errorf("expected ErrInternalServerError, got %v", err)
 	}
 }

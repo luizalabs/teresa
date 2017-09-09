@@ -9,7 +9,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
-	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	te "github.com/luizalabs/teresa/pkg/server/errors"
 	"github.com/luizalabs/teresa/pkg/server/validations"
 )
 
@@ -36,7 +36,7 @@ func (dbu *DatabaseOperations) Login(email, password string) (string, error) {
 		return "", auth.ErrPermissionDenied
 	}
 	if err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); err != nil {
-		return "", teresa_errors.New(
+		return "", te.New(
 			auth.ErrPermissionDenied,
 			errors.Wrap(err, fmt.Sprintf("Authentication failed for user %s", email)),
 		)
@@ -44,7 +44,7 @@ func (dbu *DatabaseOperations) Login(email, password string) (string, error) {
 
 	token, err := dbu.auth.GenerateToken(email)
 	if err != nil {
-		return "", teresa_errors.New(
+		return "", te.New(
 			auth.ErrPermissionDenied,
 			errors.Wrap(err, "Signing JWT token"),
 		)
@@ -67,15 +67,15 @@ func (dbu *DatabaseOperations) SetPassword(email, newPassword string) error {
 	}
 	pass, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
-		return teresa_errors.New(
-			teresa_errors.ErrInternalServerError,
+		return te.New(
+			te.ErrInternalServerError,
 			errors.Wrap(err, fmt.Sprintf("Generating the password hash to user %s", email)),
 		)
 	}
 	u.Password = string(pass)
 	if err = dbu.DB.Save(u).Error; err != nil {
-		return teresa_errors.New(
-			teresa_errors.ErrInternalServerError,
+		return te.New(
+			te.ErrInternalServerError,
 			errors.Wrap(err, fmt.Sprintf("Updating password of user %s", email)),
 		)
 	}
@@ -88,8 +88,8 @@ func (dbu *DatabaseOperations) Delete(email string) error {
 		return err
 	}
 	if err = dbu.DB.Delete(u).Error; err != nil {
-		return teresa_errors.New(
-			teresa_errors.ErrInternalServerError,
+		return te.New(
+			te.ErrInternalServerError,
 			errors.Wrap(err, fmt.Sprintf("Deleting user %s", email)),
 		)
 	}
@@ -110,8 +110,8 @@ func (dbu *DatabaseOperations) Create(name, email, pass string, admin bool) erro
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
 	if err != nil {
-		return teresa_errors.New(
-			teresa_errors.ErrInternalServerError,
+		return te.New(
+			te.ErrInternalServerError,
 			errors.Wrap(err, fmt.Sprintf("Generating the password hash to user %s", email)),
 		)
 	}
@@ -120,8 +120,8 @@ func (dbu *DatabaseOperations) Create(name, email, pass string, admin bool) erro
 	u.Password = string(hash)
 	u.IsAdmin = admin
 	if err = dbu.DB.Save(u).Error; err != nil {
-		return teresa_errors.New(
-			teresa_errors.ErrInternalServerError,
+		return te.New(
+			te.ErrInternalServerError,
 			errors.Wrap(err, fmt.Sprintf("Creating user %s", email)),
 		)
 	}

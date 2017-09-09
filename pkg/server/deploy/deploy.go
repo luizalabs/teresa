@@ -10,7 +10,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
-	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	te "github.com/luizalabs/teresa/pkg/server/errors"
 	"github.com/pborman/uuid"
 )
 
@@ -58,7 +58,7 @@ func (ops *DeployOperations) Deploy(user *database.User, appName string, tarBall
 
 	confFiles, err := getDeployConfigFilesFromTarBall(tarBall, a.ProcessType)
 	if err != nil {
-		return nil, teresa_errors.New(ErrInvalidTeresaYamlFile, err)
+		return nil, te.New(ErrInvalidTeresaYamlFile, err)
 	}
 
 	deployId := genDeployId()
@@ -173,7 +173,7 @@ func (ops *DeployOperations) List(user *database.User, appName string) ([]*Repli
 
 	items, err := ops.k8s.ReplicaSetListByLabel(appName, runLabel, appName)
 	if err != nil {
-		return nil, teresa_errors.NewInternalServerError(err)
+		return nil, te.NewInternalServerError(err)
 	}
 
 	return items, nil
@@ -186,11 +186,11 @@ func (ops *DeployOperations) Rollback(user *database.User, appName, revision str
 	}
 
 	if err = ops.k8s.DeployRollbackToRevision(appName, appName, revision); err != nil {
-		return teresa_errors.NewInternalServerError(err)
+		return te.NewInternalServerError(err)
 	}
 
 	if err := ops.appOps.SaveApp(app, user.Email); err != nil {
-		return teresa_errors.NewInternalServerError(err)
+		return te.NewInternalServerError(err)
 	}
 
 	return nil

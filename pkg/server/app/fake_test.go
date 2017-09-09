@@ -6,7 +6,7 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
-	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	te "github.com/luizalabs/teresa/pkg/server/errors"
 )
 
 func TestFakeOperationsCreate(t *testing.T) {
@@ -148,8 +148,8 @@ func TestFakeOperationsInfoErrPermissionDenied(t *testing.T) {
 	app := &App{Name: "teresa"}
 	fake.(*FakeOperations).Storage[app.Name] = app
 
-	if _, err := fake.Info(user, app.Name); teresa_errors.Get(err) != auth.ErrPermissionDenied {
-		t.Errorf("expected ErrPermissionDenied, got %v", teresa_errors.Get(err))
+	if _, err := fake.Info(user, app.Name); te.Get(err) != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", te.Get(err))
 	}
 }
 
@@ -157,8 +157,8 @@ func TestFakeOperationsInfoErrNotFound(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Name: "gopher@luizalabs.com"}
 
-	if _, err := fake.Info(user, "teresa"); teresa_errors.Get(err) != ErrNotFound {
-		t.Errorf("expected ErrNotFound, got %v", teresa_errors.Get(err))
+	if _, err := fake.Info(user, "teresa"); te.Get(err) != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", te.Get(err))
 	}
 }
 

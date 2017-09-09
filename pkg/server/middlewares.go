@@ -9,7 +9,7 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
-	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	te "github.com/luizalabs/teresa/pkg/server/errors"
 	"github.com/luizalabs/teresa/pkg/server/user"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -96,7 +96,7 @@ func logUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryS
 			logger = logger.WithField("user", u.Email)
 		}
 		logger.Error("Log Interceptor got an Error")
-		return resp, teresa_errors.Get(err)
+		return resp, te.Get(err)
 	}
 	return resp, nil
 }
@@ -110,7 +110,7 @@ func logStreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.
 			logger = logger.WithField("user", u.Email)
 		}
 		logger.Error("Log Interceptor got an Error")
-		return teresa_errors.Get(err)
+		return te.Get(err)
 	}
 	return nil
 }

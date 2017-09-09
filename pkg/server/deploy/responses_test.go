@@ -27,7 +27,7 @@ func TestNewListResponse(t *testing.T) {
 	resp := newListResponse(items)
 
 	if !test.DeepEqual(resp.Deploys, items) {
-		t.Fatal("expected %v items, got %v", resp.Deploys, items)
+		t.Fatalf("expected %v items, got %v", resp.Deploys, items)
 	}
 }
 

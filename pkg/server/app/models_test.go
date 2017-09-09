@@ -113,7 +113,7 @@ func TestNewListResponse(t *testing.T) {
 
 	resp := newListResponse(items)
 	if len(items) != len(resp.Apps) {
-		t.Fatal("expected %d items, got %d", len(items), len(resp.Apps))
+		t.Fatalf("expected %d items, got %d", len(items), len(resp.Apps))
 	}
 	itemExpected := items[0]
 	itemActual := resp.Apps[0]

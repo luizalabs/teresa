@@ -51,7 +51,7 @@ func init() {
 	// the config is only loaded if the command is valid,
 	// that is why we use OnInitialize
 	cobra.OnInitialize(initConfig)
-	// using this so i will check manualy for strange behavior of the cli
+	// using this so i will check manually for strange behavior of the cli
 	RootCmd.SilenceErrors = true
 	RootCmd.SilenceUsage = true
 

@@ -245,7 +245,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Error sending deploy information: %v", err)
 	}
 
-	g, ctx := errgroup.WithContext(ctx)
+	g, _ := errgroup.WithContext(ctx)
 	g.Go(func() error { return sendAppTarball(appName, appFolder, stream) })
 	g.Go(func() error { return streamServerMsgs(stream) })
 

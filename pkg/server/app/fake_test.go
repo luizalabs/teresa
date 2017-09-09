@@ -186,7 +186,7 @@ func TestFakeOperationsTeamName(t *testing.T) {
 	fake := NewFakeOperations()
 	teamName, err := fake.TeamName("teresa")
 	if err != nil {
-		t.Errorf("got error on get TeamName:", err)
+		t.Errorf("got error on get TeamName: %v", err)
 	}
 	if teamName != "luizalabs" {
 		t.Errorf("expected luizalabs, got %s", teamName)
@@ -197,7 +197,7 @@ func TestFakeOperationsMeta(t *testing.T) {
 	fake := NewFakeOperations()
 	a, err := fake.Get("teresa")
 	if err != nil {
-		t.Errorf("got error on get app Meta:", err)
+		t.Errorf("got error on get app Meta: %v", err)
 	}
 	if a.Name != "teresa" {
 		t.Errorf("expected teresa, got %s", a.Name)

@@ -184,10 +184,10 @@ func TestDeploySpecToK8sDeploy(t *testing.T) {
 	var expectedReplicas int32 = 5
 	k8sDeploy, err := deploySpecToK8sDeploy(ds, expectedReplicas)
 	if err != nil {
-		t.Fatal("error to convert spec", err)
+		t.Fatalf("error to convert specL %v", err)
 	}
 	if len(k8sDeploy.Spec.Template.Spec.Containers) != 1 {
-		t.Fatal("expected 1 container, got %d", len(k8sDeploy.Spec.Template.Spec.Containers))
+		t.Fatalf("expected 1 container, got %d", len(k8sDeploy.Spec.Template.Spec.Containers))
 	}
 	c := k8sDeploy.Spec.Template.Spec.Containers[0]
 	for idx, arg := range ds.Args {

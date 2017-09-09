@@ -587,7 +587,7 @@ func init() {
 	appCmd.AddCommand(appAutoscaleSetCmd)
 
 	appCreateCmd.Flags().String("team", "", "team owner of the app")
-	appCreateCmd.Flags().Int32("scale-min", 1, "minimium number of replicas")
+	appCreateCmd.Flags().Int32("scale-min", 1, "minimum number of replicas")
 	appCreateCmd.Flags().Int32("scale-max", 2, "maximum number of replicas")
 	appCreateCmd.Flags().Int32("scale-cpu", 70, "auto scale target cpu percentage to scale")
 	appCreateCmd.Flags().String("cpu", "200m", "allocated pod cpu")
@@ -605,7 +605,7 @@ func init() {
 	appLogsCmd.Flags().Int64("lines", 10, "number of lines")
 	appLogsCmd.Flags().Bool("follow", false, "follow logs")
 	// App autoscale
-	appAutoscaleSetCmd.Flags().Int32("min", flagNotDefined, "Minimium number of replicas")
+	appAutoscaleSetCmd.Flags().Int32("min", flagNotDefined, "Minimum number of replicas")
 	appAutoscaleSetCmd.Flags().Int32("max", flagNotDefined, "Maximum number of replicas")
 	appAutoscaleSetCmd.Flags().Int32("cpu-percent", flagNotDefined, "The target average CPU utilization (represented as a percent of requested CPU) over all the pods. If it's not specified or negative, the current autoscaling policy will be used.")
 }

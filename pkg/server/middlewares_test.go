@@ -16,7 +16,7 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
-	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	te "github.com/luizalabs/teresa/pkg/server/errors"
 	"github.com/luizalabs/teresa/pkg/server/user"
 )
 
@@ -178,7 +178,7 @@ func TestLogStreamInterceptor(t *testing.T) {
 		rawError      error
 		expectedError error
 	}{
-		{teresa_errors.New(grpcErr, rawErr), grpcErr},
+		{te.New(grpcErr, rawErr), grpcErr},
 		{grpcErr, grpcErr},
 		{rawErr, rawErr},
 		{nil, nil},
@@ -208,7 +208,7 @@ func TestLogUnaryInterceptor(t *testing.T) {
 		expectedError  error
 	}{
 		{"result", rawErr, rawErr},
-		{"result", teresa_errors.New(grpcErr, rawErr), grpcErr},
+		{"result", te.New(grpcErr, rawErr), grpcErr},
 		{"result", nil, nil},
 		{"", grpcErr, grpcErr},
 	}

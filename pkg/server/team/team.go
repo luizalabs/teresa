@@ -5,7 +5,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/luizalabs/teresa/pkg/server/database"
-	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	te "github.com/luizalabs/teresa/pkg/server/errors"
 	"github.com/luizalabs/teresa/pkg/server/user"
 	"github.com/pkg/errors"
 )
@@ -34,8 +34,8 @@ func (dbt *DatabaseOperations) Create(name, email, url string) error {
 	t.URL = url
 
 	if err := dbt.DB.Save(t).Error; err != nil {
-		return teresa_errors.New(
-			teresa_errors.ErrInternalServerError,
+		return te.New(
+			te.ErrInternalServerError,
 			errors.Wrap(err, fmt.Sprintf("saving team %s", name)),
 		)
 	}
@@ -66,8 +66,8 @@ func (dbt *DatabaseOperations) AddUser(name, userEmail string) error {
 func (dbt *DatabaseOperations) List() ([]*database.Team, error) {
 	var teams []*database.Team
 	if err := dbt.DB.Find(&teams).Error; err != nil {
-		return nil, teresa_errors.New(
-			teresa_errors.ErrInternalServerError,
+		return nil, te.New(
+			te.ErrInternalServerError,
 			errors.Wrap(err, "finding teams"),
 		)
 	}
@@ -86,8 +86,8 @@ func (dbt *DatabaseOperations) ListByUser(userEmail string) ([]*database.Team, e
 
 	var teams []*database.Team
 	if err = dbt.DB.Model(u).Association("Teams").Find(&teams).Error; err != nil {
-		return nil, teresa_errors.New(
-			teresa_errors.ErrInternalServerError,
+		return nil, te.New(
+			te.ErrInternalServerError,
 			errors.Wrap(err, fmt.Sprintf("finding teams of user %s", userEmail)),
 		)
 	}
@@ -101,8 +101,8 @@ func (dbt *DatabaseOperations) ListByUser(userEmail string) ([]*database.Team, e
 func (dbt *DatabaseOperations) findTeamUsers(teams []*database.Team) error {
 	for _, t := range teams {
 		if err := dbt.DB.Model(t).Association("Users").Find(&t.Users).Error; err != nil {
-			return teresa_errors.New(
-				teresa_errors.ErrInternalServerError,
+			return te.New(
+				te.ErrInternalServerError,
 				errors.Wrap(err, fmt.Sprintf("associating team %s with its users", t.Name)),
 			)
 		}
@@ -134,7 +134,7 @@ func (dbt *DatabaseOperations) RemoveUser(name, userEmail string) error {
 	}
 
 	if err := dbt.DB.Model(t).Association("Users").Delete(u).Error; err != nil {
-		return teresa_errors.NewInternalServerError(err)
+		return te.NewInternalServerError(err)
 	}
 
 	return nil

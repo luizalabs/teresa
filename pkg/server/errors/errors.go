@@ -1,4 +1,4 @@
-package teresa_errors
+package te
 
 import (
 	"fmt"

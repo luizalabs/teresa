@@ -10,7 +10,7 @@ import (
 	appb "github.com/luizalabs/teresa/pkg/protobuf/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
-	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	te "github.com/luizalabs/teresa/pkg/server/errors"
 )
 
 type LogsStreamWrapper struct {
@@ -142,7 +142,7 @@ func TestInfoAppNotFound(t *testing.T) {
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	if _, err := s.Info(ctx, &appb.InfoRequest{Name: "teresa"}); teresa_errors.Get(err) != ErrNotFound {
+	if _, err := s.Info(ctx, &appb.InfoRequest{Name: "teresa"}); te.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
@@ -155,7 +155,7 @@ func TestInfoPermissionDenied(t *testing.T) {
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	if _, err := s.Info(ctx, &appb.InfoRequest{Name: name}); teresa_errors.Get(err) != auth.ErrPermissionDenied {
+	if _, err := s.Info(ctx, &appb.InfoRequest{Name: name}); te.Get(err) != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }

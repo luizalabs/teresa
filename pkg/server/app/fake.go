@@ -8,7 +8,7 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
-	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	te "github.com/luizalabs/teresa/pkg/server/errors"
 )
 
 type FakeOperations struct {
@@ -69,11 +69,11 @@ func (f *FakeOperations) Info(user *database.User, appName string) (*Info, error
 	defer f.mutex.Unlock()
 
 	if !hasPerm(user.Email) {
-		return nil, teresa_errors.New(auth.ErrPermissionDenied, fmt.Errorf("error"))
+		return nil, te.New(auth.ErrPermissionDenied, fmt.Errorf("error"))
 	}
 
 	if _, found := f.Storage[appName]; !found {
-		return nil, teresa_errors.New(ErrNotFound, fmt.Errorf("error"))
+		return nil, te.New(ErrNotFound, fmt.Errorf("error"))
 	}
 
 	return &Info{}, nil

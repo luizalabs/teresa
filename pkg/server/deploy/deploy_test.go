@@ -13,7 +13,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
-	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	te "github.com/luizalabs/teresa/pkg/server/errors"
 )
 
 type fakeReadSeeker struct{}
@@ -384,7 +384,7 @@ func TestDeployListInternalServerError(t *testing.T) {
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 
-	if _, err := ops.List(user, "teresa"); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
+	if _, err := ops.List(user, "teresa"); te.Get(err) != te.ErrInternalServerError {
 		t.Errorf("expected ErrInternalServerError, got %s", err)
 	}
 }

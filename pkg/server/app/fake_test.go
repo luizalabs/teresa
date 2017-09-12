@@ -376,6 +376,9 @@ func TestFakeOperationsDelete(t *testing.T) {
 	if err := fake.Delete(user, app.Name); err != nil {
 		t.Error("error on Delete: ", err)
 	}
+	if _, found := fake.(*FakeOperations).Storage[app.Name]; found {
+		t.Error("expected not found app, but founded")
+	}
 }
 func TestFakeOperationsDeletePermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()

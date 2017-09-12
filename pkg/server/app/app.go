@@ -209,6 +209,7 @@ func (ops *AppOperations) Info(user *database.User, appName string) (*Info, erro
 		return nil, teresa_errors.NewInternalServerError(err)
 	}
 
+	sortEnvsByKey(appMeta.EnvVars)
 	info := &Info{
 		Team:      teamName,
 		Addresses: addr,

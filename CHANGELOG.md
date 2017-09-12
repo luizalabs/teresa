@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Deploys are now performed using the 'deploy create' command
+- app info now print env vars sorted
 
 ### Fixed
 - App info don't print pod without status

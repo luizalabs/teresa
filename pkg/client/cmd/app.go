@@ -288,6 +288,7 @@ func appInfo(cmd *cobra.Command, args []string) {
 		}
 	}
 	if len(info.EnvVars) > 0 {
+		client.SortEnvsByKey(info.EnvVars)
 		fmt.Println(bold("env vars:"))
 		for _, ev := range info.EnvVars {
 			fmt.Printf("  %s=%s\n", ev.Key, ev.Value)

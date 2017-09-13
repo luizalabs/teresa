@@ -1,7 +1,7 @@
 # Teresa
 [![Release](https://img.shields.io/github/release/luizalabs/teresa.svg?style=flat-square)](https://github.com/luizalabs/teresa/releases/latest)
 [![Software License](https://img.shields.io/badge/license-apache-brightgreen.svg?style=flat-square)](/LICENSE.md)
-[![Build Status](https://img.shields.io/travis/luizalabs/teresa.svg?style=flat-square)](https://travis-ci.org/luizalabs/teresa)
+[![Build Status](https://img.shields.io/travis/luizalabs/teresa/master.svg?style=flat-square)](https://travis-ci.org/luizalabs/teresa)
 [![codecov](https://img.shields.io/codecov/c/github/luizalabs/teresa/master.svg?style=flat-square")](https://codecov.io/gh/luizalabs/teresa)
 [![Go Report Card](https://goreportcard.com/badge/github.com/luizalabs/teresa?style=flat-square)](https://goreportcard.com/report/github.com/luizalabs/teresa)
 

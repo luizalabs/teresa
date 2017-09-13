@@ -27,6 +27,10 @@ import (
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Everything about deploys",
+	Long: `To deploy your application you must use the new "teresa deploy create ..."
+
+To see the "deploy create" help, please enter either "teresa deploy create --help"
+or just "teresa deploy create".`,
 }
 
 var deployCreateCmd = &cobra.Command{

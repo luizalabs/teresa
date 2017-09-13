@@ -16,7 +16,7 @@ Server requirements:
 
 - database backend to store users and teams (SQLite or MySQL)
 
-- storage for build artifacts (Amazon S3 or minio)
+- storage to save docker images (AWS S3 or minio)
 
 - rsa keys for token signing
 

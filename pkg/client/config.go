@@ -38,18 +38,22 @@ func init() {
 	DefaultConfigFileLocation = filepath.Join(homeDir, ".teresa", "config.yaml")
 }
 
-func SaveToken(cfgFile, token string) error {
+func SaveToken(cfgFile, cfgCluster, token string) error {
 	cfg, err := ReadConfigFile(cfgFile)
 	if err != nil {
 		return err
 	}
-	cc, ok := cfg.Clusters[cfg.CurrentCluster]
+	cluster := cfgCluster
+	if cluster == "" {
+		cluster = cfg.CurrentCluster
+	}
+	cc, ok := cfg.Clusters[cluster]
 	if !ok {
 		return ErrInvalidConfigFile
 	}
 
 	cc.Token = token
-	cfg.Clusters[cfg.CurrentCluster] = cc
+	cfg.Clusters[cluster] = cc
 	return SaveConfigFile(cfgFile, cfg)
 }
 

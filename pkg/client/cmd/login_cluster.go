@@ -49,7 +49,7 @@ func login(cmd *cobra.Command, args []string) {
 	}
 	color.Green("Login OK")
 
-	if err = client.SaveToken(cfgFile, res.Token); err != nil {
+	if err = client.SaveToken(cfgFile, cfgCluster, res.Token); err != nil {
 		client.PrintErrorAndExit("Error trying to save token in configuration file: %v", err)
 	}
 }

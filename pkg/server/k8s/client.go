@@ -342,6 +342,9 @@ func (k *k8sClient) Autoscale(namespace string) (*app.Autoscale, error) {
 
 	hpa, err := kc.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(namespace)
 	if err != nil {
+		if k.IsNotFound(err) {
+			return nil, nil
+		}
 		return nil, errors.Wrap(err, "get autoscale failed")
 	}
 

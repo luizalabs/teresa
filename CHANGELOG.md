@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - login now use the --cluster flag to save the token to config file
 
+### Changed
+- Upgrade `slugbuilder` version to `v3.0.0`
+
 ## [0.8.0] - 2017-09-18
 ### Added
 - Command 'deploy list'

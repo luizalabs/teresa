@@ -21,7 +21,7 @@ const (
 type Options struct {
 	KeepAliveTimeout     time.Duration `split_words:"true" default:"30s"`
 	RevisionHistoryLimit int           `split_words:"true" default:"5"`
-	SlugBuilderImage     string        `split_words:"true" default:"luizalabs/slugbuilder:v2.5.0"`
+	SlugBuilderImage     string        `split_words:"true" default:"luizalabs/slugbuilder:v3.0.0"`
 	SlugRunnerImage      string        `split_words:"true" default:"luizalabs/slugrunner:v2.4.0"`
 	BuildLimitCPU        string        `split_words:"true" default:"800m"`
 	BuildLimitMemory     string        `split_words:"true" default:"1Gi"`

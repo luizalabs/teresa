@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Next Version] - Release Date
 ### Fixed
 - login now use the --cluster flag to save the token to config file
+- Don't return error on `app info` command if the app doesn't have HPA
 
 ## [0.8.0] - 2017-09-18
 ### Added

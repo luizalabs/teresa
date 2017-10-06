@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+	"time"
+
 	context "golang.org/x/net/context"
 
 	"github.com/fatih/color"
@@ -12,15 +15,19 @@ import (
 )
 
 var userName string
+var expiresIn time.Duration
 
 var loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Login in the currently selected cluster",
-	Long: `Login in the selected cluster.
+	Short: "Authorize access to the selected cluster",
+	Long: `Authorize access to the selected cluster.
 
 eg.:
 
-	$ teresa login --user user@mydomain.com
+	$ teresa login --user user@mydomain.com [--expires-in 168h]
+
+Where valid "expires-in" units are "ns", "us" (or "µs"), "ms", "s", "m", "h",
+as accepted by Go's time.ParseDuration.
 	`,
 	Run: login,
 }
@@ -30,6 +37,7 @@ func login(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 		return
 	}
+	fmt.Printf("expiresin: #v float: %f\n", expiresIn, float64(expiresIn))
 
 	p, err := client.GetMaskedPassword("Password: ")
 	if err != nil {
@@ -42,8 +50,9 @@ func login(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
+	exp := float64(expiresIn)
 	cli := userpb.NewUserClient(conn)
-	res, err := cli.Login(context.Background(), &userpb.LoginRequest{Email: userName, Password: p})
+	res, err := cli.Login(context.Background(), &userpb.LoginRequest{Email: userName, Password: p, ExpiresIn: exp})
 	if err != nil {
 		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
@@ -55,6 +64,7 @@ func login(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	loginCmd.Flags().StringVar(&userName, "user", "", "e-mail to login with")
+	loginCmd.Flags().StringVar(&userName, "user", "", "e-mail to login with (required)")
+	loginCmd.Flags().DurationVar(&expiresIn, "expires-in", 15*24*time.Hour, "duration of login token")
 	RootCmd.AddCommand(loginCmd)
 }

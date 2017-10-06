@@ -1,10 +1,13 @@
 package auth
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestFakeGenerateToken(t *testing.T) {
 	fake := NewFake()
-	token, err := fake.GenerateToken("gopher@luizalabs.com")
+	token, err := fake.GenerateToken("gopher@luizalabs.com", time.Second)
 	if err != nil {
 		t.Fatal("error on generate fake token: ", err)
 	}

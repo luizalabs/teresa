@@ -1,8 +1,10 @@
 package auth
 
+import "time"
+
 type Fake struct{}
 
-func (*Fake) GenerateToken(email string) (string, error) {
+func (*Fake) GenerateToken(email string, exp time.Duration) (string, error) {
 	return "good token", nil
 }
 

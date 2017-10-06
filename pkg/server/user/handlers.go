@@ -1,6 +1,8 @@
 package user
 
 import (
+	"time"
+
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 
@@ -14,7 +16,12 @@ type Service struct {
 }
 
 func (s *Service) Login(ctx context.Context, request *userpb.LoginRequest) (*userpb.LoginResponse, error) {
-	token, err := s.ops.Login(request.Email, request.Password)
+	exp := time.Hour * 24 * 15
+	e := ctx.Value("expires_in")
+	if e != nil {
+		exp = e.(time.Duration)
+	}
+	token, err := s.ops.Login(request.Email, request.Password, exp)
 	if err != nil {
 		return nil, auth.ErrPermissionDenied
 	}

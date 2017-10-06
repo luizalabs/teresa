@@ -7,6 +7,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Pod readiness to the `app info` output
 - [helm] minio as dependency
 
+### Changed
+- Using `dep` instead of `Godep` for dependencies management
+
 ## [0.9.0] - 2017-10-26
 ### Fixed
 - login now use the --cluster flag to save the token to config file
@@ -14,7 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Upgrade `slugbuilder` version to `v3.0.0`
-- Timeout of `PodRun` process (deploy and release) now is configurable
+- Timeout of `PodRun` process (deploy and release) is now configurable
 
 ### Added
 - Allows developers to set the JWT auth token expiration period

@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
@@ -18,7 +19,7 @@ const (
 )
 
 type Operations interface {
-	Login(email, password string) (string, error)
+	Login(email, password string, exp time.Duration) (string, error)
 	GetUser(email string) (*database.User, error)
 	SetPassword(email, newPassword string) error
 	Delete(email string) error
@@ -30,7 +31,7 @@ type DatabaseOperations struct {
 	auth auth.Auth
 }
 
-func (dbu *DatabaseOperations) Login(email, password string) (string, error) {
+func (dbu *DatabaseOperations) Login(email, password string, exp time.Duration) (string, error) {
 	u, err := dbu.GetUser(email)
 	if err != nil {
 		return "", auth.ErrPermissionDenied
@@ -42,7 +43,7 @@ func (dbu *DatabaseOperations) Login(email, password string) (string, error) {
 		)
 	}
 
-	token, err := dbu.auth.GenerateToken(email)
+	token, err := dbu.auth.GenerateToken(email, exp)
 	if err != nil {
 		return "", teresa_errors.New(
 			auth.ErrPermissionDenied,

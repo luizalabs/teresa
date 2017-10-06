@@ -2,6 +2,7 @@ package user
 
 import (
 	"sync"
+	"time"
 
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
@@ -12,7 +13,7 @@ type FakeOperations struct {
 	Storage map[string]*database.User
 }
 
-func (f *FakeOperations) Login(email, password string) (string, error) {
+func (f *FakeOperations) Login(email, password string, exp time.Duration) (string, error) {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 

@@ -10,6 +10,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Upgrade `slugbuilder` version to `v3.0.0`
 
+### Added
+- Allows developers to set the JWT auth token expiration period
+
 ## [0.8.0] - 2017-09-18
 ### Added
 - Command 'deploy list'

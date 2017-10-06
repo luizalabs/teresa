@@ -2,6 +2,7 @@ package user
 
 import (
 	"testing"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -40,7 +41,7 @@ func TestDatabaseOperationsLogin(t *testing.T) {
 		t.Fatal("error on create fake user: ", err)
 	}
 
-	token, err := dbu.Login(expectedEmail, expectedPassword)
+	token, err := dbu.Login(expectedEmail, expectedPassword, time.Second)
 	if err != nil {
 		t.Fatal("Error on perform Login: ", err)
 	}
@@ -58,7 +59,7 @@ func TestDatabaseOperationsBadLogin(t *testing.T) {
 
 	dbu := NewDatabaseOperations(db, auth.NewFake())
 
-	if _, err := dbu.Login("invalid@luizalabs.com", "secret"); err != auth.ErrPermissionDenied {
+	if _, err := dbu.Login("invalid@luizalabs.com", "secret", time.Second); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %s", err)
 	}
 }
@@ -117,7 +118,7 @@ func TestDatabaseOperationsSetPassword(t *testing.T) {
 	if err = dbu.SetPassword(expectedEmail, expectedPassword); err != nil {
 		t.Fatal("error trying to set a new password: ", err)
 	}
-	if _, err = dbu.Login(expectedEmail, expectedPassword); err != nil {
+	if _, err = dbu.Login(expectedEmail, expectedPassword, time.Second); err != nil {
 		t.Error("error trying to make login with new password: ", err)
 	}
 }

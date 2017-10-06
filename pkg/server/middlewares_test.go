@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -28,11 +29,11 @@ var (
 
 func TestAuthorize(t *testing.T) {
 	validEmail := "gopher@luizalabs.com"
-	validToken, err := authenticator.GenerateToken(validEmail)
+	validToken, err := authenticator.GenerateToken(validEmail, time.Second)
 	if err != nil {
 		t.Fatal("error on generate token: ", err)
 	}
-	tokenForInvalidUser, err := authenticator.GenerateToken("invalid@luizalabs.com")
+	tokenForInvalidUser, err := authenticator.GenerateToken("invalid@luizalabs.com", time.Second)
 	if err != nil {
 		t.Fatal("error on generate token: ", err)
 	}
@@ -114,7 +115,7 @@ func TestLoginUnaryInterceptor(t *testing.T) {
 		Email:    expectedUserEmail,
 	}
 
-	validToken, err := authenticator.GenerateToken(expectedUserEmail)
+	validToken, err := authenticator.GenerateToken(expectedUserEmail, time.Second)
 	if err != nil {
 		t.Fatal("error on generate token: ", err)
 	}
@@ -157,7 +158,7 @@ func TestLoginStreamInterceptor(t *testing.T) {
 		Email:    expectedUserEmail,
 	}
 
-	validToken, err := authenticator.GenerateToken(expectedUserEmail)
+	validToken, err := authenticator.GenerateToken(expectedUserEmail, time.Second)
 	if err != nil {
 		t.Fatal("error on generate token: ", err)
 	}

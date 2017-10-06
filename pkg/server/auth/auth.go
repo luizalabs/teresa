@@ -8,7 +8,7 @@ import (
 )
 
 type Auth interface {
-	GenerateToken(email string) (string, error)
+	GenerateToken(email string, exp time.Duration) (string, error)
 	ValidateToken(token string) (string, error)
 }
 
@@ -22,10 +22,10 @@ type JWTAuth struct {
 	publicKey  *rsa.PublicKey
 }
 
-func (a *JWTAuth) GenerateToken(email string) (string, error) {
+func (a *JWTAuth) GenerateToken(email string, exp time.Duration) (string, error) {
 	jwtClaims := jwt.MapClaims{
 		"email": email,
-		"exp":   time.Now().Add(time.Hour * 24 * 14).Unix()}
+		"exp":   time.Now().Add(exp).Unix()}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwtClaims)
 	return token.SignedString(a.privateKey)
 }

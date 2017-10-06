@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"testing"
+	"time"
 )
 
 var (
@@ -13,7 +14,7 @@ var (
 
 func TestJWTAuthGenerateToken(t *testing.T) {
 	a := New(privateKey, publicKey)
-	token, err := a.GenerateToken("gopher@luizalabs.com")
+	token, err := a.GenerateToken("gopher@luizalabs.com", time.Second)
 	if err != nil {
 		t.Fatal("error on generate token: ", err)
 	}
@@ -26,7 +27,7 @@ func TestJWTAuthValidateTokenSuccess(t *testing.T) {
 	a := New(privateKey, publicKey)
 
 	expectedEmail := "gopher@luizalabs.com"
-	token, err := a.GenerateToken(expectedEmail)
+	token, err := a.GenerateToken(expectedEmail, time.Second*10)
 	if err != nil {
 		t.Fatal("error on generate token: ", err)
 	}
@@ -44,6 +45,21 @@ func TestJWTAuthValidateTokenSuccess(t *testing.T) {
 func TestJWTAuthValidateTokenForInvalidToken(t *testing.T) {
 	a := New(privateKey, publicKey)
 	if _, err := a.ValidateToken("invalid@foo.com"); err != ErrPermissionDenied {
+		t.Error("expected ErrPermissionDenied, got nil")
+	}
+}
+
+func TestJWTAuthValidateExpiredToken(t *testing.T) {
+	exp, err := time.ParseDuration("-1s")
+	if err != nil {
+		t.Fatal("fix token duration accordingly to time.ParseDuration")
+	}
+	a := New(privateKey, publicKey)
+	token, err := a.GenerateToken("gopher@luizalabs.com", exp)
+	if err != nil {
+		t.Fatal("error on generate token: ", err)
+	}
+	if _, err := a.ValidateToken(token); err != ErrPermissionDenied {
 		t.Error("expected ErrPermissionDenied, got nil")
 	}
 }

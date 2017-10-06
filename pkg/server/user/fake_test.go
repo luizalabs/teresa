@@ -2,6 +2,7 @@ package user
 
 import (
 	"testing"
+	"time"
 
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
@@ -17,7 +18,7 @@ func TestFakeOperationsLogin(t *testing.T) {
 		Email:    expectedEmail,
 	}
 
-	token, err := fake.Login(expectedEmail, expectedPassword)
+	token, err := fake.Login(expectedEmail, expectedPassword, time.Second)
 	if err != nil {
 		t.Fatal("Error on perform Login in FakeOperations: ", err)
 	}
@@ -30,7 +31,7 @@ func TestFakeOperationsLogin(t *testing.T) {
 func TestFakeOperationsBadLogin(t *testing.T) {
 	fake := NewFakeOperations()
 
-	if _, err := fake.Login("invalid@luizalabs.com", "foo"); err != auth.ErrPermissionDenied {
+	if _, err := fake.Login("invalid@luizalabs.com", "foo", time.Second); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %s", err)
 	}
 }

@@ -82,8 +82,8 @@ Parameter | Description | Default
 `aws.key.secret` | AWS Secret Key | `""`
 `rsa.public` | RSA Public Key | `""`
 `rsa.private` | RSA Private Key | `""`
-`tls.crt` | (Optional) TLS Certificate | `""`
-`tls.key` | (Optional) TLS Certificate Key | `""`
+`tls.crt` | (Optional) The base64 of TLS Certificate | `""`
+`tls.key` | (Optional) The base64 of TLS Certificate Key | `""`
 `docker.registry` | Docker Registry | `luizalabs` 
 `docker.image` | Docker Image | `teresa`
 `docker.tag` | Docker Tag | `0.5.0`

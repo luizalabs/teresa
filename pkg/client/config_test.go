@@ -138,7 +138,7 @@ func TestSaveTokenForInvalidConfigFile(t *testing.T) {
 	}
 	defer os.Remove(confPath)
 
-	if err := SaveToken(confPath, "gopher"); err != ErrInvalidConfigFile {
+	if err := SaveToken(confPath, "", "gopher"); err != ErrInvalidConfigFile {
 		t.Errorf("expected ErrInvalidConfigFile, got %v", err)
 	}
 }
@@ -159,7 +159,7 @@ func TestSaveToken(t *testing.T) {
 	defer os.Remove(confPath)
 
 	expectedToken := "gopher"
-	if err := SaveToken(confPath, expectedToken); err != nil {
+	if err := SaveToken(confPath, "", expectedToken); err != nil {
 		t.Fatal("error trying to save token: ", err)
 	}
 

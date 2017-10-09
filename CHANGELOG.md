@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Using `dep` instead of `Godep` for dependencies management
+- deploy list now print revision in reverse order and remove current column
 
 ## [0.9.0] - 2017-10-26
 ### Fixed

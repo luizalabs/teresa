@@ -335,17 +335,19 @@ func deployList(cmd *cobra.Command, args []string) {
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"REVISION", "CURRENT", "AGE", "DESCRIPTION"})
+	table.SetHeader([]string{"REVISION", "AGE", "DESCRIPTION"})
 	table.SetRowLine(true)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetRowSeparator("-")
 	table.SetAutoWrapText(false)
 
-	sort.Sort(deploy.ByRevision(resp.Deploys))
+	sort.Sort(sort.Reverse(deploy.ByRevision(resp.Deploys)))
 	for _, d := range resp.Deploys {
+		if d.Current {
+			d.Revision = fmt.Sprintf("%s (current)", d.Revision)
+		}
 		r := []string{
 			d.Revision,
-			fmt.Sprintf("%t", d.Current),
 			shortHumanDuration(time.Duration(d.Age)),
 			d.Description,
 		}

@@ -1,6 +1,8 @@
 package k8s
 
 import (
+	"time"
+
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/deploy"
 	"github.com/luizalabs/teresa/pkg/server/healthcheck"
@@ -14,8 +16,9 @@ var validServiceTypes = map[api.ServiceType]bool{
 }
 
 type Config struct {
-	ConfigFile         string `split_words:"true"`
-	DefaultServiceType string `split_words:"true" default:"LoadBalancer"`
+	ConfigFile         string        `split_words:"true"`
+	DefaultServiceType string        `split_words:"true" default:"LoadBalancer"`
+	PodRunTimeout      time.Duration `split_words:"true" default:"30m"`
 }
 
 type Client interface {

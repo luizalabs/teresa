@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Upgrade `slugbuilder` version to `v3.0.0`
+- Timeout of `PodRun` process (deploy and release) now is configurable
 
 ### Added
 - Allows developers to set the JWT auth token expiration period

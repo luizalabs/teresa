@@ -29,6 +29,7 @@ const (
 type k8sClient struct {
 	conf               *restclient.Config
 	defaultServiceType string
+	podRunTimeout      time.Duration
 }
 
 func (k *k8sClient) buildClient() (*kubernetes.Clientset, error) {
@@ -452,7 +453,7 @@ func (k *k8sClient) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, 
 		}
 		io.Copy(w, stream)
 
-		if err = k.waitPodEnd(pod, 3*time.Second, 30*time.Minute); err != nil {
+		if err = k.waitPodEnd(pod, 3*time.Second, k.podRunTimeout); err != nil {
 			return
 		}
 
@@ -716,6 +717,8 @@ func newOutOfClusterK8sClient(conf *Config) (Client, error) {
 		return nil, err
 	}
 	return &k8sClient{
-		conf: k8sConf, defaultServiceType: conf.DefaultServiceType,
+		conf:               k8sConf,
+		defaultServiceType: conf.DefaultServiceType,
+		podRunTimeout:      conf.PodRunTimeout,
 	}, nil
 }

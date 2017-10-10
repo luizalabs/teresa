@@ -103,7 +103,7 @@ func TestLoginUnaryInterceptor(t *testing.T) {
 			return false, errors.New("Context without User")
 		}
 		if u.Email != expectedUserEmail {
-			return false, errors.New(fmt.Sprintf("expected %s, got %s", expectedUserEmail, u.Email))
+			return false, fmt.Errorf("expected %s, got %s", expectedUserEmail, u.Email)
 		}
 		return true, nil
 	}
@@ -146,7 +146,7 @@ func TestLoginStreamInterceptor(t *testing.T) {
 			return errors.New("Context without User")
 		}
 		if u.Email != expectedUserEmail {
-			return errors.New(fmt.Sprintf("expected %s, got %s", expectedUserEmail, u.Email))
+			return fmt.Errorf("expected %s, got %s", expectedUserEmail, u.Email)
 		}
 		return nil
 	}

@@ -94,7 +94,7 @@ func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {
 		p := &app.Pod{Name: pod.Name}
 
 		if pod.Status.StartTime != nil {
-			p.Age = int64(time.Now().Sub(pod.Status.StartTime.Time))
+			p.Age = int64(time.Since(pod.Status.StartTime.Time))
 		}
 
 		for _, status := range pod.Status.ContainerStatuses {
@@ -675,7 +675,7 @@ func (k *k8sClient) ReplicaSetListByLabel(namespace, label, value string) ([]*de
 	for i, item := range rs.Items {
 		resp[i] = &deploy.ReplicaSetListItem{
 			Revision:    item.Annotations[revisionAnnotation],
-			Age:         int64(time.Now().Sub(item.CreationTimestamp.Time)),
+			Age:         int64(time.Since(item.CreationTimestamp.Time)),
 			Current:     item.Status.ReadyReplicas > 0,
 			Description: item.Annotations[changeCauseAnnotation],
 		}

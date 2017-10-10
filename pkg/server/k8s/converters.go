@@ -39,9 +39,7 @@ func podSpecToK8sContainer(podSpec *deploy.PodSpec) (*k8sv1.Container, error) {
 		}
 	}
 
-	for _, arg := range podSpec.Args {
-		c.Args = append(c.Args, arg)
-	}
+	c.Args = append(c.Args, podSpec.Args...)
 
 	for k, v := range podSpec.Env {
 		c.Env = append(c.Env, k8sv1.EnvVar{Name: k, Value: v})

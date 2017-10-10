@@ -16,18 +16,6 @@ var (
 	ErrPodStillRunning    = status.Errorf(codes.Unknown, "Pod still running")
 )
 
-func cleanError(err error) error {
-	if e, ok := err.(*k8serrors.StatusError); ok {
-		switch e.ErrStatus.Code {
-		case 404:
-			return ErrNotFound
-		default:
-			return e
-		}
-	}
-	return err
-}
-
 func (k *k8sClient) IsNotFound(err error) bool {
 	return k8serrors.IsNotFound(errors.Cause(err))
 }

@@ -51,6 +51,9 @@ The app name must follow this rules:
   With specific cpu and memory size...
   $ teresa create foo --team bar --cpu 200m --max-cpu 500m --memory 512Mi --max-memory 1Gi
 
+  With hostname to ingress
+  $ teresa create foo --team bar --host foo.teresa.io
+
   With all flags...
   $ teresa app create foo --team bar --cpu 200m --max-cpu 500m --memory 512Mi --max-memory 1Gi --scale-min 2 --scale-max 10 --scale-cpu 70 --process-type web`,
 	Run: createApp,
@@ -111,6 +114,11 @@ func createApp(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid process-type parameter")
 	}
 
+	host, err := cmd.Flags().GetString("host")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid host parameter")
+	}
+
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
@@ -151,6 +159,7 @@ func createApp(cmd *cobra.Command, args []string) {
 			Name:        name,
 			Team:        team,
 			ProcessType: processType,
+			Host:        host,
 			Limits:      lim,
 			Autoscale:   as,
 		},
@@ -600,6 +609,7 @@ func init() {
 	appCreateCmd.Flags().String("max-cpu", "200m", "when set, allows the pod to burst cpu usage up to 'max-cpu'")
 	appCreateCmd.Flags().String("max-memory", "512Mi", "when set, allows the pod to burst memory usage up to 'max-memory'")
 	appCreateCmd.Flags().String("process-type", "", "app process type")
+	appCreateCmd.Flags().String("host", "", "hostname that the app will response (required if you use ingress)")
 
 	appEnvSetCmd.Flags().String("app", "", "app name")
 	appEnvSetCmd.Flags().Bool("no-input", false, "set env vars without warning")

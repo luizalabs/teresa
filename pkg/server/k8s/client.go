@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/pkg/api/resource"
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
 	asv1 "k8s.io/client-go/pkg/apis/autoscaling/v1"
+
 	"k8s.io/client-go/pkg/util/wait"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -30,6 +31,7 @@ type k8sClient struct {
 	conf               *restclient.Config
 	defaultServiceType string
 	podRunTimeout      time.Duration
+	ingress            bool
 }
 
 func (k *k8sClient) buildClient() (*kubernetes.Clientset, error) {
@@ -471,7 +473,7 @@ func (k *k8sClient) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, 
 	return r, exitCodeChan, nil
 }
 
-func (k *k8sClient) HasService(namespace, appName string) (bool, error) {
+func (k *k8sClient) hasService(namespace, appName string) (bool, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return false, err
@@ -486,7 +488,7 @@ func (k *k8sClient) HasService(namespace, appName string) (bool, error) {
 	return true, nil
 }
 
-func (k *k8sClient) CreateService(namespace, appName string) error {
+func (k *k8sClient) createService(namespace, appName string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -494,6 +496,59 @@ func (k *k8sClient) CreateService(namespace, appName string) error {
 	srvSpec := serviceSpec(namespace, appName, k.defaultServiceType)
 	_, err = kc.CoreV1().Services(namespace).Create(srvSpec)
 	return errors.Wrap(err, "create service failed")
+}
+
+func (k *k8sClient) hasIngress(namespace, appName string) (bool, error) {
+	kc, err := k.buildClient()
+	if err != nil {
+		return false, err
+	}
+	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Get(appName)
+	if err != nil {
+		if k.IsNotFound(err) {
+			return false, nil
+		}
+		return false, errors.Wrap(err, "get ingress failed")
+	}
+	return true, nil
+}
+
+func (k *k8sClient) createIngress(namespace, appName, host string) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+	igsSpec := ingressSpec(namespace, appName, host)
+	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Create(igsSpec)
+	return errors.Wrap(err, "create ingress failed")
+}
+
+// ExposeApp creates a service and/or a ingress if needed
+func (k *k8sClient) ExposeApp(namespace, appName, host string, w io.Writer) error {
+	hasSrv, err := k.hasService(namespace, appName)
+	if err != nil {
+		return err
+	}
+	if !hasSrv {
+		fmt.Fprintln(w, "Exposing service")
+		if err := k.createService(namespace, appName); err != nil {
+			return err
+		}
+	}
+
+	if k.ingress {
+		hasIgs, err := k.hasIngress(namespace, appName)
+		if err != nil {
+			return err
+		}
+		if !hasIgs {
+			fmt.Fprintln(w, "Creating ingress")
+			if err := k.createIngress(namespace, appName, host); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (k *k8sClient) killPod(pod *k8sv1.Pod) error {
@@ -729,7 +784,9 @@ func newInClusterK8sClient(conf *Config) (Client, error) {
 		return nil, err
 	}
 	return &k8sClient{
-		conf: k8sConf, defaultServiceType: conf.DefaultServiceType,
+		conf:               k8sConf,
+		defaultServiceType: conf.DefaultServiceType,
+		ingress:            conf.Ingress,
 	}, nil
 }
 

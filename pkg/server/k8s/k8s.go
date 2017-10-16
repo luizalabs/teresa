@@ -19,6 +19,7 @@ type Config struct {
 	ConfigFile         string        `split_words:"true"`
 	DefaultServiceType string        `split_words:"true" default:"LoadBalancer"`
 	PodRunTimeout      time.Duration `split_words:"true" default:"30m"`
+	Ingress            bool          `split_words:"true" default:"false"`
 }
 
 type Client interface {

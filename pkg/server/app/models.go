@@ -31,6 +31,7 @@ type App struct {
 	Name        string     `json:"name"`
 	Team        string     `json:"-"`
 	ProcessType string     `json:"processType"`
+	Host        string     `json:"host"`
 	Limits      *Limits    `json:"-"`
 	Autoscale   *Autoscale `json:"-"`
 	EnvVars     []*EnvVar  `json:"envVars"`
@@ -123,6 +124,7 @@ func newApp(req *appb.CreateRequest) *App {
 		},
 		Name:        req.Name,
 		ProcessType: processType,
+		Host:        req.Host,
 		Team:        req.Team,
 		EnvVars:     []*EnvVar{},
 	}

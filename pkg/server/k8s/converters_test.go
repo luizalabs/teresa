@@ -216,3 +216,37 @@ func TestDeploySpecToK8sDeploy(t *testing.T) {
 		t.Errorf("expected 3, got %v", k8sRollingUpdate.MaxSurge)
 	}
 }
+
+func TestServiceSpec(t *testing.T) {
+	name := "teresa"
+	namespace := "teresa"
+	srvType := "LoadBalancer"
+
+	s := serviceSpec(namespace, name, srvType)
+	if s.ObjectMeta.Name != name {
+		t.Errorf("expected %s, got %s", name, s.ObjectMeta.Name)
+	}
+	if s.ObjectMeta.Namespace != namespace {
+		t.Errorf("expected %s, got %s", namespace, s.ObjectMeta.Namespace)
+	}
+	if s.Spec.Type != k8sv1.ServiceType(srvType) {
+		t.Errorf("expected %s, got %v", srvType, s.Spec.Type)
+	}
+}
+
+func TestIngressSpec(t *testing.T) {
+	name := "teresa"
+	namespace := "teresa"
+	host := "test.teresa-apps.io"
+
+	i := ingressSpec(namespace, name, host)
+	if i.ObjectMeta.Name != name {
+		t.Errorf("expected %s, got %s", name, i.ObjectMeta.Name)
+	}
+	if i.ObjectMeta.Namespace != namespace {
+		t.Errorf("expected %s, got %s", namespace, i.ObjectMeta.Namespace)
+	}
+	if i.Spec.Rules[0].Host != host {
+		t.Errorf("expected %s, got %s", host, i.Spec.Rules[0].Host)
+	}
+}

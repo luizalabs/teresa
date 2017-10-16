@@ -14,12 +14,14 @@ func cmpAppWithCreateRequest(app *App, req *appb.CreateRequest) bool {
 		A string
 		B string
 		C string
-		D *Limits
-		E *Autoscale
+		D string
+		E *Limits
+		F *Autoscale
 	}{
 		app.Name,
 		app.Team,
 		app.ProcessType,
+		app.Host,
 		app.Limits,
 		app.Autoscale,
 	}
@@ -63,6 +65,7 @@ func newCreateRequest() *appb.CreateRequest {
 		Name:        "name",
 		Team:        "team",
 		ProcessType: "process_type",
+		Host:        "test.teresa-apps.io",
 		Autoscale:   as,
 		Limits:      lim,
 	}

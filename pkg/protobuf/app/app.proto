@@ -17,6 +17,7 @@ message CreateRequest {
     string name = 1;
     string team = 2;
     string process_type = 3;
+  	string host = 6;
 
     message Limits {
         message LimitRangeQuantity {

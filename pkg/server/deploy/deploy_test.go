@@ -29,9 +29,8 @@ func (f *fakeReadSeeker) Seek(offset int64, whence int) (int64, error) {
 type fakeK8sOperations struct {
 	lastDeploySpec           *DeploySpec
 	createDeployReturn       error
-	hasSrvReturn             bool
 	hasSrvErr                error
-	createServiceWasCalled   bool
+	exposeAppWasCalled       bool
 	podRunReadCloser         io.ReadCloser
 	podRunExitCodeChan       chan int
 	podRunErr                error
@@ -47,12 +46,8 @@ func (f *fakeK8sOperations) CreateOrUpdateDeploy(deploySpec *DeploySpec) error {
 	return f.createDeployReturn
 }
 
-func (f *fakeK8sOperations) HasService(namespace string, name string) (bool, error) {
-	return f.hasSrvReturn, f.hasSrvErr
-}
-
-func (f *fakeK8sOperations) CreateService(namespace string, name string) error {
-	f.createServiceWasCalled = true
+func (f *fakeK8sOperations) ExposeApp(namespace, name, host string, w io.Writer) error {
+	f.exposeAppWasCalled = true
 	return nil
 }
 
@@ -186,21 +181,19 @@ func TestCreateDeployReturnError(t *testing.T) {
 
 func TestExposeService(t *testing.T) {
 	var testCases = []struct {
-		appProcessType                 string
-		hasSrvReturn                   bool
-		hasSrvErr                      error
-		expectedCreateServiceWasCalled bool
+		appProcessType             string
+		hasSrvErr                  error
+		expectedExposeAppWasCalled bool
 	}{
-		{app.ProcessTypeWeb, false, nil, true},
-		{app.ProcessTypeWeb, true, nil, false},
-		{app.ProcessTypeWeb, false, errors.New("some sad error"), false},
-		{"worker", false, nil, false},
+		{app.ProcessTypeWeb, nil, true},
+		{app.ProcessTypeWeb, nil, true},
+		{app.ProcessTypeWeb, errors.New("some sad error"), true},
+		{"worker", nil, false},
 	}
 
 	for _, tc := range testCases {
 		fakeK8s := &fakeK8sOperations{
-			hasSrvReturn: tc.hasSrvReturn,
-			hasSrvErr:    tc.hasSrvErr,
+			hasSrvErr: tc.hasSrvErr,
 		}
 		ops := NewDeployOperations(
 			app.NewFakeOperations(),
@@ -208,16 +201,13 @@ func TestExposeService(t *testing.T) {
 			st.NewFake(),
 		)
 		deployOperations := ops.(*DeployOperations)
-		err := deployOperations.exposeService(&app.App{ProcessType: tc.appProcessType}, new(bytes.Buffer))
-		if err != tc.hasSrvErr {
-			t.Error("error exposing service:", err)
-		}
+		deployOperations.exposeService(&app.App{ProcessType: tc.appProcessType}, new(bytes.Buffer))
 
-		if fakeK8s.createServiceWasCalled != tc.expectedCreateServiceWasCalled {
+		if fakeK8s.exposeAppWasCalled != tc.expectedExposeAppWasCalled {
 			t.Errorf(
 				"expected %v, got %v",
-				tc.expectedCreateServiceWasCalled,
-				fakeK8s.createServiceWasCalled,
+				tc.expectedExposeAppWasCalled,
+				fakeK8s.exposeAppWasCalled,
 			)
 		}
 	}

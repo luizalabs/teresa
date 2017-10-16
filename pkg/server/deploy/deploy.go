@@ -28,8 +28,7 @@ type Operations interface {
 type K8sOperations interface {
 	PodRun(podSpec *PodSpec) (io.ReadCloser, <-chan int, error)
 	CreateOrUpdateDeploy(deploySpec *DeploySpec) error
-	HasService(namespace, name string) (bool, error)
-	CreateService(namespace, name string) error
+	ExposeApp(namespace, name, host string, w io.Writer) error
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
 	DeployRollbackToRevision(namespace, name, revision string) error
 }
@@ -117,15 +116,8 @@ func (ops *DeployOperations) exposeService(a *app.App, w io.Writer) error {
 	if a.ProcessType != app.ProcessTypeWeb {
 		return nil
 	}
-	hasSrv, err := ops.k8s.HasService(a.Name, a.Name)
-	if err != nil {
+	if err := ops.k8s.ExposeApp(a.Name, a.Name, a.Host, w); err != nil {
 		return err
-	}
-	if !hasSrv {
-		fmt.Fprintln(w, "Exposing service")
-		if err := ops.k8s.CreateService(a.Name, a.Name); err != nil {
-			return err
-		}
 	}
 	return nil // already exposed
 }

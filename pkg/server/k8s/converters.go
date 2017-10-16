@@ -13,6 +13,7 @@ import (
 
 const (
 	changeCauseAnnotation = "kubernetes.io/change-cause"
+	defaultServicePort    = 80
 )
 
 func podSpecToK8sContainer(podSpec *deploy.PodSpec) (*k8sv1.Container, error) {
@@ -224,6 +225,39 @@ func serviceSpec(namespace, name, srvType string) *k8sv1.Service {
 					Port:       80,
 					Protocol:   k8sv1.ProtocolTCP,
 					TargetPort: intstr.FromInt(deploy.DefaultPort),
+				},
+			},
+		},
+	}
+}
+
+func ingressSpec(namespace, name, host string) *k8s_extensions.Ingress {
+	return &k8s_extensions.Ingress{
+		TypeMeta: unversioned.TypeMeta{
+			APIVersion: "extensions/v1beta1",
+			Kind:       "Ingress",
+		},
+		ObjectMeta: k8sv1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: k8s_extensions.IngressSpec{
+			Rules: []k8s_extensions.IngressRule{
+				{
+					Host: host,
+					IngressRuleValue: k8s_extensions.IngressRuleValue{
+						HTTP: &k8s_extensions.HTTPIngressRuleValue{
+							Paths: []k8s_extensions.HTTPIngressPath{
+								{
+									Path: "/",
+									Backend: k8s_extensions.IngressBackend{
+										ServiceName: name,
+										ServicePort: intstr.FromInt(defaultServicePort),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},

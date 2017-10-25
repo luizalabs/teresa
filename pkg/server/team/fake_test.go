@@ -237,3 +237,40 @@ func TestFakeOpsRemoveUserNotInTeam(t *testing.T) {
 		t.Error("expected error ErrUserNotInTeam, got ", err)
 	}
 }
+
+func TestFakeOpsRename(t *testing.T) {
+	fake := NewFakeOperations()
+
+	newName := "teresa-new"
+	oldName := "teresa"
+	fake.(*FakeOperations).Storage[oldName] = &database.Team{Name: oldName}
+
+	if err := fake.Rename(oldName, newName); err != nil {
+		t.Fatal("error trying to rename team: ", err)
+	}
+
+	if _, found := fake.(*FakeOperations).Storage[newName]; !found {
+		t.Error("team with new name, not found")
+	}
+}
+
+func TestFakeOpsRenameTeamNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+
+	if err := fake.Rename("teresa", "gophers"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestFakeOpsRenameTeamAlreadyExists(t *testing.T) {
+	fake := NewFakeOperations()
+
+	newName := "gophers"
+	oldName := "teresa"
+	fake.(*FakeOperations).Storage[newName] = &database.Team{Name: newName}
+	fake.(*FakeOperations).Storage[oldName] = &database.Team{Name: oldName}
+
+	if err := fake.Rename(oldName, newName); err != ErrTeamAlreadyExists {
+		t.Errorf("expected ErrTeamAlreadyExists, got %v", err)
+	}
+}

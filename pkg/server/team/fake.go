@@ -100,6 +100,23 @@ func (f *FakeOperations) RemoveUser(name, userEmail string) error {
 	return nil
 }
 
+func (f *FakeOperations) Rename(oldName, newName string) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if _, found := f.Storage[oldName]; !found {
+		return ErrNotFound
+	}
+
+	if _, found := f.Storage[newName]; found {
+		return ErrTeamAlreadyExists
+	}
+
+	f.Storage[newName] = f.Storage[oldName]
+	delete(f.Storage, oldName)
+	return nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

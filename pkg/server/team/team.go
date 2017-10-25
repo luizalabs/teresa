@@ -16,6 +16,7 @@ type Operations interface {
 	List() ([]*database.Team, error)
 	ListByUser(userEmail string) ([]*database.Team, error)
 	RemoveUser(name, userEmail string) error
+	Rename(oldName, newName string) error
 }
 
 type DatabaseOperations struct {
@@ -137,6 +138,10 @@ func (dbt *DatabaseOperations) RemoveUser(name, userEmail string) error {
 		return teresa_errors.NewInternalServerError(err)
 	}
 
+	return nil
+}
+
+func (dbt *DatabaseOperations) Rename(oldName, newName string) error {
 	return nil
 }
 

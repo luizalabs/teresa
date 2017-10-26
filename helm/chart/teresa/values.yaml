@@ -39,3 +39,6 @@ minio:
     policy: public
 rbac:
   enabled: false
+apps:
+  ingress: false
+  service_type: LoadBalancer

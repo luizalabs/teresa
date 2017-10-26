@@ -299,10 +299,10 @@ func appInfo(cmd *cobra.Command, args []string) {
 		fmt.Printf("  %s %d%%\n", bold("cpu:"), info.Status.Cpu)
 		fmt.Printf("  %s %d\n", bold("pods:"), len(info.Status.Pods))
 		for _, pod := range info.Status.Pods {
-			//Don't print pods in OutOfCpu or Evicted status
+			// Don't print pods in OutOfCpu or Evicted status
 			if pod.State != "" {
 				age := shortHumanDuration(time.Duration(pod.Age))
-				fmt.Printf("    Name: %s  State: %s  Age: %s  Restarts: %d\n", pod.Name, pod.State, age, pod.Restarts)
+				fmt.Printf("    Name: %s  State: %s  Age: %s  Restarts: %d  Ready: %v\n", pod.Name, pod.State, age, pod.Restarts, pod.Ready)
 			}
 		}
 	}

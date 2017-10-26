@@ -106,6 +106,7 @@ func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {
 				p.State = string(api.PodRunning)
 			}
 			p.Restarts = status.RestartCount
+			p.Ready = status.Ready
 			if p.State != "" {
 				break
 			}

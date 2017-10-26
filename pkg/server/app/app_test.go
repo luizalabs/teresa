@@ -802,3 +802,38 @@ func TestAppOperationsDeleteErrNotFound(t *testing.T) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
+
+func TestAppOperationsChangeTeam(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.ChangeTeam(user, app.Name, "gopher"); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func TestAppOperationsChangeTeamErrPermissionDenied(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+
+	if err := ops.ChangeTeam(user, "teresa", "gopher"); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestAppOperationsChangeTeamErrNotFound(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+
+	if err := ops.ChangeTeam(user, "gophers", "teresa"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}

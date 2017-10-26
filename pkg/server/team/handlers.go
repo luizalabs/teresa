@@ -78,6 +78,17 @@ func (s *Service) RemoveUser(ctx context.Context, request *teampb.RemoveUserRequ
 	return &teampb.Empty{}, nil
 }
 
+func (s *Service) Rename(ctx context.Context, request *teampb.RenameRequest) (*teampb.Empty, error) {
+	u := ctx.Value("user").(*database.User)
+	if !u.IsAdmin {
+		return nil, auth.ErrPermissionDenied
+	}
+	if err := s.ops.Rename(request.OldName, request.NewName); err != nil {
+		return nil, err
+	}
+	return &teampb.Empty{}, nil
+}
+
 func (s *Service) RegisterService(grpcServer *grpc.Server) {
 	teampb.RegisterTeamServer(grpcServer, s)
 }

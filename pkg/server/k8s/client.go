@@ -587,6 +587,24 @@ func (k *k8sClient) SetNamespaceAnnotations(namespace string, annotations map[st
 	return err
 }
 
+func (k *k8sClient) SetNamespaceLabel(namespace string, labels map[string]string) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+
+	ns, err := k.getNamespace(namespace)
+	if err != nil {
+		return err
+	}
+
+	for key, value := range labels {
+		ns.Labels[key] = value
+	}
+	_, err = kc.CoreV1().Namespaces().Update(ns)
+	return err
+}
+
 func (k *k8sClient) patchDeployEnvVars(namespace, name string, v interface{}) error {
 	kc, err := k.buildClient()
 	if err != nil {

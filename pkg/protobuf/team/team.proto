@@ -7,6 +7,7 @@ service Team {
     rpc AddUser(AddUserRequest) returns (Empty);
     rpc List(Empty) returns (ListResponse);
     rpc RemoveUser(RemoveUserRequest) returns (Empty);
+    rpc Rename(RenameRequest) returns (Empty);
 }
 
 message CreateRequest {
@@ -37,6 +38,11 @@ message ListResponse {
         repeated User users = 4;
     }
     repeated Team teams = 1;
+}
+
+message RenameRequest {
+    string oldName = 1;
+    string newName = 2;
 }
 
 message Empty {}

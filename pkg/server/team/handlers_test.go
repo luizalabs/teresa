@@ -297,3 +297,54 @@ func TestRemoveUserPermissionDenied(t *testing.T) {
 		t.Errorf("expected auth.ErrPermissionDenied, got %v", err)
 	}
 }
+
+func TestTeamRenameSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+
+	expectedEmail := "teresa@luizalabs.com"
+	oldName := "teresa"
+	fake.(*FakeOperations).Storage[oldName] = &database.Team{Name: oldName, Email: expectedEmail}
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &database.User{Email: "gopher", IsAdmin: true})
+
+	newName := "gophers"
+	req := &teampb.RenameRequest{OldName: oldName, NewName: newName}
+	if _, err := s.Rename(ctx, req); err != nil {
+		t.Fatal("Got error renaming team:", err)
+	}
+
+	oldTeam := fake.(*FakeOperations).Storage[newName]
+	if oldTeam.Email != expectedEmail {
+		t.Errorf("expected %s, got %s", expectedEmail, oldTeam.Email)
+	}
+}
+
+func TestTeamRenameErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &database.User{IsAdmin: false})
+	if _, err := s.Rename(
+		ctx, &teampb.RenameRequest{OldName: "old", NewName: "new"},
+	); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestTeamRenameTeamAlreadyExists(t *testing.T) {
+	fake := NewFakeOperations()
+
+	oldName := "gopher"
+	createdName := "teresa"
+	fake.(*FakeOperations).Storage[oldName] = &database.Team{Name: oldName}
+	fake.(*FakeOperations).Storage[createdName] = &database.Team{Name: createdName}
+
+	s := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", &database.User{Email: "gopher", IsAdmin: true})
+
+	req := &teampb.RenameRequest{OldName: oldName, NewName: createdName}
+	if _, err := s.Rename(ctx, req); err != ErrTeamAlreadyExists {
+		t.Errorf("expected ErrTeamAlreadyExists, got %v", err)
+	}
+}

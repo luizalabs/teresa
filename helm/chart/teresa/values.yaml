@@ -37,3 +37,5 @@ minio:
     enabled: true
     name: teresa
     policy: public
+rbac:
+  enabled: false

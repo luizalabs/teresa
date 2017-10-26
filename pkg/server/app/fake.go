@@ -201,6 +201,22 @@ func (f *FakeOperations) SaveApp(app *App, lastUser string) error {
 	return nil
 }
 
+func (f *FakeOperations) ChangeTeam(user *database.User, appName, teamName string) error {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	if !hasPerm(user.Email) {
+		return auth.ErrPermissionDenied
+	}
+
+	if _, found := f.Storage[appName]; !found {
+		return ErrNotFound
+	}
+
+	f.Storage[appName].Team = teamName
+	return nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

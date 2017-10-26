@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [NEXT_RELEASE]
+### Added
+- [helm] support rbac
+
 ### Fixed
 - Don't return error on `app info` command if the app doesn't have HPA
 

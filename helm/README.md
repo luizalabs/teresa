@@ -90,6 +90,8 @@ Parameter | Description | Default
 `build.limits.cpu` | CPU limit used by build POD  | `500m`
 `build.limits.memory` | Memory limit used by build POD | `1024Mi`
 `debug` | If true, print the stack trace on every panic/recover. | `false`
+`rbac.enabled` | If true, this configure teresa deployment to use rbac, for now
+it will use the `cluster-admin` role | `false`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 

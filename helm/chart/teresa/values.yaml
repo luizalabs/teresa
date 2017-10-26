@@ -30,3 +30,5 @@ build:
     cpu: 500m
     memory: 1024Mi
 debug: false
+rbac:
+  enabled: false

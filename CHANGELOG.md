@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Next Version] - Release Date
+### Added
+- Helm chart now support rbac
+
 ## [0.9.0] - 2017-10-26
 ### Fixed
 - login now use the --cluster flag to save the token to config file

@@ -145,7 +145,6 @@ func (dbt *DatabaseOperations) RemoveUser(name, userEmail string) error {
 	return nil
 }
 
-// #TODO: renomear o label do team :facepalm:
 func (dbt *DatabaseOperations) Rename(oldName, newName string) error {
 	t := new(database.Team)
 	if !dbt.DB.Where(&database.Team{Name: newName}).First(t).RecordNotFound() {

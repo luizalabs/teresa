@@ -31,7 +31,7 @@ type Operations interface {
 	CheckPermAndGet(user *database.User, appName string) (*App, error)
 	SaveApp(app *App, lastUser string) error
 	Delete(user *database.User, appName string) error
-	ChangeTeam(user *database.User, app *App, teamName string) error
+	ChangeTeam(user *database.User, appName, teamName string) error
 }
 
 type K8sOperations interface {
@@ -409,7 +409,16 @@ func (ops *AppOperations) Delete(user *database.User, appName string) error {
 	return nil
 }
 
-func (ops *AppOperations) ChangeTeam(user *database.User, app *App, teamName string) error {
+// ChangeTeam changes current team name of an App (be sure the new team exists)
+func (ops *AppOperations) ChangeTeam(user *database.User, appName, teamName string) error {
+	if _, err := ops.CheckPermAndGet(user, appName); err != nil {
+		return err
+	}
+
+	label := map[string]string{TeresaTeamLabel: teamName}
+	if err := ops.kops.SetNamespaceLabels(appName, label); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
 	return nil
 }
 

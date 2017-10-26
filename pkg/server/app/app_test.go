@@ -31,6 +31,7 @@ type errK8sOperations struct {
 	AutoscaleErr               error
 	DeleteNamespaceErr         error
 	SetNamespaceAnnotationsErr error
+	SetNamespaceLabelsErr      error
 	Namespaces                 map[string]struct{}
 }
 
@@ -117,6 +118,10 @@ func (*fakeK8sOperations) SetNamespaceAnnotations(namespace string, annotations 
 	return nil
 }
 
+func (*fakeK8sOperations) SetNamespaceLabels(namespace string, labels map[string]string) error {
+	return nil
+}
+
 func (*fakeK8sOperations) DeleteDeployEnvVars(namespace, name string, evNames []string) error {
 	return nil
 }
@@ -196,6 +201,10 @@ func (*errK8sOperations) IsNotFound(err error) bool {
 
 func (e *errK8sOperations) SetNamespaceAnnotations(namespace string, annotations map[string]string) error {
 	return e.SetNamespaceAnnotationsErr
+}
+
+func (e *errK8sOperations) SetNamespaceLabels(namespace string, annotations map[string]string) error {
+	return e.SetNamespaceLabelsErr
 }
 
 func (e *errK8sOperations) DeleteDeployEnvVars(namespace, name string, evNames []string) error {

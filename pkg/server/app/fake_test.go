@@ -380,6 +380,7 @@ func TestFakeOperationsDelete(t *testing.T) {
 		t.Error("expected not found app, but founded")
 	}
 }
+
 func TestFakeOperationsDeletePermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Email: "bad-user@luizalabs.com"}
@@ -396,6 +397,35 @@ func TestFakeOperationsDeleteErrNotFound(t *testing.T) {
 	user := &database.User{Name: "gopher@luizalabs.com"}
 
 	if err := fake.Delete(user, "teresa"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestFakeOperationsChangeTeam(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+	appName := "teresa"
+	fake.(*FakeOperations).Storage[appName] = &App{Name: appName}
+
+	if err := fake.ChangeTeam(user, appName, "gophers"); err != nil {
+		t.Errorf("error changing app team: %v", err)
+	}
+}
+
+func TestFakeOperationsChangeTeamErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+
+	if err := fake.ChangeTeam(user, "gophers", "teresa"); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestFakeOperationsChangeTeamErrNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Email: "gopher-user@luizalabs.com"}
+
+	if err := fake.ChangeTeam(user, "gophers", "teresa"); err != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }

@@ -31,6 +31,7 @@ type Operations interface {
 	CheckPermAndGet(user *database.User, appName string) (*App, error)
 	SaveApp(app *App, lastUser string) error
 	Delete(user *database.User, appName string) error
+	ChangeTeam(user *database.User, app *App, teamName string) error
 }
 
 type K8sOperations interface {
@@ -49,6 +50,7 @@ type K8sOperations interface {
 	IsNotFound(err error) bool
 	IsAlreadyExists(err error) bool
 	SetNamespaceAnnotations(namespace string, annotations map[string]string) error
+	SetNamespaceLabels(namespace string, labels map[string]string) error
 	DeleteDeployEnvVars(namespace, name string, evNames []string) error
 	CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error
 	DeleteNamespace(namespace string) error
@@ -404,6 +406,10 @@ func (ops *AppOperations) Delete(user *database.User, appName string) error {
 		return teresa_errors.NewInternalServerError(err)
 	}
 
+	return nil
+}
+
+func (ops *AppOperations) ChangeTeam(user *database.User, app *App, teamName string) error {
 	return nil
 }
 

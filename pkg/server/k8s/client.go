@@ -587,7 +587,7 @@ func (k *k8sClient) SetNamespaceAnnotations(namespace string, annotations map[st
 	return err
 }
 
-func (k *k8sClient) SetNamespaceLabel(namespace string, labels map[string]string) error {
+func (k *k8sClient) SetNamespaceLabels(namespace string, labels map[string]string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err

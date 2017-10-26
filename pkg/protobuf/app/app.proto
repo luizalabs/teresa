@@ -82,6 +82,7 @@ message InfoResponse {
             string state = 2;
             int64 age = 3;
             int32 restarts = 4;
+            bool ready = 5;
         }
 
         int32 cpu = 1;

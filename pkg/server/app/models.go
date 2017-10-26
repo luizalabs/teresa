@@ -41,6 +41,7 @@ type Pod struct {
 	State    string
 	Age      int64
 	Restarts int32
+	Ready    bool
 }
 
 type Address struct {
@@ -167,6 +168,7 @@ func newInfoResponse(info *Info) *appb.InfoResponse {
 				State:    item.State,
 				Age:      item.Age,
 				Restarts: item.Restarts,
+				Ready:    item.Ready,
 			}
 			pods = append(pods, pod)
 		}

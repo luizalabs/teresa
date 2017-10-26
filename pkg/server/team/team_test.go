@@ -384,3 +384,65 @@ func TestDatabaseOpsRemoveUserNotInTeam(t *testing.T) {
 		t.Errorf("expected error ErrUserNotInTeam, got %v", err)
 	}
 }
+
+func TestDatabaseOperationsRename(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error opening in memory database ", err)
+	}
+	defer db.Close()
+
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+
+	oldName := "teresa"
+	expectedEmail := "teresa@luizalabs.com"
+	if err = createFakeTeam(db, oldName, expectedEmail, ""); err != nil {
+		t.Fatal("error on create a fake team:", err)
+	}
+
+	newName := "gophers"
+	if err = dbt.Rename(oldName, newName); err != nil {
+		t.Errorf("error renaming team name: %v", err)
+	}
+
+	updatedTeam, err := dbt.(*DatabaseOperations).getTeam(newName)
+	if err != nil {
+		t.Fatal("error on get team:", err)
+	}
+	if updatedTeam.Email != expectedEmail {
+		t.Errorf("expected %s, got %s", expectedEmail, updatedTeam.Email)
+	}
+}
+
+func TestDatabaseOperationsRenameTeamAlreadyExists(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error opening in memory database ", err)
+	}
+	defer db.Close()
+
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+
+	name := "teresa"
+	if err = createFakeTeam(db, name, "", ""); err != nil {
+		t.Fatal("error on create a fake team:", err)
+	}
+
+	if err = dbt.Rename(name, name); err != ErrTeamAlreadyExists {
+		t.Errorf("expected ErrTeamAlreadyExists, got %v", err)
+	}
+}
+
+func TestDatabaseOperationsRenameNotFound(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error opening in memory database ", err)
+	}
+	defer db.Close()
+
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+
+	if err = dbt.Rename("teresa", "gophers"); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}

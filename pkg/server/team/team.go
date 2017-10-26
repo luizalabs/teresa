@@ -34,10 +34,14 @@ func (dbt *DatabaseOperations) Create(name, email, url string) error {
 	t.Email = email
 	t.URL = url
 
+	return dbt.save(t)
+}
+
+func (dbt *DatabaseOperations) save(t *database.Team) error {
 	if err := dbt.DB.Save(t).Error; err != nil {
 		return teresa_errors.New(
 			teresa_errors.ErrInternalServerError,
-			errors.Wrap(err, fmt.Sprintf("saving team %s", name)),
+			errors.Wrap(err, fmt.Sprintf("saving team %s", t.Name)),
 		)
 	}
 	return nil
@@ -142,7 +146,18 @@ func (dbt *DatabaseOperations) RemoveUser(name, userEmail string) error {
 }
 
 func (dbt *DatabaseOperations) Rename(oldName, newName string) error {
-	return nil
+	t := new(database.Team)
+	if !dbt.DB.Where(&database.Team{Name: newName}).First(t).RecordNotFound() {
+		return ErrTeamAlreadyExists
+	}
+
+	t, err := dbt.getTeam(oldName)
+	if err != nil {
+		return err
+	}
+
+	t.Name = newName
+	return dbt.save(t)
 }
 
 func NewDatabaseOperations(db *gorm.DB, uOps user.Operations) Operations {

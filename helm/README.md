@@ -92,6 +92,8 @@ Parameter | Description | Default
 `debug` | If true, print the stack trace on every panic/recover. | `false`
 `useMinio` | If true, use minio instead of s3. | `false`
 `rbac.enabled` | If true, this configure teresa deployment to use rbac, for now it will use the `cluster-admin` role | `false`
+`apps.ingress` | If true, teresa will create a ingress when expose the app | `false`
+`apps.service_type` | The type used to create the app server | `LoadBalancer`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 

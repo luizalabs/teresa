@@ -536,18 +536,20 @@ func (k *k8sClient) ExposeApp(namespace, appName, host string, w io.Writer) erro
 		}
 	}
 
-	if k.ingress {
-		hasIgs, err := k.hasIngress(namespace, appName)
-		if err != nil {
+	if !k.ingress {
+		return nil
+	}
+	hasIgs, err := k.hasIngress(namespace, appName)
+	if err != nil {
+		return err
+	}
+	if !hasIgs {
+		fmt.Fprintln(w, "Creating ingress")
+		if err := k.createIngress(namespace, appName, host); err != nil {
 			return err
 		}
-		if !hasIgs {
-			fmt.Fprintln(w, "Creating ingress")
-			if err := k.createIngress(namespace, appName, host); err != nil {
-				return err
-			}
-		}
 	}
+
 	return nil
 }
 

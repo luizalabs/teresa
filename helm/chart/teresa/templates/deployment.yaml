@@ -101,6 +101,10 @@ spec:
           value: {{ .Values.build.limits.cpu }}
         - name: TERESA_DEPLOY_BUILD_LIMIT_MEMORY
           value: {{ .Values.build.limits.memory }}
+        - name: TERESA_K8S_INGRESS
+          value: {{ .Values.apps.ingress }}
+        - name: TERESA_K8S_DEFAULT_SERVICE_TYPE
+          value: {{ .Values.apps.service_type }}
         volumeMounts:
         {{- if .Values.tls.crt }}
         - mountPath: /etc/teresa

@@ -90,6 +90,8 @@ Parameter | Description | Default
 `build.limits.cpu` | CPU limit used by build POD  | `500m`
 `build.limits.memory` | Memory limit used by build POD | `1024Mi`
 `debug` | If true, print the stack trace on every panic/recover. | `false`
+`apps.ingress` | If true, teresa will create a ingress when expose the app | `false`
+`apps.service_type` | The type used to create the app server | `LoadBalancer`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 

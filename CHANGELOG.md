@@ -2,9 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Next Version] - Release Date
 ### Added
+=======
+###Added
 - Pod readiness to the `app info` output
+- Support ingress on app expose
+- app create now support --host to define the host used by ingress
+- Helm support ingress and service type config
 
 ## [0.9.0] - 2017-10-26
 ### Fixed

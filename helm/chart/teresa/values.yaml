@@ -30,3 +30,6 @@ build:
     cpu: 500m
     memory: 1024Mi
 debug: false
+apps:
+  ingress: false
+  service_type: LoadBalancer

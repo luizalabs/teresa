@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/teamext"
 	"github.com/luizalabs/teresa/pkg/server/user"
 )
 
@@ -115,6 +116,9 @@ func (f *FakeOperations) Rename(oldName, newName string) error {
 	f.Storage[newName] = f.Storage[oldName]
 	delete(f.Storage, oldName)
 	return nil
+}
+
+func (f *FakeOperations) SetTeamExt(ext teamext.TeamExt) {
 }
 
 func NewFakeOperations() Operations {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/teamext"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 	"github.com/luizalabs/teresa/pkg/server/user"
 	"github.com/pkg/errors"
@@ -17,11 +18,13 @@ type Operations interface {
 	ListByUser(userEmail string) ([]*database.Team, error)
 	RemoveUser(name, userEmail string) error
 	Rename(oldName, newName string) error
+	SetTeamExt(ext teamext.TeamExt)
 }
 
 type DatabaseOperations struct {
 	DB      *gorm.DB
 	UserOps user.Operations
+	Ext     teamext.TeamExt
 }
 
 func (dbt *DatabaseOperations) Create(name, email, url string) error {
@@ -157,7 +160,25 @@ func (dbt *DatabaseOperations) Rename(oldName, newName string) error {
 	}
 
 	t.Name = newName
-	return dbt.save(t)
+	if err = dbt.save(t); err != nil {
+		return err
+	}
+
+	apps, err := dbt.Ext.ListByTeam(oldName)
+	if err != nil {
+		return err
+	}
+
+	for _, a := range apps {
+		if err = dbt.Ext.ChangeTeam(a, newName); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (dbt *DatabaseOperations) SetTeamExt(ext teamext.TeamExt) {
+	dbt.Ext = ext
 }
 
 func NewDatabaseOperations(db *gorm.DB, uOps user.Operations) Operations {

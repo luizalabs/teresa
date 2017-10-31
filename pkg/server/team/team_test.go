@@ -9,6 +9,19 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/user"
 )
 
+type fakeExt struct{}
+
+func (fakeExt) ListByTeam(teamName string) ([]string, error) {
+	apps := make([]string, 1)
+	apps[0] = "teresa"
+
+	return apps, nil
+}
+
+func (fakeExt) ChangeTeam(oldTeam, newName string) error {
+	return nil
+}
+
 func createFakeTeam(db *gorm.DB, name, email, url string) error {
 	t := &database.Team{
 		Name:  name,
@@ -393,6 +406,7 @@ func TestDatabaseOperationsRename(t *testing.T) {
 	defer db.Close()
 
 	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+	dbt.SetTeamExt(&fakeExt{})
 
 	oldName := "teresa"
 	expectedEmail := "teresa@luizalabs.com"

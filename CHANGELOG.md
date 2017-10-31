@@ -11,6 +11,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Using `dep` instead of `Godep` for dependencies management
 - deploy list now print revision in reverse order and remove current column
 
+### Fixed
+- `app info` now counts only pods with defined state
+
 ## [0.9.0] - 2017-10-26
 ### Fixed
 - login now use the --cluster flag to save the token to config file

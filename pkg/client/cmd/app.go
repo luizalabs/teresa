@@ -295,15 +295,20 @@ func appInfo(cmd *cobra.Command, args []string) {
 		}
 	}
 	if info.Status != nil {
-		fmt.Println(bold("status:"))
-		fmt.Printf("  %s %d%%\n", bold("cpu:"), info.Status.Cpu)
-		fmt.Printf("  %s %d\n", bold("pods:"), len(info.Status.Pods))
+		pods := make([]*appb.InfoResponse_Status_Pod, 0)
 		for _, pod := range info.Status.Pods {
 			// Don't print pods in OutOfCpu or Evicted status
 			if pod.State != "" {
-				age := shortHumanDuration(time.Duration(pod.Age))
-				fmt.Printf("    Name: %s  State: %s  Age: %s  Restarts: %d  Ready: %v\n", pod.Name, pod.State, age, pod.Restarts, pod.Ready)
+				pods = append(pods, pod)
 			}
+		}
+
+		fmt.Println(bold("status:"))
+		fmt.Printf("  %s %d%%\n", bold("cpu:"), info.Status.Cpu)
+		fmt.Printf("  %s %d\n", bold("pods:"), len(pods))
+		for _, pod := range pods {
+			age := shortHumanDuration(time.Duration(pod.Age))
+			fmt.Printf("    Name: %s  State: %s  Age: %s  Restarts: %d  Ready: %v\n", pod.Name, pod.State, age, pod.Restarts, pod.Ready)
 		}
 	}
 	if info.Autoscale != nil {

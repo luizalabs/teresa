@@ -94,6 +94,20 @@ func (f *FakeOperations) List(user *database.User) ([]*AppListItem, error) {
 	return items, nil
 }
 
+func (f *FakeOperations) ListByTeam(teamName string) ([]string, error) {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	items := make([]string, 0)
+	for k, v := range f.Storage {
+		if v.Team == teamName {
+			items = append(items, k)
+		}
+	}
+
+	return items, nil
+}
+
 func (f *FakeOperations) Delete(user *database.User, appName string) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
@@ -201,17 +215,9 @@ func (f *FakeOperations) SaveApp(app *App, lastUser string) error {
 	return nil
 }
 
-func (f *FakeOperations) ChangeTeam(user *database.User, appName, teamName string) error {
-	f.mutex.RLock()
-	defer f.mutex.RUnlock()
-
-	if !hasPerm(user.Email) {
-		return auth.ErrPermissionDenied
-	}
-
-	if _, found := f.Storage[appName]; !found {
-		return ErrNotFound
-	}
+func (f *FakeOperations) ChangeTeam(appName, teamName string) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
 
 	f.Storage[appName].Team = teamName
 	return nil

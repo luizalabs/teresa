@@ -575,6 +575,28 @@ func TestAppOperationsList(t *testing.T) {
 	}
 }
 
+func TestAppOperationsListByTeam(t *testing.T) {
+	tops := team.NewFakeOperations()
+	appName := "teresa"
+
+	fk8s := &fakeK8sOperations{Namespaces: map[string]struct{}{appName: {}}}
+
+	ops := NewOperations(tops, fk8s, nil)
+
+	apps, err := ops.ListByTeam("gophers")
+	if err != nil {
+		t.Fatal("error getting app list:", err)
+	}
+
+	if len(apps) == 0 {
+		t.Fatal("expected at least one app")
+	}
+
+	if apps[0] != appName {
+		t.Errorf("expected %s, got %s", appName, apps[0])
+	}
+}
+
 func TestAppOperationsSetEnv(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
@@ -804,36 +826,19 @@ func TestAppOperationsDeleteErrNotFound(t *testing.T) {
 }
 
 func TestAppOperationsChangeTeam(t *testing.T) {
-	tops := team.NewFakeOperations()
-	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
-	user := &database.User{Email: "teresa@luizalabs.com"}
+	ops := NewOperations(team.NewFakeOperations(), &fakeK8sOperations{}, nil)
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
-		Name:  app.Team,
-		Users: []database.User{*user},
-	}
 
-	if err := ops.ChangeTeam(user, app.Name, "gopher"); err != nil {
+	if err := ops.ChangeTeam(app.Name, "gopher"); err != nil {
 		t.Errorf("expected no error, got %v", err)
-	}
-}
-
-func TestAppOperationsChangeTeamErrPermissionDenied(t *testing.T) {
-	tops := team.NewFakeOperations()
-	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
-	user := &database.User{Email: "teresa@luizalabs.com"}
-
-	if err := ops.ChangeTeam(user, "teresa", "gopher"); err != auth.ErrPermissionDenied {
-		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }
 
 func TestAppOperationsChangeTeamErrNotFound(t *testing.T) {
 	tops := team.NewFakeOperations()
-	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
-	user := &database.User{Email: "teresa@luizalabs.com"}
+	ops := NewOperations(tops, &errK8sOperations{SetNamespaceLabelsErr: ErrNotFound}, nil)
 
-	if err := ops.ChangeTeam(user, "gophers", "teresa"); err != ErrNotFound {
-		t.Errorf("expected ErrNotFound, got %v", err)
+	if err := ops.ChangeTeam("gophers", "teresa"); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
+		t.Errorf("expected ErrInternalServerError, got %v", err)
 	}
 }

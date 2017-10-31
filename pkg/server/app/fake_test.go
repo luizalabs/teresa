@@ -170,7 +170,7 @@ func TestFakeOperationsList(t *testing.T) {
 
 	apps, err := fake.List(user)
 	if err != nil {
-		t.Fatal("error getting app info: ", err)
+		t.Fatal("error getting app list: ", err)
 	}
 
 	if len(apps) != 1 {
@@ -179,6 +179,30 @@ func TestFakeOperationsList(t *testing.T) {
 
 	if apps[0].Name != app.Name {
 		t.Errorf("expected test, got %s", apps[0].Name)
+	}
+}
+
+func TestFakeOperationsListByTeam(t *testing.T) {
+	var testCases = []struct {
+		app      *App
+		teamName string
+		expected int
+	}{
+		{&App{Name: "teresa", Team: "gophers"}, "gophers", 1},
+		{&App{Name: "teresa", Team: "vimmers"}, "gophers", 0},
+	}
+
+	fake := NewFakeOperations()
+
+	for _, tc := range testCases {
+		fake.(*FakeOperations).Storage[tc.app.Name] = tc.app
+		apps, err := fake.ListByTeam(tc.teamName)
+		if err != nil {
+			t.Fatal("error getting app list by team:", err)
+		}
+		if len(apps) != tc.expected {
+			t.Error("expected %d, got %d", tc.expected, len(apps))
+		}
 	}
 }
 
@@ -403,29 +427,10 @@ func TestFakeOperationsDeleteErrNotFound(t *testing.T) {
 
 func TestFakeOperationsChangeTeam(t *testing.T) {
 	fake := NewFakeOperations()
-	user := &database.User{Name: "gopher@luizalabs.com"}
 	appName := "teresa"
 	fake.(*FakeOperations).Storage[appName] = &App{Name: appName}
 
-	if err := fake.ChangeTeam(user, appName, "gophers"); err != nil {
+	if err := fake.ChangeTeam(appName, "gophers"); err != nil {
 		t.Errorf("error changing app team: %v", err)
-	}
-}
-
-func TestFakeOperationsChangeTeamErrPermissionDenied(t *testing.T) {
-	fake := NewFakeOperations()
-	user := &database.User{Email: "bad-user@luizalabs.com"}
-
-	if err := fake.ChangeTeam(user, "gophers", "teresa"); err != auth.ErrPermissionDenied {
-		t.Errorf("expected ErrPermissionDenied, got %v", err)
-	}
-}
-
-func TestFakeOperationsChangeTeamErrNotFound(t *testing.T) {
-	fake := NewFakeOperations()
-	user := &database.User{Email: "gopher-user@luizalabs.com"}
-
-	if err := fake.ChangeTeam(user, "gophers", "teresa"); err != ErrNotFound {
-		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }

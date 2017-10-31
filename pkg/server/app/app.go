@@ -27,11 +27,12 @@ type Operations interface {
 	SetEnv(user *database.User, appName string, evs []*EnvVar) error
 	UnsetEnv(user *database.User, appName string, evs []string) error
 	List(user *database.User) ([]*AppListItem, error)
+	ListByTeam(teamName string) ([]string, error)
 	SetAutoscale(user *database.User, appName string, as *Autoscale) error
 	CheckPermAndGet(user *database.User, appName string) (*App, error)
 	SaveApp(app *App, lastUser string) error
 	Delete(user *database.User, appName string) error
-	ChangeTeam(user *database.User, appName, teamName string) error
+	ChangeTeam(appName, teamName string) error
 }
 
 type K8sOperations interface {
@@ -350,7 +351,7 @@ func (ops *AppOperations) List(user *database.User) ([]*AppListItem, error) {
 	}
 	items := make([]*AppListItem, 0)
 	for _, team := range teams {
-		apps, err := ops.kops.NamespaceListByLabel(TeresaTeamLabel, team.Name)
+		apps, err := ops.ListByTeam(team.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -367,6 +368,10 @@ func (ops *AppOperations) List(user *database.User) ([]*AppListItem, error) {
 		}
 	}
 	return items, nil
+}
+
+func (ops *AppOperations) ListByTeam(teamName string) ([]string, error) {
+	return ops.kops.NamespaceListByLabel(TeresaTeamLabel, teamName)
 }
 
 func (ops *AppOperations) SetAutoscale(user *database.User, appName string, as *Autoscale) error {
@@ -410,11 +415,7 @@ func (ops *AppOperations) Delete(user *database.User, appName string) error {
 }
 
 // ChangeTeam changes current team name of an App (be sure the new team exists)
-func (ops *AppOperations) ChangeTeam(user *database.User, appName, teamName string) error {
-	if _, err := ops.CheckPermAndGet(user, appName); err != nil {
-		return err
-	}
-
+func (ops *AppOperations) ChangeTeam(appName, teamName string) error {
 	label := map[string]string{TeresaTeamLabel: teamName}
 	if err := ops.kops.SetNamespaceLabels(appName, label); err != nil {
 		return teresa_errors.NewInternalServerError(err)

@@ -95,6 +95,9 @@ func registerServices(s *grpc.Server, opt Options, uOps user.Operations) {
 	a := app.NewService(appOps)
 	a.RegisterService(s)
 
+	// use appOps as teamExt to avoid circular import
+	tOps.SetTeamExt(appOps)
+
 	dOps := deploy.NewDeployOperations(appOps, opt.K8s, opt.Storage)
 	d := deploy.NewService(dOps, opt.DeployOpt)
 	d.RegisterService(s)

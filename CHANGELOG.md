@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - Pod readiness to the `app info` output
 - [helm] minio as dependency
+- Team rename command
 
 ### Changed
 - Using `dep` instead of `Godep` for dependencies management

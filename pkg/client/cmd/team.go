@@ -57,6 +57,14 @@ You can remove an user of a team with:
 	Run: teamRemoveUser,
 }
 
+var teamRenameCmd = &cobra.Command{
+	Use:     "rename",
+	Short:   "Rename a team",
+	Long:    "Rename a already created team",
+	Example: "$ teresa team rename --old foo --new bar",
+	Run:     teamRename,
+}
+
 func init() {
 	RootCmd.AddCommand(teamCmd)
 	// Commands
@@ -64,6 +72,7 @@ func init() {
 	teamCmd.AddCommand(teamCreateCmd)
 	teamCmd.AddCommand(teamAddUserCmd)
 	teamCmd.AddCommand(teamRemoveUserCmd)
+	teamCmd.AddCommand(teamRenameCmd)
 
 	teamListCmd.Flags().Bool("show-users", false, "show members of team")
 
@@ -75,6 +84,9 @@ func init() {
 
 	teamRemoveUserCmd.Flags().String("user", "", "user email")
 	teamRemoveUserCmd.Flags().String("team", "", "team name")
+
+	teamRenameCmd.Flags().String("old", "", "old team name")
+	teamRenameCmd.Flags().String("new", "", "new team name")
 }
 
 func createTeam(cmd *cobra.Command, args []string) {
@@ -195,4 +207,35 @@ func teamRemoveUser(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Printf("User %s has been removed from the team %s\n", color.CyanString(user), color.CyanString(team))
+}
+
+func teamRename(cmd *cobra.Command, args []string) {
+	oldTeam, err := cmd.Flags().GetString("old")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid old team name parameter")
+	}
+
+	newTeam, err := cmd.Flags().GetString("new")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid new team name parameter")
+	}
+
+	if oldTeam == "" || newTeam == "" {
+		cmd.Usage()
+		return
+	}
+
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
+
+	cli := teampb.NewTeamClient(conn)
+	req := &teampb.RenameRequest{OldName: oldTeam, NewName: newTeam}
+	if _, err := cli.Rename(context.Background(), req); err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+
+	fmt.Printf("Team %s renamed to %s with success\n", color.CyanString(oldTeam), color.CyanString(newTeam))
 }

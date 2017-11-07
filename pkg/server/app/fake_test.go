@@ -201,7 +201,7 @@ func TestFakeOperationsListByTeam(t *testing.T) {
 			t.Fatal("error getting app list by team:", err)
 		}
 		if len(apps) != tc.expected {
-			t.Error("expected %d, got %d", tc.expected, len(apps))
+			t.Errorf("expected %d, got %d", tc.expected, len(apps))
 		}
 	}
 }

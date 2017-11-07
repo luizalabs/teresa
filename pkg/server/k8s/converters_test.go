@@ -66,7 +66,7 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 	}
 	if c.Resources.Limits[k8sv1.ResourceCPU] != expectedCPU {
 		t.Errorf(
-			"expected %s, got %s",
+			"expected %v, got %v",
 			expectedCPU,
 			c.Resources.Limits[k8sv1.ResourceCPU],
 		)
@@ -77,7 +77,7 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 	}
 	if c.Resources.Limits[k8sv1.ResourceMemory] != expectedMemory {
 		t.Errorf(
-			"expected %s, got %s",
+			"expected %v, got %v",
 			expectedMemory,
 			c.Resources.Limits[k8sv1.ResourceMemory],
 		)

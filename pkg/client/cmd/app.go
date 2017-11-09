@@ -280,6 +280,13 @@ func appInfo(cmd *cobra.Command, args []string) {
 	color.New(color.FgCyan, color.Bold).Printf("[%s]\n", name)
 	bold := color.New(color.Bold).SprintFunc()
 
+	f, err := client.ReadConfigFile(cfgFile)
+	if err != nil {
+		client.PrintErrorAndExit("Cannot read the config file, have you created it with `teresa set-cluster` command?")
+	}
+
+	color.New(color.FgRed, color.Bold).Printf("env: %s\n", f.CurrentCluster)
+
 	fmt.Println(bold("team:"), info.Team)
 	if len(info.Addresses) > 0 {
 		fmt.Println(bold("addresses:"))

@@ -183,6 +183,6 @@ you have to keep compatibility with old code.
 Run the following in your command-line:
 
 ```sh
-$ brew tap luizalabs/teresa-cli
+$ brew tap luizalabs/homebrew-teresa-cli
 $ brew install teresa
 ```

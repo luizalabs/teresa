@@ -316,6 +316,9 @@ func (k *k8sClient) Status(namespace string) (*app.Status, error) {
 
 	hpa, err := kc.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(namespace)
 	if err != nil {
+		if k.IsNotFound(err) {
+			return nil, nil
+		}
 		return nil, errors.Wrap(err, "get status failed")
 	}
 

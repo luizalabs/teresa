@@ -136,12 +136,12 @@ func (k *k8sClient) PodLogs(namespace string, podName string, lines int64, follo
 	return req.Stream()
 }
 
-func newNs(a *app.App, user string) *k8sv1.Namespace {
+func newNs(nsName, teamName, user string) *k8sv1.Namespace {
 	return &k8sv1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: a.Name,
+			Name: nsName,
 			Labels: map[string]string{
-				app.TeresaTeamLabel: a.Team,
+				app.TeresaTeamLabel: teamName,
 			},
 			Annotations: map[string]string{
 				app.TeresaLastUser: user,
@@ -230,10 +230,22 @@ func (k *k8sClient) CreateNamespace(a *app.App, user string) error {
 		return err
 	}
 
-	ns := newNs(a, user)
+	ns := newNs(a.Name, a.Team, user)
 	if err := addAppToNs(a, ns); err != nil {
 		return err
 	}
+
+	_, err = kc.CoreV1().Namespaces().Create(ns)
+	return err
+}
+
+func (k *k8sClient) CreateNamespaceFromName(nsName, teamName, user string) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+
+	ns := newNs(nsName, teamName, user)
 
 	_, err = kc.CoreV1().Namespaces().Create(ns)
 	return err

@@ -30,7 +30,7 @@ type fakeK8sOperations struct {
 	lastDeploySpec           *DeploySpec
 	createDeployReturn       error
 	hasSrvErr                error
-	exposeAppWasCalled       bool
+	exposeDeployWasCalled    bool
 	podRunReadCloser         io.ReadCloser
 	podRunExitCodeChan       chan int
 	podRunErr                error
@@ -46,8 +46,8 @@ func (f *fakeK8sOperations) CreateOrUpdateDeploy(deploySpec *DeploySpec) error {
 	return f.createDeployReturn
 }
 
-func (f *fakeK8sOperations) ExposeApp(namespace, name, vHost string, w io.Writer) error {
-	f.exposeAppWasCalled = true
+func (f *fakeK8sOperations) ExposeDeploy(namespace, name, vHost string, w io.Writer) error {
+	f.exposeDeployWasCalled = true
 	return nil
 }
 
@@ -179,11 +179,11 @@ func TestCreateDeployReturnError(t *testing.T) {
 	}
 }
 
-func TestExposeService(t *testing.T) {
+func TestExposeApp(t *testing.T) {
 	var testCases = []struct {
-		appProcessType             string
-		hasSrvErr                  error
-		expectedExposeAppWasCalled bool
+		appProcessType                string
+		hasSrvErr                     error
+		expectedExposeDeployWasCalled bool
 	}{
 		{app.ProcessTypeWeb, nil, true},
 		{app.ProcessTypeWeb, nil, true},
@@ -201,13 +201,13 @@ func TestExposeService(t *testing.T) {
 			st.NewFake(),
 		)
 		deployOperations := ops.(*DeployOperations)
-		deployOperations.exposeService(&app.App{ProcessType: tc.appProcessType}, new(bytes.Buffer))
+		deployOperations.exposeApp(&app.App{ProcessType: tc.appProcessType}, new(bytes.Buffer))
 
-		if fakeK8s.exposeAppWasCalled != tc.expectedExposeAppWasCalled {
+		if fakeK8s.exposeDeployWasCalled != tc.expectedExposeDeployWasCalled {
 			t.Errorf(
 				"expected %v, got %v",
-				tc.expectedExposeAppWasCalled,
-				fakeK8s.exposeAppWasCalled,
+				tc.expectedExposeDeployWasCalled,
+				fakeK8s.exposeDeployWasCalled,
 			)
 		}
 	}

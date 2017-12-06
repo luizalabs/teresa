@@ -46,7 +46,7 @@ func (f *fakeK8sOperations) CreateOrUpdateDeploy(deploySpec *DeploySpec) error {
 	return f.createDeployReturn
 }
 
-func (f *fakeK8sOperations) ExposeApp(namespace, name, host string, w io.Writer) error {
+func (f *fakeK8sOperations) ExposeApp(namespace, name, vHost string, w io.Writer) error {
 	f.exposeAppWasCalled = true
 	return nil
 }

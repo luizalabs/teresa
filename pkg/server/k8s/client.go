@@ -523,8 +523,8 @@ func (k *k8sClient) createIngress(namespace, appName, vHost string) error {
 	return errors.Wrap(err, "create ingress failed")
 }
 
-// ExposeApp creates a service and/or a ingress if needed
-func (k *k8sClient) ExposeApp(namespace, appName, vHost string, w io.Writer) error {
+// ExposeDeploy creates a service and/or a ingress if needed
+func (k *k8sClient) ExposeDeploy(namespace, appName, vHost string, w io.Writer) error {
 	hasSrv, err := k.hasService(namespace, appName)
 	if err != nil {
 		return err

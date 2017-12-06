@@ -17,7 +17,6 @@ message CreateRequest {
     string name = 1;
     string team = 2;
     string process_type = 3;
-    string virtual_host = 6;
 
     message Limits {
         message LimitRangeQuantity {
@@ -36,6 +35,8 @@ message CreateRequest {
         int32 min = 3;
     }
     Autoscale autoscale = 5;
+
+    string virtual_host = 6;
 }
 
 message ListResponse {

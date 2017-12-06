@@ -14,16 +14,16 @@ func cmpAppWithCreateRequest(app *App, req *appb.CreateRequest) bool {
 		A string
 		B string
 		C string
-		D string
-		E *Limits
-		F *Autoscale
+		D *Limits
+		E *Autoscale
+		F string
 	}{
 		app.Name,
 		app.Team,
 		app.ProcessType,
-		app.VirtualHost,
 		app.Limits,
 		app.Autoscale,
+		app.VirtualHost,
 	}
 
 	return test.DeepEqual(&tmp, req)

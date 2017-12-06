@@ -28,7 +28,7 @@ type Operations interface {
 type K8sOperations interface {
 	PodRun(podSpec *PodSpec) (io.ReadCloser, <-chan int, error)
 	CreateOrUpdateDeploy(deploySpec *DeploySpec) error
-	ExposeApp(namespace, name, vHost string, w io.Writer) error
+	ExposeDeploy(namespace, name, vHost string, w io.Writer) error
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
 	DeployRollbackToRevision(namespace, name, revision string) error
 }
@@ -85,7 +85,7 @@ func (ops *DeployOperations) Deploy(user *database.User, appName string, tarBall
 			return
 		}
 
-		if err := ops.exposeService(a, w); err != nil {
+		if err := ops.exposeApp(a, w); err != nil {
 			log.WithError(err).Errorf("Exposing service %s", appName)
 		}
 		fmt.Fprintln(w, fmt.Sprintf("The app %s has been successfully deployed", appName))
@@ -112,11 +112,11 @@ func (ops *DeployOperations) createDeploy(a *app.App, tYaml *TeresaYaml, descrip
 	return ops.k8s.CreateOrUpdateDeploy(deploySpec)
 }
 
-func (ops *DeployOperations) exposeService(a *app.App, w io.Writer) error {
+func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {
 	if a.ProcessType != app.ProcessTypeWeb {
 		return nil
 	}
-	if err := ops.k8s.ExposeApp(a.Name, a.Name, a.VirtualHost, w); err != nil {
+	if err := ops.k8s.ExposeDeploy(a.Name, a.Name, a.VirtualHost, w); err != nil {
 		return err
 	}
 	return nil // already exposed

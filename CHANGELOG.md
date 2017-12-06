@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - [helm] support rbac
 - Support ingress on app expose
-- app create now support --host to define the host used by ingress
+- app create now support --vhost to define a virtual host to app
 - Helm support ingress and service type config
 
 ### Fixed

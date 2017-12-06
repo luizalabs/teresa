@@ -231,7 +231,7 @@ func serviceSpec(namespace, name, srvType string) *k8sv1.Service {
 	}
 }
 
-func ingressSpec(namespace, name, host string) *k8s_extensions.Ingress {
+func ingressSpec(namespace, name, vHost string) *k8s_extensions.Ingress {
 	return &k8s_extensions.Ingress{
 		TypeMeta: unversioned.TypeMeta{
 			APIVersion: "extensions/v1beta1",
@@ -244,7 +244,7 @@ func ingressSpec(namespace, name, host string) *k8s_extensions.Ingress {
 		Spec: k8s_extensions.IngressSpec{
 			Rules: []k8s_extensions.IngressRule{
 				{
-					Host: host,
+					Host: vHost,
 					IngressRuleValue: k8s_extensions.IngressRuleValue{
 						HTTP: &k8s_extensions.HTTPIngressRuleValue{
 							Paths: []k8s_extensions.HTTPIngressPath{

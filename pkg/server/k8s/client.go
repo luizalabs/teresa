@@ -225,27 +225,23 @@ func newHPA(a *app.App) *asv1.HorizontalPodAutoscaler {
 }
 
 func (k *k8sClient) CreateNamespace(a *app.App, user string) error {
-	kc, err := k.buildClient()
-	if err != nil {
-		return err
-	}
-
 	ns := newNs(a.Name, a.Team, user)
 	if err := addAppToNs(a, ns); err != nil {
 		return err
 	}
-
-	_, err = kc.CoreV1().Namespaces().Create(ns)
-	return err
+	return k.createNamespaceFromSpec(ns)
 }
 
 func (k *k8sClient) CreateNamespaceFromName(nsName, teamName, user string) error {
+	ns := newNs(nsName, teamName, user)
+	return k.createNamespaceFromSpec(ns)
+}
+
+func (k *k8sClient) createNamespaceFromSpec(ns *k8sv1.Namespace) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
 	}
-
-	ns := newNs(nsName, teamName, user)
 
 	_, err = kc.CoreV1().Namespaces().Create(ns)
 	return err

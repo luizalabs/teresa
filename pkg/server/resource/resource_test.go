@@ -45,7 +45,7 @@ func (f *fakeK8sOperations) CreateNamespaceFromName(nsName, teamName, userEmail 
 	return f.CreateNamespaceErr
 }
 
-func (f *fakeK8sOperations) CreateResources(nsName string, rep string) error {
+func (f *fakeK8sOperations) CreateResources(nsName string, r io.Reader) error {
 	return f.ResourcesErr
 }
 

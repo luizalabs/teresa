@@ -30,6 +30,7 @@ type Operations interface {
 
 type Templater interface {
 	Template(resName string) (string, error)
+	WelcomeTemplate(resName string) (string, error)
 }
 
 type Executer interface {
@@ -87,8 +88,18 @@ func (ops *ResourceOperations) Create(user *database.User, res *Resource) (_ str
 		return "", teresa_errors.NewInternalServerError(err)
 	}
 
+	welcomeTpl, err := ops.tpl.WelcomeTemplate(res.Name)
+	if err != nil {
+		return "", teresa_errors.NewInternalServerError(err)
+	}
+
 	var buf bytes.Buffer
 	if err := ops.exe.Execute(&buf, tpl, res.Settings); err != nil {
+		return "", teresa_errors.NewInternalServerError(err)
+	}
+
+	var welcomeBuf bytes.Buffer
+	if err := ops.exe.Execute(&welcomeBuf, welcomeTpl, res.Settings); err != nil {
 		return "", teresa_errors.NewInternalServerError(err)
 	}
 
@@ -97,8 +108,7 @@ func (ops *ResourceOperations) Create(user *database.User, res *Resource) (_ str
 		return "", teresa_errors.NewInternalServerError(err)
 	}
 
-	// TODO: send usage message for the new resource
-	return "", nil
+	return string(welcomeBuf.Bytes()), nil
 }
 
 func (ops *ResourceOperations) Delete(user *database.User, resName string) error {

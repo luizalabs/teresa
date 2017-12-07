@@ -14,7 +14,8 @@ import (
 )
 
 type fakeTemplater struct {
-	Err error
+	Err        error
+	WelcomeErr error
 }
 
 func (f *fakeTemplater) Template(resName string) (string, error) {
@@ -22,6 +23,13 @@ func (f *fakeTemplater) Template(resName string) (string, error) {
 		return "", f.Err
 	}
 	return "Test Template", nil
+}
+
+func (f *fakeTemplater) WelcomeTemplate(resName string) (string, error) {
+	if f.WelcomeErr != nil {
+		return "", f.WelcomeErr
+	}
+	return "Welcome Template", nil
 }
 
 type fakeExecuter struct {
@@ -140,6 +148,7 @@ func TestOperationsCreateErrInternalServerError(t *testing.T) {
 		k8s K8sOperations
 	}{
 		{&fakeTemplater{Err: errors.New("test")}, &fakeExecuter{}, &fakeK8sOperations{}},
+		{&fakeTemplater{WelcomeErr: errors.New("test")}, &fakeExecuter{}, &fakeK8sOperations{}},
 		{&fakeTemplater{}, &fakeExecuter{Err: errors.New("test")}, &fakeK8sOperations{}},
 		{&fakeTemplater{}, &fakeExecuter{}, &fakeK8sOperations{ResourcesErr: errors.New("test")}},
 	}

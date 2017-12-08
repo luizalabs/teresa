@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Changed
 - Back to Godep for dependencies management
+- Update `client-go` lib to version 4.0
 
 ## [0.11.0] - 2017-12-11
 ### Added

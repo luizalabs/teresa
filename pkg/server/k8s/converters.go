@@ -4,11 +4,12 @@ import (
 	"strconv"
 
 	"github.com/luizalabs/teresa/pkg/server/deploy"
-	"k8s.io/client-go/pkg/api/resource"
-	"k8s.io/client-go/pkg/api/unversioned"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/pkg/apis/apps/v1beta1"
 	k8s_extensions "k8s.io/client-go/pkg/apis/extensions/v1beta1"
-	"k8s.io/client-go/pkg/util/intstr"
 )
 
 const (
@@ -81,8 +82,8 @@ func podSpecToK8sPod(podSpec *deploy.PodSpec) (*k8sv1.Pod, error) {
 	}
 
 	pod := &k8sv1.Pod{
-		TypeMeta: unversioned.TypeMeta{Kind: "Pod", APIVersion: "v1"},
-		ObjectMeta: k8sv1.ObjectMeta{
+		TypeMeta: metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      podSpec.Name,
 			Namespace: podSpec.Namespace,
 		},
@@ -91,7 +92,7 @@ func podSpecToK8sPod(podSpec *deploy.PodSpec) (*k8sv1.Pod, error) {
 	return pod, nil
 }
 
-func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) (*k8s_extensions.Deployment, error) {
+func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) (*v1beta1.Deployment, error) {
 	c, err := podSpecToK8sContainer(&deploySpec.PodSpec)
 	if err != nil {
 		return nil, err
@@ -124,12 +125,12 @@ func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) (*k8s_
 	}
 
 	rhl := int32(deploySpec.RevisionHistoryLimit)
-	d := &k8s_extensions.Deployment{
-		TypeMeta: unversioned.TypeMeta{
+	d := &v1beta1.Deployment{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: "extensions/v1beta1",
 			Kind:       "Deployment",
 		},
-		ObjectMeta: k8sv1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      deploySpec.Name,
 			Namespace: deploySpec.Namespace,
 			Labels:    map[string]string{"run": deploySpec.Name},
@@ -138,17 +139,17 @@ func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) (*k8s_
 				"teresa.io/slug":      deploySpec.SlugURL,
 			},
 		},
-		Spec: k8s_extensions.DeploymentSpec{
+		Spec: v1beta1.DeploymentSpec{
 			Replicas: &replicas,
-			Strategy: k8s_extensions.DeploymentStrategy{
-				Type: k8s_extensions.RollingUpdateDeploymentStrategyType,
-				RollingUpdate: &k8s_extensions.RollingUpdateDeployment{
+			Strategy: v1beta1.DeploymentStrategy{
+				Type: v1beta1.RollingUpdateDeploymentStrategyType,
+				RollingUpdate: &v1beta1.RollingUpdateDeployment{
 					MaxUnavailable: maxUnavailable,
 					MaxSurge:       maxSurge,
 				},
 			},
 			Template: k8sv1.PodTemplateSpec{
-				ObjectMeta: k8sv1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{"run": deploySpec.Name},
 				},
 				Spec: ps,
@@ -203,11 +204,11 @@ func lifecycleToK8sLifecycle(lc *deploy.Lifecycle) *k8sv1.Lifecycle {
 func serviceSpec(namespace, name, srvType string) *k8sv1.Service {
 	serviceType := k8sv1.ServiceType(srvType)
 	return &k8sv1.Service{
-		TypeMeta: unversioned.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Service",
 		},
-		ObjectMeta: k8sv1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Labels: map[string]string{
 				"run": name,
 			},
@@ -233,11 +234,11 @@ func serviceSpec(namespace, name, srvType string) *k8sv1.Service {
 
 func ingressSpec(namespace, name, vHost string) *k8s_extensions.Ingress {
 	return &k8s_extensions.Ingress{
-		TypeMeta: unversioned.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: "extensions/v1beta1",
 			Kind:       "Ingress",
 		},
-		ObjectMeta: k8sv1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},

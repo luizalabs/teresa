@@ -10,13 +10,15 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/deploy"
 	"github.com/pkg/errors"
 
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api"
-	"k8s.io/client-go/pkg/api/resource"
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
 	asv1 "k8s.io/client-go/pkg/apis/autoscaling/v1"
 
-	"k8s.io/client-go/pkg/util/wait"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -47,7 +49,7 @@ func (k *k8sClient) HealthCheck() error {
 	if err != nil {
 		return err
 	}
-	_, err = kc.CoreV1().Namespaces().List(k8sv1.ListOptions{})
+	_, err = kc.CoreV1().Namespaces().List(metav1.ListOptions{})
 	return err
 }
 
@@ -56,7 +58,7 @@ func (k *k8sClient) getNamespace(namespace string) (*k8sv1.Namespace, error) {
 	if err != nil {
 		return nil, err
 	}
-	ns, err := kc.CoreV1().Namespaces().Get(namespace)
+	ns, err := kc.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +88,7 @@ func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {
 	if err != nil {
 		return nil, err
 	}
-	podList, err := kc.CoreV1().Pods(namespace).List(k8sv1.ListOptions{})
+	podList, err := kc.CoreV1().Pods(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +138,7 @@ func (k *k8sClient) PodLogs(namespace string, podName string, lines int64, follo
 
 func newNs(a *app.App, user string) *k8sv1.Namespace {
 	return &k8sv1.Namespace{
-		ObjectMeta: k8sv1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: a.Name,
 			Labels: map[string]string{
 				app.TeresaTeamLabel: a.Team,
@@ -190,7 +192,7 @@ func newLimitRange(a *app.App) (*k8sv1.LimitRange, error) {
 	}
 
 	lr := &k8sv1.LimitRange{
-		ObjectMeta: k8sv1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "limits",
 		},
 		Spec: k8sv1.LimitRangeSpec{
@@ -205,7 +207,7 @@ func newHPA(a *app.App) *asv1.HorizontalPodAutoscaler {
 	minr := a.Autoscale.Min
 
 	return &asv1.HorizontalPodAutoscaler{
-		ObjectMeta: k8sv1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      a.Name,
 			Namespace: a.Name,
 		},
@@ -260,7 +262,7 @@ func (k *k8sClient) CreateSecret(appName, secretName string, data map[string][]b
 
 	s := &k8sv1.Secret{
 		Type: k8sv1.SecretTypeOpaque,
-		ObjectMeta: k8sv1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
 			Namespace: appName,
 		},
@@ -292,7 +294,7 @@ func (k *k8sClient) AddressList(namespace string) ([]*app.Address, error) {
 		return nil, err
 	}
 
-	srvs, err := kc.CoreV1().Services(namespace).List(k8sv1.ListOptions{})
+	srvs, err := kc.CoreV1().Services(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "get addr list failed")
 	}
@@ -316,7 +318,10 @@ func (k *k8sClient) Status(namespace string) (*app.Status, error) {
 		return nil, err
 	}
 
-	hpa, err := kc.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(namespace)
+	hpa, err := kc.AutoscalingV1().
+		HorizontalPodAutoscalers(namespace).
+		Get(namespace, metav1.GetOptions{})
+
 	if err != nil {
 		if k.IsNotFound(err) {
 			return nil, nil
@@ -347,7 +352,10 @@ func (k *k8sClient) Autoscale(namespace string) (*app.Autoscale, error) {
 		return nil, err
 	}
 
-	hpa, err := kc.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(namespace)
+	hpa, err := kc.AutoscalingV1().
+		HorizontalPodAutoscalers(namespace).
+		Get(namespace, metav1.GetOptions{})
+
 	if err != nil {
 		if k.IsNotFound(err) {
 			return nil, nil
@@ -377,7 +385,7 @@ func (k *k8sClient) Limits(namespace, name string) (*app.Limits, error) {
 		return nil, err
 	}
 
-	lr, err := kc.CoreV1().LimitRanges(namespace).Get(name)
+	lr, err := kc.CoreV1().LimitRanges(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "get limits failed")
 	}
@@ -419,9 +427,9 @@ func (k *k8sClient) CreateOrUpdateDeploy(deploySpec *deploy.DeploySpec) error {
 		return err
 	}
 
-	_, err = kc.Deployments(deploySpec.Namespace).Update(deployYaml)
+	_, err = kc.AppsV1beta1().Deployments(deploySpec.Namespace).Update(deployYaml)
 	if k.IsNotFound(err) {
-		_, err = kc.Deployments(deploySpec.Namespace).Create(deployYaml)
+		_, err = kc.AppsV1beta1().Deployments(deploySpec.Namespace).Create(deployYaml)
 	}
 	return err
 }
@@ -478,7 +486,7 @@ func (k *k8sClient) hasService(namespace, appName string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = kc.CoreV1().Services(namespace).Get(appName)
+	_, err = kc.CoreV1().Services(namespace).Get(appName, metav1.GetOptions{})
 	if err != nil {
 		if k.IsNotFound(err) {
 			return false, nil
@@ -503,7 +511,10 @@ func (k *k8sClient) hasIngress(namespace, appName string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Get(appName)
+	_, err = kc.ExtensionsV1beta1().
+		Ingresses(namespace).
+		Get(appName, metav1.GetOptions{})
+
 	if err != nil {
 		if k.IsNotFound(err) {
 			return false, nil
@@ -558,7 +569,7 @@ func (k *k8sClient) killPod(pod *k8sv1.Pod) error {
 	if err != nil {
 		return err
 	}
-	return kc.Pods(pod.Namespace).Delete(pod.Name, &k8sv1.DeleteOptions{})
+	return kc.Pods(pod.Namespace).Delete(pod.Name, &metav1.DeleteOptions{})
 }
 
 func (k *k8sClient) waitPodStart(pod *k8sv1.Pod, checkInterval, timeout time.Duration) error {
@@ -568,7 +579,7 @@ func (k *k8sClient) waitPodStart(pod *k8sv1.Pod, checkInterval, timeout time.Dur
 	}
 	podsClient := kc.Pods(pod.Namespace)
 	return wait.PollImmediate(checkInterval, timeout, func() (bool, error) {
-		p, err := podsClient.Get(pod.Name)
+		p, err := podsClient.Get(pod.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -587,7 +598,7 @@ func (k *k8sClient) waitPodEnd(pod *k8sv1.Pod, checkInterval, timeout time.Durat
 	}
 	podsClient := kc.Pods(pod.Namespace)
 	return wait.PollImmediate(checkInterval, timeout, func() (bool, error) {
-		p, err := podsClient.Get(pod.Name)
+		p, err := podsClient.Get(pod.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -602,7 +613,7 @@ func (k *k8sClient) podExitCode(pod *k8sv1.Pod) (int, error) {
 		return 1, err
 	}
 
-	p, err := kc.Pods(pod.Namespace).Get(pod.Name)
+	p, err := kc.Pods(pod.Namespace).Get(pod.Name, metav1.GetOptions{})
 	if err != nil {
 		return 1, err
 	}
@@ -622,7 +633,8 @@ func (k *k8sClient) currentPodReplicasFromDeploy(namespace, appName string) int3
 		return 1
 	}
 
-	d, err := kc.Deployments(namespace).Get(appName)
+	d, err := kc.AppsV1beta1().Deployments(
+		namespace).Get(appName, metav1.GetOptions{})
 	if err != nil || d.Status.Replicas < 1 {
 		return 1
 	}
@@ -678,7 +690,7 @@ func (k *k8sClient) patchDeployEnvVars(namespace, name string, v interface{}) er
 
 	_, err = kc.ExtensionsV1beta1().Deployments(namespace).Patch(
 		name,
-		api.StrategicMergePatchType,
+		types.StrategicMergePatchType,
 		[]byte(data),
 	)
 
@@ -716,7 +728,7 @@ func (k *k8sClient) DeleteNamespace(namespace string) error {
 	if err != nil {
 		return err
 	}
-	err = kc.CoreV1().Namespaces().Delete(namespace, &k8sv1.DeleteOptions{})
+	err = kc.CoreV1().Namespaces().Delete(namespace, &metav1.DeleteOptions{})
 	return errors.Wrap(err, "delete ns failed")
 }
 
@@ -726,7 +738,7 @@ func (k k8sClient) NamespaceListByLabel(label, value string) ([]string, error) {
 		return nil, err
 	}
 	labelSelector := fmt.Sprintf("%s=%s", label, value)
-	nl, err := kc.CoreV1().Namespaces().List(k8sv1.ListOptions{LabelSelector: labelSelector})
+	nl, err := kc.CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		return nil, err
 	}
@@ -744,7 +756,7 @@ func (k *k8sClient) ReplicaSetListByLabel(namespace, label, value string) ([]*de
 	}
 
 	labelSelector := fmt.Sprintf("%s=%s", label, value)
-	opts := k8sv1.ListOptions{LabelSelector: labelSelector}
+	opts := metav1.ListOptions{LabelSelector: labelSelector}
 	rs, err := cli.ExtensionsV1beta1().ReplicaSets(namespace).List(opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get replicasets")
@@ -773,7 +785,7 @@ func (k *k8sClient) DeployRollbackToRevision(namespace, name, revision string) e
 
 	_, err = kc.ExtensionsV1beta1().Deployments(namespace).Patch(
 		name,
-		api.StrategicMergePatchType,
+		types.StrategicMergePatchType,
 		[]byte(data),
 	)
 

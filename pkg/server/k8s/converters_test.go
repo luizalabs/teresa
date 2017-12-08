@@ -3,9 +3,9 @@ package k8s
 import (
 	"testing"
 
-	"k8s.io/client-go/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/util/intstr"
 
 	"github.com/luizalabs/teresa/pkg/server/deploy"
 )

@@ -28,13 +28,8 @@ type Operations interface {
 	Delete(user *database.User, resName string) error
 }
 
-type Templater interface {
-	Template(resName string) (io.Reader, error)
-	WelcomeTemplate(resName string) (io.Reader, error)
-}
-
 type Executer interface {
-	Execute(w io.Writer, r io.Reader, settings []*Setting) error
+	Execute(w io.Writer, r io.ReadCloser, settings []*Setting) error
 }
 
 type K8sOperations interface {
@@ -83,23 +78,23 @@ func (ops *ResourceOperations) Create(user *database.User, res *Resource) (_ str
 		}
 	}()
 
-	tplReader, err := ops.tpl.Template(res.Name)
+	tplReadCloser, err := ops.tpl.Template(res.Name)
 	if err != nil {
 		return "", teresa_errors.NewInternalServerError(err)
 	}
 
-	welcomeReader, err := ops.tpl.WelcomeTemplate(res.Name)
+	welcomeReadCloser, err := ops.tpl.WelcomeTemplate(res.Name)
 	if err != nil {
 		return "", teresa_errors.NewInternalServerError(err)
 	}
 
 	var buf bytes.Buffer
-	if err := ops.exe.Execute(&buf, tplReader, res.Settings); err != nil {
+	if err := ops.exe.Execute(&buf, tplReadCloser, res.Settings); err != nil {
 		return "", teresa_errors.NewInternalServerError(err)
 	}
 
 	var welcomeBuf bytes.Buffer
-	if err := ops.exe.Execute(&welcomeBuf, welcomeReader, res.Settings); err != nil {
+	if err := ops.exe.Execute(&welcomeBuf, welcomeReadCloser, res.Settings); err != nil {
 		return "", teresa_errors.NewInternalServerError(err)
 	}
 

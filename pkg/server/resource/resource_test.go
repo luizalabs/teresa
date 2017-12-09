@@ -13,10 +13,14 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/test"
 )
 
-type fakeReader struct{}
+type fakeReadCloser struct{}
 
-func (f *fakeReader) Read(p []byte) (n int, err error) {
+func (f *fakeReadCloser) Read(p []byte) (n int, err error) {
 	return 0, nil
+}
+
+func (f *fakeReadCloser) Close() error {
+	return nil
 }
 
 type fakeTemplater struct {
@@ -24,19 +28,19 @@ type fakeTemplater struct {
 	WelcomeErr error
 }
 
-func (f *fakeTemplater) Template(resName string) (io.Reader, error) {
-	return &fakeReader{}, f.Err
+func (f *fakeTemplater) Template(resName string) (io.ReadCloser, error) {
+	return &fakeReadCloser{}, f.Err
 }
 
-func (f *fakeTemplater) WelcomeTemplate(resName string) (io.Reader, error) {
-	return &fakeReader{}, f.WelcomeErr
+func (f *fakeTemplater) WelcomeTemplate(resName string) (io.ReadCloser, error) {
+	return &fakeReadCloser{}, f.WelcomeErr
 }
 
 type fakeExecuter struct {
 	Err error
 }
 
-func (f *fakeExecuter) Execute(w io.Writer, r io.Reader, settings []*Setting) error {
+func (f *fakeExecuter) Execute(w io.Writer, r io.ReadCloser, settings []*Setting) error {
 	w.Write([]byte("Test Representation"))
 	return f.Err
 }

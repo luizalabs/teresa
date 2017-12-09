@@ -12,6 +12,11 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 )
 
+type Config struct {
+	URLFmt        string `envconfig:"url_fmt"`
+	WelcomeURLFmt string `envconfig:"welcome_url_fmt"`
+}
+
 type Setting struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`

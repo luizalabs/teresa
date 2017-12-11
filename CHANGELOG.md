@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [NEXT_RELEASE]
+## [0.11.0] - 2017-12-11
 ### Added
 - [helm] support rbac
 - Support ingress on app expose

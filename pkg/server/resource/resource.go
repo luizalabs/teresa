@@ -33,10 +33,6 @@ type Operations interface {
 	Delete(user *database.User, resName string) error
 }
 
-type Executer interface {
-	Execute(w io.Writer, r io.ReadCloser, settings []*Setting) error
-}
-
 type K8sOperations interface {
 	CreateNamespaceFromName(nsName, teamName, userEmail string) error
 	CreateResources(nsName string, r io.Reader) error

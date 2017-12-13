@@ -504,7 +504,8 @@ WARNING:
   You can also simulate tail -f:
 
   $ teresa app logs foo --lines=20 --follow`,
-	Run: appLogs,
+	Run:     appLogs,
+	Aliases: []string{"log"},
 }
 
 var appAutoscaleSetCmd = &cobra.Command{
@@ -617,8 +618,8 @@ func init() {
 	appEnvUnSetCmd.Flags().String("app", "", "app name")
 	appEnvUnSetCmd.Flags().Bool("no-input", false, "unset env vars without warning")
 	// App logs
-	appLogsCmd.Flags().Int64("lines", 10, "number of lines")
-	appLogsCmd.Flags().Bool("follow", false, "follow logs")
+	appLogsCmd.Flags().Int64P("lines", "n", 10, "number of lines")
+	appLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")
 	// App autoscale
 	appAutoscaleSetCmd.Flags().Int32("min", flagNotDefined, "Minimum number of replicas")
 	appAutoscaleSetCmd.Flags().Int32("max", flagNotDefined, "Maximum number of replicas")

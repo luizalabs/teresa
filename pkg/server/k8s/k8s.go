@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"io"
 	"time"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
@@ -26,6 +27,9 @@ type Client interface {
 	app.K8sOperations
 	deploy.K8sOperations
 	healthcheck.K8sOperations
+
+	Create(namespace string, reader io.Reader) error
+	CreateNamespaceFromName(nsName, teamName, user string) error
 }
 
 func validateConfig(conf *Config) error {

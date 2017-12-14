@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - Env vars being set or unset for the app on deploy update errors
+- Typo on server pkg
 
 ## [0.11.0] - 2017-12-11
 ### Added

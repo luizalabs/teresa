@@ -293,18 +293,19 @@ func (ops *AppOperations) SetEnv(user *database.User, appName string, evs []*Env
 		return err
 	}
 
-	setEnvVars(app, evs)
-
-	if err := ops.SaveApp(app, user.Email); err != nil {
-		return teresa_errors.NewInternalServerError(err)
-	}
-
 	if err = ops.kops.CreateOrUpdateDeployEnvVars(appName, appName, evs); err != nil {
 		if ops.kops.IsNotFound(err) {
 			return nil
 		}
 		return teresa_errors.NewInternalServerError(err)
 	}
+
+	setEnvVars(app, evs)
+
+	if err := ops.SaveApp(app, user.Email); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
 	return nil
 }
 
@@ -318,18 +319,19 @@ func (ops *AppOperations) UnsetEnv(user *database.User, appName string, evNames 
 		return err
 	}
 
-	unsetEnvVars(app, evNames)
-
-	if err := ops.SaveApp(app, user.Email); err != nil {
-		return teresa_errors.NewInternalServerError(err)
-	}
-
 	if err = ops.kops.DeleteDeployEnvVars(appName, appName, evNames); err != nil {
 		if ops.kops.IsNotFound(err) {
 			return nil
 		}
 		return teresa_errors.NewInternalServerError(err)
 	}
+
+	unsetEnvVars(app, evNames)
+
+	if err := ops.SaveApp(app, user.Email); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
 	return nil
 }
 

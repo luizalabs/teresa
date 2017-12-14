@@ -17,7 +17,7 @@ func (e *errReader) Read(p []byte) (int, error) {
 }
 
 func TestExecuteSuccess(t *testing.T) {
-	exe := NewExecuter()
+	exe := NewTemplateExecuter()
 	r, err := os.Open("testdata/success.tmpl")
 	if err != nil {
 		t.Fatal("got unexpected error:", err)
@@ -39,7 +39,7 @@ func TestExecuteSuccess(t *testing.T) {
 }
 
 func TestExecuteErrReader(t *testing.T) {
-	exe := NewExecuter()
+	exe := NewTemplateExecuter()
 	r := ioutil.NopCloser(&errReader{Err: errors.New("test")})
 	var buf bytes.Buffer
 	settings := []*Setting{
@@ -53,7 +53,7 @@ func TestExecuteErrReader(t *testing.T) {
 }
 
 func TestExecuteFail(t *testing.T) {
-	exe := NewExecuter()
+	exe := NewTemplateExecuter()
 	r, err := os.Open("testdata/fail.tmpl")
 	if err != nil {
 		t.Fatal("got unexpected error:", err)

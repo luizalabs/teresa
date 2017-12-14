@@ -13,8 +13,8 @@ import (
 )
 
 type Config struct {
-	URLFmt        string `envconfig:"url_fmt"`
-	WelcomeURLFmt string `envconfig:"welcome_url_fmt"`
+	URLFmt        string `envconfig:"template_url_fmt"`
+	WelcomeURLFmt string `envconfig:"welcome_template_url_fmt"`
 }
 
 type Setting struct {
@@ -43,7 +43,7 @@ type K8sOperations interface {
 
 type ResourceOperations struct {
 	tpl    Templater
-	exe    Executer
+	exe    TemplateExecuter
 	k8s    K8sOperations
 	appOps app.Operations
 }
@@ -123,6 +123,6 @@ func (ops *ResourceOperations) Delete(user *database.User, resName string) error
 	return nil
 }
 
-func NewOperations(tpl Templater, exe Executer, k8s K8sOperations, appOps app.Operations) Operations {
+func NewOperations(tpl Templater, exe TemplateExecuter, k8s K8sOperations, appOps app.Operations) Operations {
 	return &ResourceOperations{tpl: tpl, exe: exe, k8s: k8s, appOps: appOps}
 }

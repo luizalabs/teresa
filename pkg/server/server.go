@@ -60,7 +60,7 @@ func (s *Server) Run() error {
 	return g.Wait()
 }
 
-func createSeverOps(opt Options, uOps user.Operations) []grpc.ServerOption {
+func createServerOps(opt Options, uOps user.Operations) []grpc.ServerOption {
 	recOpts := []grpc_recovery.Option{
 		grpc_recovery.WithRecoveryHandler(buildRecFunc(opt.Debug)),
 	}
@@ -110,7 +110,7 @@ func New(opt Options) (*Server, error) {
 	}
 
 	uOps := user.NewDatabaseOperations(opt.DB, opt.Auth)
-	sOpts := createSeverOps(opt, uOps)
+	sOpts := createServerOps(opt, uOps)
 	s := grpc.NewServer(sOpts...)
 	registerServices(s, opt, uOps)
 

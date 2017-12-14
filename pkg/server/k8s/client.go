@@ -21,6 +21,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	kubectl_cmd_util "k8s.io/kubernetes/pkg/kubectl/cmd/util"
+	kubectl_resource "k8s.io/kubernetes/pkg/kubectl/resource"
 )
 
 const (
@@ -798,6 +801,42 @@ func (k *k8sClient) DeployRollbackToRevision(namespace, name, revision string) e
 	)
 
 	return errors.Wrap(err, "patch deploy failed")
+}
+
+func (k *k8sClient) Create(namespace string, reader io.Reader) error {
+	kubeFactory := kubectl_cmd_util.NewFactory(nil)
+	schema, err := kubeFactory.Validator(false, "/tmp")
+	if err != nil {
+		return errors.Wrap(err, "create resource validator failed")
+	}
+
+	r := kubeFactory.NewBuilder(true).
+		ContinueOnError().
+		Schema(schema).
+		NamespaceParam(namespace).
+		DefaultNamespace().
+		Stream(reader, "").
+		Flatten().
+		Do()
+
+	if err := r.Err(); err != nil {
+		return errors.Wrap(err, "create resource builder failed")
+	}
+
+	return r.Visit(func(info *kubectl_resource.Info, err error) error {
+		if err != nil {
+			return err
+		}
+
+		h := kubectl_resource.NewHelper(info.Client, info.Mapping)
+		obj, err := h.Create(info.Namespace, true, info.Object)
+		if err != nil {
+			return err
+		}
+		info.Refresh(obj, true)
+
+		return nil
+	})
 }
 
 func newInClusterK8sClient(conf *Config) (Client, error) {

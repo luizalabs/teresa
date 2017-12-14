@@ -35,7 +35,7 @@ type Operations interface {
 
 type K8sOperations interface {
 	CreateNamespaceFromName(nsName, teamName, userEmail string) error
-	CreateResources(nsName string, r io.Reader) error
+	Create(nsName string, r io.Reader) error
 	DeleteNamespace(nsName string) error
 	IsAlreadyExists(err error) bool
 	IsNotFound(err error) bool
@@ -100,7 +100,7 @@ func (ops *ResourceOperations) Create(user *database.User, res *Resource) (_ str
 	}
 
 	r := bytes.NewReader(buf.Bytes())
-	if err := ops.k8s.CreateResources(nsName, r); err != nil {
+	if err := ops.k8s.Create(nsName, r); err != nil {
 		return "", teresa_errors.NewInternalServerError(err)
 	}
 

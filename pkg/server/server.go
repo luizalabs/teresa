@@ -33,7 +33,7 @@ type Options struct {
 	Storage   st.Storage
 	K8s       k8s.Client
 	Tmpl      resource.Templater
-	Exe       resource.Executer
+	Exe       resource.TemplateExecuter
 	DeployOpt *deploy.Options
 	Debug     bool
 }

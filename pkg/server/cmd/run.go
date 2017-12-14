@@ -83,7 +83,7 @@ func runServer(cmd *cobra.Command, args []string) {
 		log.Fatal("Error getting deploy configuration:", err)
 	}
 
-	tmpl, err := getTemplater()
+	tmpl, err := getResourceTemplater()
 	if err != nil {
 		log.WithError(err).Fatal("failed to configure resource templater")
 	}
@@ -96,7 +96,7 @@ func runServer(cmd *cobra.Command, args []string) {
 		Storage:   st,
 		K8s:       k8s,
 		Tmpl:      tmpl,
-		Exe:       resource.NewExecuter(),
+		Exe:       resource.NewTemplateExecuter(),
 		DeployOpt: deployOpt,
 		Debug:     debug,
 	})
@@ -152,7 +152,7 @@ func getDeployOpt() (*deploy.Options, error) {
 	return conf, nil
 }
 
-func getTemplater() (resource.Templater, error) {
+func getResourceTemplater() (resource.Templater, error) {
 	cfg := new(resource.Config)
 	if err := envconfig.Process("teresa_resource", cfg); err != nil {
 		return nil, err

@@ -36,11 +36,11 @@ func (f *fakeTemplater) WelcomeTemplate(resName string) (io.ReadCloser, error) {
 	return &fakeReadCloser{}, f.WelcomeErr
 }
 
-type fakeExecuter struct {
+type fakeTemplateExecuter struct {
 	Err error
 }
 
-func (f *fakeExecuter) Execute(w io.Writer, r io.ReadCloser, settings []*Setting) error {
+func (f *fakeTemplateExecuter) Execute(w io.Writer, r io.ReadCloser, settings []*Setting) error {
 	w.Write([]byte("Test Representation"))
 	return f.Err
 }
@@ -102,7 +102,7 @@ func TestNewResource(t *testing.T) {
 
 func TestOperationsCreateSuccess(t *testing.T) {
 	tpl := &fakeTemplater{}
-	exe := &fakeExecuter{}
+	exe := &fakeTemplateExecuter{}
 	k8s := &fakeK8sOperations{}
 	appOps := app.NewFakeOperations()
 	ops := NewOperations(tpl, exe, k8s, appOps)
@@ -116,7 +116,7 @@ func TestOperationsCreateSuccess(t *testing.T) {
 
 func TestOperationsCreateErrPermissionDenied(t *testing.T) {
 	tpl := &fakeTemplater{}
-	exe := &fakeExecuter{}
+	exe := &fakeTemplateExecuter{}
 	k8s := &fakeK8sOperations{}
 	appOps := app.NewFakeOperations()
 	ops := NewOperations(tpl, exe, k8s, appOps)
@@ -130,7 +130,7 @@ func TestOperationsCreateErrPermissionDenied(t *testing.T) {
 
 func TestOperationsCreateErrAlreadyExists(t *testing.T) {
 	tpl := &fakeTemplater{}
-	exe := &fakeExecuter{}
+	exe := &fakeTemplateExecuter{}
 	k8s := &fakeK8sOperations{
 		CreateNamespaceErr: errors.New("test"),
 		IsAlreadyExistsErr: true,
@@ -148,13 +148,13 @@ func TestOperationsCreateErrAlreadyExists(t *testing.T) {
 func TestOperationsCreateErrInternalServerError(t *testing.T) {
 	var testCases = []struct {
 		tpl Templater
-		exe Executer
+		exe TemplateExecuter
 		k8s K8sOperations
 	}{
-		{&fakeTemplater{Err: errors.New("test")}, &fakeExecuter{}, &fakeK8sOperations{}},
-		{&fakeTemplater{WelcomeErr: errors.New("test")}, &fakeExecuter{}, &fakeK8sOperations{}},
-		{&fakeTemplater{}, &fakeExecuter{Err: errors.New("test")}, &fakeK8sOperations{}},
-		{&fakeTemplater{}, &fakeExecuter{}, &fakeK8sOperations{ResourcesErr: errors.New("test")}},
+		{&fakeTemplater{Err: errors.New("test")}, &fakeTemplateExecuter{}, &fakeK8sOperations{}},
+		{&fakeTemplater{WelcomeErr: errors.New("test")}, &fakeTemplateExecuter{}, &fakeK8sOperations{}},
+		{&fakeTemplater{}, &fakeTemplateExecuter{Err: errors.New("test")}, &fakeK8sOperations{}},
+		{&fakeTemplater{}, &fakeTemplateExecuter{}, &fakeK8sOperations{ResourcesErr: errors.New("test")}},
 	}
 	appOps := app.NewFakeOperations()
 	user := &database.User{Email: "gopher@luizalabs.com"}
@@ -171,7 +171,7 @@ func TestOperationsCreateErrInternalServerError(t *testing.T) {
 
 func TestOperationsDeleteSuccess(t *testing.T) {
 	tpl := &fakeTemplater{}
-	exe := &fakeExecuter{}
+	exe := &fakeTemplateExecuter{}
 	k8s := &fakeK8sOperations{}
 	appOps := app.NewFakeOperations()
 	ops := NewOperations(tpl, exe, k8s, appOps)
@@ -184,7 +184,7 @@ func TestOperationsDeleteSuccess(t *testing.T) {
 
 func TestOperationsDeleteErrPermissionDenied(t *testing.T) {
 	tpl := &fakeTemplater{}
-	exe := &fakeExecuter{}
+	exe := &fakeTemplateExecuter{}
 	k8s := &fakeK8sOperations{}
 	appOps := app.NewFakeOperations()
 	ops := NewOperations(tpl, exe, k8s, appOps)
@@ -197,7 +197,7 @@ func TestOperationsDeleteErrPermissionDenied(t *testing.T) {
 
 func TestOperationsDeleteErrNotFound(t *testing.T) {
 	tpl := &fakeTemplater{}
-	exe := &fakeExecuter{}
+	exe := &fakeTemplateExecuter{}
 	k8s := &fakeK8sOperations{
 		DeleteNamespaceErr: errors.New("test"),
 		IsNotFoundErr:      true,
@@ -213,7 +213,7 @@ func TestOperationsDeleteErrNotFound(t *testing.T) {
 
 func TestOperationsDeleteErrInternalServerError(t *testing.T) {
 	tpl := &fakeTemplater{}
-	exe := &fakeExecuter{}
+	exe := &fakeTemplateExecuter{}
 	k8s := &fakeK8sOperations{DeleteNamespaceErr: errors.New("test")}
 	appOps := app.NewFakeOperations()
 	ops := NewOperations(tpl, exe, k8s, appOps)

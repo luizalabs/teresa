@@ -6,7 +6,7 @@ import (
 	"text/template"
 )
 
-type Executer interface {
+type TemplateExecuter interface {
 	Execute(w io.Writer, r io.ReadCloser, settings []*Setting) error
 }
 
@@ -40,6 +40,6 @@ func (g *goTemplateExecuter) Execute(w io.Writer, r io.ReadCloser, settings []*S
 	return tmpl.Execute(w, settingsToMap(settings))
 }
 
-func NewExecuter() Executer {
+func NewTemplateExecuter() TemplateExecuter {
 	return &goTemplateExecuter{}
 }

@@ -28,27 +28,42 @@ func (f *FakeOperations) Create(name, email, url string) error {
 }
 
 func (f *FakeOperations) AddUser(name, userEmail string) error {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
-	t, found := f.Storage[name]
-	if !found {
-		return ErrNotFound
-	}
-
 	u, err := f.UserOps.GetUser(userEmail)
 	if err != nil {
 		return err
 	}
 
+	if ait, err := f.Contains(name, userEmail); err != nil || ait {
+		if err != nil {
+			return err
+		}
+		return ErrUserAlreadyInTeam
+	}
+
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	t := f.Storage[name]
+	t.Users = append(t.Users, *u)
+	return nil
+}
+
+func (f *FakeOperations) Contains(name, userEmail string) (bool, error) {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	t, found := f.Storage[name]
+	if !found {
+		return false, ErrNotFound
+	}
+
 	for _, userOfTeam := range t.Users {
 		if userOfTeam.Email == userEmail {
-			return ErrUserAlreadyInTeam
+			return true, nil
 		}
 	}
 
-	t.Users = append(t.Users, *u)
-	return nil
+	return false, nil
 }
 
 func (f *FakeOperations) List() ([]*database.Team, error) {

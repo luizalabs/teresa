@@ -64,7 +64,10 @@ func TestFakeOperationsAddUser(t *testing.T) {
 func TestFakeOperationsAddUserTeamNotFound(t *testing.T) {
 	fake := NewFakeOperations()
 
-	if err := fake.AddUser("teresa", "gopher"); err != ErrNotFound {
+	expectedUserEmail := "gopher"
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
+
+	if err := fake.AddUser("teresa", expectedUserEmail); err != ErrNotFound {
 		t.Errorf("expected error ErrNotFound, got %v", err)
 	}
 }
@@ -95,6 +98,41 @@ func TestFakeOperationsAddUserUserAlreadyInTeam(t *testing.T) {
 
 	if err := fake.AddUser(expectedName, expectedUserEmail); err != ErrUserAlreadyInTeam {
 		t.Errorf("expected error ErrUserAlreadyInTeam, got %v", err)
+	}
+}
+
+func TestFakeOperationsContains(t *testing.T) {
+	var testCases = []struct {
+		teamName       string
+		userEmail      string
+		expectedInTeam bool
+	}{
+		{"teresa", "gopher", true},
+		{"teresa", "ricky", false},
+	}
+
+	for _, tc := range testCases {
+		u := &database.User{Email: tc.userEmail}
+
+		fake := NewFakeOperations()
+		fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[tc.userEmail] = u
+
+		currentTeam := &database.Team{
+			Name:  tc.teamName,
+			Users: []database.User{},
+		}
+		if tc.expectedInTeam {
+			currentTeam.Users = append(currentTeam.Users, *u)
+		}
+		fake.(*FakeOperations).Storage[tc.teamName] = currentTeam
+
+		actual, err := fake.Contains(tc.teamName, tc.userEmail)
+		if err != nil {
+			t.Fatal("error checking team containes user", err)
+		}
+		if actual != tc.expectedInTeam {
+			t.Errorf("expected %v, got %v", tc.expectedInTeam, actual)
+		}
 	}
 }
 

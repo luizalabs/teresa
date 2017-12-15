@@ -89,8 +89,11 @@ func TestTeamAddUserNotFound(t *testing.T) {
 	fake := NewFakeOperations()
 	s := NewService(fake)
 
+	expectedUserEmail := "gopher"
+	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
+
 	ctx := context.WithValue(context.Background(), "user", &database.User{Email: "gopher", IsAdmin: true})
-	req := &teampb.AddUserRequest{Name: "teresa", User: "gopher"}
+	req := &teampb.AddUserRequest{Name: "teresa", User: expectedUserEmail}
 	if _, err := s.AddUser(ctx, req); err != ErrNotFound {
 		t.Errorf("expected error ErrNotFound, got %v", err)
 	}

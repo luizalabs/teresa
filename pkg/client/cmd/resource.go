@@ -63,13 +63,13 @@ func createRes(cmd *cobra.Command, args []string) {
 
 	req := &respb.CreateRequest{Name: name, TeamName: team, Settings: parsedSettings}
 	cli := respb.NewResourceClient(conn)
-	text, err := cli.Create(context.Background(), req)
+	resp, err := cli.Create(context.Background(), req)
 	if err != nil {
 		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 
 	fmt.Println("Resource created")
-	fmt.Println(text)
+	fmt.Println(resp.GetText())
 }
 
 func init() {

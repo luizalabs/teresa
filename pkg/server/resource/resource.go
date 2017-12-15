@@ -9,6 +9,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/team"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 )
 
@@ -42,10 +43,11 @@ type K8sOperations interface {
 }
 
 type ResourceOperations struct {
-	tpl    Templater
-	exe    TemplateExecuter
-	k8s    K8sOperations
-	appOps app.Operations
+	tpl     Templater
+	exe     TemplateExecuter
+	k8s     K8sOperations
+	appOps  app.Operations
+	teamOps team.Operations
 }
 
 func newResource(req *respb.CreateRequest) *Resource {
@@ -61,7 +63,10 @@ func (ops *ResourceOperations) namespace(resName string) string {
 }
 
 func (ops *ResourceOperations) Create(user *database.User, res *Resource) (_ string, Err error) {
-	if !ops.appOps.HasPermission(user, res.Name) {
+	if uit, err := ops.teamOps.Contains(res.TeamName, user.Email); err != nil || !uit {
+		if err != nil {
+			return "", err
+		}
 		return "", auth.ErrPermissionDenied
 	}
 
@@ -123,6 +128,12 @@ func (ops *ResourceOperations) Delete(user *database.User, resName string) error
 	return nil
 }
 
-func NewOperations(tpl Templater, exe TemplateExecuter, k8s K8sOperations, appOps app.Operations) Operations {
-	return &ResourceOperations{tpl: tpl, exe: exe, k8s: k8s, appOps: appOps}
+func NewOperations(tpl Templater, exe TemplateExecuter, k8s K8sOperations, appOps app.Operations, teamOps team.Operations) Operations {
+	return &ResourceOperations{
+		tpl:     tpl,
+		exe:     exe,
+		k8s:     k8s,
+		appOps:  appOps,
+		teamOps: teamOps,
+	}
 }

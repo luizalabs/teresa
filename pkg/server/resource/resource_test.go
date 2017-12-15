@@ -9,8 +9,10 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/team"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 	"github.com/luizalabs/teresa/pkg/server/test"
+	"github.com/luizalabs/teresa/pkg/server/user"
 )
 
 type fakeReadCloser struct{}
@@ -104,10 +106,22 @@ func TestOperationsCreateSuccess(t *testing.T) {
 	tpl := &fakeTemplater{}
 	exe := &fakeTemplateExecuter{}
 	k8s := &fakeK8sOperations{}
-	appOps := app.NewFakeOperations()
-	ops := NewOperations(tpl, exe, k8s, appOps)
+
+	teamName := "luizalabs"
+	userEmail := "gopher@luizalabs.com"
+	teamOps := team.NewFakeOperations()
+	teamOps.(*team.FakeOperations).UserOps.(*user.FakeOperations).Storage[userEmail] = &database.User{Email: userEmail}
+
+	if err := teamOps.Create(teamName, "", ""); err != nil {
+		t.Fatal("erro creating fake team", err)
+	}
+	user := &database.User{Email: userEmail}
+	if err := teamOps.AddUser("luizalabs", user.Email); err != nil {
+		t.Fatal("error adding user on fake team", err)
+	}
+
+	ops := NewOperations(tpl, exe, k8s, app.NewFakeOperations(), teamOps)
 	res := testResource()
-	user := &database.User{Email: "gopher@luizalabs.com"}
 
 	if _, err := ops.Create(user, res); err != nil {
 		t.Error("got error creating resource:", err)
@@ -118,10 +132,15 @@ func TestOperationsCreateErrPermissionDenied(t *testing.T) {
 	tpl := &fakeTemplater{}
 	exe := &fakeTemplateExecuter{}
 	k8s := &fakeK8sOperations{}
-	appOps := app.NewFakeOperations()
-	ops := NewOperations(tpl, exe, k8s, appOps)
+
+	teamOps := team.NewFakeOperations()
+	if err := teamOps.Create("luizalabs", "", ""); err != nil {
+		t.Fatal("erro creating fake team", err)
+	}
+
+	ops := NewOperations(tpl, exe, k8s, app.NewFakeOperations(), teamOps)
 	res := testResource()
-	user := &database.User{Email: "bad-user@luizalabs.com"}
+	user := &database.User{Email: "gopher@luizalabs.com"}
 
 	if _, err := ops.Create(user, res); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
@@ -135,10 +154,22 @@ func TestOperationsCreateErrAlreadyExists(t *testing.T) {
 		CreateNamespaceErr: errors.New("test"),
 		IsAlreadyExistsErr: true,
 	}
-	appOps := app.NewFakeOperations()
-	ops := NewOperations(tpl, exe, k8s, appOps)
+
+	teamName := "luizalabs"
+	userEmail := "gopher@luizalabs.com"
+	teamOps := team.NewFakeOperations()
+	teamOps.(*team.FakeOperations).UserOps.(*user.FakeOperations).Storage[userEmail] = &database.User{Email: userEmail}
+
+	if err := teamOps.Create(teamName, "", ""); err != nil {
+		t.Fatal("erro creating fake team", err)
+	}
+	user := &database.User{Email: userEmail}
+	if err := teamOps.AddUser("luizalabs", user.Email); err != nil {
+		t.Fatal("error adding user on fake team", err)
+	}
+
+	ops := NewOperations(tpl, exe, k8s, app.NewFakeOperations(), teamOps)
 	res := testResource()
-	user := &database.User{Email: "gopher@luizalabs.com"}
 
 	if _, err := ops.Create(user, res); err != ErrAlreadyExists {
 		t.Errorf("expected ErrAlreadyExists, got %v", err)
@@ -156,12 +187,23 @@ func TestOperationsCreateErrInternalServerError(t *testing.T) {
 		{&fakeTemplater{}, &fakeTemplateExecuter{Err: errors.New("test")}, &fakeK8sOperations{}},
 		{&fakeTemplater{}, &fakeTemplateExecuter{}, &fakeK8sOperations{ResourcesErr: errors.New("test")}},
 	}
-	appOps := app.NewFakeOperations()
-	user := &database.User{Email: "gopher@luizalabs.com"}
-	res := testResource()
 
+	teamName := "luizalabs"
+	userEmail := "gopher@luizalabs.com"
+	teamOps := team.NewFakeOperations()
+	teamOps.(*team.FakeOperations).UserOps.(*user.FakeOperations).Storage[userEmail] = &database.User{Email: userEmail}
+
+	if err := teamOps.Create(teamName, "", ""); err != nil {
+		t.Fatal("erro creating fake team", err)
+	}
+	user := &database.User{Email: userEmail}
+	if err := teamOps.AddUser("luizalabs", user.Email); err != nil {
+		t.Fatal("error adding user on fake team", err)
+	}
+
+	res := testResource()
 	for _, tc := range testCases {
-		ops := NewOperations(tc.tpl, tc.exe, tc.k8s, appOps)
+		ops := NewOperations(tc.tpl, tc.exe, tc.k8s, app.NewFakeOperations(), teamOps)
 
 		if _, err := ops.Create(user, res); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
 			t.Errorf("expected ErrInternalServerError, got %v", err)
@@ -173,8 +215,8 @@ func TestOperationsDeleteSuccess(t *testing.T) {
 	tpl := &fakeTemplater{}
 	exe := &fakeTemplateExecuter{}
 	k8s := &fakeK8sOperations{}
-	appOps := app.NewFakeOperations()
-	ops := NewOperations(tpl, exe, k8s, appOps)
+	teamOps := team.NewFakeOperations()
+	ops := NewOperations(tpl, exe, k8s, app.NewFakeOperations(), teamOps)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 
 	if err := ops.Delete(user, "test"); err != nil {
@@ -186,8 +228,8 @@ func TestOperationsDeleteErrPermissionDenied(t *testing.T) {
 	tpl := &fakeTemplater{}
 	exe := &fakeTemplateExecuter{}
 	k8s := &fakeK8sOperations{}
-	appOps := app.NewFakeOperations()
-	ops := NewOperations(tpl, exe, k8s, appOps)
+	teamOps := team.NewFakeOperations()
+	ops := NewOperations(tpl, exe, k8s, app.NewFakeOperations(), teamOps)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 
 	if err := ops.Delete(user, "test"); err != auth.ErrPermissionDenied {
@@ -202,8 +244,8 @@ func TestOperationsDeleteErrNotFound(t *testing.T) {
 		DeleteNamespaceErr: errors.New("test"),
 		IsNotFoundErr:      true,
 	}
-	appOps := app.NewFakeOperations()
-	ops := NewOperations(tpl, exe, k8s, appOps)
+	teamOps := team.NewFakeOperations()
+	ops := NewOperations(tpl, exe, k8s, app.NewFakeOperations(), teamOps)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 
 	if err := ops.Delete(user, "test"); err != ErrNotFound {
@@ -215,8 +257,8 @@ func TestOperationsDeleteErrInternalServerError(t *testing.T) {
 	tpl := &fakeTemplater{}
 	exe := &fakeTemplateExecuter{}
 	k8s := &fakeK8sOperations{DeleteNamespaceErr: errors.New("test")}
-	appOps := app.NewFakeOperations()
-	ops := NewOperations(tpl, exe, k8s, appOps)
+	teamOps := team.NewFakeOperations()
+	ops := NewOperations(tpl, exe, k8s, app.NewFakeOperations(), teamOps)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 
 	if err := ops.Delete(user, "test"); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {

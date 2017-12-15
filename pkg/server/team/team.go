@@ -19,6 +19,7 @@ type Operations interface {
 	RemoveUser(name, userEmail string) error
 	Rename(oldName, newName string) error
 	SetTeamExt(ext teamext.TeamExt)
+	Contains(name, userEmail string) (bool, error)
 }
 
 type DatabaseOperations struct {
@@ -60,15 +61,35 @@ func (dbt *DatabaseOperations) AddUser(name, userEmail string) error {
 		return err
 	}
 
-	usersOfTeam := []database.User{}
-	dbt.DB.Model(t).Association("Users").Find(&usersOfTeam)
-	for _, userOfTeam := range usersOfTeam {
-		if userOfTeam.Email == userEmail {
-			return ErrUserAlreadyInTeam
+	// FIXME: Two call for method `dbt.getTeam`
+	if ait, err := dbt.Contains(name, userEmail); err != nil || ait {
+		if err != nil {
+			return err
 		}
+		return ErrUserAlreadyInTeam
 	}
 
 	return dbt.DB.Model(t).Association("Users").Append(u).Error
+}
+
+func (dbt *DatabaseOperations) Contains(name, userEmail string) (bool, error) {
+	t, err := dbt.getTeam(name)
+	if err != nil {
+		return false, err
+	}
+
+	usersOfTeam := []database.User{}
+	if err := dbt.DB.Model(t).Association("Users").Find(&usersOfTeam).Error; err != nil {
+		return false, err
+	}
+
+	for _, userOfTeam := range usersOfTeam {
+		if userOfTeam.Email == userEmail {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (dbt *DatabaseOperations) List() ([]*database.Team, error) {

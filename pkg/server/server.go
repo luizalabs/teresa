@@ -105,7 +105,7 @@ func registerServices(s *grpc.Server, opt Options, uOps user.Operations) {
 	d := deploy.NewService(dOps, opt.DeployOpt)
 	d.RegisterService(s)
 
-	rOps := resource.NewOperations(opt.Tmpl, opt.Exe, opt.K8s, appOps)
+	rOps := resource.NewOperations(opt.Tmpl, opt.Exe, opt.K8s, appOps, tOps)
 	r := resource.NewService(rOps)
 	r.RegisterService(s)
 }

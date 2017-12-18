@@ -116,7 +116,7 @@ func TestOperationsCreateSuccess(t *testing.T) {
 		t.Fatal("erro creating fake team", err)
 	}
 	user := &database.User{Email: userEmail}
-	if err := teamOps.AddUser("luizalabs", user.Email); err != nil {
+	if err := teamOps.AddUser(teamName, user.Email); err != nil {
 		t.Fatal("error adding user on fake team", err)
 	}
 
@@ -161,10 +161,10 @@ func TestOperationsCreateErrAlreadyExists(t *testing.T) {
 	teamOps.(*team.FakeOperations).UserOps.(*user.FakeOperations).Storage[userEmail] = &database.User{Email: userEmail}
 
 	if err := teamOps.Create(teamName, "", ""); err != nil {
-		t.Fatal("erro creating fake team", err)
+		t.Fatal("error creating fake team", err)
 	}
 	user := &database.User{Email: userEmail}
-	if err := teamOps.AddUser("luizalabs", user.Email); err != nil {
+	if err := teamOps.AddUser(teamName, user.Email); err != nil {
 		t.Fatal("error adding user on fake team", err)
 	}
 
@@ -197,7 +197,7 @@ func TestOperationsCreateErrInternalServerError(t *testing.T) {
 		t.Fatal("erro creating fake team", err)
 	}
 	user := &database.User{Email: userEmail}
-	if err := teamOps.AddUser("luizalabs", user.Email); err != nil {
+	if err := teamOps.AddUser(teamName, user.Email); err != nil {
 		t.Fatal("error adding user on fake team", err)
 	}
 

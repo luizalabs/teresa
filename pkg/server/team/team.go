@@ -61,8 +61,7 @@ func (dbt *DatabaseOperations) AddUser(name, userEmail string) error {
 		return err
 	}
 
-	// FIXME: Two call for method `dbt.getTeam`
-	if ait, err := dbt.Contains(name, userEmail); err != nil || ait {
+	if ait, err := dbt.internalContains(name, userEmail, t); err != nil || ait {
 		if err != nil {
 			return err
 		}
@@ -72,10 +71,15 @@ func (dbt *DatabaseOperations) AddUser(name, userEmail string) error {
 	return dbt.DB.Model(t).Association("Users").Append(u).Error
 }
 
-func (dbt *DatabaseOperations) Contains(name, userEmail string) (bool, error) {
-	t, err := dbt.getTeam(name)
-	if err != nil {
-		return false, err
+func (dbt *DatabaseOperations) internalContains(name, userEmail string, t *database.Team) (bool, error) {
+	// declared here to prevent compiling error `t declared but not used`
+	var err error
+
+	if t == nil {
+		t, err = dbt.getTeam(name)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	usersOfTeam := []database.User{}
@@ -90,6 +94,10 @@ func (dbt *DatabaseOperations) Contains(name, userEmail string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (dbt *DatabaseOperations) Contains(name, userEmail string) (bool, error) {
+	return dbt.internalContains(name, userEmail, nil)
 }
 
 func (dbt *DatabaseOperations) List() ([]*database.Team, error) {

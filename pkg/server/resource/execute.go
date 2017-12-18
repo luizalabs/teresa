@@ -3,6 +3,7 @@ package resource
 import (
 	"io"
 	"io/ioutil"
+	"strings"
 	"text/template"
 )
 
@@ -16,7 +17,8 @@ func settingsToMap(s []*Setting) map[string]string {
 	m := make(map[string]string, len(s))
 
 	for i, _ := range s {
-		m[s[i].Key] = s[i].Value
+		key := strings.Replace(s[i].Key, "-", "_", -1)
+		m[key] = s[i].Value
 	}
 
 	return m

@@ -71,6 +71,7 @@ func (ops *ResourceOperations) Create(user *database.User, res *Resource) (_ str
 	}
 
 	nsName := ops.namespace(res.Name)
+	res.Settings = append(res.Settings, &Setting{Key: "namespace", Value: nsName})
 	if err := ops.k8s.CreateNamespaceFromName(nsName, res.TeamName, user.Email); err != nil {
 		if ops.k8s.IsAlreadyExists(err) {
 			return "", ErrAlreadyExists

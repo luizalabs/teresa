@@ -114,11 +114,11 @@ func (ops *ResourceOperations) Create(user *database.User, res *Resource) (_ str
 }
 
 func (ops *ResourceOperations) Delete(user *database.User, resName string) error {
-	if !ops.appOps.HasPermission(user, resName) {
+	nsName := ops.namespace(resName)
+	if !ops.appOps.HasPermission(user, nsName) {
 		return auth.ErrPermissionDenied
 	}
 
-	nsName := ops.namespace(resName)
 	if err := ops.k8s.DeleteNamespace(nsName); err != nil {
 		if ops.k8s.IsNotFound(err) {
 			return ErrNotFound

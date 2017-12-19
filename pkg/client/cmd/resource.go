@@ -30,6 +30,15 @@ var resCreateCmd = &cobra.Command{
 	Run: createRes,
 }
 
+var resDeleteCmd = &cobra.Command{
+	Use:   "delete <name>",
+	Short: "Delete a resource",
+	Long: `Delete a resource.
+
+  Stay tuned!`,
+	Run: deleteRes,
+}
+
 func createRes(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		cmd.Usage()
@@ -72,9 +81,35 @@ func createRes(cmd *cobra.Command, args []string) {
 	fmt.Println(resp.GetText())
 }
 
+func deleteRes(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		cmd.Usage()
+		return
+	}
+	name := args[0]
+	if len(name) > resNameLimit {
+		client.PrintErrorAndExit("Invalid resource name (max %d characters)", resNameLimit)
+	}
+
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
+
+	req := &respb.DeleteRequest{Name: name}
+	cli := respb.NewResourceClient(conn)
+	if _, err := cli.Delete(context.Background(), req); err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+
+	fmt.Println("Resource deleted")
+}
+
 func init() {
 	RootCmd.AddCommand(resCmd)
 	resCmd.AddCommand(resCreateCmd)
+	resCmd.AddCommand(resDeleteCmd)
 
 	resCreateCmd.Flags().String("team", "", "team owner of the resource")
 	resCreateCmd.Flags().StringSlice("set", []string{}, "resource settings")

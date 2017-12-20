@@ -19,6 +19,7 @@ type Operations interface {
 	RemoveUser(name, userEmail string) error
 	Rename(oldName, newName string) error
 	SetTeamExt(ext teamext.TeamExt)
+	Contains(name, userEmail string) (bool, error)
 }
 
 type DatabaseOperations struct {
@@ -60,15 +61,43 @@ func (dbt *DatabaseOperations) AddUser(name, userEmail string) error {
 		return err
 	}
 
-	usersOfTeam := []database.User{}
-	dbt.DB.Model(t).Association("Users").Find(&usersOfTeam)
-	for _, userOfTeam := range usersOfTeam {
-		if userOfTeam.Email == userEmail {
-			return ErrUserAlreadyInTeam
+	if ait, err := dbt.internalContains(name, userEmail, t); err != nil || ait {
+		if err != nil {
+			return err
 		}
+		return ErrUserAlreadyInTeam
 	}
 
 	return dbt.DB.Model(t).Association("Users").Append(u).Error
+}
+
+func (dbt *DatabaseOperations) internalContains(name, userEmail string, t *database.Team) (bool, error) {
+	// declared here to prevent compiling error `t declared but not used`
+	var err error
+
+	if t == nil {
+		t, err = dbt.getTeam(name)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	usersOfTeam := []database.User{}
+	if err := dbt.DB.Model(t).Association("Users").Find(&usersOfTeam).Error; err != nil {
+		return false, err
+	}
+
+	for _, userOfTeam := range usersOfTeam {
+		if userOfTeam.Email == userEmail {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (dbt *DatabaseOperations) Contains(name, userEmail string) (bool, error) {
+	return dbt.internalContains(name, userEmail, nil)
 }
 
 func (dbt *DatabaseOperations) List() ([]*database.Team, error) {

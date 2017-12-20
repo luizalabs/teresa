@@ -15,6 +15,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/deploy"
 	"github.com/luizalabs/teresa/pkg/server/healthcheck"
 	"github.com/luizalabs/teresa/pkg/server/k8s"
+	"github.com/luizalabs/teresa/pkg/server/resource"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/team"
 	"github.com/luizalabs/teresa/pkg/server/user"
@@ -31,6 +32,8 @@ type Options struct {
 	DB        *gorm.DB
 	Storage   st.Storage
 	K8s       k8s.Client
+	Tmpl      resource.Templater
+	Exe       resource.TemplateExecuter
 	DeployOpt *deploy.Options
 	Debug     bool
 }
@@ -101,6 +104,10 @@ func registerServices(s *grpc.Server, opt Options, uOps user.Operations) {
 	dOps := deploy.NewDeployOperations(appOps, opt.K8s, opt.Storage)
 	d := deploy.NewService(dOps, opt.DeployOpt)
 	d.RegisterService(s)
+
+	rOps := resource.NewOperations(opt.Tmpl, opt.Exe, opt.K8s, appOps, tOps)
+	r := resource.NewService(rOps)
+	r.RegisterService(s)
 }
 
 func New(opt Options) (*Server, error) {

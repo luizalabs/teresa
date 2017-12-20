@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"crypto/tls"
+	"net/http"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/kelseyhightower/envconfig"
@@ -9,6 +10,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/deploy"
 	"github.com/luizalabs/teresa/pkg/server/k8s"
+	"github.com/luizalabs/teresa/pkg/server/resource"
 	"github.com/luizalabs/teresa/pkg/server/secrets"
 	"github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/spf13/cobra"
@@ -81,6 +83,11 @@ func runServer(cmd *cobra.Command, args []string) {
 		log.Fatal("Error getting deploy configuration:", err)
 	}
 
+	tmpl, err := getResourceTemplater()
+	if err != nil {
+		log.WithError(err).Fatal("failed to configure resource templater")
+	}
+
 	s, err := server.New(server.Options{
 		Port:      port,
 		Auth:      a,
@@ -88,6 +95,8 @@ func runServer(cmd *cobra.Command, args []string) {
 		TLSCert:   tlsCert,
 		Storage:   st,
 		K8s:       k8s,
+		Tmpl:      tmpl,
+		Exe:       resource.NewTemplateExecuter(),
 		DeployOpt: deployOpt,
 		Debug:     debug,
 	})
@@ -141,4 +150,12 @@ func getDeployOpt() (*deploy.Options, error) {
 		return nil, err
 	}
 	return conf, nil
+}
+
+func getResourceTemplater() (resource.Templater, error) {
+	cfg := new(resource.Config)
+	if err := envconfig.Process("teresa_resource", cfg); err != nil {
+		return nil, err
+	}
+	return resource.NewTemplater(cfg, http.DefaultClient), nil
 }

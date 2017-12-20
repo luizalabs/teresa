@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package resource;
+
+service Resource {
+    rpc Create(CreateRequest) returns (CreateResponse);
+    rpc Delete (DeleteRequest) returns (Empty);
+}
+
+message CreateRequest {
+    string name = 1;
+    string team_name = 2;
+
+    message Setting {
+        string key = 1;
+        string value = 2;
+    }
+    repeated Setting settings = 3;
+}
+
+message CreateResponse {
+    string text = 1;
+}
+
+message DeleteRequest {
+    string name = 1;
+}
+
+message Empty {}

@@ -80,7 +80,9 @@ func TestDeployPermissionDenied(t *testing.T) {
 		st.NewFake(),
 	)
 	u := &database.User{Email: "bad-user@luizalabs.com"}
-	if _, err := ops.Deploy(u, "teresa", &fakeReadSeeker{}, "test", &Options{}); err != auth.ErrPermissionDenied {
+	_, errChan := ops.Deploy(u, "teresa", &fakeReadSeeker{}, "test", &Options{})
+
+	if err := <-errChan; err != auth.ErrPermissionDenied {
 		t.Errorf("expecter ErrPermissionDenied, got %v", err)
 	}
 }
@@ -107,7 +109,12 @@ func TestDeploy(t *testing.T) {
 		st.NewFake(),
 	)
 	u := &database.User{Email: "gopher@luizalabs.com"}
-	r, err := ops.Deploy(u, "teresa", tarBall, "test", &Options{})
+	r, errChan := ops.Deploy(u, "teresa", tarBall, "test", &Options{})
+	select {
+	case err = <-errChan:
+	default:
+	}
+
 	if err != nil {
 		t.Fatal("error making deploy:", err)
 	}

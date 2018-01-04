@@ -33,7 +33,7 @@ func (f *FakeOperations) List(user *database.User, appName string) ([]*ReplicaSe
 	return []*ReplicaSetListItem{}, nil
 }
 
-func (f *FakeOperations) Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, error) {
+func (f *FakeOperations) Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, <-chan error) {
 	return nil, nil
 }
 

@@ -57,10 +57,7 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 	}
 
 	rs := bytes.NewReader(content.Bytes())
-	rc, err := s.ops.Deploy(u, appName, rs, description, s.options)
-	if err != nil {
-		return err
-	}
+	rc, errChan := s.ops.Deploy(u, appName, rs, description, s.options)
 	defer rc.Close()
 
 	deployMsgs := goutil.ChannelFromReader(rc, true)
@@ -70,6 +67,8 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 		select {
 		case <-time.After(s.options.KeepAliveTimeout):
 			msg = keepAliveMessage
+		case err := <-errChan:
+			return err
 		case m, ok := <-deployMsgs:
 			if !ok {
 				return nil

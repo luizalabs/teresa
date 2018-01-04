@@ -20,7 +20,7 @@ const (
 )
 
 type Operations interface {
-	Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, error)
+	Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, <-chan error)
 	List(user *database.User, appName string) ([]*ReplicaSetListItem, error)
 	Rollback(user *database.User, appName, revision string) error
 }
@@ -39,25 +39,30 @@ type DeployOperations struct {
 	k8s         K8sOperations
 }
 
-func (ops *DeployOperations) Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, error) {
+func (ops *DeployOperations) Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, <-chan error) {
+	errChan := make(chan error, 1)
 	a, err := ops.appOps.Get(appName)
 	if err != nil {
-		return nil, err
+		errChan <- err
+		return nil, errChan
 	}
 
 	teamName, err := ops.appOps.TeamName(appName)
 	if err != nil {
-		return nil, err
+		errChan <- err
+		return nil, errChan
 	}
 	a.Team = teamName
 
 	if !ops.appOps.HasPermission(user, appName) {
-		return nil, auth.ErrPermissionDenied
+		errChan <- auth.ErrPermissionDenied
+		return nil, errChan
 	}
 
 	confFiles, err := getDeployConfigFilesFromTarBall(tarBall, a.ProcessType)
 	if err != nil {
-		return nil, teresa_errors.New(ErrInvalidTeresaYamlFile, err)
+		errChan <- teresa_errors.New(ErrInvalidTeresaYamlFile, err)
+		return nil, errChan
 	}
 
 	deployId := genDeployId()
@@ -67,6 +72,7 @@ func (ops *DeployOperations) Deploy(user *database.User, appName string, tarBall
 	go func() {
 		defer w.Close()
 		if err = ops.buildApp(tarBall, a, deployId, buildDest, w, opts); err != nil {
+			errChan <- err
 			log.WithError(err).WithField("id", deployId).Errorf("Building app %s", appName)
 			return
 		}
@@ -75,22 +81,25 @@ func (ops *DeployOperations) Deploy(user *database.User, appName string, tarBall
 		releaseCmd := confFiles.Procfile[ProcfileReleaseCmd]
 		if confFiles.Procfile != nil && releaseCmd != "" {
 			if err := ops.runReleaseCmd(a, deployId, slugURL, w, opts); err != nil {
+				errChan <- err
 				log.WithError(err).WithField("id", deployId).Errorf("Running release command %s in app %s", releaseCmd, appName)
 				return
 			}
 		}
 
 		if err := ops.createDeploy(a, confFiles.TeresaYaml, description, slugURL, opts); err != nil {
+			errChan <- err
 			log.WithError(err).Errorf("Creating deploy app %s", appName)
 			return
 		}
 
 		if err := ops.exposeApp(a, w); err != nil {
+			errChan <- err
 			log.WithError(err).Errorf("Exposing service %s", appName)
 		}
 		fmt.Fprintln(w, fmt.Sprintf("The app %s has been successfully deployed", appName))
 	}()
-	return r, nil
+	return r, errChan
 }
 
 func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugPath string, stream io.Writer, opts *Options) error {

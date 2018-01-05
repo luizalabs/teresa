@@ -2,6 +2,10 @@ package tar
 
 import "github.com/jhoonb/archivex"
 
+const (
+	PathSeparator = "/"
+)
+
 type Writer interface {
 	AddFile(string, string) error
 	AddAll(string) error

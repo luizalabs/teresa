@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -150,7 +151,7 @@ func getIgnorePatterns(source string) ([]string, error) {
 	return patterns, nil
 }
 
-func addFiles(source string, tar tar.Writer, ignorePatterns []string) error {
+func addFiles(source string, w tar.Writer, ignorePatterns []string) error {
 	return filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -166,9 +167,15 @@ func addFiles(source string, tar tar.Writer, ignorePatterns []string) error {
 		if info.IsDir() {
 			return nil
 		}
-		basePath := fmt.Sprintf("%s%c", source, filepath.Separator)
+		basePath := fmt.Sprintf("%s%c", filepath.Clean(source), filepath.Separator)
 		filename := strings.Replace(path, basePath, "", 1)
-		return tar.AddFile(path, filename)
+
+		if runtime.GOOS == "windows" {
+			path = strings.Replace(path, string(filepath.Separator), tar.PathSeparator, -1)
+			filename = strings.Replace(filename, string(filepath.Separator), tar.PathSeparator, -1)
+		}
+
+		return w.AddFile(path, filename)
 	})
 }
 

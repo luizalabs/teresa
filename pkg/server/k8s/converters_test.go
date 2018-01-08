@@ -250,3 +250,46 @@ func TestIngressSpec(t *testing.T) {
 		t.Errorf("expected %s, got %s", vHost, i.Spec.Rules[0].Host)
 	}
 }
+
+func TestPodSpecToK8sPodShouldAddAutomountSATokenField(t *testing.T) {
+	ps := &deploy.PodSpec{
+		Name:  "Teresa",
+		Image: "luizalabs/teresa:0.0.1",
+	}
+
+	pod, err := podSpecToK8sPod(ps)
+	if err != nil {
+		t.Fatal("error converting spec:", err)
+	}
+	if pod.Spec.AutomountServiceAccountToken == nil {
+		t.Fatal("got nil AutomountServiceAccountToken")
+	}
+
+	if *pod.Spec.AutomountServiceAccountToken {
+		t.Error("got true, expected false")
+	}
+}
+
+func TestDeploySpecToK8sDeployShouldAddAutomountSATokenField(t *testing.T) {
+	ds := &deploy.DeploySpec{
+		PodSpec: deploy.PodSpec{
+			Name:  "Teresa",
+			Image: "luizalabs/teresa:0.0.1",
+			Args:  []string{"run", "web"},
+		},
+	}
+
+	k8sDeploy, err := deploySpecToK8sDeploy(ds, 1)
+	if err != nil {
+		t.Fatal("error converting spec:", err)
+	}
+
+	ps := k8sDeploy.Spec.Template.Spec
+	if ps.AutomountServiceAccountToken == nil {
+		t.Fatal("got nil AutomountServiceAccountToken")
+	}
+
+	if *ps.AutomountServiceAccountToken {
+		t.Error("got true, expected false")
+	}
+}

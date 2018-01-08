@@ -74,11 +74,13 @@ func podSpecToK8sPod(podSpec *deploy.PodSpec) (*k8sv1.Pod, error) {
 		return nil, err
 	}
 	volumes := podSpecVolumesToK8sVolumes(podSpec.Volume)
+	f := false
 
 	ps := k8sv1.PodSpec{
 		RestartPolicy: k8sv1.RestartPolicyNever,
 		Containers:    []k8sv1.Container{*c},
 		Volumes:       volumes,
+		AutomountServiceAccountToken: &f,
 	}
 
 	pod := &k8sv1.Pod{
@@ -112,10 +114,12 @@ func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) (*v1be
 		c.Lifecycle = lifecycleToK8sLifecycle(deploySpec.Lifecycle)
 	}
 
+	f := false
 	ps := k8sv1.PodSpec{
 		RestartPolicy: k8sv1.RestartPolicyAlways,
 		Containers:    []k8sv1.Container{*c},
 		Volumes:       volumes,
+		AutomountServiceAccountToken: &f,
 	}
 
 	var maxSurge, maxUnavailable *intstr.IntOrString

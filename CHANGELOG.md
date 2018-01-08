@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Back to Godep for dependencies management
 - Update `client-go` lib to version 4.0
+- [server] Don't use the default service account on builds and deploys
 
 ### Added
 - alias `app log` to `app logs`

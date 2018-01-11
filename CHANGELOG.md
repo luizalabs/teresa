@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Fixed
+- [client] On deploys create the tar file before connecting to the server and
+  remove it before exiting
+
 ## [0.12.0] - 2018-01-12
 ### Changed
 - Back to Godep for dependencies management

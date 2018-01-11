@@ -234,6 +234,9 @@ func deployApp(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	tarPath := createAppTarBall(appName, appFolder)
+	defer os.Remove(tarPath)
+
 	conn, err := connection.New(cfgFile, currentClusterName)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
@@ -257,7 +260,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 	}
 
 	g, _ := errgroup.WithContext(ctx)
-	g.Go(func() error { return sendAppTarball(appName, appFolder, stream) })
+	g.Go(func() error { return sendAppTarball(tarPath, stream) })
 	g.Go(func() error { return streamServerMsgs(stream) })
 
 	if err := g.Wait(); err != nil {
@@ -265,14 +268,17 @@ func deployApp(cmd *cobra.Command, args []string) {
 	}
 }
 
-func sendAppTarball(appName, appFolder string, stream dpb.Deploy_MakeClient) error {
-	defer stream.CloseSend()
+func createAppTarBall(appName, appFolder string) string {
 	fmt.Println("Generating tarball of:", appFolder)
 	tarPath, err := createTempArchiveToUpload(appName, appFolder)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error generating tarball:")
-		return err
+		client.PrintErrorAndExit("Error generating tarball: %v", err)
 	}
+	return tarPath
+}
+
+func sendAppTarball(tarPath string, stream dpb.Deploy_MakeClient) error {
+	defer stream.CloseSend()
 
 	f, err := os.Open(tarPath)
 	if err != nil {

@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [NEXT_RELEASE]
+## [0.12.0] - 2018-01-12
 ### Changed
 - Back to Godep for dependencies management
 - Update `client-go` lib to version 4.0
@@ -10,7 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - alias `app log` to `app logs`
-- `app logs` now  support shorthand `-f` to `--follow` and `-n` to `--lines`  
+- `app logs` now  support shorthand `-f` to `--follow` and `-n` to `--lines`
 
 ### Fixed
 - Env vars being set or unset for the app on deploy update errors

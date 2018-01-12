@@ -7,17 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-type fakeReadSeeker struct{}
-
 type fakeS3Client struct{}
-
-func (f *fakeReadSeeker) Seek(offset int64, whence int) (int64, error) {
-	return 0, nil
-}
-
-func (f *fakeReadSeeker) Read(p []byte) (int, error) {
-	return 0, nil
-}
 
 func (f *fakeS3Client) PutObject(*s3.PutObjectInput) (*s3.PutObjectOutput, error) {
 	return nil, nil

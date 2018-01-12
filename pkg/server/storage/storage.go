@@ -9,6 +9,7 @@ type storageType string
 const (
 	S3Type    storageType = "s3"
 	MinioType storageType = "minio"
+	GcsType   storageType = "gcs"
 	FakeType  storageType = "fake"
 )
 
@@ -37,6 +38,8 @@ func New(conf *Config) (Storage, error) {
 		return newS3(conf), nil
 	case MinioType:
 		return newMinio(conf), nil
+	case GcsType:
+		return newGcs(conf)
 	default:
 		return nil, ErrInvalidStorageType
 	}

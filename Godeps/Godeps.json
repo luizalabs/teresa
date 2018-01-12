@@ -7,6 +7,36 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "cloud.google.com/go/compute/metadata",
+			"Comment": "v0.17.0",
+			"Rev": "050b16d2314d5fc3d4c9a51e4cd5c7468e77f162"
+		},
+		{
+			"ImportPath": "cloud.google.com/go/iam",
+			"Comment": "v0.17.0",
+			"Rev": "050b16d2314d5fc3d4c9a51e4cd5c7468e77f162"
+		},
+		{
+			"ImportPath": "cloud.google.com/go/internal",
+			"Comment": "v0.17.0",
+			"Rev": "050b16d2314d5fc3d4c9a51e4cd5c7468e77f162"
+		},
+		{
+			"ImportPath": "cloud.google.com/go/internal/optional",
+			"Comment": "v0.17.0",
+			"Rev": "050b16d2314d5fc3d4c9a51e4cd5c7468e77f162"
+		},
+		{
+			"ImportPath": "cloud.google.com/go/internal/version",
+			"Comment": "v0.17.0",
+			"Rev": "050b16d2314d5fc3d4c9a51e4cd5c7468e77f162"
+		},
+		{
+			"ImportPath": "cloud.google.com/go/storage",
+			"Comment": "v0.17.0",
+			"Rev": "050b16d2314d5fc3d4c9a51e4cd5c7468e77f162"
+		},
+		{
 			"ImportPath": "github.com/PuerkitoBio/purell",
 			"Comment": "v1.0.0",
 			"Rev": "8a290539e2e8629dbc4e6bad948158f790ec31f4"
@@ -220,12 +250,20 @@
 			"Rev": "2bba0603135d7d7f5cb73b2125beeda19c09f4ef"
 		},
 		{
+			"ImportPath": "github.com/golang/protobuf/protoc-gen-go/descriptor",
+			"Rev": "2bba0603135d7d7f5cb73b2125beeda19c09f4ef"
+		},
+		{
 			"ImportPath": "github.com/golang/protobuf/ptypes/any",
 			"Rev": "2bba0603135d7d7f5cb73b2125beeda19c09f4ef"
 		},
 		{
 			"ImportPath": "github.com/google/gofuzz",
 			"Rev": "fd52762d25a41827db7ef64c43756fd4b9f7e382"
+		},
+		{
+			"ImportPath": "github.com/googleapis/gax-go",
+			"Rev": "9af46dd5a1713e8b5cd71106287eba3cefdde50b"
 		},
 		{
 			"ImportPath": "github.com/grpc-ecosystem/go-grpc-middleware",
@@ -480,6 +518,10 @@
 			"Rev": "a6577fac2d73be281a500b310739095313165611"
 		},
 		{
+			"ImportPath": "golang.org/x/net/context/ctxhttp",
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
+		},
+		{
 			"ImportPath": "golang.org/x/net/http2",
 			"Rev": "a6577fac2d73be281a500b310739095313165611"
 		},
@@ -502,6 +544,26 @@
 		{
 			"ImportPath": "golang.org/x/net/trace",
 			"Rev": "a6577fac2d73be281a500b310739095313165611"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "30785a2c434e431ef7c507b54617d6a951d5f2b4"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/google",
+			"Rev": "30785a2c434e431ef7c507b54617d6a951d5f2b4"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/internal",
+			"Rev": "30785a2c434e431ef7c507b54617d6a951d5f2b4"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/jws",
+			"Rev": "30785a2c434e431ef7c507b54617d6a951d5f2b4"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/jwt",
+			"Rev": "30785a2c434e431ef7c507b54617d6a951d5f2b4"
 		},
 		{
 			"ImportPath": "golang.org/x/sync/errgroup",
@@ -550,6 +612,50 @@
 		{
 			"ImportPath": "golang.org/x/text/width",
 			"Rev": "2910a502d2bf9e43193af9d68ca516529614eed3"
+		},
+		{
+			"ImportPath": "google.golang.org/api/gensupport",
+			"Rev": "d2c53ea20b719a26e291430d99eaaf6c9a8eb68c"
+		},
+		{
+			"ImportPath": "google.golang.org/api/googleapi",
+			"Rev": "d2c53ea20b719a26e291430d99eaaf6c9a8eb68c"
+		},
+		{
+			"ImportPath": "google.golang.org/api/googleapi/internal/uritemplates",
+			"Rev": "d2c53ea20b719a26e291430d99eaaf6c9a8eb68c"
+		},
+		{
+			"ImportPath": "google.golang.org/api/googleapi/transport",
+			"Rev": "d2c53ea20b719a26e291430d99eaaf6c9a8eb68c"
+		},
+		{
+			"ImportPath": "google.golang.org/api/internal",
+			"Rev": "d2c53ea20b719a26e291430d99eaaf6c9a8eb68c"
+		},
+		{
+			"ImportPath": "google.golang.org/api/iterator",
+			"Rev": "d2c53ea20b719a26e291430d99eaaf6c9a8eb68c"
+		},
+		{
+			"ImportPath": "google.golang.org/api/option",
+			"Rev": "d2c53ea20b719a26e291430d99eaaf6c9a8eb68c"
+		},
+		{
+			"ImportPath": "google.golang.org/api/storage/v1",
+			"Rev": "d2c53ea20b719a26e291430d99eaaf6c9a8eb68c"
+		},
+		{
+			"ImportPath": "google.golang.org/api/transport/http",
+			"Rev": "d2c53ea20b719a26e291430d99eaaf6c9a8eb68c"
+		},
+		{
+			"ImportPath": "google.golang.org/genproto/googleapis/api/annotations",
+			"Rev": "411e09b969b1170a9f0c467558eb4c4c110d9c77"
+		},
+		{
+			"ImportPath": "google.golang.org/genproto/googleapis/iam/v1",
+			"Rev": "411e09b969b1170a9f0c467558eb4c4c110d9c77"
 		},
 		{
 			"ImportPath": "google.golang.org/genproto/googleapis/rpc/status",

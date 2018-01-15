@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - [client] On deploys create the tar file before connecting to the server and
   remove it before exiting
+- [server] null pointer exception on deploy
 
 ### Added
 - app Start/Stop commands

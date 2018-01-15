@@ -33,6 +33,8 @@ type Operations interface {
 	SaveApp(app *App, lastUser string) error
 	Delete(user *database.User, appName string) error
 	ChangeTeam(appName, teamName string) error
+	Stop(user *database.User, appName string) error
+	Start(user *database.User, appName string, replicas int32) error
 }
 
 type K8sOperations interface {
@@ -56,6 +58,7 @@ type K8sOperations interface {
 	CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error
 	DeleteNamespace(namespace string) error
 	NamespaceListByLabel(label, value string) ([]string, error)
+	DeploySetReplicas(namespace, name string, replicas int32) error
 }
 
 type AppOperations struct {
@@ -408,6 +411,34 @@ func (ops *AppOperations) Delete(user *database.User, appName string) error {
 	}
 
 	if err := ops.kops.DeleteNamespace(app.Name); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	return nil
+}
+
+// Stop set the replicas count of app to 0
+func (ops *AppOperations) Stop(user *database.User, appName string) error {
+	app, err := ops.CheckPermAndGet(user, appName)
+	if err != nil {
+		return err
+	}
+
+	if err := ops.kops.DeploySetReplicas(app.Name, app.Name, 0); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	return nil
+}
+
+// Start change the replicas count of app
+func (ops *AppOperations) Start(user *database.User, appName string, replicas int32) error {
+	app, err := ops.CheckPermAndGet(user, appName)
+	if err != nil {
+		return err
+	}
+
+	if err := ops.kops.DeploySetReplicas(app.Name, app.Name, replicas); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
 

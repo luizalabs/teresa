@@ -130,6 +130,10 @@ func (*fakeK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, ev
 	return nil
 }
 
+func (*fakeK8sOperations) DeploySetReplicas(namespace, name string, replicas int32) error {
+	return nil
+}
+
 func (f *fakeK8sOperations) DeleteNamespace(namespace string) error {
 	delete(f.Namespaces, namespace)
 	return nil
@@ -218,6 +222,10 @@ func (e *errK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, e
 func (e *errK8sOperations) DeleteNamespace(namespace string) error {
 	delete(e.Namespaces, namespace)
 	return e.DeleteNamespaceErr
+}
+
+func (e *errK8sOperations) DeploySetReplicas(namespace, name string, replicas int32) error {
+	return e.Err
 }
 
 func (e *errK8sOperations) NamespaceListByLabel(label, value string) ([]string, error) {

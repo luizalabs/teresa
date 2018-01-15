@@ -124,6 +124,26 @@ func (s *Service) SetAutoscale(ctx context.Context, req *appb.SetAutoscaleReques
 	return &appb.Empty{}, nil
 }
 
+func (s *Service) Stop(ctx context.Context, req *appb.StopRequest) (*appb.Empty, error) {
+	user := ctx.Value("user").(*database.User)
+
+	if err := s.ops.Stop(user, req.Name); err != nil {
+		return nil, err
+	}
+
+	return &appb.Empty{}, nil
+}
+
+func (s *Service) Start(ctx context.Context, req *appb.StartRequest) (*appb.Empty, error) {
+	user := ctx.Value("user").(*database.User)
+
+	if err := s.ops.Start(user, req.Name, req.Replicas); err != nil {
+		return nil, err
+	}
+
+	return &appb.Empty{}, nil
+}
+
 func (s *Service) RegisterService(grpcServer *grpc.Server) {
 	appb.RegisterAppServer(grpcServer, s)
 }

@@ -340,7 +340,7 @@ func TestDeletePermissionDenied(t *testing.T) {
 	}
 }
 
-func TestStopSuccess(t *testing.T) {
+func TestSetReplicasSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
@@ -348,25 +348,25 @@ func TestStopSuccess(t *testing.T) {
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	req := &appb.StopRequest{Name: name}
-	if _, err := s.Stop(ctx, req); err != nil {
-		t.Error("got error on stop: ", err)
+	req := &appb.SetReplicasRequest{Name: name}
+	if _, err := s.SetReplicas(ctx, req); err != nil {
+		t.Error("got error on setReplicas: ", err)
 	}
 }
 
-func TestStopAppNotFound(t *testing.T) {
+func TestSetReplicasAppNotFound(t *testing.T) {
 	name := "teresa"
 	s := NewService(NewFakeOperations())
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	req := &appb.StopRequest{Name: name}
-	if _, err := s.Stop(ctx, req); err != ErrNotFound {
+	req := &appb.SetReplicasRequest{Name: name}
+	if _, err := s.SetReplicas(ctx, req); err != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
 
-func TestStopPermissionDenied(t *testing.T) {
+func TestSetReplicasPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
 	fake.(*FakeOperations).Storage[name] = &App{Name: name}
@@ -374,50 +374,9 @@ func TestStopPermissionDenied(t *testing.T) {
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	req := &appb.StopRequest{Name: name}
+	req := &appb.SetReplicasRequest{Name: name}
 
-	if _, err := s.Stop(ctx, req); err != auth.ErrPermissionDenied {
-		t.Errorf("expected ErrPermissionDenied, got %v", err)
-	}
-}
-
-func TestStartSuccess(t *testing.T) {
-	fake := NewFakeOperations()
-	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
-	s := NewService(fake)
-	user := &database.User{Email: "gopher@luizalabs.com"}
-	ctx := context.WithValue(context.Background(), "user", user)
-
-	req := &appb.StartRequest{Name: name}
-	if _, err := s.Start(ctx, req); err != nil {
-		t.Error("got error on start: ", err)
-	}
-}
-
-func TestStartAppNotFound(t *testing.T) {
-	name := "teresa"
-	s := NewService(NewFakeOperations())
-	user := &database.User{Email: "gopher@luizalabs.com"}
-	ctx := context.WithValue(context.Background(), "user", user)
-
-	req := &appb.StartRequest{Name: name}
-	if _, err := s.Start(ctx, req); err != ErrNotFound {
-		t.Errorf("expected ErrNotFound, got %v", err)
-	}
-}
-
-func TestStartPermissionDenied(t *testing.T) {
-	fake := NewFakeOperations()
-	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
-	s := NewService(fake)
-	user := &database.User{Email: "bad-user@luizalabs.com"}
-	ctx := context.WithValue(context.Background(), "user", user)
-
-	req := &appb.StartRequest{Name: name}
-
-	if _, err := s.Start(ctx, req); err != auth.ErrPermissionDenied {
+	if _, err := s.SetReplicas(ctx, req); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }

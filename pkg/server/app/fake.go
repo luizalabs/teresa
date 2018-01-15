@@ -215,22 +215,7 @@ func (f *FakeOperations) SaveApp(app *App, lastUser string) error {
 	return nil
 }
 
-func (f *FakeOperations) Start(user *database.User, appName string, replicas int32) error {
-	f.mutex.RLock()
-	defer f.mutex.RUnlock()
-
-	if !hasPerm(user.Email) {
-		return auth.ErrPermissionDenied
-	}
-
-	if _, found := f.Storage[appName]; !found {
-		return ErrNotFound
-	}
-
-	return nil
-}
-
-func (f *FakeOperations) Stop(user *database.User, appName string) error {
+func (f *FakeOperations) SetReplicas(user *database.User, appName string, replicas int32) error {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 

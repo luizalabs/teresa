@@ -11,8 +11,7 @@ service App {
     rpc List(Empty) returns (ListResponse);
     rpc SetAutoscale(SetAutoscaleRequest) returns (Empty);
     rpc Delete (DeleteRequest) returns (Empty);
-    rpc Stop  (StopRequest) returns (Empty);
-    rpc Start (StartRequest)  returns (Empty);
+    rpc SetReplicas  (SetReplicasRequest) returns (Empty);
 }
 
 message CreateRequest {
@@ -139,11 +138,7 @@ message SetAutoscaleRequest {
     Autoscale autoscale = 2;
 }
 
-message StopRequest {
-   string name = 1;
-}
-
-message StartRequest {
+message SetReplicasRequest {
    string name = 1;
    int32  replicas = 2;
 }

@@ -26,6 +26,7 @@ import (
 const (
 	patchDeployEnvVarsTmpl            = `{"spec":{"template":{"spec":{"containers":[{"name": "%s", "env":%s}]}}}}`
 	patchDeployRollbackToRevisionTmpl = `{"spec":{"rollbackTo":{"revision": %s}}}`
+	patchDeployReplicasTmpl           = `{"spec":{"replicas": %d}}`
 	revisionAnnotation                = "deployment.kubernetes.io/revision"
 )
 
@@ -782,6 +783,23 @@ func (k *k8sClient) DeployRollbackToRevision(namespace, name, revision string) e
 	}
 
 	data := fmt.Sprintf(patchDeployRollbackToRevisionTmpl, revision)
+
+	_, err = kc.ExtensionsV1beta1().Deployments(namespace).Patch(
+		name,
+		types.StrategicMergePatchType,
+		[]byte(data),
+	)
+
+	return errors.Wrap(err, "patch deploy failed")
+}
+
+func (k *k8sClient) DeploySetReplicas(namespace, name string, replicas int32) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+
+	data := fmt.Sprintf(patchDeployReplicasTmpl, replicas)
 
 	_, err = kc.ExtensionsV1beta1().Deployments(namespace).Patch(
 		name,

@@ -588,6 +588,81 @@ func validateFlags(min, max int32) (string, bool) {
 	return "", true
 }
 
+var appStartCmd = &cobra.Command{
+	Use:   "start <name> [flags]",
+	Short: "Set replicas count for the app",
+	Long: `Set application's replicas count.
+
+	Example:   To set the number of replicas to 2:
+
+  $ teresa app start myapp --replicas 2`,
+	Run: appStart,
+}
+
+func appStart(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		cmd.Usage()
+		return
+	}
+	name := args[0]
+
+	replicas, err := cmd.Flags().GetInt32("replicas")
+	if err != nil || replicas < 1 {
+		client.PrintErrorAndExit("invalid replicas parameter")
+	}
+
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %s", err)
+	}
+	defer conn.Close()
+
+	req := &appb.SetReplicasRequest{
+		Name:     name,
+		Replicas: replicas,
+	}
+	cli := appb.NewAppClient(conn)
+	if _, err := cli.SetReplicas(context.Background(), req); err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+	fmt.Println("App started with success")
+}
+
+var appStopCmd = &cobra.Command{
+	Use:   "stop <name> [flags]",
+	Short: "Set replicas count for the app to 0",
+	Long: `Set application's replicas count to 0.
+
+	Example:
+
+  $ teresa app stop myapp`,
+	Run: appStop,
+}
+
+func appStop(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		cmd.Usage()
+		return
+	}
+	name := args[0]
+
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %s", err)
+	}
+	defer conn.Close()
+
+	req := &appb.SetReplicasRequest{
+		Name:     name,
+		Replicas: 0,
+	}
+	cli := appb.NewAppClient(conn)
+	if _, err := cli.SetReplicas(context.Background(), req); err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+	fmt.Println("App stopped with success")
+}
+
 func init() {
 	// add AppCmd
 	RootCmd.AddCommand(appCmd)
@@ -600,6 +675,8 @@ func init() {
 	appCmd.AddCommand(appEnvUnSetCmd)
 	appCmd.AddCommand(appLogsCmd)
 	appCmd.AddCommand(appAutoscaleSetCmd)
+	appCmd.AddCommand(appStartCmd)
+	appCmd.AddCommand(appStopCmd)
 
 	appCreateCmd.Flags().String("team", "", "team owner of the app")
 	appCreateCmd.Flags().Int32("scale-min", 1, "minimum number of replicas")
@@ -624,6 +701,8 @@ func init() {
 	appAutoscaleSetCmd.Flags().Int32("min", flagNotDefined, "Minimum number of replicas")
 	appAutoscaleSetCmd.Flags().Int32("max", flagNotDefined, "Maximum number of replicas")
 	appAutoscaleSetCmd.Flags().Int32("cpu-percent", flagNotDefined, "The target average CPU utilization (represented as a percent of requested CPU) over all the pods. If it's not specified or negative, the current autoscaling policy will be used.")
+	// App Start
+	appStartCmd.Flags().Int32("replicas", 1, "Number of replicas")
 }
 
 func appLogs(cmd *cobra.Command, args []string) {

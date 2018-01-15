@@ -7,6 +7,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [client] On deploys create the tar file before connecting to the server and
   remove it before exiting
 
+### Added
+- app Start/Stop commands
+
 ## [0.12.0] - 2018-01-12
 ### Changed
 - Back to Godep for dependencies management

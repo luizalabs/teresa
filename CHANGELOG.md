@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - app Start/Stop commands
 - `app delete-pods` command
+- set-password now support the --user flag to set password of another user(needs admin)
 
 ## [0.12.0] - 2018-01-12
 ### Changed

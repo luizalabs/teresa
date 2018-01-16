@@ -109,31 +109,6 @@ func TestDatabaseOperationsSetPassword(t *testing.T) {
 
 	dbu := NewDatabaseOperations(db, auth.NewFake())
 
-	expectedEmail := "teresa@luizalabs.com"
-	expectedPassword := "secret"
-
-	if err = createFakeUser(db, "Test", expectedEmail, "123456", false); err != nil {
-		t.Fatal("error on create fake user: ", err)
-	}
-
-	user := &database.User{Email: expectedEmail}
-	if err = dbu.SetPassword(user, expectedPassword, ""); err != nil {
-		t.Fatal("error trying to set a new password: ", err)
-	}
-	if _, err = dbu.Login(expectedEmail, expectedPassword, time.Second); err != nil {
-		t.Error("error trying to make login with new password: ", err)
-	}
-}
-
-func TestDatabaseOperationsSetPasswordAdmin(t *testing.T) {
-	db, err := gorm.Open("sqlite3", ":memory:")
-	if err != nil {
-		t.Fatal("error on open in memory database ", err)
-	}
-	defer db.Close()
-
-	dbu := NewDatabaseOperations(db, auth.NewFake())
-
 	users := map[string]database.User{
 		"admin": database.User{Name: "Admin", Email: "sre@luizalabs.com", IsAdmin: true},
 		"user1": database.User{Name: "User 1", Email: "teresa@luizalabs.com", IsAdmin: false},
@@ -184,6 +159,32 @@ func TestDatabaseOperationsSetPasswordForInvalidTargetUser(t *testing.T) {
 		if err := dbu.SetPassword(user, "123", tc.targetUser); err != ErrNotFound {
 			t.Errorf("expected ErrNotFound, got %v", err)
 		}
+	}
+}
+
+func TestDatabaseOperationsSetPasswordErrPermissionDenied(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error on open in memory database ", err)
+	}
+	defer db.Close()
+
+	dbu := NewDatabaseOperations(db, auth.NewFake())
+
+	users := map[string]database.User{
+		"user1": database.User{Name: "User 1", Email: "teresa@luizalabs.com", IsAdmin: false},
+		"user2": database.User{Name: "User 2", Email: "gopher@luizalabs.com", IsAdmin: false},
+	}
+
+	for _, u := range users {
+		if err = createFakeUser(db, u.Name, u.Email, "123456", u.IsAdmin); err != nil {
+			t.Fatal("error on create fake user: ", err)
+		}
+	}
+
+	user := &database.User{Email: users["user1"].Email, IsAdmin: users["user1"].IsAdmin}
+	if err = dbu.SetPassword(user, "123", users["user2"].Email); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %s", err)
 	}
 }
 

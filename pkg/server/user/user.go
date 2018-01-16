@@ -79,14 +79,14 @@ func (dbu *DatabaseOperations) SetPassword(user *database.User, newPassword, use
 	if err != nil {
 		return teresa_errors.New(
 			teresa_errors.ErrInternalServerError,
-			errors.Wrap(err, fmt.Sprintf("Generating the password hash to user %s", u.Email)),
+			errors.Wrap(err, fmt.Sprintf("Generating the password hash to user %s", email)),
 		)
 	}
 	u.Password = string(pass)
 	if err = dbu.DB.Save(u).Error; err != nil {
 		return teresa_errors.New(
 			teresa_errors.ErrInternalServerError,
-			errors.Wrap(err, fmt.Sprintf("Updating password of user %s", u.Email)),
+			errors.Wrap(err, fmt.Sprintf("Updating password of user %s", email)),
 		)
 	}
 	return nil

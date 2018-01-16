@@ -95,7 +95,7 @@ func TestFakeOperationsSetPasswordErrPermissionDenied(t *testing.T) {
 	fake.(*FakeOperations).Storage[email] = user
 
 	if err := fake.SetPassword(user, "", targetUser); err != auth.ErrPermissionDenied {
-		t.Fatal("error trying to change user password: ", err)
+		t.Errorf("expected ErrPermissionDenied, got %s", err)
 	}
 }
 

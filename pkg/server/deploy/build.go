@@ -8,7 +8,10 @@ import (
 	st "github.com/luizalabs/teresa/pkg/server/storage"
 )
 
-const DefaultPort = 5000
+const (
+	DefaultPort                = 5000
+	defaultDrainTimeoutSeconds = 10
+)
 
 type ContainerLimits struct {
 	CPU    string
@@ -119,6 +122,8 @@ func newDeploySpec(a *app.App, tYaml *TeresaYaml, fileStorage st.Storage, descri
 		}
 	}
 
+	setDefaultLifecycle(ds)
+
 	return ds
 }
 
@@ -141,4 +146,12 @@ func newRunCommandSpec(a *app.App, deployId, command, slugURL string, fileStorag
 		Memory: opts.BuildLimitMemory,
 	}
 	return ps
+}
+
+func setDefaultLifecycle(ds *DeploySpec) {
+	if ds.Lifecycle == nil {
+		ds.Lifecycle = &Lifecycle{
+			PreStop: &PreStop{DrainTimeoutSeconds: defaultDrainTimeoutSeconds},
+		}
+	}
 }

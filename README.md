@@ -159,6 +159,8 @@ lifecycle:
     drainTimeoutSeconds: 10
 ```
 
+By default teresa adds a 10 seconds drain timeout.
+
 **Q: What's the deployment strategy?**
 
 Teresa creates a rolling update deployment, which updates a fixed number of

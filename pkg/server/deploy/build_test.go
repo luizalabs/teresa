@@ -166,3 +166,33 @@ func TestNewDeploySpec(t *testing.T) {
 		t.Errorf("expected %d, got %d", opts.RevisionHistoryLimit, ds.RevisionHistoryLimit)
 	}
 }
+
+func TestNewDeploySpecDefaultDrainTimeout(t *testing.T) {
+	expectedDescription := "test"
+	expectedSlugURL := "http://teresa.io/slug.tgz"
+	expectedProcessType := "worker"
+	expectedName := "deploy-test"
+	opts := &Options{RevisionHistoryLimit: 5}
+
+	ds := newDeploySpec(
+		&app.App{Name: expectedName},
+		&TeresaYaml{},
+		st.NewFake(),
+		expectedDescription,
+		expectedSlugURL,
+		expectedProcessType,
+		opts,
+	)
+
+	if ds.Lifecycle == nil {
+		t.Fatal("expected lifecycle; got nil")
+	}
+
+	if ds.Lifecycle.PreStop == nil {
+		t.Fatal("expected prestop; got nil")
+	}
+
+	if ds.Lifecycle.PreStop.DrainTimeoutSeconds != defaultDrainTimeoutSeconds {
+		t.Errorf("got %d; want %d", ds.Lifecycle.PreStop.DrainTimeoutSeconds, defaultDrainTimeoutSeconds)
+	}
+}

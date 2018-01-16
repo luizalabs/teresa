@@ -12,16 +12,16 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/database"
 )
 
-func createFakeUser(db *gorm.DB, email, password string) error {
+func createFakeUser(db *gorm.DB, name, email, password string, isAdmin bool) error {
 	p, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 	u := &database.User{
-		Name:     "Test",
+		Name:     name,
 		Email:    email,
 		Password: string(p),
-		IsAdmin:  false}
+		IsAdmin:  isAdmin}
 
 	return db.Create(u).Error
 }
@@ -37,7 +37,7 @@ func TestDatabaseOperationsLogin(t *testing.T) {
 
 	expectedEmail := "teresa@luizalabs.com"
 	expectedPassword := "secret"
-	if err = createFakeUser(db, expectedEmail, expectedPassword); err != nil {
+	if err = createFakeUser(db, "Test", expectedEmail, expectedPassword, false); err != nil {
 		t.Fatal("error on create fake user: ", err)
 	}
 
@@ -74,7 +74,7 @@ func TestDatabaseOperationsGetUser(t *testing.T) {
 	dbu := NewDatabaseOperations(db, auth.NewFake())
 
 	expectedEmail := "teresa@luizalabs.com"
-	if err = createFakeUser(db, expectedEmail, ""); err != nil {
+	if err = createFakeUser(db, "Test", expectedEmail, "", false); err != nil {
 		t.Fatal("error on create fake user: ", err)
 	}
 
@@ -111,11 +111,13 @@ func TestDatabaseOperationsSetPassword(t *testing.T) {
 
 	expectedEmail := "teresa@luizalabs.com"
 	expectedPassword := "secret"
-	if err = createFakeUser(db, expectedEmail, "123456"); err != nil {
+
+	if err = createFakeUser(db, "Test", expectedEmail, "123456", false); err != nil {
 		t.Fatal("error on create fake user: ", err)
 	}
 
-	if err = dbu.SetPassword(expectedEmail, expectedPassword); err != nil {
+	user := &database.User{Email: expectedEmail}
+	if err = dbu.SetPassword(user, expectedPassword, ""); err != nil {
 		t.Fatal("error trying to set a new password: ", err)
 	}
 	if _, err = dbu.Login(expectedEmail, expectedPassword, time.Second); err != nil {
@@ -123,7 +125,7 @@ func TestDatabaseOperationsSetPassword(t *testing.T) {
 	}
 }
 
-func TestDatabaseOperationsSetPasswordForInvalidUser(t *testing.T) {
+func TestDatabaseOperationsSetPasswordAdmin(t *testing.T) {
 	db, err := gorm.Open("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal("error on open in memory database ", err)
@@ -131,8 +133,57 @@ func TestDatabaseOperationsSetPasswordForInvalidUser(t *testing.T) {
 	defer db.Close()
 
 	dbu := NewDatabaseOperations(db, auth.NewFake())
-	if err := dbu.SetPassword("gopher@luizalabs.com", "123"); err != ErrNotFound {
-		t.Errorf("expected ErrNotFound, got %v", err)
+
+	users := map[string]database.User{
+		"admin": database.User{Name: "Admin", Email: "sre@luizalabs.com", IsAdmin: true},
+		"user1": database.User{Name: "User 1", Email: "teresa@luizalabs.com", IsAdmin: false},
+		"user2": database.User{Name: "User 2", Email: "gopher@luizalabs.com", IsAdmin: false},
+	}
+	expectedPassword := "secret"
+
+	for _, u := range users {
+		if err = createFakeUser(db, u.Name, u.Email, "123456", u.IsAdmin); err != nil {
+			t.Fatal("error on create fake user: ", err)
+		}
+	}
+
+	testCases := []struct{ user, targetUser, userChanged string }{
+		{user: "admin", targetUser: "", userChanged: "admin"},
+		{user: "admin", targetUser: "user1", userChanged: "user1"},
+		{user: "user2", targetUser: "user2", userChanged: "user2"},
+	}
+
+	for _, tc := range testCases {
+		user := &database.User{Email: users[tc.user].Email, IsAdmin: users[tc.user].IsAdmin}
+		if err = dbu.SetPassword(user, expectedPassword, users[tc.targetUser].Email); err != nil {
+			t.Fatal("error trying to set a new password: ", err)
+		}
+		if _, err = dbu.Login(users[tc.userChanged].Email, expectedPassword, time.Second); err != nil {
+			t.Error("error trying to make login with new password: ", err)
+		}
+	}
+}
+
+func TestDatabaseOperationsSetPasswordForInvalidTargetUser(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error on open in memory database ", err)
+	}
+	defer db.Close()
+
+	dbu := NewDatabaseOperations(db, auth.NewFake())
+
+	testCases := []struct{ user, targetUser string }{
+		{user: "gopher@luizalabs.com", targetUser: ""},
+		{user: "gopher@luizalabs.com", targetUser: "teresa@luizalabs.com"},
+		{user: "gopher@luizalabs.com", targetUser: "gopher@luizalabs.com"},
+	}
+
+	for _, tc := range testCases {
+		user := &database.User{Email: tc.user, IsAdmin: true}
+		if err := dbu.SetPassword(user, "123", tc.targetUser); err != ErrNotFound {
+			t.Errorf("expected ErrNotFound, got %v", err)
+		}
 	}
 }
 
@@ -145,7 +196,7 @@ func TestDatabaseOperationsDelete(t *testing.T) {
 
 	dbu := NewDatabaseOperations(db, auth.NewFake())
 	email := "teresa@luizalabs.com"
-	if err := createFakeUser(db, email, "123456"); err != nil {
+	if err := createFakeUser(db, "Test", email, "123456", false); err != nil {
 		t.Fatal("error creating fake user: ", err)
 	}
 	if err := dbu.Delete(email); err != nil {
@@ -212,7 +263,7 @@ func TestDatabaseOperationsCreateUserAlreadyExists(t *testing.T) {
 	dbu := NewDatabaseOperations(db, auth.NewFake())
 	email := "teresa@luizalabs.com"
 
-	if err := createFakeUser(db, email, "12345678"); err != nil {
+	if err := createFakeUser(db, "Test", email, "12345678", false); err != nil {
 		t.Fatal("error creating fake user: ", err)
 	}
 	if err := dbu.Create("gopher", email, "12345678", false); err != ErrUserAlreadyExists {

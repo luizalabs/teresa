@@ -21,7 +21,7 @@ const (
 type Operations interface {
 	Login(email, password string, exp time.Duration) (string, error)
 	GetUser(email string) (*database.User, error)
-	SetPassword(email, newPassword string) error
+	SetPassword(user *database.User, newPassword, userTarget string) error
 	Delete(email string) error
 	Create(name, email, pass string, admin bool) error
 }
@@ -61,23 +61,32 @@ func (dbu *DatabaseOperations) GetUser(email string) (*database.User, error) {
 	return u, nil
 }
 
-func (dbu *DatabaseOperations) SetPassword(email, newPassword string) error {
+func (dbu *DatabaseOperations) SetPassword(user *database.User, newPassword, userTarget string) error {
+	email := user.Email
+	if userTarget != "" && userTarget != email {
+		if !user.IsAdmin {
+			return auth.ErrPermissionDenied
+		}
+		email = userTarget
+	}
+
 	u, err := dbu.GetUser(email)
 	if err != nil {
 		return err
 	}
+
 	pass, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return teresa_errors.New(
 			teresa_errors.ErrInternalServerError,
-			errors.Wrap(err, fmt.Sprintf("Generating the password hash to user %s", email)),
+			errors.Wrap(err, fmt.Sprintf("Generating the password hash to user %s", u.Email)),
 		)
 	}
 	u.Password = string(pass)
 	if err = dbu.DB.Save(u).Error; err != nil {
 		return teresa_errors.New(
 			teresa_errors.ErrInternalServerError,
-			errors.Wrap(err, fmt.Sprintf("Updating password of user %s", email)),
+			errors.Wrap(err, fmt.Sprintf("Updating password of user %s", u.Email)),
 		)
 	}
 	return nil

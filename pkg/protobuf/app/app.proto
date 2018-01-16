@@ -12,6 +12,7 @@ service App {
     rpc SetAutoscale(SetAutoscaleRequest) returns (Empty);
     rpc Delete (DeleteRequest) returns (Empty);
     rpc SetReplicas  (SetReplicasRequest) returns (Empty);
+    rpc DeletePods (DeletePodsRequest) returns (Empty);
 }
 
 message CreateRequest {
@@ -145,6 +146,11 @@ message SetReplicasRequest {
 
 message DeleteRequest {
     string name = 1;
+}
+
+message DeletePodsRequest {
+    string name = 1;
+    repeated string pods_names = 2;
 }
 
 message Empty {}

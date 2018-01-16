@@ -380,3 +380,42 @@ func TestSetReplicasPermissionDenied(t *testing.T) {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }
+
+func TestDeletePodsSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+	req := &appb.DeletePodsRequest{Name: name, PodsNames: []string{"pod1", "pod2"}}
+
+	if _, err := s.DeletePods(ctx, req); err != nil {
+		t.Error("got error on delete pods:", err)
+	}
+}
+
+func TestDeletePodsErrNotFound(t *testing.T) {
+	s := NewService(NewFakeOperations())
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+	req := &appb.DeletePodsRequest{Name: "teresa", PodsNames: []string{"pod1", "pod2"}}
+
+	if _, err := s.DeletePods(ctx, req); teresa_errors.Get(err) != ErrNotFound {
+		t.Errorf("expected %v, got %v", ErrNotFound, teresa_errors.Get(err))
+	}
+}
+
+func TestDeletePodsErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+	req := &appb.DeletePodsRequest{Name: name, PodsNames: []string{"pod1", "pod2"}}
+
+	if _, err := s.DeletePods(ctx, req); teresa_errors.Get(err) != auth.ErrPermissionDenied {
+		t.Errorf("expected %v, got %v", auth.ErrPermissionDenied, teresa_errors.Get(err))
+	}
+}

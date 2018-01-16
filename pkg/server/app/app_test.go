@@ -32,6 +32,8 @@ type errK8sOperations struct {
 	DeleteNamespaceErr         error
 	SetNamespaceAnnotationsErr error
 	SetNamespaceLabelsErr      error
+	DeletePodErr               error
+	NegateIsNotFound           bool
 	Namespaces                 map[string]struct{}
 }
 
@@ -147,6 +149,10 @@ func (f *fakeK8sOperations) NamespaceListByLabel(label, value string) ([]string,
 	return ns, nil
 }
 
+func (f *fakeK8sOperations) DeletePod(namespace, podName string) error {
+	return nil
+}
+
 func (e *errK8sOperations) CreateNamespace(app *App, user string) error {
 	return e.NamespaceErr
 }
@@ -199,7 +205,10 @@ func (*errK8sOperations) IsAlreadyExists(err error) bool {
 	return true
 }
 
-func (*errK8sOperations) IsNotFound(err error) bool {
+func (e *errK8sOperations) IsNotFound(err error) bool {
+	if e.NegateIsNotFound {
+		return false
+	}
 	return true
 }
 
@@ -230,6 +239,10 @@ func (e *errK8sOperations) DeploySetReplicas(namespace, name string, replicas in
 
 func (e *errK8sOperations) NamespaceListByLabel(label, value string) ([]string, error) {
 	return nil, e.Err
+}
+
+func (e *errK8sOperations) DeletePod(namespace, podName string) error {
+	return e.DeletePodErr
 }
 
 func TestAppOperationsCreate(t *testing.T) {
@@ -883,5 +896,60 @@ func TestAppOperationsSetReplicasErrNotFound(t *testing.T) {
 
 	if err := ops.SetReplicas(user, "teresa", 1); teresa_errors.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestAppOpsDeletePodsSuccess(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+	pods := []string{"pod1", "pod2"}
+
+	if err := ops.DeletePods(user, app.Name, pods); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func TestAppOpsDeletePodsErrNotFound(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	pods := []string{"pod1", "pod2"}
+
+	if err := ops.DeletePods(user, "teresa", pods); teresa_errors.Get(err) != ErrNotFound {
+		t.Errorf("expected %v, got %v", ErrNotFound, teresa_errors.Get(err))
+	}
+}
+
+func TestAppOpsDeletePodsErrPermissionDenied(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	pods := []string{"pod1", "pod2"}
+
+	if err := ops.DeletePods(user, "teresa", pods); err != auth.ErrPermissionDenied {
+		t.Errorf("expected %v, got %v", auth.ErrPermissionDenied, teresa_errors.Get(err))
+	}
+}
+
+func TestAppOpsDeletePodsInternalServerError(t *testing.T) {
+	tops := team.NewFakeOperations()
+	kops := &errK8sOperations{DeletePodErr: errors.New("test"), NegateIsNotFound: true}
+	ops := NewOperations(tops, kops, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+	pods := []string{"pod1", "pod2"}
+
+	if err := ops.DeletePods(user, app.Name, pods); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
+		t.Errorf("expected %v, got %v", teresa_errors.ErrInternalServerError, teresa_errors.Get(err))
 	}
 }

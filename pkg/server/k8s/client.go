@@ -477,7 +477,7 @@ func (k *k8sClient) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, 
 			return
 		}
 		exitCodeChan <- exitCode
-		go k.killPod(pod)
+		go k.DeletePod(pod.Namespace, pod.Name)
 	}()
 	return r, exitCodeChan, nil
 }
@@ -565,12 +565,13 @@ func (k *k8sClient) ExposeDeploy(namespace, appName, vHost string, w io.Writer) 
 	return nil
 }
 
-func (k *k8sClient) killPod(pod *k8sv1.Pod) error {
+func (k *k8sClient) DeletePod(namespace, podName string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
 	}
-	return kc.Pods(pod.Namespace).Delete(pod.Name, &metav1.DeleteOptions{})
+	err = kc.Pods(namespace).Delete(podName, &metav1.DeleteOptions{})
+	return errors.Wrap(err, "could not delete pod")
 }
 
 func (k *k8sClient) waitPodStart(pod *k8sv1.Pod, checkInterval, timeout time.Duration) error {

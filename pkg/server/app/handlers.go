@@ -134,6 +134,16 @@ func (s *Service) SetReplicas(ctx context.Context, req *appb.SetReplicasRequest)
 	return &appb.Empty{}, nil
 }
 
+func (s *Service) DeletePods(ctx context.Context, req *appb.DeletePodsRequest) (*appb.Empty, error) {
+	user := ctx.Value("user").(*database.User)
+
+	if err := s.ops.DeletePods(user, req.Name, req.PodsNames); err != nil {
+		return nil, err
+	}
+
+	return &appb.Empty{}, nil
+}
+
 func (s *Service) RegisterService(grpcServer *grpc.Server) {
 	appb.RegisterAppServer(grpcServer, s)
 }

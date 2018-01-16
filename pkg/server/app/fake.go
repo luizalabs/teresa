@@ -238,6 +238,21 @@ func (f *FakeOperations) ChangeTeam(appName, teamName string) error {
 	return nil
 }
 
+func (f *FakeOperations) DeletePods(user *database.User, appName string, podsNames []string) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if !hasPerm(user.Email) {
+		return teresa_errors.New(auth.ErrPermissionDenied, fmt.Errorf("error"))
+	}
+
+	if _, found := f.Storage[appName]; !found {
+		return teresa_errors.New(ErrNotFound, fmt.Errorf("error"))
+	}
+
+	return nil
+}
+
 func NewFakeOperations() Operations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

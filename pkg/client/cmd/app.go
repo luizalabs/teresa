@@ -677,6 +677,7 @@ func init() {
 	appCmd.AddCommand(appAutoscaleSetCmd)
 	appCmd.AddCommand(appStartCmd)
 	appCmd.AddCommand(appStopCmd)
+	appCmd.AddCommand(appDeletePodsCmd)
 
 	appCreateCmd.Flags().String("team", "", "team owner of the app")
 	appCreateCmd.Flags().Int32("scale-min", 1, "minimum number of replicas")
@@ -703,6 +704,8 @@ func init() {
 	appAutoscaleSetCmd.Flags().Int32("cpu-percent", flagNotDefined, "The target average CPU utilization (represented as a percent of requested CPU) over all the pods. If it's not specified or negative, the current autoscaling policy will be used.")
 	// App Start
 	appStartCmd.Flags().Int32("replicas", 1, "Number of replicas")
+	// App delete-pods
+	appDeletePodsCmd.Flags().String("app", "", "app name")
 }
 
 func appLogs(cmd *cobra.Command, args []string) {
@@ -737,6 +740,47 @@ func appLogs(cmd *cobra.Command, args []string) {
 		}
 		fmt.Println(msg.Text)
 	}
+}
+
+var appDeletePodsCmd = &cobra.Command{
+	Use:   "delete-pods [pods, ...]",
+	Short: "Delete app's pods by name",
+	Long:  "Delete app's pods by name",
+	Example: `  To delete pods myapp-1234 and myapp-5678 from app myapp:
+
+  $ teresa app delete-pods myapp-1234 myapp-5678 --app myapp`,
+	Run: appDeletePods,
+}
+
+func appDeletePods(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		cmd.Usage()
+		return
+	}
+
+	appName, err := cmd.Flags().GetString("app")
+	if err != nil || appName == "" {
+		client.PrintErrorAndExit("Invalid app parameter")
+	}
+
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
+
+	cli := appb.NewAppClient(conn)
+	if err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+
+	req := &appb.DeletePodsRequest{Name: appName, PodsNames: args}
+	_, err = cli.DeletePods(context.Background(), req)
+	if err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+		return
+	}
+	fmt.Println("Pods will be deleted in a few seconds")
 }
 
 // Shamelessly copied from Kubernetes

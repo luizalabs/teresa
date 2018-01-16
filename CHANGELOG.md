@@ -10,6 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - app Start/Stop commands
+- `app delete-pods` command
 
 ## [0.12.0] - 2018-01-12
 ### Changed

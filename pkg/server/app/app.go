@@ -34,6 +34,7 @@ type Operations interface {
 	Delete(user *database.User, appName string) error
 	ChangeTeam(appName, teamName string) error
 	SetReplicas(user *database.User, appName string, replicas int32) error
+	DeletePods(user *database.User, appName string, podsNames []string) error
 }
 
 type K8sOperations interface {
@@ -58,6 +59,7 @@ type K8sOperations interface {
 	DeleteNamespace(namespace string) error
 	NamespaceListByLabel(label, value string) ([]string, error)
 	DeploySetReplicas(namespace, name string, replicas int32) error
+	DeletePod(namespace, podName string) error
 }
 
 type AppOperations struct {
@@ -435,6 +437,23 @@ func (ops *AppOperations) ChangeTeam(appName, teamName string) error {
 	if err := ops.kops.SetNamespaceLabels(appName, label); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
+	return nil
+}
+
+func (ops *AppOperations) DeletePods(user *database.User, appName string, podsNames []string) error {
+	if _, err := ops.CheckPermAndGet(user, appName); err != nil {
+		return err
+	}
+
+	for _, pod := range podsNames {
+		if err := ops.kops.DeletePod(appName, pod); err != nil {
+			if ops.kops.IsNotFound(err) {
+				continue
+			}
+			return teresa_errors.NewInternalServerError(err)
+		}
+	}
+
 	return nil
 }
 

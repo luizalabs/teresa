@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Pod list on `app info` command for apps without HPA
 
+### Added
+- [server] default deploy lifecycle with 10s drain timeout
+
 ## [0.13.0] - 2018-01-22
 ### Fixed
 - [client] On deploys create the tar file before connecting to the server and

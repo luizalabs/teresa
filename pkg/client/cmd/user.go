@@ -37,9 +37,11 @@ var deleteUserCmd = &cobra.Command{
 // set password for an user
 var setUserPasswordCmd = &cobra.Command{
 	Use:   "set-password",
-	Short: "Set password for current user",
-	Long:  `Set password for current user.`,
-	Run:   setPassword,
+	Short: "Set password for an user",
+	Long: `Set password for an user.
+To set password for another user (needs admin):
+	$ teresa set-password --user user@mydomain.com`,
+	Run: setPassword,
 }
 
 func setPassword(cmd *cobra.Command, args []string) {
@@ -50,6 +52,10 @@ func setPassword(cmd *cobra.Command, args []string) {
 	if err = client.EnsurePasswordLength(p); err != nil {
 		client.PrintErrorAndExit(err.Error())
 	}
+	user, err := cmd.Flags().GetString("user")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid user parameter: %v", err)
+	}
 
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
@@ -58,7 +64,11 @@ func setPassword(cmd *cobra.Command, args []string) {
 	defer conn.Close()
 
 	cli := userpb.NewUserClient(conn)
-	if _, err := cli.SetPassword(context.Background(), &userpb.SetPasswordRequest{Password: p}); err != nil {
+	spr := &userpb.SetPasswordRequest{
+		Password: p,
+		User:     user,
+	}
+	if _, err := cli.SetPassword(context.Background(), spr); err != nil {
 		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 	fmt.Println("Password updated")
@@ -136,4 +146,5 @@ func init() {
 	deleteUserCmd.Flags().String("email", "", "user email [required]")
 
 	RootCmd.AddCommand(setUserPasswordCmd)
+	setUserPasswordCmd.Flags().String("user", "", "user to set the password, if not provided will set the current user password")
 }

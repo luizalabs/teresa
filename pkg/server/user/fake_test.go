@@ -66,12 +66,13 @@ func TestFakeOperationsSetPassword(t *testing.T) {
 
 	expectedEmail := "teresa@luizalabs.com"
 	expectedPassword := "123456"
-	fake.(*FakeOperations).Storage[expectedEmail] = &database.User{
+	user := &database.User{
 		Password: "gopher",
 		Email:    expectedEmail,
 	}
+	fake.(*FakeOperations).Storage[expectedEmail] = user
 
-	err := fake.SetPassword(expectedEmail, expectedPassword)
+	err := fake.SetPassword(user, expectedPassword, "")
 	if err != nil {
 		t.Fatal("error trying to change user password: ", err)
 	}
@@ -81,10 +82,31 @@ func TestFakeOperationsSetPassword(t *testing.T) {
 	}
 }
 
+func TestFakeOperationsSetPasswordErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+
+	email := "teresa@luizalabs.com"
+	targetUser := "gopher@luizalabs.com"
+	isAdmin := false
+	user := &database.User{
+		Email:   email,
+		IsAdmin: isAdmin,
+	}
+	fake.(*FakeOperations).Storage[email] = user
+
+	if err := fake.SetPassword(user, "", targetUser); err != auth.ErrPermissionDenied {
+		t.Fatal("error trying to change user password: ", err)
+	}
+}
+
 func TestFakeOperationsSetPasswordUserNotFound(t *testing.T) {
 	fake := NewFakeOperations()
 
-	if err := fake.SetPassword("gopher@luizalabs.com", "123"); err != ErrNotFound {
+	user := &database.User{
+		Email: "gopher@luizalabs.com",
+	}
+
+	if err := fake.SetPassword(user, "123", ""); err != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }

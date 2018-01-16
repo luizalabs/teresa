@@ -34,9 +34,17 @@ func (f *FakeOperations) GetUser(email string) (*database.User, error) {
 	return &database.User{Email: user.Email, Password: user.Password}, nil
 }
 
-func (f *FakeOperations) SetPassword(email, newPassword string) error {
+func (f *FakeOperations) SetPassword(user *database.User, newPassword, targetUser string) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
+
+	email := user.Email
+	if targetUser != "" && targetUser != email {
+		if !user.IsAdmin {
+			return auth.ErrPermissionDenied
+		}
+		email = targetUser
+	}
 
 	if _, found := f.Storage[email]; !found {
 		return ErrNotFound

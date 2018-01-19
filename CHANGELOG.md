@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - Pod list on `app info` command for apps without HPA
+- [server] make the build process stop on client cancellation
 
 ### Added
 - [server] default deploy lifecycle with 10s drain timeout

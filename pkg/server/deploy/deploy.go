@@ -5,6 +5,7 @@ import (
 	"io"
 
 	log "github.com/Sirupsen/logrus"
+	context "golang.org/x/net/context"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
@@ -20,7 +21,7 @@ const (
 )
 
 type Operations interface {
-	Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, <-chan error)
+	Deploy(ctx context.Context, user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, <-chan error)
 	List(user *database.User, appName string) ([]*ReplicaSetListItem, error)
 	Rollback(user *database.User, appName, revision string) error
 }
@@ -31,6 +32,7 @@ type K8sOperations interface {
 	ExposeDeploy(namespace, name, vHost string, w io.Writer) error
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
 	DeployRollbackToRevision(namespace, name, revision string) error
+	DeletePod(namespace, podName string) error
 }
 
 type DeployOperations struct {
@@ -39,7 +41,7 @@ type DeployOperations struct {
 	k8s         K8sOperations
 }
 
-func (ops *DeployOperations) Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, <-chan error) {
+func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, <-chan error) {
 	errChan := make(chan error, 1)
 	a, err := ops.appOps.Get(appName)
 	if err != nil {
@@ -71,7 +73,7 @@ func (ops *DeployOperations) Deploy(user *database.User, appName string, tarBall
 	r, w := io.Pipe()
 	go func() {
 		defer w.Close()
-		if err = ops.buildApp(tarBall, a, deployId, buildDest, w, opts); err != nil {
+		if err = ops.buildApp(ctx, tarBall, a, deployId, buildDest, w, opts); err != nil {
 			errChan <- err
 			log.WithError(err).WithField("id", deployId).Errorf("Building app %s", appName)
 			return
@@ -106,7 +108,7 @@ func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugPath string
 	runCommandSpec := newRunCommandSpec(a, deployId, ProcfileReleaseCmd, slugPath, ops.fileStorage, opts)
 
 	fmt.Fprintln(stream, "Running release command")
-	err := ops.podRun(runCommandSpec, stream)
+	err := ops.podRun(context.Background(), runCommandSpec, stream)
 	if err != nil {
 		if err == ErrPodRunFail {
 			return ErrReleaseFail
@@ -131,7 +133,7 @@ func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {
 	return nil // already exposed
 }
 
-func (ops *DeployOperations) buildApp(tarBall io.ReadSeeker, a *app.App, deployId, buildDest string, stream io.Writer, opts *Options) error {
+func (ops *DeployOperations) buildApp(ctx context.Context, tarBall io.ReadSeeker, a *app.App, deployId, buildDest string, stream io.Writer, opts *Options) error {
 	tarBall.Seek(0, 0)
 	tarBallLocation := fmt.Sprintf("deploys/%s/%s/in/app.tar.gz", a.Name, deployId)
 	if err := ops.fileStorage.UploadFile(tarBallLocation, tarBall); err != nil {
@@ -139,7 +141,7 @@ func (ops *DeployOperations) buildApp(tarBall io.ReadSeeker, a *app.App, deployI
 		return err
 	}
 	buildSpec := newBuildSpec(a, deployId, tarBallLocation, buildDest, ops.fileStorage, opts)
-	err := ops.podRun(buildSpec, stream)
+	err := ops.podRun(ctx, buildSpec, stream)
 	if err != nil {
 		if err == ErrPodRunFail {
 			return ErrBuildFail
@@ -149,17 +151,23 @@ func (ops *DeployOperations) buildApp(tarBall io.ReadSeeker, a *app.App, deployI
 	return nil
 }
 
-func (ops *DeployOperations) podRun(podSpec *PodSpec, stream io.Writer) error {
+func (ops *DeployOperations) podRun(ctx context.Context, podSpec *PodSpec, stream io.Writer) error {
 	podStream, exitCodeChan, err := ops.k8s.PodRun(podSpec)
 	if err != nil {
 		return err
 	}
 	go io.Copy(stream, podStream)
 
-	exitCode, ok := <-exitCodeChan
-	if !ok || exitCode != 0 {
-		return ErrPodRunFail
+	select {
+	case <-ctx.Done():
+		go ops.k8s.DeletePod(podSpec.Namespace, podSpec.Name)
+		return ctx.Err()
+	case exitCode, ok := <-exitCodeChan:
+		if !ok || exitCode != 0 {
+			return ErrPodRunFail
+		}
 	}
+
 	return nil
 }
 

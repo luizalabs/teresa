@@ -57,7 +57,7 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 	}
 
 	rs := bytes.NewReader(content.Bytes())
-	rc, errChan := s.ops.Deploy(u, appName, rs, description, s.options)
+	rc, errChan := s.ops.Deploy(ctx, u, appName, rs, description, s.options)
 	if rc == nil {
 		return <-errChan
 	}

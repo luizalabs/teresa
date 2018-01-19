@@ -7,6 +7,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
+	context "golang.org/x/net/context"
 )
 
 type FakeOperations struct {
@@ -33,7 +34,7 @@ func (f *FakeOperations) List(user *database.User, appName string) ([]*ReplicaSe
 	return []*ReplicaSetListItem{}, nil
 }
 
-func (f *FakeOperations) Deploy(user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, <-chan error) {
+func (f *FakeOperations) Deploy(ctx context.Context, user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, <-chan error) {
 	return nil, nil
 }
 

@@ -14,6 +14,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/database"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	context "golang.org/x/net/context"
 )
 
 type fakeReadSeeker struct{}
@@ -73,6 +74,10 @@ func (f *fakeK8sOperations) DeployRollbackToRevision(namespace, name, revision s
 	return nil
 }
 
+func (f *fakeK8sOperations) DeletePod(namespace, podName string) error {
+	return nil
+}
+
 func TestDeployPermissionDenied(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
@@ -80,7 +85,8 @@ func TestDeployPermissionDenied(t *testing.T) {
 		st.NewFake(),
 	)
 	u := &database.User{Email: "bad-user@luizalabs.com"}
-	_, errChan := ops.Deploy(u, "teresa", &fakeReadSeeker{}, "test", &Options{})
+	ctx := context.Background()
+	_, errChan := ops.Deploy(ctx, u, "teresa", &fakeReadSeeker{}, "test", &Options{})
 
 	if err := <-errChan; err != auth.ErrPermissionDenied {
 		t.Errorf("expecter ErrPermissionDenied, got %v", err)
@@ -109,7 +115,8 @@ func TestDeploy(t *testing.T) {
 		st.NewFake(),
 	)
 	u := &database.User{Email: "gopher@luizalabs.com"}
-	r, errChan := ops.Deploy(u, "teresa", tarBall, "test", &Options{})
+	ctx := context.Background()
+	r, errChan := ops.Deploy(ctx, u, "teresa", tarBall, "test", &Options{})
 	select {
 	case err = <-errChan:
 	default:
@@ -246,6 +253,7 @@ func TestBuildApp(t *testing.T) {
 		podExitCodeChan <- tc.exitCode
 		deployOperations := ops.(*DeployOperations)
 		err := deployOperations.buildApp(
+			context.Background(),
 			&fakeReadSeeker{},
 			&app.App{Name: "Test"},
 			"123456",

@@ -1,11 +1,11 @@
 package k8s
 
 import (
+	"io"
 	"time"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/deploy"
-	"github.com/luizalabs/teresa/pkg/server/healthcheck"
 	"k8s.io/client-go/pkg/api"
 )
 
@@ -22,10 +22,71 @@ type Config struct {
 	Ingress            bool          `split_words:"true" default:"false"`
 }
 
+type Namespace interface {
+	NamespaceAnnotation(namespace, annotation string) (string, error)
+	NamespaceLabel(namespace, label string) (string, error)
+	CreateNamespace(a *app.App, userEmail string) error
+	NamespaceListByLabel(label, value string) ([]string, error)
+	DeleteNamespace(namespace string) error
+	SetNamespaceLabels(namespace string, labels map[string]string) error
+	SetNamespaceAnnotations(namespace string, annotations map[string]string) error
+	Status(namespace string) (*app.Status, error)
+}
+
+type Pod interface {
+	PodList(namespace string) ([]*app.Pod, error)
+	PodLogs(namespace, podName string, lines int64, follow bool) (io.ReadCloser, error)
+	DeletePod(namespace, podName string) error
+	PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, error)
+}
+
+type Quota interface {
+	CreateQuota(a *app.App) error
+	Limits(namespace, name string) (*app.Limits, error)
+}
+
+type Secret interface {
+	CreateSecret(appName, secretName string, data map[string][]byte) error
+}
+
+type Hpa interface {
+	Autoscale(namespace string) (*app.Autoscale, error)
+	CreateOrUpdateAutoscale(a *app.App) error
+}
+
+type Deploy interface {
+	DeploySetReplicas(namespace, name string, replicas int32) error
+	CreateOrUpdateDeployEnvVars(namespace, name string, evs []*app.EnvVar) error
+	DeleteDeployEnvVars(namespace, name string, evNames []string) error
+	CreateOrUpdateDeploy(deploySpec *deploy.DeploySpec) error
+	ExposeDeploy(namespace, name, vHost string, w io.Writer) error
+	ReplicaSetListByLabel(namespace, label, value string) ([]*deploy.ReplicaSetListItem, error)
+	DeployRollbackToRevision(namespace, name, revision string) error
+}
+
+type Error interface {
+	IsNotFound(err error) bool
+	IsAlreadyExists(err error) bool
+}
+
+type Service interface {
+	AddressList(namespace string) ([]*app.Address, error)
+}
+
+type TeresaHealthCheck interface {
+	HealthCheck() error
+}
+
 type Client interface {
-	app.K8sOperations
-	deploy.K8sOperations
-	healthcheck.K8sOperations
+	Namespace
+	Pod
+	Quota
+	Secret
+	Hpa
+	Deploy
+	Error
+	Service
+	TeresaHealthCheck
 }
 
 func validateConfig(conf *Config) error {

@@ -313,7 +313,9 @@ func appInfo(cmd *cobra.Command, args []string) {
 		}
 
 		fmt.Println(bold("status:"))
-		fmt.Printf("  %s %d%%\n", bold("cpu:"), info.Status.Cpu)
+		if info.Status.Cpu >= 0 {
+			fmt.Printf("  %s %d%%\n", bold("cpu:"), info.Status.Cpu)
+		}
 		fmt.Printf("  %s %d\n", bold("pods:"), len(pods))
 		for _, pod := range pods {
 			age := shortHumanDuration(time.Duration(pod.Age))

@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [NEXT_RELEASE]
+## [0.13.0] - 2018-01-22
 ### Fixed
 - [client] On deploys create the tar file before connecting to the server and
   remove it before exiting

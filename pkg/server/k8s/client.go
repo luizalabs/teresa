@@ -319,24 +319,23 @@ func (k *k8sClient) Status(namespace string) (*app.Status, error) {
 		return nil, err
 	}
 
-	hpa, err := kc.AutoscalingV1().
-		HorizontalPodAutoscalers(namespace).
-		Get(namespace, metav1.GetOptions{})
-
-	if err != nil {
-		if k.IsNotFound(err) {
-			return nil, nil
-		}
-		return nil, errors.Wrap(err, "get status failed")
-	}
-
 	pods, err := k.PodList(namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "get status failed")
 	}
 
-	var cpu int32
-	if hpa.Status.CurrentCPUUtilizationPercentage != nil {
+	hpa, err := kc.AutoscalingV1().
+		HorizontalPodAutoscalers(namespace).
+		Get(namespace, metav1.GetOptions{})
+
+	if err != nil {
+		if !k.IsNotFound(err) {
+			return nil, errors.Wrap(err, "get status failed")
+		}
+	}
+
+	var cpu int32 = -1
+	if hpa != nil && hpa.Status.CurrentCPUUtilizationPercentage != nil {
 		cpu = *hpa.Status.CurrentCPUUtilizationPercentage
 	}
 

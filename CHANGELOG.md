@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - [server] decouple k8s client interface from the domain ones
 
+### Fixed
+- Pod list on `app info` command for apps without HPA
+
 ## [0.13.0] - 2018-01-22
 ### Fixed
 - [client] On deploys create the tar file before connecting to the server and

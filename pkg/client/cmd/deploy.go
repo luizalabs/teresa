@@ -2,12 +2,10 @@ package cmd
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -19,7 +17,6 @@ import (
 	dpb "github.com/luizalabs/teresa/pkg/protobuf/deploy"
 	"github.com/luizalabs/teresa/pkg/server/deploy"
 	"github.com/olekukonko/tablewriter"
-	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 	context "golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
@@ -78,48 +75,6 @@ func getCurrentClusterName() (string, error) {
 	return cfg.CurrentCluster, nil
 }
 
-func createTempArchiveToUpload(appName, source string) (path string, err error) {
-	id := uuid.NewV4()
-	source, err = filepath.Abs(source)
-	if err != nil {
-		return "", err
-	}
-	p := filepath.Join(os.TempDir(), fmt.Sprintf("%s_%s.tar.gz", appName, id))
-	if err = createArchive(source, p); err != nil {
-		return "", err
-	}
-	return p, nil
-}
-
-func createArchive(source, target string) error {
-	dir, err := os.Stat(source)
-	if err != nil {
-		return fmt.Errorf("Dir not found to create an archive: %s", err)
-	} else if !dir.IsDir() {
-		return errors.New("Path to create the app archive isn't a directory")
-	}
-
-	ignorePatterns, err := getIgnorePatterns(source)
-	if err != nil {
-		return errors.New("Invalid file '.teresaignore'")
-	}
-
-	t, err := tar.New(target)
-	if err != nil {
-		return err
-	}
-	defer t.Close()
-
-	if ignorePatterns != nil {
-		if err = addFiles(source, t, ignorePatterns); err != nil {
-			return err
-		}
-	} else {
-		t.AddAll(source)
-	}
-	return nil
-}
-
 func getIgnorePatterns(source string) ([]string, error) {
 	fPath := filepath.Join(source, ".teresaignore")
 	if _, err := os.Stat(fPath); err != nil {
@@ -149,34 +104,6 @@ func getIgnorePatterns(source string) ([]string, error) {
 	}
 
 	return patterns, nil
-}
-
-func addFiles(source string, w tar.Writer, ignorePatterns []string) error {
-	return filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		for _, ip := range ignorePatterns {
-			if matched, _ := filepath.Match(ip, info.Name()); matched {
-				if info.IsDir() {
-					return filepath.SkipDir
-				}
-				return nil
-			}
-		}
-		if info.IsDir() {
-			return nil
-		}
-		basePath := fmt.Sprintf("%s%c", filepath.Clean(source), filepath.Separator)
-		filename := strings.Replace(path, basePath, "", 1)
-
-		if runtime.GOOS == "windows" {
-			path = strings.Replace(path, string(filepath.Separator), tar.PathSeparator, -1)
-			filename = strings.Replace(filename, string(filepath.Separator), tar.PathSeparator, -1)
-		}
-
-		return w.AddFile(path, filename)
-	})
 }
 
 func init() {
@@ -234,7 +161,16 @@ func deployApp(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	tarPath := createAppTarBall(appName, appFolder)
+	ip, err := getIgnorePatterns(appFolder)
+	if err != nil {
+		client.PrintErrorAndExit("Error acessing .teresaignore file: %v", err)
+	}
+
+	fmt.Println("Generating tarball of:", appFolder)
+	tarPath, err := tar.CreateTemp(appFolder, appName, ip)
+	if err != nil {
+		client.PrintErrorAndExit("Error generating tarball: %v", err)
+	}
 	defer os.Remove(tarPath)
 
 	conn, err := connection.New(cfgFile, currentClusterName)
@@ -268,16 +204,8 @@ func deployApp(cmd *cobra.Command, args []string) {
 	}
 }
 
-func createAppTarBall(appName, appFolder string) string {
-	fmt.Println("Generating tarball of:", appFolder)
-	tarPath, err := createTempArchiveToUpload(appName, appFolder)
-	if err != nil {
-		client.PrintErrorAndExit("Error generating tarball: %v", err)
-	}
-	return tarPath
-}
-
 func sendAppTarball(tarPath string, stream dpb.Deploy_MakeClient) error {
+	fmt.Println("Sending app tarbal...")
 	defer stream.CloseSend()
 
 	f, err := os.Open(tarPath)

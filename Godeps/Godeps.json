@@ -285,10 +285,6 @@
 			"Rev": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
 		},
 		{
-			"ImportPath": "github.com/jhoonb/archivex",
-			"Rev": "333107c714224dd425951d488a51a03a42592fd8"
-		},
-		{
 			"ImportPath": "github.com/jinzhu/gorm",
 			"Comment": "v1.0-50-ga646b13",
 			"Rev": "a646b13548ec0aa812fe805b2780f460dd2771b6"
@@ -396,11 +392,6 @@
 		{
 			"ImportPath": "github.com/prometheus/common/log",
 			"Rev": "ebdfc6da46522d58825777cf1f90490a5b1ef1d8"
-		},
-		{
-			"ImportPath": "github.com/satori/go.uuid",
-			"Comment": "v1.1.0-1-g0aa62d5",
-			"Rev": "0aa62d5ddceb50dbcb909d790b5345affd3669b6"
 		},
 		{
 			"ImportPath": "github.com/soheilhy/cmux",

@@ -23,7 +23,7 @@ func TestFakeOperationsCommandFuncs(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		fake.expectedErr = tc.expectedErr
+		fake.ExpectedErr = tc.expectedErr
 		rc, errChan := tc.cmdCall()
 		defer rc.Close()
 

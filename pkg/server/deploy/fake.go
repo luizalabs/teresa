@@ -34,7 +34,7 @@ func (f *FakeOperations) List(user *database.User, appName string) ([]*ReplicaSe
 	return []*ReplicaSetListItem{}, nil
 }
 
-func (f *FakeOperations) Deploy(ctx context.Context, user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, <-chan error) {
+func (f *FakeOperations) Deploy(ctx context.Context, user *database.User, appName string, tarBall io.ReadSeeker, description string) (io.ReadCloser, <-chan error) {
 	return nil, nil
 }
 

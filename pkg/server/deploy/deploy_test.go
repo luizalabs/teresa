@@ -12,6 +12,8 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/exec"
+	"github.com/luizalabs/teresa/pkg/server/spec"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 	context "golang.org/x/net/context"
@@ -28,7 +30,7 @@ func (f *fakeReadSeeker) Seek(offset int64, whence int) (int64, error) {
 }
 
 type fakeK8sOperations struct {
-	lastDeploySpec           *DeploySpec
+	lastDeploySpec           *spec.Deploy
 	createDeployReturn       error
 	hasSrvErr                error
 	exposeDeployWasCalled    bool
@@ -38,11 +40,11 @@ type fakeK8sOperations struct {
 	replicaSetListByLabelErr error
 }
 
-func (f *fakeK8sOperations) PodRun(podSpec *PodSpec) (io.ReadCloser, <-chan int, error) {
+func (f *fakeK8sOperations) PodRun(podSpec *spec.Pod) (io.ReadCloser, <-chan int, error) {
 	return f.podRunReadCloser, f.podRunExitCodeChan, f.podRunErr
 }
 
-func (f *fakeK8sOperations) CreateOrUpdateDeploy(deploySpec *DeploySpec) error {
+func (f *fakeK8sOperations) CreateOrUpdateDeploy(deploySpec *spec.Deploy) error {
 	f.lastDeploySpec = deploySpec
 	return f.createDeployReturn
 }
@@ -83,10 +85,12 @@ func TestDeployPermissionDenied(t *testing.T) {
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
 		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
 	)
 	u := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.Background()
-	_, errChan := ops.Deploy(ctx, u, "teresa", &fakeReadSeeker{}, "test", &Options{})
+	_, errChan := ops.Deploy(ctx, u, "teresa", &fakeReadSeeker{}, "test")
 
 	if err := <-errChan; err != auth.ErrPermissionDenied {
 		t.Errorf("expecter ErrPermissionDenied, got %v", err)
@@ -113,10 +117,12 @@ func TestDeploy(t *testing.T) {
 		app.NewFakeOperations(),
 		fakeK8s,
 		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
 	)
 	u := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.Background()
-	r, errChan := ops.Deploy(ctx, u, "teresa", tarBall, "test", &Options{})
+	r, errChan := ops.Deploy(ctx, u, "teresa", tarBall, "test")
 	select {
 	case err = <-errChan:
 	default:
@@ -140,16 +146,12 @@ func TestCreateDeploy(t *testing.T) {
 		app.NewFakeOperations(),
 		fakeK8s,
 		st.NewFake(),
+		exec.NewFakeOperations(),
+		opts,
 	)
 
 	deployOperations := ops.(*DeployOperations)
-	err := deployOperations.createDeploy(
-		a,
-		nil,
-		expectedDescription,
-		expectedSlugURL,
-		opts,
-	)
+	err := deployOperations.createDeploy(a, nil, expectedDescription, expectedSlugURL)
 
 	if err != nil {
 		t.Fatal("error create deploy:", err)
@@ -177,6 +179,8 @@ func TestCreateDeployReturnError(t *testing.T) {
 		app.NewFakeOperations(),
 		fakeK8s,
 		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
 	)
 
 	deployOperations := ops.(*DeployOperations)
@@ -185,7 +189,6 @@ func TestCreateDeployReturnError(t *testing.T) {
 		nil,
 		"some desc",
 		"some slug",
-		&Options{},
 	)
 
 	if err != expectedErr {
@@ -213,6 +216,8 @@ func TestExposeApp(t *testing.T) {
 			app.NewFakeOperations(),
 			fakeK8s,
 			st.NewFake(),
+			exec.NewFakeOperations(),
+			&Options{},
 		)
 		deployOperations := ops.(*DeployOperations)
 		deployOperations.exposeApp(&app.App{ProcessType: tc.appProcessType}, new(bytes.Buffer))
@@ -229,28 +234,24 @@ func TestExposeApp(t *testing.T) {
 
 func TestBuildApp(t *testing.T) {
 	var testCases = []struct {
-		exitCode    int
+		commandErr  error
 		expectedErr error
 	}{
-		{0, nil}, {1, ErrBuildFail},
+		{nil, nil}, {exec.ErrNonZeroExitCode, ErrBuildFail},
 	}
-
-	podExitCodeChan := make(chan int, 1)
-	defer close(podExitCodeChan)
-
-	fakeK8s := &fakeK8sOperations{
-		podRunExitCodeChan: podExitCodeChan,
-		podRunReadCloser:   ioutil.NopCloser(new(bytes.Buffer)),
-	}
-
-	ops := NewDeployOperations(
-		app.NewFakeOperations(),
-		fakeK8s,
-		st.NewFake(),
-	)
 
 	for _, tc := range testCases {
-		podExitCodeChan <- tc.exitCode
+		fakeExec := exec.NewFakeOperations()
+		fakeExec.ExpectedErr = tc.commandErr
+
+		ops := NewDeployOperations(
+			app.NewFakeOperations(),
+			&fakeK8sOperations{},
+			st.NewFake(),
+			fakeExec,
+			&Options{},
+		)
+
 		deployOperations := ops.(*DeployOperations)
 		err := deployOperations.buildApp(
 			context.Background(),
@@ -259,7 +260,6 @@ func TestBuildApp(t *testing.T) {
 			"123456",
 			"/slug.tgz",
 			new(bytes.Buffer),
-			&Options{},
 		)
 
 		if err != tc.expectedErr {
@@ -270,35 +270,30 @@ func TestBuildApp(t *testing.T) {
 
 func TestRunReleaseCmd(t *testing.T) {
 	var testCases = []struct {
-		exitCode    int
+		commandErr  error
 		expectedErr error
 	}{
-		{0, nil}, {1, ErrReleaseFail},
+		{nil, nil}, {exec.ErrNonZeroExitCode, ErrReleaseFail},
 	}
-
-	podExitCodeChan := make(chan int, 1)
-	defer close(podExitCodeChan)
-
-	fakeK8s := &fakeK8sOperations{
-		podRunExitCodeChan: podExitCodeChan,
-		podRunReadCloser:   ioutil.NopCloser(new(bytes.Buffer)),
-	}
-
-	ops := NewDeployOperations(
-		app.NewFakeOperations(),
-		fakeK8s,
-		st.NewFake(),
-	)
 
 	for _, tc := range testCases {
-		podExitCodeChan <- tc.exitCode
+		fakeExec := exec.NewFakeOperations()
+		fakeExec.ExpectedErr = tc.commandErr
+
+		ops := NewDeployOperations(
+			app.NewFakeOperations(),
+			&fakeK8sOperations{},
+			st.NewFake(),
+			fakeExec,
+			&Options{},
+		)
+
 		deployOperations := ops.(*DeployOperations)
 		err := deployOperations.runReleaseCmd(
 			&app.App{Name: "Test"},
 			"123456",
 			"/slug.tgz",
 			new(bytes.Buffer),
-			&Options{},
 		)
 
 		if err != tc.expectedErr {
@@ -323,6 +318,8 @@ func TestDeployListSuccess(t *testing.T) {
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
 		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 
@@ -360,6 +357,8 @@ func TestDeployListErrPermissionDenied(t *testing.T) {
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
 		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
 	)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 
@@ -373,6 +372,8 @@ func TestDeployListErrNotFound(t *testing.T) {
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
 		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 
@@ -386,6 +387,8 @@ func TestDeployListInternalServerError(t *testing.T) {
 		app.NewFakeOperations(),
 		&fakeK8sOperations{replicaSetListByLabelErr: errors.New("test")},
 		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 
@@ -399,6 +402,8 @@ func TestRollbackOpsSuccess(t *testing.T) {
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
 		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	name := "teresa"
@@ -413,6 +418,8 @@ func TestRollbackOpsErrPermissionDenied(t *testing.T) {
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
 		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
 	)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	name := "teresa"
@@ -427,6 +434,8 @@ func TestRollbackOpsErrNotFound(t *testing.T) {
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
 		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	name := "bad-app"

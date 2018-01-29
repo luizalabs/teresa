@@ -9,7 +9,7 @@ import (
 )
 
 type FakeOperations struct {
-	expectedErr error
+	ExpectedErr error
 }
 
 func (f *FakeOperations) Command(user *database.User, appName string, command ...string) (io.ReadCloser, <-chan error) {
@@ -22,7 +22,7 @@ func (f *FakeOperations) CommandBySpec(podSpec *spec.Pod) (io.ReadCloser, <-chan
 	go func() {
 		defer w.Close()
 
-		errChan <- f.expectedErr
+		errChan <- f.ExpectedErr
 		fmt.Fprintf(w, "command output")
 	}()
 

@@ -10,6 +10,8 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/exec"
+	"github.com/luizalabs/teresa/pkg/server/spec"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 	"github.com/pborman/uuid"
@@ -21,14 +23,13 @@ const (
 )
 
 type Operations interface {
-	Deploy(ctx context.Context, user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, <-chan error)
+	Deploy(ctx context.Context, user *database.User, appName string, tarBall io.ReadSeeker, description string) (io.ReadCloser, <-chan error)
 	List(user *database.User, appName string) ([]*ReplicaSetListItem, error)
 	Rollback(user *database.User, appName, revision string) error
 }
 
 type K8sOperations interface {
-	PodRun(podSpec *PodSpec) (io.ReadCloser, <-chan int, error)
-	CreateOrUpdateDeploy(deploySpec *DeploySpec) error
+	CreateOrUpdateDeploy(deploySpec *spec.Deploy) error
 	ExposeDeploy(namespace, name, vHost string, w io.Writer) error
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
 	DeployRollbackToRevision(namespace, name, revision string) error
@@ -39,9 +40,11 @@ type DeployOperations struct {
 	appOps      app.Operations
 	fileStorage st.Storage
 	k8s         K8sOperations
+	execOps     exec.Operations
+	opts        *Options
 }
 
-func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, appName string, tarBall io.ReadSeeker, description string, opts *Options) (io.ReadCloser, <-chan error) {
+func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, appName string, tarBall io.ReadSeeker, description string) (io.ReadCloser, <-chan error) {
 	errChan := make(chan error, 1)
 	a, err := ops.appOps.Get(appName)
 	if err != nil {
@@ -73,7 +76,7 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 	r, w := io.Pipe()
 	go func() {
 		defer w.Close()
-		if err = ops.buildApp(ctx, tarBall, a, deployId, buildDest, w, opts); err != nil {
+		if err = ops.buildApp(ctx, tarBall, a, deployId, buildDest, w); err != nil {
 			errChan <- err
 			log.WithError(err).WithField("id", deployId).Errorf("Building app %s", appName)
 			return
@@ -82,14 +85,14 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 		slugURL := fmt.Sprintf("%s/slug.tgz", buildDest)
 		releaseCmd := confFiles.Procfile[ProcfileReleaseCmd]
 		if confFiles.Procfile != nil && releaseCmd != "" {
-			if err := ops.runReleaseCmd(a, deployId, slugURL, w, opts); err != nil {
+			if err := ops.runReleaseCmd(a, deployId, slugURL, w); err != nil {
 				errChan <- err
 				log.WithError(err).WithField("id", deployId).Errorf("Running release command %s in app %s", releaseCmd, appName)
 				return
 			}
 		}
 
-		if err := ops.createDeploy(a, confFiles.TeresaYaml, description, slugURL, opts); err != nil {
+		if err := ops.createDeploy(a, confFiles.TeresaYaml, description, slugURL); err != nil {
 			errChan <- err
 			log.WithError(err).Errorf("Creating deploy app %s", appName)
 			return
@@ -104,12 +107,20 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 	return r, errChan
 }
 
-func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugPath string, stream io.Writer, opts *Options) error {
-	runCommandSpec := newRunCommandSpec(a, deployId, ProcfileReleaseCmd, slugPath, ops.fileStorage, opts)
+func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugURL string, stream io.Writer) error {
+	podSpec := spec.NewRunner(
+		fmt.Sprintf("release-%s-%s", a.Name, deployId),
+		slugURL,
+		ops.opts.SlugRunnerImage,
+		a,
+		ops.fileStorage,
+		ops.buildLimits(),
+		"start",
+		ProcfileReleaseCmd,
+	)
 
 	fmt.Fprintln(stream, "Running release command")
-	err := ops.podRun(context.Background(), runCommandSpec, stream)
-	if err != nil {
+	if err := ops.podRun(context.Background(), podSpec, stream); err != nil {
 		if err == ErrPodRunFail {
 			return ErrReleaseFail
 		}
@@ -118,8 +129,23 @@ func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugPath string
 	return nil
 }
 
-func (ops *DeployOperations) createDeploy(a *app.App, tYaml *TeresaYaml, description, slugPath string, opts *Options) error {
-	deploySpec := newDeploySpec(a, tYaml, ops.fileStorage, description, slugPath, a.ProcessType, opts)
+func (ops *DeployOperations) buildLimits() *spec.ContainerLimits {
+	return &spec.ContainerLimits{
+		CPU:    ops.opts.BuildLimitCPU,
+		Memory: ops.opts.BuildLimitMemory,
+	}
+}
+
+func (ops *DeployOperations) createDeploy(a *app.App, tYaml *spec.TeresaYaml, description, slugURL string) error {
+	deploySpec := spec.NewDeploy(
+		ops.opts.SlugRunnerImage,
+		description,
+		slugURL,
+		ops.opts.RevisionHistoryLimit,
+		a,
+		tYaml,
+		ops.fileStorage,
+	)
 	return ops.k8s.CreateOrUpdateDeploy(deploySpec)
 }
 
@@ -133,16 +159,25 @@ func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {
 	return nil // already exposed
 }
 
-func (ops *DeployOperations) buildApp(ctx context.Context, tarBall io.ReadSeeker, a *app.App, deployId, buildDest string, stream io.Writer, opts *Options) error {
+func (ops *DeployOperations) buildApp(ctx context.Context, tarBall io.ReadSeeker, a *app.App, deployId, buildDest string, stream io.Writer) error {
 	tarBall.Seek(0, 0)
 	tarBallLocation := fmt.Sprintf("deploys/%s/%s/in/app.tar.gz", a.Name, deployId)
 	if err := ops.fileStorage.UploadFile(tarBallLocation, tarBall); err != nil {
 		fmt.Fprintln(stream, "The Deploy failed to upload the tarBall to slug storage")
 		return err
 	}
-	buildSpec := newBuildSpec(a, deployId, tarBallLocation, buildDest, ops.fileStorage, opts)
-	err := ops.podRun(ctx, buildSpec, stream)
-	if err != nil {
+
+	podSpec := spec.NewBuilder(
+		fmt.Sprintf("build-%s", deployId),
+		tarBallLocation,
+		buildDest,
+		ops.opts.SlugBuilderImage,
+		a,
+		ops.fileStorage,
+		ops.buildLimits(),
+	)
+
+	if err := ops.podRun(ctx, podSpec, stream); err != nil {
 		if err == ErrPodRunFail {
 			return ErrBuildFail
 		}
@@ -151,19 +186,16 @@ func (ops *DeployOperations) buildApp(ctx context.Context, tarBall io.ReadSeeker
 	return nil
 }
 
-func (ops *DeployOperations) podRun(ctx context.Context, podSpec *PodSpec, stream io.Writer) error {
-	podStream, exitCodeChan, err := ops.k8s.PodRun(podSpec)
-	if err != nil {
-		return err
-	}
+func (ops *DeployOperations) podRun(ctx context.Context, podSpec *spec.Pod, stream io.Writer) error {
+	podStream, runErrChan := ops.execOps.CommandBySpec(podSpec)
 	go io.Copy(stream, podStream)
 
 	select {
 	case <-ctx.Done():
 		go ops.k8s.DeletePod(podSpec.Namespace, podSpec.Name)
 		return ctx.Err()
-	case exitCode, ok := <-exitCodeChan:
-		if !ok || exitCode != 0 {
+	case err := <-runErrChan:
+		if err != nil {
 			return ErrPodRunFail
 		}
 	}
@@ -209,6 +241,12 @@ func genDeployId() string {
 	return uuid.New()[:8]
 }
 
-func NewDeployOperations(aOps app.Operations, k8s K8sOperations, s st.Storage) Operations {
-	return &DeployOperations{appOps: aOps, k8s: k8s, fileStorage: s}
+func NewDeployOperations(aOps app.Operations, k8s K8sOperations, s st.Storage, execOps exec.Operations, opts *Options) Operations {
+	return &DeployOperations{
+		appOps:      aOps,
+		k8s:         k8s,
+		fileStorage: s,
+		execOps:     execOps,
+		opts:        opts,
+	}
 }

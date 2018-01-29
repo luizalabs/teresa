@@ -8,6 +8,7 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/deploy"
+	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/pkg/errors"
 
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -415,7 +416,7 @@ func (k *Client) Limits(namespace, name string) (*app.Limits, error) {
 	return lim, nil
 }
 
-func (k *Client) CreateOrUpdateDeploy(deploySpec *deploy.DeploySpec) error {
+func (k *Client) CreateOrUpdateDeploy(deploySpec *spec.Deploy) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -434,7 +435,7 @@ func (k *Client) CreateOrUpdateDeploy(deploySpec *deploy.DeploySpec) error {
 	return err
 }
 
-func (k *Client) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, error) {
+func (k *Client) PodRun(podSpec *spec.Pod) (io.ReadCloser, <-chan int, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return nil, nil, err

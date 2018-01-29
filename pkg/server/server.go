@@ -13,6 +13,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/deploy"
+	"github.com/luizalabs/teresa/pkg/server/exec"
 	"github.com/luizalabs/teresa/pkg/server/healthcheck"
 	"github.com/luizalabs/teresa/pkg/server/k8s"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
@@ -98,7 +99,16 @@ func registerServices(s *grpc.Server, opt Options, uOps user.Operations) {
 	// use appOps as teamExt to avoid circular import
 	tOps.SetTeamExt(appOps)
 
-	dOps := deploy.NewDeployOperations(appOps, opt.K8s, opt.Storage)
+	execDefaults := &exec.Defaults{
+		RunnerImage:  opt.DeployOpt.SlugRunnerImage,
+		LimitsCPU:    opt.DeployOpt.BuildLimitCPU,
+		LimitsMemory: opt.DeployOpt.BuildLimitMemory,
+	}
+	execOps := exec.NewOperations(appOps, opt.K8s, opt.Storage, execDefaults)
+	e := exec.NewService(execOps)
+	e.RegisterService(s)
+
+	dOps := deploy.NewDeployOperations(appOps, opt.K8s, opt.Storage, execOps, opt.DeployOpt)
 	d := deploy.NewService(dOps, opt.DeployOpt)
 	d.RegisterService(s)
 }

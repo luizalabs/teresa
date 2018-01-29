@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package exec;
+
+service Exec {
+    rpc Command(CommandRequest) returns (stream CommandResponse);
+}
+
+message CommandRequest {
+    string name = 1;
+    repeated string command = 2;
+}
+
+message CommandResponse {
+    string text = 1;
+}

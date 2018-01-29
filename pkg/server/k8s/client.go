@@ -67,6 +67,23 @@ func (k *Client) getNamespace(namespace string) (*k8sv1.Namespace, error) {
 	return ns, nil
 }
 
+func (k *Client) DeployAnnotation(namespace, deployName, annotation string) (string, error) {
+	kc, err := k.buildClient()
+	if err != nil {
+		return "", err
+	}
+
+	d, err := kc.AppsV1beta1().
+		Deployments(namespace).
+		Get(deployName, metav1.GetOptions{})
+
+	if err != nil {
+		return "", errors.Wrap(err, "get deploy annotation failed")
+	}
+
+	return d.Annotations[annotation], nil
+}
+
 func (k *Client) NamespaceAnnotation(namespace, annotation string) (string, error) {
 	ns, err := k.getNamespace(namespace)
 	if err != nil {

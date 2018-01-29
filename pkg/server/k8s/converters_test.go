@@ -7,19 +7,19 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
 
-	"github.com/luizalabs/teresa/pkg/server/deploy"
+	"github.com/luizalabs/teresa/pkg/server/spec"
 )
 
 func TestPodSpecToK8sContainer(t *testing.T) {
-	ps := &deploy.PodSpec{
+	ps := &spec.Pod{
 		Name:  "Teresa",
 		Image: "luizalabs/teresa:0.0.1",
 		Env:   map[string]string{"ENV-KEY": "ENV-VALUE"},
 		Args:  []string{"start", "release"},
-		VolumeMounts: []*deploy.PodVolumeMountsSpec{
+		VolumeMounts: []*spec.PodVolumeMounts{
 			{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
 		},
-		ContainerLimits: &deploy.ContainerLimits{
+		ContainerLimits: &spec.ContainerLimits{
 			CPU:    "800m",
 			Memory: "1Gi",
 		},
@@ -85,7 +85,7 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 }
 
 func TestPodSpecVolumesToK8sVolumes(t *testing.T) {
-	vols := []*deploy.PodVolumeSpec{
+	vols := []*spec.PodVolume{
 		{Name: "Vol-Test", SecretName: "Bond"},
 	}
 	k8sVols := podSpecVolumesToK8sVolumes(vols)
@@ -101,11 +101,11 @@ func TestPodSpecVolumesToK8sVolumes(t *testing.T) {
 }
 
 func TestPodSpecToK8sPod(t *testing.T) {
-	ps := &deploy.PodSpec{
+	ps := &spec.Pod{
 		Name:  "Teresa",
 		Image: "luizalabs/teresa:0.0.1",
 		Env:   map[string]string{"ENV-KEY": "ENV-VALUE"},
-		VolumeMounts: []*deploy.PodVolumeMountsSpec{
+		VolumeMounts: []*spec.PodVolumeMounts{
 			{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
 		},
 	}
@@ -122,7 +122,7 @@ func TestPodSpecToK8sPod(t *testing.T) {
 }
 
 func TestRollingUpdateToK8sRollingUpdate(t *testing.T) {
-	ru := &deploy.RollingUpdate{MaxSurge: "3", MaxUnavailable: "30%"}
+	ru := &spec.RollingUpdate{MaxSurge: "3", MaxUnavailable: "30%"}
 	maxSurge, maxUnavailable := rollingUpdateToK8sRollingUpdate(ru)
 
 	if maxSurge != intstr.FromInt(3) {
@@ -135,7 +135,7 @@ func TestRollingUpdateToK8sRollingUpdate(t *testing.T) {
 }
 
 func TestHealthCheckProbeToK8sProbe(t *testing.T) {
-	hc := &deploy.HealthCheckProbe{
+	hc := &spec.HealthCheckProbe{
 		FailureThreshold:    2,
 		InitialDelaySeconds: 5,
 		PeriodSeconds:       5,
@@ -166,18 +166,18 @@ func TestHealthCheckProbeToK8sProbe(t *testing.T) {
 }
 
 func TestDeploySpecToK8sDeploy(t *testing.T) {
-	ds := &deploy.DeploySpec{
-		PodSpec: deploy.PodSpec{
+	ds := &spec.Deploy{
+		Pod: spec.Pod{
 			Name:  "Teresa",
 			Image: "luizalabs/teresa:0.0.1",
 			Args:  []string{"run", "web"},
 		},
-		TeresaYaml: deploy.TeresaYaml{
-			HealthCheck: &deploy.HealthCheck{
-				Liveness:  &deploy.HealthCheckProbe{PeriodSeconds: 2},
-				Readiness: &deploy.HealthCheckProbe{PeriodSeconds: 5},
+		TeresaYaml: spec.TeresaYaml{
+			HealthCheck: &spec.HealthCheck{
+				Liveness:  &spec.HealthCheckProbe{PeriodSeconds: 2},
+				Readiness: &spec.HealthCheckProbe{PeriodSeconds: 5},
 			},
-			RollingUpdate: &deploy.RollingUpdate{MaxSurge: "3", MaxUnavailable: "30%"},
+			RollingUpdate: &spec.RollingUpdate{MaxSurge: "3", MaxUnavailable: "30%"},
 		},
 	}
 
@@ -252,7 +252,7 @@ func TestIngressSpec(t *testing.T) {
 }
 
 func TestPodSpecToK8sPodShouldAddAutomountSATokenField(t *testing.T) {
-	ps := &deploy.PodSpec{
+	ps := &spec.Pod{
 		Name:  "Teresa",
 		Image: "luizalabs/teresa:0.0.1",
 	}
@@ -271,8 +271,8 @@ func TestPodSpecToK8sPodShouldAddAutomountSATokenField(t *testing.T) {
 }
 
 func TestDeploySpecToK8sDeployShouldAddAutomountSATokenField(t *testing.T) {
-	ds := &deploy.DeploySpec{
-		PodSpec: deploy.PodSpec{
+	ds := &spec.Deploy{
+		Pod: spec.Pod{
 			Name:  "Teresa",
 			Image: "luizalabs/teresa:0.0.1",
 			Args:  []string{"run", "web"},

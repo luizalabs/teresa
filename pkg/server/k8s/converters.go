@@ -3,7 +3,7 @@ package k8s
 import (
 	"strconv"
 
-	"github.com/luizalabs/teresa/pkg/server/deploy"
+	"github.com/luizalabs/teresa/pkg/server/spec"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -17,7 +17,7 @@ const (
 	defaultServicePort    = 80
 )
 
-func podSpecToK8sContainer(podSpec *deploy.PodSpec) (*k8sv1.Container, error) {
+func podSpecToK8sContainer(podSpec *spec.Pod) (*k8sv1.Container, error) {
 	c := &k8sv1.Container{
 		Name:            podSpec.Name,
 		ImagePullPolicy: k8sv1.PullIfNotPresent,
@@ -56,7 +56,7 @@ func podSpecToK8sContainer(podSpec *deploy.PodSpec) (*k8sv1.Container, error) {
 	return c, nil
 }
 
-func podSpecVolumesToK8sVolumes(vols []*deploy.PodVolumeSpec) []k8sv1.Volume {
+func podSpecVolumesToK8sVolumes(vols []*spec.PodVolume) []k8sv1.Volume {
 	volumes := make([]k8sv1.Volume, 0)
 	for _, v := range vols {
 		vol := k8sv1.Volume{Name: v.Name}
@@ -68,7 +68,7 @@ func podSpecVolumesToK8sVolumes(vols []*deploy.PodVolumeSpec) []k8sv1.Volume {
 	return volumes
 }
 
-func podSpecToK8sPod(podSpec *deploy.PodSpec) (*k8sv1.Pod, error) {
+func podSpecToK8sPod(podSpec *spec.Pod) (*k8sv1.Pod, error) {
 	c, err := podSpecToK8sContainer(podSpec)
 	if err != nil {
 		return nil, err
@@ -94,8 +94,8 @@ func podSpecToK8sPod(podSpec *deploy.PodSpec) (*k8sv1.Pod, error) {
 	return pod, nil
 }
 
-func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) (*v1beta1.Deployment, error) {
-	c, err := podSpecToK8sContainer(&deploySpec.PodSpec)
+func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.Deployment, error) {
+	c, err := podSpecToK8sContainer(&deploySpec.Pod)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) (*v1be
 			Labels:    map[string]string{"run": deploySpec.Name},
 			Annotations: map[string]string{
 				changeCauseAnnotation: deploySpec.Description,
-				"teresa.io/slug":      deploySpec.SlugURL,
+				spec.SlugAnnotation:   deploySpec.SlugURL,
 			},
 		},
 		Spec: v1beta1.DeploymentSpec{
@@ -164,7 +164,7 @@ func deploySpecToK8sDeploy(deploySpec *deploy.DeploySpec, replicas int32) (*v1be
 	return d, nil
 }
 
-func rollingUpdateToK8sRollingUpdate(ru *deploy.RollingUpdate) (maxSurge, maxUnavailable intstr.IntOrString) {
+func rollingUpdateToK8sRollingUpdate(ru *spec.RollingUpdate) (maxSurge, maxUnavailable intstr.IntOrString) {
 	conv := func(value string) intstr.IntOrString {
 		v, err := strconv.Atoi(value)
 		if err != nil {
@@ -175,7 +175,7 @@ func rollingUpdateToK8sRollingUpdate(ru *deploy.RollingUpdate) (maxSurge, maxUna
 	return conv(ru.MaxSurge), conv(ru.MaxUnavailable)
 }
 
-func healthCheckProbeToK8sProbe(probe *deploy.HealthCheckProbe) *k8sv1.Probe {
+func healthCheckProbeToK8sProbe(probe *spec.HealthCheckProbe) *k8sv1.Probe {
 	return &k8sv1.Probe{
 		InitialDelaySeconds: probe.InitialDelaySeconds,
 		TimeoutSeconds:      probe.TimeoutSeconds,
@@ -184,14 +184,14 @@ func healthCheckProbeToK8sProbe(probe *deploy.HealthCheckProbe) *k8sv1.Probe {
 		SuccessThreshold:    probe.SuccessThreshold,
 		Handler: k8sv1.Handler{
 			HTTPGet: &k8sv1.HTTPGetAction{
-				Port: intstr.FromInt(deploy.DefaultPort),
+				Port: intstr.FromInt(spec.DefaultPort),
 				Path: probe.Path,
 			},
 		},
 	}
 }
 
-func lifecycleToK8sLifecycle(lc *deploy.Lifecycle) *k8sv1.Lifecycle {
+func lifecycleToK8sLifecycle(lc *spec.Lifecycle) *k8sv1.Lifecycle {
 	k8sLc := new(k8sv1.Lifecycle)
 
 	if lc.PreStop != nil {
@@ -229,7 +229,7 @@ func serviceSpec(namespace, name, srvType string) *k8sv1.Service {
 				{
 					Port:       80,
 					Protocol:   k8sv1.ProtocolTCP,
-					TargetPort: intstr.FromInt(deploy.DefaultPort),
+					TargetPort: intstr.FromInt(spec.DefaultPort),
 				},
 			},
 		},

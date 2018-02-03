@@ -7,7 +7,6 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/client"
 	"github.com/luizalabs/teresa/pkg/client/connection"
-	_ "github.com/prometheus/common/log"
 	"github.com/spf13/cobra"
 
 	userpb "github.com/luizalabs/teresa/pkg/protobuf/user"

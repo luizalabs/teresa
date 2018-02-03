@@ -30,7 +30,7 @@ type Options struct {
 	Auth      auth.Auth
 	DB        *gorm.DB
 	Storage   st.Storage
-	K8s       k8s.Client
+	K8s       *k8s.Client
 	DeployOpt *deploy.Options
 	Debug     bool
 }

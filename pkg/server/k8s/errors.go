@@ -16,10 +16,10 @@ var (
 	ErrPodStillRunning    = status.Errorf(codes.Unknown, "Pod still running")
 )
 
-func (k *k8sClient) IsNotFound(err error) bool {
+func (k *Client) IsNotFound(err error) bool {
 	return k8serrors.IsNotFound(errors.Cause(err))
 }
 
-func (k *k8sClient) IsAlreadyExists(err error) bool {
+func (k *Client) IsAlreadyExists(err error) bool {
 	return k8serrors.IsAlreadyExists(errors.Cause(err))
 }

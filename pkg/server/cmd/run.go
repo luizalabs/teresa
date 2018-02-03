@@ -53,7 +53,7 @@ func runServer(cmd *cobra.Command, args []string) {
 		log.WithError(err).Fatal("failed to configure storage")
 	}
 
-	k8s, err := getK8s()
+	kc, err := getK8s()
 	if err != nil {
 		log.WithError(err).Fatal("failed to configure k8s client")
 	}
@@ -87,7 +87,7 @@ func runServer(cmd *cobra.Command, args []string) {
 		DB:        db,
 		TLSCert:   tlsCert,
 		Storage:   st,
-		K8s:       k8s,
+		K8s:       kc,
 		DeployOpt: deployOpt,
 		Debug:     debug,
 	})
@@ -127,7 +127,7 @@ func getStorage() (storage.Storage, error) {
 	return storage.New(conf)
 }
 
-func getK8s() (k8s.Client, error) {
+func getK8s() (*k8s.Client, error) {
 	conf := new(k8s.Config)
 	if err := envconfig.Process("teresa_k8s", conf); err != nil {
 		return nil, err

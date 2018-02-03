@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - [server] default deploy lifecycle with 10s drain timeout
+- [server] configurable env (`TERESA_DB_SHOW_LOGS`) to show (or not) database logs (default `false`)
 
 ## [0.13.0] - 2018-01-22
 ### Fixed

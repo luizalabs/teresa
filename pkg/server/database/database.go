@@ -20,6 +20,7 @@ type Config struct {
 	Username string
 	Password string
 	Database string
+	ShowLogs bool `split_words:"true" default:"false"`
 }
 
 func New(conf *Config) (*gorm.DB, error) {
@@ -64,6 +65,6 @@ func New(conf *Config) (*gorm.DB, error) {
 		"user":    conf.Username,
 	}).Info("connected to database")
 
-	db.LogMode(true)
+	db.LogMode(conf.ShowLogs)
 	return db, nil
 }

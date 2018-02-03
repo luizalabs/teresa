@@ -30,14 +30,14 @@ const (
 	revisionAnnotation                = "deployment.kubernetes.io/revision"
 )
 
-type k8sClient struct {
+type Client struct {
 	conf               *restclient.Config
 	defaultServiceType string
 	podRunTimeout      time.Duration
 	ingress            bool
 }
 
-func (k *k8sClient) buildClient() (*kubernetes.Clientset, error) {
+func (k *Client) buildClient() (*kubernetes.Clientset, error) {
 	c, err := kubernetes.NewForConfig(k.conf)
 	if err != nil {
 		return nil, errors.Wrap(err, "create k8s client failed")
@@ -45,7 +45,7 @@ func (k *k8sClient) buildClient() (*kubernetes.Clientset, error) {
 	return c, nil
 }
 
-func (k *k8sClient) HealthCheck() error {
+func (k *Client) HealthCheck() error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func (k *k8sClient) HealthCheck() error {
 	return err
 }
 
-func (k *k8sClient) getNamespace(namespace string) (*k8sv1.Namespace, error) {
+func (k *Client) getNamespace(namespace string) (*k8sv1.Namespace, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (k *k8sClient) getNamespace(namespace string) (*k8sv1.Namespace, error) {
 	return ns, nil
 }
 
-func (k *k8sClient) NamespaceAnnotation(namespace, annotation string) (string, error) {
+func (k *Client) NamespaceAnnotation(namespace, annotation string) (string, error) {
 	ns, err := k.getNamespace(namespace)
 	if err != nil {
 		return "", errors.Wrap(err, "get annotation failed")
@@ -75,7 +75,7 @@ func (k *k8sClient) NamespaceAnnotation(namespace, annotation string) (string, e
 	return ns.Annotations[annotation], nil
 }
 
-func (k k8sClient) NamespaceLabel(namespace, label string) (string, error) {
+func (k *Client) NamespaceLabel(namespace, label string) (string, error) {
 	ns, err := k.getNamespace(namespace)
 	if err != nil {
 		return "", errors.Wrap(err, "get label failed")
@@ -84,7 +84,7 @@ func (k k8sClient) NamespaceLabel(namespace, label string) (string, error) {
 	return ns.Labels[label], nil
 }
 
-func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {
+func (k *Client) PodList(namespace string) ([]*app.Pod, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (k *k8sClient) PodList(namespace string) ([]*app.Pod, error) {
 	return pods, nil
 }
 
-func (k *k8sClient) PodLogs(namespace string, podName string, lines int64, follow bool) (io.ReadCloser, error) {
+func (k *Client) PodLogs(namespace string, podName string, lines int64, follow bool) (io.ReadCloser, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return nil, err
@@ -225,7 +225,7 @@ func newHPA(a *app.App) *asv1.HorizontalPodAutoscaler {
 	}
 }
 
-func (k *k8sClient) CreateNamespace(a *app.App, user string) error {
+func (k *Client) CreateNamespace(a *app.App, user string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -240,7 +240,7 @@ func (k *k8sClient) CreateNamespace(a *app.App, user string) error {
 	return err
 }
 
-func (k *k8sClient) CreateQuota(a *app.App) error {
+func (k *Client) CreateQuota(a *app.App) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -255,7 +255,7 @@ func (k *k8sClient) CreateQuota(a *app.App) error {
 	return err
 }
 
-func (k *k8sClient) CreateSecret(appName, secretName string, data map[string][]byte) error {
+func (k *Client) CreateSecret(appName, secretName string, data map[string][]byte) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -274,7 +274,7 @@ func (k *k8sClient) CreateSecret(appName, secretName string, data map[string][]b
 	return err
 }
 
-func (k *k8sClient) CreateOrUpdateAutoscale(a *app.App) error {
+func (k *Client) CreateOrUpdateAutoscale(a *app.App) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -289,7 +289,7 @@ func (k *k8sClient) CreateOrUpdateAutoscale(a *app.App) error {
 	return err
 }
 
-func (k *k8sClient) AddressList(namespace string) ([]*app.Address, error) {
+func (k *Client) AddressList(namespace string) ([]*app.Address, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return nil, err
@@ -313,7 +313,7 @@ func (k *k8sClient) AddressList(namespace string) ([]*app.Address, error) {
 	return addrs, nil
 }
 
-func (k *k8sClient) Status(namespace string) (*app.Status, error) {
+func (k *Client) Status(namespace string) (*app.Status, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return nil, err
@@ -346,7 +346,7 @@ func (k *k8sClient) Status(namespace string) (*app.Status, error) {
 	return stat, nil
 }
 
-func (k *k8sClient) Autoscale(namespace string) (*app.Autoscale, error) {
+func (k *Client) Autoscale(namespace string) (*app.Autoscale, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return nil, err
@@ -379,7 +379,7 @@ func (k *k8sClient) Autoscale(namespace string) (*app.Autoscale, error) {
 	return as, nil
 }
 
-func (k *k8sClient) Limits(namespace, name string) (*app.Limits, error) {
+func (k *Client) Limits(namespace, name string) (*app.Limits, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return nil, err
@@ -415,7 +415,7 @@ func (k *k8sClient) Limits(namespace, name string) (*app.Limits, error) {
 	return lim, nil
 }
 
-func (k *k8sClient) CreateOrUpdateDeploy(deploySpec *deploy.DeploySpec) error {
+func (k *Client) CreateOrUpdateDeploy(deploySpec *deploy.DeploySpec) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -434,7 +434,7 @@ func (k *k8sClient) CreateOrUpdateDeploy(deploySpec *deploy.DeploySpec) error {
 	return err
 }
 
-func (k *k8sClient) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, error) {
+func (k *Client) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return nil, nil, err
@@ -481,7 +481,7 @@ func (k *k8sClient) PodRun(podSpec *deploy.PodSpec) (io.ReadCloser, <-chan int, 
 	return r, exitCodeChan, nil
 }
 
-func (k *k8sClient) hasService(namespace, appName string) (bool, error) {
+func (k *Client) hasService(namespace, appName string) (bool, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return false, err
@@ -496,7 +496,7 @@ func (k *k8sClient) hasService(namespace, appName string) (bool, error) {
 	return true, nil
 }
 
-func (k *k8sClient) createService(namespace, appName string) error {
+func (k *Client) createService(namespace, appName string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -506,7 +506,7 @@ func (k *k8sClient) createService(namespace, appName string) error {
 	return errors.Wrap(err, "create service failed")
 }
 
-func (k *k8sClient) hasIngress(namespace, appName string) (bool, error) {
+func (k *Client) hasIngress(namespace, appName string) (bool, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return false, err
@@ -524,7 +524,7 @@ func (k *k8sClient) hasIngress(namespace, appName string) (bool, error) {
 	return true, nil
 }
 
-func (k *k8sClient) createIngress(namespace, appName, vHost string) error {
+func (k *Client) createIngress(namespace, appName, vHost string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -535,7 +535,7 @@ func (k *k8sClient) createIngress(namespace, appName, vHost string) error {
 }
 
 // ExposeDeploy creates a service and/or a ingress if needed
-func (k *k8sClient) ExposeDeploy(namespace, appName, vHost string, w io.Writer) error {
+func (k *Client) ExposeDeploy(namespace, appName, vHost string, w io.Writer) error {
 	hasSrv, err := k.hasService(namespace, appName)
 	if err != nil {
 		return err
@@ -564,7 +564,7 @@ func (k *k8sClient) ExposeDeploy(namespace, appName, vHost string, w io.Writer) 
 	return nil
 }
 
-func (k *k8sClient) DeletePod(namespace, podName string) error {
+func (k *Client) DeletePod(namespace, podName string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -573,7 +573,7 @@ func (k *k8sClient) DeletePod(namespace, podName string) error {
 	return errors.Wrap(err, "could not delete pod")
 }
 
-func (k *k8sClient) waitPodStart(pod *k8sv1.Pod, checkInterval, timeout time.Duration) error {
+func (k *Client) waitPodStart(pod *k8sv1.Pod, checkInterval, timeout time.Duration) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -592,7 +592,7 @@ func (k *k8sClient) waitPodStart(pod *k8sv1.Pod, checkInterval, timeout time.Dur
 	})
 }
 
-func (k *k8sClient) waitPodEnd(pod *k8sv1.Pod, checkInterval, timeout time.Duration) error {
+func (k *Client) waitPodEnd(pod *k8sv1.Pod, checkInterval, timeout time.Duration) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -608,7 +608,7 @@ func (k *k8sClient) waitPodEnd(pod *k8sv1.Pod, checkInterval, timeout time.Durat
 	})
 }
 
-func (k *k8sClient) podExitCode(pod *k8sv1.Pod) (int, error) {
+func (k *Client) podExitCode(pod *k8sv1.Pod) (int, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return 1, err
@@ -628,7 +628,7 @@ func (k *k8sClient) podExitCode(pod *k8sv1.Pod) (int, error) {
 	return 1, ErrPodStillRunning
 }
 
-func (k *k8sClient) currentPodReplicasFromDeploy(namespace, appName string) int32 {
+func (k *Client) currentPodReplicasFromDeploy(namespace, appName string) int32 {
 	kc, err := k.buildClient()
 	if err != nil {
 		return 1
@@ -642,7 +642,7 @@ func (k *k8sClient) currentPodReplicasFromDeploy(namespace, appName string) int3
 	return d.Status.Replicas
 }
 
-func (k *k8sClient) SetNamespaceAnnotations(namespace string, annotations map[string]string) error {
+func (k *Client) SetNamespaceAnnotations(namespace string, annotations map[string]string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -660,7 +660,7 @@ func (k *k8sClient) SetNamespaceAnnotations(namespace string, annotations map[st
 	return err
 }
 
-func (k *k8sClient) SetNamespaceLabels(namespace string, labels map[string]string) error {
+func (k *Client) SetNamespaceLabels(namespace string, labels map[string]string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -678,7 +678,7 @@ func (k *k8sClient) SetNamespaceLabels(namespace string, labels map[string]strin
 	return err
 }
 
-func (k *k8sClient) patchDeployEnvVars(namespace, name string, v interface{}) error {
+func (k *Client) patchDeployEnvVars(namespace, name string, v interface{}) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -698,7 +698,7 @@ func (k *k8sClient) patchDeployEnvVars(namespace, name string, v interface{}) er
 	return errors.Wrap(err, "patch deploy failed")
 }
 
-func (k *k8sClient) DeleteDeployEnvVars(namespace, name string, evNames []string) error {
+func (k *Client) DeleteDeployEnvVars(namespace, name string, evNames []string) error {
 	type EnvVar struct {
 		Name  string `json:"name"`
 		Patch string `json:"$patch"`
@@ -711,7 +711,7 @@ func (k *k8sClient) DeleteDeployEnvVars(namespace, name string, evNames []string
 	return k.patchDeployEnvVars(namespace, name, env)
 }
 
-func (k *k8sClient) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*app.EnvVar) error {
+func (k *Client) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*app.EnvVar) error {
 	type EnvVar struct {
 		Name  string `json:"name"`
 		Value string `json:"value"`
@@ -724,7 +724,7 @@ func (k *k8sClient) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*a
 	return k.patchDeployEnvVars(namespace, name, env)
 }
 
-func (k *k8sClient) DeleteNamespace(namespace string) error {
+func (k *Client) DeleteNamespace(namespace string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -733,7 +733,7 @@ func (k *k8sClient) DeleteNamespace(namespace string) error {
 	return errors.Wrap(err, "delete ns failed")
 }
 
-func (k k8sClient) NamespaceListByLabel(label, value string) ([]string, error) {
+func (k *Client) NamespaceListByLabel(label, value string) ([]string, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return nil, err
@@ -750,7 +750,7 @@ func (k k8sClient) NamespaceListByLabel(label, value string) ([]string, error) {
 	return namespaces, nil
 }
 
-func (k *k8sClient) ReplicaSetListByLabel(namespace, label, value string) ([]*deploy.ReplicaSetListItem, error) {
+func (k *Client) ReplicaSetListByLabel(namespace, label, value string) ([]*deploy.ReplicaSetListItem, error) {
 	cli, err := k.buildClient()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build client")
@@ -776,7 +776,7 @@ func (k *k8sClient) ReplicaSetListByLabel(namespace, label, value string) ([]*de
 	return resp, nil
 }
 
-func (k *k8sClient) DeployRollbackToRevision(namespace, name, revision string) error {
+func (k *Client) DeployRollbackToRevision(namespace, name, revision string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -793,7 +793,7 @@ func (k *k8sClient) DeployRollbackToRevision(namespace, name, revision string) e
 	return errors.Wrap(err, "patch deploy failed")
 }
 
-func (k *k8sClient) DeploySetReplicas(namespace, name string, replicas int32) error {
+func (k *Client) DeploySetReplicas(namespace, name string, replicas int32) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -810,24 +810,24 @@ func (k *k8sClient) DeploySetReplicas(namespace, name string, replicas int32) er
 	return errors.Wrap(err, "patch deploy failed")
 }
 
-func newInClusterK8sClient(conf *Config) (Client, error) {
+func newInClusterK8sClient(conf *Config) (*Client, error) {
 	k8sConf, err := restclient.InClusterConfig()
 	if err != nil {
 		return nil, err
 	}
-	return &k8sClient{
+	return &Client{
 		conf:               k8sConf,
 		defaultServiceType: conf.DefaultServiceType,
 		ingress:            conf.Ingress,
 	}, nil
 }
 
-func newOutOfClusterK8sClient(conf *Config) (Client, error) {
+func newOutOfClusterK8sClient(conf *Config) (*Client, error) {
 	k8sConf, err := clientcmd.BuildConfigFromFlags("", conf.ConfigFile)
 	if err != nil {
 		return nil, err
 	}
-	return &k8sClient{
+	return &Client{
 		conf:               k8sConf,
 		defaultServiceType: conf.DefaultServiceType,
 		podRunTimeout:      conf.PodRunTimeout,

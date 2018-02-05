@@ -16,9 +16,9 @@ var execCmd = &cobra.Command{
 	Short: "Exec a command on an app replica",
 	Long: `Exec a command on an app replica.
 
-You can execute a command on an app replica (same of current deploy),
+You can execute a non-interactive command on an app replica (same of current deploy),
 Teresa will collect and stream the stdout of replica until the command ends`,
-	Example: ` $ teresa exec <app-name> -- python manage.py start_job_x -a arg1 -s arg2`,
+	Example: "  $ teresa exec <app-name> -- python manage.py start_job_x -a arg1 -s arg2",
 	Run:     execCommand,
 }
 

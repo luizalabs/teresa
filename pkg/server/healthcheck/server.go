@@ -5,6 +5,8 @@ import (
 	"net"
 	"net/http"
 
+	context "golang.org/x/net/context"
+
 	"github.com/jinzhu/gorm"
 )
 
@@ -13,8 +15,9 @@ type K8sOperations interface {
 }
 
 type Server struct {
-	k8s K8sOperations
-	DB  *gorm.DB
+	k8s        K8sOperations
+	DB         *gorm.DB
+	httpServer *http.Server
 }
 
 type healthCheckResponse struct {
@@ -47,13 +50,20 @@ func (s *Server) healthCheck(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s *Server) Run(l net.Listener) error {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/healthcheck/", s.healthCheck)
-	server := &http.Server{Handler: mux}
+	return s.httpServer.Serve(l)
+}
 
-	return server.Serve(l)
+func (s *Server) GracefulStop() error {
+	return s.httpServer.Shutdown(context.Background())
 }
 
 func New(k K8sOperations, db *gorm.DB) *Server {
-	return &Server{k8s: k, DB: db}
+	s := &Server{k8s: k, DB: db}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/healthcheck/", s.healthCheck)
+
+	server := &http.Server{Handler: mux}
+	s.httpServer = server
+
+	return s
 }

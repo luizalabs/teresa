@@ -4,6 +4,9 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"golang.org/x/sync/errgroup"
 
@@ -58,7 +61,21 @@ func (s *Server) Run() error {
 	g.Go(func() error { return s.hcServer.Run(httpListener) })
 	g.Go(func() error { return m.Serve() })
 
-	return g.Wait()
+	exitChan := make(chan os.Signal, 1)
+	signal.Notify(exitChan, syscall.SIGINT, syscall.SIGTERM)
+	defer close(exitChan)
+
+	gChan := make(chan error)
+	go func() { gChan <- g.Wait() }()
+
+	select {
+	case err := <-gChan:
+		return err
+	case <-exitChan:
+		s.grpcServer.GracefulStop()
+		s.hcServer.GracefulStop()
+		return nil
+	}
 }
 
 func createServerOps(opt Options, uOps user.Operations) []grpc.ServerOption {

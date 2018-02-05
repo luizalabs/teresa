@@ -5,7 +5,6 @@ import (
 	"io"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
-	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/luizalabs/teresa/pkg/server/storage"
@@ -37,13 +36,9 @@ type ExecOperations struct {
 
 func (ops *ExecOperations) RunCommand(user *database.User, appName string, command ...string) (io.ReadCloser, <-chan error) {
 	errChan := make(chan error, 1)
-	a, err := ops.appOps.Get(appName)
+	a, err := ops.appOps.CheckPermAndGet(user, appName)
 	if err != nil {
 		errChan <- err
-		return nil, errChan
-	}
-	if !ops.appOps.HasPermission(user, appName) {
-		errChan <- auth.ErrPermissionDenied
 		return nil, errChan
 	}
 

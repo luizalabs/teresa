@@ -187,7 +187,7 @@ func (ops *DeployOperations) buildApp(ctx context.Context, tarBall io.ReadSeeker
 }
 
 func (ops *DeployOperations) podRun(ctx context.Context, podSpec *spec.Pod, stream io.Writer) error {
-	podStream, runErrChan := ops.execOps.CommandBySpec(podSpec)
+	podStream, runErrChan := ops.execOps.RunCommandBySpec(podSpec)
 	go io.Copy(stream, podStream)
 
 	select {

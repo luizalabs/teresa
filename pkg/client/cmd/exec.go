@@ -37,7 +37,7 @@ func execCommand(cmd *cobra.Command, args []string) {
 	defer conn.Close()
 
 	req := &execpb.CommandRequest{
-		Name:    appName,
+		AppName: appName,
 		Command: command,
 	}
 

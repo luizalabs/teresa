@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Changed
 - [server] using multistage build on teresa dockerfile
+- [server] update default slugbuilder version to v3.2.0
 
 ## [0.14.0] - 2018-02-06
 ### Changed

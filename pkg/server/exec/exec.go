@@ -12,8 +12,8 @@ import (
 )
 
 type Operations interface {
-	Command(user *database.User, appName string, command ...string) (io.ReadCloser, <-chan error)
-	CommandBySpec(podSpec *spec.Pod) (io.ReadCloser, <-chan error)
+	RunCommand(user *database.User, appName string, command ...string) (io.ReadCloser, <-chan error)
+	RunCommandBySpec(podSpec *spec.Pod) (io.ReadCloser, <-chan error)
 }
 
 type K8sOperations interface {
@@ -35,7 +35,7 @@ type ExecOperations struct {
 	defaults *Defaults
 }
 
-func (ops *ExecOperations) Command(user *database.User, appName string, command ...string) (io.ReadCloser, <-chan error) {
+func (ops *ExecOperations) RunCommand(user *database.User, appName string, command ...string) (io.ReadCloser, <-chan error) {
 	errChan := make(chan error, 1)
 	a, err := ops.appOps.Get(appName)
 	if err != nil {
@@ -70,10 +70,10 @@ func (ops *ExecOperations) Command(user *database.User, appName string, command 
 		command...,
 	)
 
-	return ops.CommandBySpec(podSpec)
+	return ops.RunCommandBySpec(podSpec)
 }
 
-func (ops *ExecOperations) CommandBySpec(podSpec *spec.Pod) (io.ReadCloser, <-chan error) {
+func (ops *ExecOperations) RunCommandBySpec(podSpec *spec.Pod) (io.ReadCloser, <-chan error) {
 	errChan := make(chan error)
 	r, w := io.Pipe()
 	go func() {

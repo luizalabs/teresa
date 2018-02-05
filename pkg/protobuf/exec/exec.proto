@@ -7,7 +7,7 @@ service Exec {
 }
 
 message CommandRequest {
-    string name = 1;
+    string app_name = 1;
     repeated string command = 2;
 }
 

@@ -23,7 +23,7 @@ func TestCommand(t *testing.T) {
 
 	user := &database.User{}
 	ctx := context.WithValue(context.Background(), "user", user)
-	req := &execpb.CommandRequest{Name: "teresa", Command: []string{"ls"}}
+	req := &execpb.CommandRequest{AppName: "teresa", Command: []string{"ls"}}
 
 	wrap := &streamWrapper{ctx: ctx}
 	if err := s.Command(req, wrap); err != nil {

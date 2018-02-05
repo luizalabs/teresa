@@ -16,10 +16,10 @@ func TestFakeOperationsCommandFuncs(t *testing.T) {
 		cmdCall     commandCall
 		expectedErr error
 	}{
-		{func() (io.ReadCloser, <-chan error) { return fake.Command(nil, "") }, nil},
-		{func() (io.ReadCloser, <-chan error) { return fake.Command(nil, "") }, fmt.Errorf("some error")},
-		{func() (io.ReadCloser, <-chan error) { return fake.CommandBySpec(nil) }, nil},
-		{func() (io.ReadCloser, <-chan error) { return fake.CommandBySpec(nil) }, fmt.Errorf("some error")},
+		{func() (io.ReadCloser, <-chan error) { return fake.RunCommand(nil, "") }, nil},
+		{func() (io.ReadCloser, <-chan error) { return fake.RunCommand(nil, "") }, fmt.Errorf("some error")},
+		{func() (io.ReadCloser, <-chan error) { return fake.RunCommandBySpec(nil) }, nil},
+		{func() (io.ReadCloser, <-chan error) { return fake.RunCommandBySpec(nil) }, fmt.Errorf("some error")},
 	}
 
 	for _, tc := range testCases {

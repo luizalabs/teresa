@@ -15,7 +15,7 @@ func (s *Service) Command(req *execpb.CommandRequest, stream execpb.Exec_Command
 	ctx := stream.Context()
 	u := ctx.Value("user").(*database.User)
 
-	rc, errChan := s.ops.Command(u, req.Name, req.Command...)
+	rc, errChan := s.ops.RunCommand(u, req.AppName, req.Command...)
 	if rc == nil {
 		return <-errChan
 	}

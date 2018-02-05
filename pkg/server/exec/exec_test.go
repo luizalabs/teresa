@@ -38,11 +38,11 @@ func (f *fakeK8sOperations) IsNotFound(err error) bool {
 	return f.isNotFound
 }
 
-func TestOpsCommand(t *testing.T) {
+func TestOpsRunCommand(t *testing.T) {
 	k8sOps := &fakeK8sOperations{}
 	ops := NewOperations(app.NewFakeOperations(), k8sOps, storage.NewFake(), &Defaults{})
 
-	rc, errChan := ops.Command(&database.User{}, "teresa", "ls")
+	rc, errChan := ops.RunCommand(&database.User{}, "teresa", "ls")
 	defer rc.Close()
 
 	if err := <-errChan; err != nil {
@@ -50,36 +50,36 @@ func TestOpsCommand(t *testing.T) {
 	}
 }
 
-func TestOpsCommandAppNotFound(t *testing.T) {
+func TestOpsRunCommandAppNotFound(t *testing.T) {
 	ops := NewOperations(app.NewFakeOperations(), &fakeK8sOperations{}, storage.NewFake(), &Defaults{})
-	_, errChan := ops.Command(&database.User{}, "notfound", "ls")
+	_, errChan := ops.RunCommand(&database.User{}, "notfound", "ls")
 	if err := <-errChan; err != app.ErrNotFound {
 		t.Errorf("expected app.ErrNotFound, got %v", err)
 	}
 }
 
-func TestOpsCommandPermissionDenied(t *testing.T) {
+func TestOpsRunCommandPermissionDenied(t *testing.T) {
 	ops := NewOperations(app.NewFakeOperations(), &fakeK8sOperations{}, storage.NewFake(), &Defaults{})
-	_, errChan := ops.Command(&database.User{Email: "bad-user@luizalabs.com"}, "teresa", "ls")
+	_, errChan := ops.RunCommand(&database.User{Email: "bad-user@luizalabs.com"}, "teresa", "ls")
 	if err := <-errChan; err != auth.ErrPermissionDenied {
 		t.Errorf("expected auth.ErrPermissionDenied, got %v", err)
 	}
 }
 
-func TestOpsCommandDeployNotFound(t *testing.T) {
+func TestOpsRunCommandDeployNotFound(t *testing.T) {
 	k8sOps := &fakeK8sOperations{errDeployAnnotation: fmt.Errorf("not found"), isNotFound: true}
 	ops := NewOperations(app.NewFakeOperations(), k8sOps, storage.NewFake(), &Defaults{})
-	_, errChan := ops.Command(&database.User{}, "teresa", "ls")
+	_, errChan := ops.RunCommand(&database.User{}, "teresa", "ls")
 	if err := <-errChan; err != ErrDeployNotFound {
 		t.Errorf("expected ErrDeployNotFound, got %v", err)
 	}
 }
 
-func TestOpsCommandBySpec(t *testing.T) {
+func TestOpsRunCommandBySpec(t *testing.T) {
 	k8sOps := &fakeK8sOperations{}
 	ops := NewOperations(app.NewFakeOperations(), k8sOps, storage.NewFake(), &Defaults{})
 
-	rc, errChan := ops.CommandBySpec(&spec.Pod{})
+	rc, errChan := ops.RunCommandBySpec(&spec.Pod{})
 	defer rc.Close()
 
 	if err := <-errChan; err != nil {
@@ -87,11 +87,11 @@ func TestOpsCommandBySpec(t *testing.T) {
 	}
 }
 
-func TestCommandBySpecNoZeroExitCode(t *testing.T) {
+func TestRunCommandBySpecNoZeroExitCode(t *testing.T) {
 	k8sOps := &fakeK8sOperations{exitCodePodRun: 1}
 	ops := NewOperations(app.NewFakeOperations(), k8sOps, storage.NewFake(), &Defaults{})
 
-	rc, errChan := ops.CommandBySpec(&spec.Pod{})
+	rc, errChan := ops.RunCommandBySpec(&spec.Pod{})
 	defer rc.Close()
 
 	if err := <-errChan; err != ErrNonZeroExitCode {

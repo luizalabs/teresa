@@ -1,4 +1,4 @@
-FROM golang:1.8 AS builder
+FROM golang:1.9 AS builder
 
 WORKDIR /go/src/github.com/luizalabs/teresa
 COPY . /go/src/github.com/luizalabs/teresa

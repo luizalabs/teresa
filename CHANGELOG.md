@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [NEXT_RELEASE]
+## [0.14.0] - 2018-02-06
 ### Changed
 - [server] decouple k8s client interface from the domain ones
 - [client] rewrite client tar pkg and change the deploy cmd accordingly

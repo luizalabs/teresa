@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - `exec` command
+- [server] upgrade golang version of server to 1.9
 
 ## [0.14.0] - 2018-02-06
 ### Changed

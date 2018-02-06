@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"testing"
+
+	context "golang.org/x/net/context"
 )
 
 type commandCall func() (io.ReadCloser, <-chan error)
@@ -16,10 +18,10 @@ func TestFakeOperationsCommandFuncs(t *testing.T) {
 		cmdCall     commandCall
 		expectedErr error
 	}{
-		{func() (io.ReadCloser, <-chan error) { return fake.RunCommand(nil, "") }, nil},
-		{func() (io.ReadCloser, <-chan error) { return fake.RunCommand(nil, "") }, fmt.Errorf("some error")},
-		{func() (io.ReadCloser, <-chan error) { return fake.RunCommandBySpec(nil) }, nil},
-		{func() (io.ReadCloser, <-chan error) { return fake.RunCommandBySpec(nil) }, fmt.Errorf("some error")},
+		{func() (io.ReadCloser, <-chan error) { return fake.RunCommand(context.Background(), nil, "") }, nil},
+		{func() (io.ReadCloser, <-chan error) { return fake.RunCommand(context.Background(), nil, "") }, fmt.Errorf("some error")},
+		{func() (io.ReadCloser, <-chan error) { return fake.RunCommandBySpec(context.Background(), nil) }, nil},
+		{func() (io.ReadCloser, <-chan error) { return fake.RunCommandBySpec(context.Background(), nil) }, fmt.Errorf("some error")},
 	}
 
 	for _, tc := range testCases {

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 
+	context "golang.org/x/net/context"
+
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/spec"
@@ -11,14 +13,15 @@ import (
 )
 
 type Operations interface {
-	RunCommand(user *database.User, appName string, command ...string) (io.ReadCloser, <-chan error)
-	RunCommandBySpec(podSpec *spec.Pod) (io.ReadCloser, <-chan error)
+	RunCommand(ctx context.Context, user *database.User, appName string, command ...string) (io.ReadCloser, <-chan error)
+	RunCommandBySpec(ctx context.Context, podSpec *spec.Pod) (io.ReadCloser, <-chan error)
 }
 
 type K8sOperations interface {
 	DeployAnnotation(namespace, deployName, annotation string) (string, error)
 	PodRun(podSpec *spec.Pod) (io.ReadCloser, <-chan int, error)
 	IsNotFound(err error) bool
+	DeletePod(namespace, podName string) error
 }
 
 type Defaults struct {
@@ -34,7 +37,7 @@ type ExecOperations struct {
 	defaults *Defaults
 }
 
-func (ops *ExecOperations) RunCommand(user *database.User, appName string, command ...string) (io.ReadCloser, <-chan error) {
+func (ops *ExecOperations) RunCommand(ctx context.Context, user *database.User, appName string, command ...string) (io.ReadCloser, <-chan error) {
 	errChan := make(chan error, 1)
 	a, err := ops.appOps.CheckPermAndGet(user, appName)
 	if err != nil {
@@ -65,10 +68,10 @@ func (ops *ExecOperations) RunCommand(user *database.User, appName string, comma
 		command...,
 	)
 
-	return ops.RunCommandBySpec(podSpec)
+	return ops.RunCommandBySpec(ctx, podSpec)
 }
 
-func (ops *ExecOperations) RunCommandBySpec(podSpec *spec.Pod) (io.ReadCloser, <-chan error) {
+func (ops *ExecOperations) RunCommandBySpec(ctx context.Context, podSpec *spec.Pod) (io.ReadCloser, <-chan error) {
 	errChan := make(chan error)
 	r, w := io.Pipe()
 	go func() {
@@ -84,8 +87,14 @@ func (ops *ExecOperations) RunCommandBySpec(podSpec *spec.Pod) (io.ReadCloser, <
 		}
 		go io.Copy(w, podStream)
 
-		if ec := <-exitCodeChain; ec != 0 {
-			errChan <- ErrNonZeroExitCode
+		select {
+		case <-ctx.Done():
+			go ops.k8s.DeletePod(podSpec.Namespace, podSpec.Name)
+			errChan <- ctx.Err()
+		case ec := <-exitCodeChain:
+			if ec != 0 {
+				errChan <- ErrNonZeroExitCode
+			}
 		}
 	}()
 	return r, errChan

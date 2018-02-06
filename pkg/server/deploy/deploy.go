@@ -33,7 +33,6 @@ type K8sOperations interface {
 	ExposeDeploy(namespace, name, vHost string, w io.Writer) error
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
 	DeployRollbackToRevision(namespace, name, revision string) error
-	DeletePod(namespace, podName string) error
 }
 
 type DeployOperations struct {
@@ -187,17 +186,11 @@ func (ops *DeployOperations) buildApp(ctx context.Context, tarBall io.ReadSeeker
 }
 
 func (ops *DeployOperations) podRun(ctx context.Context, podSpec *spec.Pod, stream io.Writer) error {
-	podStream, runErrChan := ops.execOps.RunCommandBySpec(podSpec)
+	podStream, runErrChan := ops.execOps.RunCommandBySpec(ctx, podSpec)
 	go io.Copy(stream, podStream)
 
-	select {
-	case <-ctx.Done():
-		go ops.k8s.DeletePod(podSpec.Namespace, podSpec.Name)
-		return ctx.Err()
-	case err := <-runErrChan:
-		if err != nil {
-			return ErrPodRunFail
-		}
+	if err := <-runErrChan; err != nil {
+		return ErrPodRunFail
 	}
 
 	return nil

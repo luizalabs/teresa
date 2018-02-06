@@ -6,17 +6,18 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/spec"
+	context "golang.org/x/net/context"
 )
 
 type FakeOperations struct {
 	ExpectedErr error
 }
 
-func (f *FakeOperations) RunCommand(user *database.User, appName string, command ...string) (io.ReadCloser, <-chan error) {
-	return f.RunCommandBySpec(nil)
+func (f *FakeOperations) RunCommand(ctx context.Context, user *database.User, appName string, command ...string) (io.ReadCloser, <-chan error) {
+	return f.RunCommandBySpec(ctx, nil)
 }
 
-func (f *FakeOperations) RunCommandBySpec(podSpec *spec.Pod) (io.ReadCloser, <-chan error) {
+func (f *FakeOperations) RunCommandBySpec(ctx context.Context, podSpec *spec.Pod) (io.ReadCloser, <-chan error) {
 	errChan := make(chan error, 1)
 	r, w := io.Pipe()
 	go func() {

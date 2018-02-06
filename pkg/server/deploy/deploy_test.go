@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -34,14 +33,7 @@ type fakeK8sOperations struct {
 	createDeployReturn       error
 	hasSrvErr                error
 	exposeDeployWasCalled    bool
-	podRunReadCloser         io.ReadCloser
-	podRunExitCodeChan       chan int
-	podRunErr                error
 	replicaSetListByLabelErr error
-}
-
-func (f *fakeK8sOperations) PodRun(podSpec *spec.Pod) (io.ReadCloser, <-chan int, error) {
-	return f.podRunReadCloser, f.podRunExitCodeChan, f.podRunErr
 }
 
 func (f *fakeK8sOperations) CreateOrUpdateDeploy(deploySpec *spec.Deploy) error {
@@ -76,10 +68,6 @@ func (f *fakeK8sOperations) DeployRollbackToRevision(namespace, name, revision s
 	return nil
 }
 
-func (f *fakeK8sOperations) DeletePod(namespace, podName string) error {
-	return nil
-}
-
 func TestDeployPermissionDenied(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
@@ -101,10 +89,6 @@ func TestDeploy(t *testing.T) {
 	// this is a dummy test to prevent panic errors
 	podExitCodeChan := make(chan int, 1)
 	defer close(podExitCodeChan)
-	fakeK8s := &fakeK8sOperations{
-		podRunExitCodeChan: podExitCodeChan,
-		podRunReadCloser:   ioutil.NopCloser(new(bytes.Buffer)),
-	}
 	podExitCodeChan <- 0
 
 	tarBall, err := os.Open(filepath.Join("testdata", "fooTxt.tgz"))
@@ -115,7 +99,7 @@ func TestDeploy(t *testing.T) {
 
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
-		fakeK8s,
+		&fakeK8sOperations{},
 		st.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},

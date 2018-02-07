@@ -14,6 +14,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/client"
 	"github.com/luizalabs/teresa/pkg/client/connection"
 	"github.com/luizalabs/teresa/pkg/client/tar"
+	"github.com/luizalabs/teresa/pkg/client/url"
 	dpb "github.com/luizalabs/teresa/pkg/protobuf/deploy"
 	"github.com/luizalabs/teresa/pkg/server/deploy"
 	"github.com/olekukonko/tablewriter"
@@ -37,13 +38,17 @@ var deployCreateCmd = &cobra.Command{
 	Long: `Deploy an application.
 	
 	To deploy an app you have to pass it's name, the team the app
-	belongs and the path to the source code. You might want to
-	describe your deployments through --description, as that'll
-	eventually help on rollbacks.
+	belongs and the path, filename or url to the source code. You
+	might want to describe your deployments through --description,
+	as that'll eventually help on rollbacks.
 	
 	eg.:
 	
 	  $ teresa deploy create . --app webapi --description "release 1.2 with new checkout"
+
+	  $ teresa deploy create /my/path/webapi.tgz --app webapi --description "release 1.2 with new checkout"
+
+	  $ teresa deploy create 'https://api.github.com/repos/owner/webapi/tarball/v1.0?access_token=xxx' --app webapi --description "release 1.0"
 	`,
 	Run: deployApp,
 }
@@ -126,7 +131,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 		return
 	}
-	appFolder := args[0]
+	appURL := args[0]
 
 	appName, err := cmd.Flags().GetString("app")
 	if err != nil || appName == "" {
@@ -161,13 +166,23 @@ func deployApp(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	ip, err := getIgnorePatterns(appFolder)
+	path, cleanup := fetchApp(appURL)
+	if cleanup {
+		defer os.Remove(path)
+	}
+
+	dir, cleanup := extractApp(path)
+	if cleanup {
+		defer os.RemoveAll(dir)
+	}
+
+	ip, err := getIgnorePatterns(dir)
 	if err != nil {
 		client.PrintErrorAndExit("Error acessing .teresaignore file: %v", err)
 	}
 
-	fmt.Println("Generating tarball of:", appFolder)
-	tarPath, err := tar.CreateTemp(appFolder, appName, ip)
+	fmt.Println("Generating tarball of:", appURL)
+	tarPath, err := tar.CreateTemp(dir, appName, ip)
 	if err != nil {
 		client.PrintErrorAndExit("Error generating tarball: %v", err)
 	}
@@ -202,6 +217,37 @@ func deployApp(cmd *cobra.Command, args []string) {
 	if err := g.Wait(); err != nil {
 		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
+}
+
+func fetchApp(appURL string) (string, bool) {
+	if url.Scheme(appURL) == "" {
+		return appURL, false
+	}
+
+	path, err := url.FetchToTemp(appURL)
+	if err != nil {
+		client.PrintErrorAndExit("Error downloading url: %v", err)
+	}
+
+	return path, true
+}
+
+func extractApp(path string) (string, bool) {
+	finfo, err := os.Stat(path)
+	if err != nil {
+		client.PrintErrorAndExit("Error accessing path: %v", err)
+	}
+
+	if finfo.IsDir() {
+		return path, false
+	}
+
+	dir, err := tar.ExtractToTemp(path)
+	if err != nil {
+		client.PrintErrorAndExit("Error extracting archive: %v", err)
+	}
+
+	return dir, true
 }
 
 func sendAppTarball(tarPath string, stream dpb.Deploy_MakeClient) error {

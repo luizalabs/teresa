@@ -86,6 +86,7 @@ func CreateTemp(dir, prefix string, ignorePatterns []string) (string, error) {
 	defer tw.Close()
 
 	if err := addAll(tw, dir, ignorePatterns); err != nil {
+		os.Remove(tmp.Name())
 		return "", errors.Wrap(err, "failed to add all files")
 	}
 

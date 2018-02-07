@@ -28,6 +28,29 @@ spec:
           - --debug
         {{- end }}
         imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /healthcheck/
+            port: 50051
+            scheme: HTTP
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 2
+        ports:
+        - containerPort: 50051
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthcheck/
+            port: 50051
+            scheme: HTTP
+          initialDelaySeconds: 1
+          periodSeconds: 3
+          successThreshold: 1
+          timeoutSeconds: 1
         ports:
         - containerPort: 50051
         env:

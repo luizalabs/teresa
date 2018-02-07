@@ -92,3 +92,74 @@ func CreateTemp(dir, prefix string, ignorePatterns []string) (string, error) {
 
 	return tmp.Name(), nil
 }
+
+func ExtractToTemp(filename string) (string, error) {
+	gr, rc, err := newReadClosers(filename)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		gr.Close()
+		rc.Close()
+	}()
+
+	tmp, err := ioutil.TempDir("", "teresa")
+	if err != nil {
+		return "", errors.Wrap(err, "failed to create temp dir")
+	}
+
+	tr := tar.NewReader(gr)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			return tmp, nil
+		}
+		if err != nil {
+			os.RemoveAll(tmp)
+			return "", errors.Wrap(err, "tar iteration failed")
+		}
+
+		dst := filepath.Join(tmp, skipFirst(hdr.Name))
+		switch hdr.Typeflag {
+		case tar.TypeDir:
+			if _, err := os.Stat(dst); err != nil {
+				if err := os.MkdirAll(dst, os.FileMode(hdr.Mode)); err != nil {
+					os.RemoveAll(tmp)
+					return "", errors.Wrap(err, "mkdir failed")
+				}
+			}
+		case tar.TypeReg:
+			file, err := os.OpenFile(dst, os.O_CREATE|os.O_RDWR, os.FileMode(hdr.Mode))
+			if err != nil {
+				os.RemoveAll(tmp)
+				return "", errors.Wrap(err, "failed to create file")
+			}
+			defer file.Close()
+			if _, err := io.Copy(file, tr); err != nil {
+				os.RemoveAll(tmp)
+				return "", errors.Wrap(err, "copy failed")
+			}
+		}
+	}
+
+	return tmp, nil
+}
+
+func newReadClosers(filename string) (*gzip.Reader, io.ReadCloser, error) {
+	rc, err := os.Open(filename)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "open failed")
+	}
+
+	gr, err := gzip.NewReader(rc)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "gunzip failed")
+	}
+
+	return gr, rc, nil
+}
+
+func skipFirst(path string) string {
+	s := strings.Split(path, string(filepath.Separator))
+	return strings.Join(s[1:], string(filepath.Separator))
+}

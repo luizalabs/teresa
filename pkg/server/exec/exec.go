@@ -10,6 +10,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/luizalabs/teresa/pkg/server/storage"
+	"github.com/luizalabs/teresa/pkg/server/uid"
 )
 
 type Operations interface {
@@ -56,7 +57,7 @@ func (ops *ExecOperations) RunCommand(ctx context.Context, user *database.User, 
 	}
 
 	podSpec := spec.NewRunner(
-		fmt.Sprintf("exec-command-%s", appName),
+		fmt.Sprintf("exec-command-%s-%s", appName, uid.New()),
 		currentSlug,
 		ops.defaults.RunnerImage,
 		a,

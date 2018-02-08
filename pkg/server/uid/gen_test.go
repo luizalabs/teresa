@@ -8,7 +8,7 @@ func TestGen(t *testing.T) {
 		gId := New()
 		if _, found := generatedIds[gId]; found {
 			t.Fatal("collision detected")
-			generatedIds[gId] = true
 		}
+		generatedIds[gId] = true
 	}
 }

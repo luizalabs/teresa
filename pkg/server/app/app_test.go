@@ -49,7 +49,7 @@ func (*fakeK8sOperations) CreateSecret(appName, secretName string, data map[stri
 	return nil
 }
 
-func (*fakeK8sOperations) PodList(namespace string) ([]*Pod, error) {
+func (*fakeK8sOperations) PodList(namespace string, opts *PodListOptions) ([]*Pod, error) {
 	pl := []*Pod{
 		{Name: "pod 1", State: string(api.PodRunning), Age: 2, Restarts: 0},
 		{Name: "pod 2", State: string(api.PodRunning), Age: 5, Restarts: 1},
@@ -57,7 +57,7 @@ func (*fakeK8sOperations) PodList(namespace string) ([]*Pod, error) {
 	return pl, nil
 }
 
-func (*fakeK8sOperations) PodLogs(namespace, podName string, lines int64, follow bool) (io.ReadCloser, error) {
+func (*fakeK8sOperations) PodLogs(namespace, podName string, opts *LogOptions) (io.ReadCloser, error) {
 	r := bytes.NewBufferString("foo\nbar")
 	return ioutil.NopCloser(r), nil
 }
@@ -169,11 +169,11 @@ func (e *errK8sOperations) CreateOrUpdateAutoscale(app *App) error {
 	return e.AutoscaleErr
 }
 
-func (e *errK8sOperations) PodList(namespace string) ([]*Pod, error) {
+func (e *errK8sOperations) PodList(namespace string, opts *PodListOptions) ([]*Pod, error) {
 	return nil, e.Err
 }
 
-func (e *errK8sOperations) PodLogs(namespace, podName string, lines int64, follow bool) (io.ReadCloser, error) {
+func (e *errK8sOperations) PodLogs(namespace, podName string, opts *LogOptions) (io.ReadCloser, error) {
 	return nil, e.Err
 }
 
@@ -400,8 +400,9 @@ func TestAppOperationsLogs(t *testing.T) {
 		Name:  name,
 		Users: []database.User{*user},
 	}
+	opts := &LogOptions{Lines: 10, Follow: false}
 
-	rc, err := ops.Logs(user, app.Name, 10, false)
+	rc, err := ops.Logs(user, app.Name, opts)
 	if err != nil {
 		t.Fatal("error on get logs: ", err)
 	}
@@ -429,8 +430,9 @@ func TestAppOperationsLogsErrPermissionDenied(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
+	opts := &LogOptions{Lines: 10, Follow: false}
 
-	if _, err := ops.Logs(user, "teresa", 10, false); err != auth.ErrPermissionDenied {
+	if _, err := ops.Logs(user, "teresa", opts); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %s", err)
 	}
 }
@@ -439,8 +441,9 @@ func TestAppOperationsLogsErrNotFound(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
+	opts := &LogOptions{Lines: 10, Follow: false}
 
-	if _, err := ops.Logs(user, "teresa", 10, false); err != ErrNotFound {
+	if _, err := ops.Logs(user, "teresa", opts); err != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }

@@ -19,7 +19,7 @@ import (
 
 type Operations interface {
 	Create(user *database.User, app *App) error
-	Logs(user *database.User, appName string, lines int64, follow bool) (io.ReadCloser, error)
+	Logs(user *database.User, appName string, opts *LogOptions) (io.ReadCloser, error)
 	Info(user *database.User, appName string) (*Info, error)
 	TeamName(appName string) (string, error)
 	Get(appName string) (*App, error)
@@ -40,8 +40,8 @@ type Operations interface {
 type K8sOperations interface {
 	NamespaceAnnotation(namespace, annotation string) (string, error)
 	NamespaceLabel(namespace, label string) (string, error)
-	PodList(namespace string) ([]*Pod, error)
-	PodLogs(namespace, podName string, lines int64, follow bool) (io.ReadCloser, error)
+	PodList(namespace string, opts *PodListOptions) ([]*Pod, error)
+	PodLogs(namespace, podName string, opts *LogOptions) (io.ReadCloser, error)
 	CreateNamespace(app *App, userEmail string) error
 	CreateQuota(app *App) error
 	CreateSecret(appName, secretName string, data map[string][]byte) error
@@ -133,7 +133,7 @@ func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 	return nil
 }
 
-func (ops *AppOperations) Logs(user *database.User, appName string, lines int64, follow bool) (io.ReadCloser, error) {
+func (ops *AppOperations) Logs(user *database.User, appName string, opts *LogOptions) (io.ReadCloser, error) {
 	team, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
 	if err != nil {
 		if ops.kops.IsNotFound(err) {
@@ -146,7 +146,7 @@ func (ops *AppOperations) Logs(user *database.User, appName string, lines int64,
 		return nil, auth.ErrPermissionDenied
 	}
 
-	pods, err := ops.kops.PodList(appName)
+	pods, err := ops.kops.PodList(appName, &PodListOptions{PodName: opts.PodName})
 	if err != nil {
 		return nil, teresa_errors.NewInternalServerError(err)
 	}
@@ -158,7 +158,7 @@ func (ops *AppOperations) Logs(user *database.User, appName string, lines int64,
 		go func(namespace, podName string) {
 			defer wg.Done()
 
-			logs, err := ops.kops.PodLogs(namespace, podName, lines, follow)
+			logs, err := ops.kops.PodLogs(namespace, podName, opts)
 			if err != nil {
 				log.WithError(err).Errorf("streaming logs from pod %s", podName)
 				return

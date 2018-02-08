@@ -33,8 +33,13 @@ func (s *Service) Create(ctx context.Context, req *appb.CreateRequest) (*appb.Em
 func (s *Service) Logs(req *appb.LogsRequest, stream appb.App_LogsServer) error {
 	ctx := stream.Context()
 	user := ctx.Value("user").(*database.User)
+	opts := &LogOptions{
+		Lines:   req.Lines,
+		Follow:  req.Follow,
+		PodName: req.PodName,
+	}
 
-	rc, err := s.ops.Logs(user, req.Name, req.Lines, req.Follow)
+	rc, err := s.ops.Logs(user, req.Name, opts)
 	if err != nil {
 		return err
 	}

@@ -39,7 +39,7 @@ func (f *FakeOperations) Create(user *database.User, app *App) error {
 	return nil
 }
 
-func (f *FakeOperations) Logs(user *database.User, appName string, lines int64, follow bool) (io.ReadCloser, error) {
+func (f *FakeOperations) Logs(user *database.User, appName string, opts *LogOptions) (io.ReadCloser, error) {
 	if _, found := f.Storage[appName]; !found {
 		return nil, ErrNotFound
 	}
@@ -51,10 +51,10 @@ func (f *FakeOperations) Logs(user *database.User, appName string, lines int64, 
 	r, w := io.Pipe()
 	go func() {
 		defer w.Close()
-		for i := 0; int64(i) < lines; i++ {
+		for i := 0; int64(i) < opts.Lines; i++ {
 			fmt.Fprintf(w, "line %d of log\n", i)
 		}
-		if follow {
+		if opts.Follow {
 			rand.Seed(42) // The Answser
 			for i := 0; i <= rand.Intn(5); i++ {
 				fmt.Fprintln(w, "extra random lines")

@@ -503,6 +503,10 @@ WARNING:
 
   $ teresa app logs foo --lines=20
 
+  To filter logs by pod name:
+
+  $ teresa app logs foo --pod mypod-1234
+
   You can also simulate tail -f:
 
   $ teresa app logs foo --lines=20 --follow`,
@@ -700,6 +704,7 @@ func init() {
 	// App logs
 	appLogsCmd.Flags().Int64P("lines", "n", 10, "number of lines")
 	appLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")
+	appLogsCmd.Flags().String("pod", "", "filter logs by pod name")
 	// App autoscale
 	appAutoscaleSetCmd.Flags().Int32("min", flagNotDefined, "Minimum number of replicas")
 	appAutoscaleSetCmd.Flags().Int32("max", flagNotDefined, "Maximum number of replicas")
@@ -716,8 +721,21 @@ func appLogs(cmd *cobra.Command, args []string) {
 		return
 	}
 	appName := args[0]
-	lines, _ := cmd.Flags().GetInt64("lines")
-	follow, _ := cmd.Flags().GetBool("follow")
+
+	lines, err := cmd.Flags().GetInt64("lines")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid lines parameter")
+	}
+
+	follow, err := cmd.Flags().GetBool("follow")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid follow parameter")
+	}
+
+	pod, err := cmd.Flags().GetString("pod")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid pod parameter")
+	}
 
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
@@ -726,7 +744,7 @@ func appLogs(cmd *cobra.Command, args []string) {
 	defer conn.Close()
 
 	cli := appb.NewAppClient(conn)
-	req := &appb.LogsRequest{Name: appName, Lines: lines, Follow: follow}
+	req := &appb.LogsRequest{Name: appName, Lines: lines, Follow: follow, PodName: pod}
 	stream, err := cli.Logs(context.Background(), req)
 	if err != nil {
 		client.PrintErrorAndExit(client.GetErrorMsg(err))

@@ -1,8 +1,10 @@
 package k8s
 
 import (
+	"fmt"
 	"strconv"
 
+	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -267,4 +269,14 @@ func ingressSpec(namespace, name, vHost string) *k8s_extensions.Ingress {
 			},
 		},
 	}
+}
+
+func appPodListOptsToK8s(opts *app.PodListOptions) *metav1.ListOptions {
+	var k8sOpts metav1.ListOptions
+
+	if opts.PodName != "" {
+		k8sOpts.FieldSelector = fmt.Sprintf("metadata.name=%s", opts.PodName)
+	}
+
+	return &k8sOpts
 }

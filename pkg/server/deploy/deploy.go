@@ -14,7 +14,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
-	"github.com/pborman/uuid"
+	"github.com/luizalabs/teresa/pkg/server/uid"
 )
 
 const (
@@ -69,7 +69,7 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 		return nil, errChan
 	}
 
-	deployId := genDeployId()
+	deployId := uid.New()
 	buildDest := fmt.Sprintf("deploys/%s/%s/out", appName, deployId)
 
 	r, w := io.Pipe()
@@ -228,10 +228,6 @@ func (ops *DeployOperations) Rollback(user *database.User, appName, revision str
 	}
 
 	return nil
-}
-
-func genDeployId() string {
-	return uuid.New()[:8]
 }
 
 func NewDeployOperations(aOps app.Operations, k8s K8sOperations, s st.Storage, execOps exec.Operations, opts *Options) Operations {

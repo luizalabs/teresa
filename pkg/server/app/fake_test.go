@@ -58,7 +58,8 @@ func TestFakeOperationsLogs(t *testing.T) {
 	fake.(*FakeOperations).Storage[app.Name] = app
 
 	expectedLines := 10
-	rc, err := fake.Logs(user, app.Name, int64(expectedLines), false)
+	opts := &LogOptions{Lines: int64(expectedLines), Follow: false}
+	rc, err := fake.Logs(user, app.Name, opts)
 	if err != nil {
 		t.Fatal("error on get logs:", err)
 	}
@@ -86,7 +87,8 @@ func TestFakeOperationsLogsFollow(t *testing.T) {
 	fake.(*FakeOperations).Storage[app.Name] = app
 
 	minimumLines := 1
-	rc, err := fake.Logs(user, app.Name, int64(minimumLines), true)
+	opts := &LogOptions{Lines: int64(minimumLines), Follow: true}
+	rc, err := fake.Logs(user, app.Name, opts)
 	if err != nil {
 		t.Fatal("error on get logs:", err)
 	}
@@ -110,8 +112,9 @@ func TestFakeOperationsLogsErrPermissionDenied(t *testing.T) {
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
 	fake.(*FakeOperations).Storage[app.Name] = app
+	opts := &LogOptions{Lines: 1, Follow: false}
 
-	if _, err := fake.Logs(user, app.Name, 1, false); err != auth.ErrPermissionDenied {
+	if _, err := fake.Logs(user, app.Name, opts); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }
@@ -120,8 +123,9 @@ func TestFakeOperationsLogsErrNotFound(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Email: "gopher-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
+	opts := &LogOptions{Lines: 1, Follow: false}
 
-	if _, err := fake.Logs(user, app.Name, 1, false); err != ErrNotFound {
+	if _, err := fake.Logs(user, app.Name, opts); err != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }

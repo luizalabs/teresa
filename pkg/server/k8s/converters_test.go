@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
 
+	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 )
 
@@ -291,5 +292,16 @@ func TestDeploySpecToK8sDeployShouldAddAutomountSATokenField(t *testing.T) {
 
 	if *ps.AutomountServiceAccountToken {
 		t.Error("got true, expected false")
+	}
+}
+
+func TestAppPodListOptsToK8s(t *testing.T) {
+	opts := &app.PodListOptions{PodName: "test-1234"}
+	expectedFs := "metadata.name=test-1234"
+
+	k8sOpts := appPodListOptsToK8s(opts)
+
+	if k8sOpts.FieldSelector != expectedFs {
+		t.Errorf("got %s, want %s", k8sOpts.FieldSelector, expectedFs)
 	}
 }

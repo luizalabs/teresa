@@ -102,12 +102,13 @@ func (k *Client) NamespaceLabel(namespace, label string) (string, error) {
 	return ns.Labels[label], nil
 }
 
-func (k *Client) PodList(namespace string) ([]*app.Pod, error) {
+func (k *Client) PodList(namespace string, opts *app.PodListOptions) ([]*app.Pod, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return nil, err
 	}
-	podList, err := kc.CoreV1().Pods(namespace).List(metav1.ListOptions{})
+	k8sOpts := appPodListOptsToK8s(opts)
+	podList, err := kc.CoreV1().Pods(namespace).List(*k8sOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +140,7 @@ func (k *Client) PodList(namespace string) ([]*app.Pod, error) {
 	return pods, nil
 }
 
-func (k *Client) PodLogs(namespace string, podName string, lines int64, follow bool) (io.ReadCloser, error) {
+func (k *Client) PodLogs(namespace string, podName string, opts *app.LogOptions) (io.ReadCloser, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return nil, err
@@ -147,8 +148,8 @@ func (k *Client) PodLogs(namespace string, podName string, lines int64, follow b
 	req := kc.CoreV1().Pods(namespace).GetLogs(
 		podName,
 		&k8sv1.PodLogOptions{
-			Follow:    follow,
-			TailLines: &lines,
+			Follow:    opts.Follow,
+			TailLines: &opts.Lines,
 		},
 	)
 
@@ -337,7 +338,7 @@ func (k *Client) Status(namespace string) (*app.Status, error) {
 		return nil, err
 	}
 
-	pods, err := k.PodList(namespace)
+	pods, err := k.PodList(namespace, &app.PodListOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "get status failed")
 	}
@@ -479,7 +480,8 @@ func (k *Client) PodRun(podSpec *spec.Pod) (io.ReadCloser, <-chan int, error) {
 			return
 		}
 
-		stream, err := k.PodLogs(podSpec.Namespace, podSpec.Name, 10, true)
+		opts := &app.LogOptions{Lines: 10, Follow: true}
+		stream, err := k.PodLogs(podSpec.Namespace, podSpec.Name, opts)
 		if err != nil {
 			return
 		}

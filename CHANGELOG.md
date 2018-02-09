@@ -6,10 +6,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - [server] using multistage build on teresa dockerfile
 - [server] update default slugbuilder version to v3.2.0
+- Upgrade golang version to 1.9
 
 ### Added
 - `exec` command
-- [server] upgrade golang version of server to 1.9
 - [helm] Add HealthChecks
 - [server] graceful shutdown
 - [client] support to deploy remote (http and https) and local files

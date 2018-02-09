@@ -1,0 +1,13 @@
+builds:
+  - binary: teresa
+    main: ./cmd/client/main.go
+    ldflags: -X ./pkg/version.Version={{.Version}}
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+archive:
+    format: binary
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"

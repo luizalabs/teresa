@@ -57,6 +57,7 @@ message LogsRequest {
     int64 lines = 2;
     bool follow = 3;
     string pod_name = 4;
+    bool previous = 5;
 }
 
 message LogsResponse {

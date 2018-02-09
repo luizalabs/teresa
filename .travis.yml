@@ -21,3 +21,8 @@ jobs:
     - stage: build docker image
       script:
         - ./.ci-docker.sh
+    - stage: build and release client
+      script:
+        - if [ -z "$TRAVIS_TAG" ]; then exit 0; fi
+        - go get github.com/goreleaser/goreleaser
+        - goreleaser --release-notes <(python release-notes.py)

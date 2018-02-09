@@ -34,9 +34,10 @@ func (s *Service) Logs(req *appb.LogsRequest, stream appb.App_LogsServer) error 
 	ctx := stream.Context()
 	user := ctx.Value("user").(*database.User)
 	opts := &LogOptions{
-		Lines:   req.Lines,
-		Follow:  req.Follow,
-		PodName: req.PodName,
+		Lines:    req.Lines,
+		Follow:   req.Follow,
+		PodName:  req.PodName,
+		Previous: req.Previous,
 	}
 
 	rc, err := s.ops.Logs(user, req.Name, opts)

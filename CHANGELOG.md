@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Added
 - `app logs` support to filter by pod name
+- `app logs` support to print the logs of the previous pod instance
 
 ## [0.15.0] - 2018-02-14
 ### Changed

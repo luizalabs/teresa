@@ -705,6 +705,7 @@ func init() {
 	appLogsCmd.Flags().Int64P("lines", "n", 10, "number of lines")
 	appLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")
 	appLogsCmd.Flags().String("pod", "", "filter logs by pod name")
+	appLogsCmd.Flags().BoolP("previous", "p", false, "print the logs for the previous instance")
 	// App autoscale
 	appAutoscaleSetCmd.Flags().Int32("min", flagNotDefined, "Minimum number of replicas")
 	appAutoscaleSetCmd.Flags().Int32("max", flagNotDefined, "Maximum number of replicas")
@@ -737,6 +738,11 @@ func appLogs(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid pod parameter")
 	}
 
+	previous, err := cmd.Flags().GetBool("previous")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid previous parameter")
+	}
+
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
@@ -744,7 +750,13 @@ func appLogs(cmd *cobra.Command, args []string) {
 	defer conn.Close()
 
 	cli := appb.NewAppClient(conn)
-	req := &appb.LogsRequest{Name: appName, Lines: lines, Follow: follow, PodName: pod}
+	req := &appb.LogsRequest{
+		Name:     appName,
+		Lines:    lines,
+		Follow:   follow,
+		PodName:  pod,
+		Previous: previous,
+	}
 	stream, err := cli.Logs(context.Background(), req)
 	if err != nil {
 		client.PrintErrorAndExit(client.GetErrorMsg(err))

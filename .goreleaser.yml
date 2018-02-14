@@ -1,7 +1,7 @@
 builds:
   - binary: teresa
     main: ./cmd/client/main.go
-    ldflags: -X ./pkg/version.Version={{.Version}}
+    ldflags: -X github.com/luizalabs/teresa/pkg/version.Version={{.Tag}}
     goos:
       - windows
       - darwin

@@ -163,6 +163,65 @@ func TestDatabaseOperationsAddUserUserAlreadyInTeam(t *testing.T) {
 	}
 }
 
+func TestDatabaseOperationsHasUser(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error on open in memory database ", err)
+	}
+	db.AutoMigrate(&database.User{})
+	defer db.Close()
+
+	expectedUserEmail := "gopher"
+
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+	dbt.(*DatabaseOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
+
+	expectedTeam := "teresa"
+	if err := dbt.Create(expectedTeam, "", ""); err != nil {
+		t.Fatal("error creating a team:", err)
+	}
+
+	if err := dbt.AddUser(expectedTeam, expectedUserEmail); err != nil {
+		t.Fatal("error trying to add user to a team:", err)
+	}
+
+	if found, err := dbt.HasUser(expectedTeam, expectedUserEmail); !found || err != nil {
+		t.Errorf("expected true and no error, got: %v:%v", found, err)
+	}
+}
+
+func TestDatabaseOperationsHasUserFalse(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error on open in memory database ", err)
+	}
+	defer db.Close()
+
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+	expectedTeam := "teresa"
+	if err := dbt.Create(expectedTeam, "", ""); err != nil {
+		t.Fatal("error creating a team:", err)
+	}
+
+	if found, err := dbt.HasUser(expectedTeam, "gopher"); found || err != nil {
+		t.Errorf("expected false and no error, got: %v:%v", found, err)
+	}
+}
+
+func TestDatabaseOperationsHasUserTeamNotFound(t *testing.T) {
+	db, err := gorm.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal("error on open in memory database ", err)
+	}
+	defer db.Close()
+
+	dbt := NewDatabaseOperations(db, user.NewFakeOperations())
+
+	if found, err := dbt.HasUser("teresa", "gopher"); found || err != ErrNotFound {
+		t.Errorf("expected false and ErrNotFound, got: %v:%v", found, err)
+	}
+}
+
 func TestDatabaseOperationsListWithoutTeams(t *testing.T) {
 	db, err := gorm.Open("sqlite3", ":memory:")
 	if err != nil {

@@ -18,6 +18,7 @@ type Operations interface {
 	ListByUser(userEmail string) ([]*database.Team, error)
 	RemoveUser(name, userEmail string) error
 	Rename(oldName, newName string) error
+	HasUser(name, userEmail string) (bool, error)
 	SetTeamExt(ext teamext.TeamExt)
 }
 
@@ -69,6 +70,23 @@ func (dbt *DatabaseOperations) AddUser(name, userEmail string) error {
 	}
 
 	return dbt.DB.Model(t).Association("Users").Append(u).Error
+}
+
+func (dbt *DatabaseOperations) HasUser(name, userEmail string) (bool, error) {
+	t, err := dbt.getTeam(name)
+	if err != nil {
+		return false, err
+	}
+
+	usersOfTeam := []database.User{}
+	dbt.DB.Model(t).Association("Users").Find(&usersOfTeam)
+	for _, userOfTeam := range usersOfTeam {
+		if userOfTeam.Email == userEmail {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (dbt *DatabaseOperations) List() ([]*database.Team, error) {

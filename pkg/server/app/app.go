@@ -52,6 +52,7 @@ type K8sOperations interface {
 	Limits(namespace, name string) (*Limits, error)
 	IsNotFound(err error) bool
 	IsAlreadyExists(err error) bool
+	IsInvalid(err error) bool
 	SetNamespaceAnnotations(namespace string, annotations map[string]string) error
 	SetNamespaceLabels(namespace string, labels map[string]string) error
 	DeleteDeployEnvVars(namespace, name string, evNames []string) error
@@ -106,6 +107,8 @@ func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 	if err := ops.kops.CreateNamespace(app, user.Email); err != nil {
 		if ops.kops.IsAlreadyExists(err) {
 			return ErrAlreadyExists
+		} else if ops.kops.IsInvalid(err) {
+			return ErrInvalidName
 		}
 		return teresa_errors.NewInternalServerError(err)
 	}

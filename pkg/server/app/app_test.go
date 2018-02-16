@@ -34,6 +34,7 @@ type errK8sOperations struct {
 	SetNamespaceLabelsErr      error
 	DeletePodErr               error
 	NegateIsNotFound           bool
+	NegateIsAlreadyExists      bool
 	Namespaces                 map[string]struct{}
 }
 
@@ -113,6 +114,10 @@ func (*fakeK8sOperations) IsAlreadyExists(err error) bool {
 }
 
 func (*fakeK8sOperations) IsNotFound(err error) bool {
+	return true
+}
+
+func (*fakeK8sOperations) IsInvalid(err error) bool {
 	return true
 }
 
@@ -201,15 +206,16 @@ func (e *errK8sOperations) Limits(namespace, name string) (*Limits, error) {
 	return nil, e.Err
 }
 
-func (*errK8sOperations) IsAlreadyExists(err error) bool {
+func (e *errK8sOperations) IsAlreadyExists(err error) bool {
+	return !e.NegateIsAlreadyExists
+}
+
+func (*errK8sOperations) IsInvalid(err error) bool {
 	return true
 }
 
 func (e *errK8sOperations) IsNotFound(err error) bool {
-	if e.NegateIsNotFound {
-		return false
-	}
-	return true
+	return !e.NegateIsNotFound
 }
 
 func (e *errK8sOperations) SetNamespaceAnnotations(namespace string, annotations map[string]string) error {
@@ -290,6 +296,27 @@ func TestAppCreateErrPermissionDeniedShouldNotTouchNamespace(t *testing.T) {
 
 	if _, ok := fakeK8s.Namespaces[name]; !ok {
 		t.Errorf("expected namespace %s, got none", name)
+	}
+}
+
+func TestAppOperationsCreateErrInvalidName(t *testing.T) {
+	tops := team.NewFakeOperations()
+	fakeSt := st.NewFake()
+	ops := NewOperations(tops, &fakeK8sOperations{}, fakeSt)
+	name := "luizalabs"
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: name}
+	tops.(*team.FakeOperations).Storage[name] = &database.Team{
+		Name:  name,
+		Users: []database.User{*user},
+	}
+	ops.(*AppOperations).kops = &errK8sOperations{
+		NamespaceErr:          ErrInvalidName,
+		NegateIsAlreadyExists: true,
+	}
+
+	if err := ops.Create(user, app); err != ErrInvalidName {
+		t.Errorf("expected %v got %v", ErrInvalidName, err)
 	}
 }
 

@@ -7,6 +7,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - `app logs` support to filter by pod name
 - `app logs` support to print the logs of the previous pod instance
 
+### Changed
+- Better error message for invalid app name error
+
 ## [0.15.0] - 2018-02-14
 ### Changed
 - [server] using multistage build on teresa dockerfile

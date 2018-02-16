@@ -51,6 +51,24 @@ func (f *FakeOperations) AddUser(name, userEmail string) error {
 	return nil
 }
 
+func (f *FakeOperations) HasUser(name, userEmail string) (bool, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	t, found := f.Storage[name]
+	if !found {
+		return false, ErrNotFound
+	}
+
+	for _, userOfTeam := range t.Users {
+		if userOfTeam.Email == userEmail {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func (f *FakeOperations) List() ([]*database.Team, error) {
 	var teams []*database.Team
 	for _, v := range f.Storage {

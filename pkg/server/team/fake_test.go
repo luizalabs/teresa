@@ -48,7 +48,7 @@ func TestFakeOperationsCreateTeamAlreadyExists(t *testing.T) {
 func TestFakeOperationsAddUser(t *testing.T) {
 	fake := NewFakeOperations()
 
-	expectedUserEmail := "gopher"
+	expectedUserEmail := "gopher@luizalabs.com"
 	fake.(*FakeOperations).UserOps.(*user.FakeOperations).Storage[expectedUserEmail] = &database.User{Email: expectedUserEmail}
 
 	expectedTeam := "teresa"
@@ -58,6 +58,33 @@ func TestFakeOperationsAddUser(t *testing.T) {
 
 	if err := fake.AddUser(expectedTeam, expectedUserEmail); err != nil {
 		t.Errorf("error trying on add user to a team: %v", err)
+	}
+}
+
+func TestFakeOperationsHasUser(t *testing.T) {
+	fake := NewFakeOperations()
+
+	expectedUserEmail := "gopher@luizalabs.com"
+	expectedName := "teresa"
+	fake.(*FakeOperations).Storage[expectedName] = &database.Team{
+		Name:  expectedName,
+		Users: []database.User{{Email: expectedUserEmail}},
+	}
+
+	if found, err := fake.HasUser(expectedName, expectedUserEmail); !found || err != nil {
+		t.Errorf("expected error true without error, got %v:%v", found, err)
+	}
+}
+
+func TestFakeOperationsHasUserFalse(t *testing.T) {
+	fake := NewFakeOperations()
+
+	expectedUserEmail := "gopher@luizalabs.com"
+	expectedName := "teresa"
+	fake.(*FakeOperations).Storage[expectedName] = &database.Team{Name: expectedName}
+
+	if found, err := fake.HasUser(expectedName, expectedUserEmail); found || err != nil {
+		t.Errorf("expected error false without error, got %v:%v", found, err)
 	}
 }
 

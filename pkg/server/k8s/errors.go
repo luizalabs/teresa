@@ -23,3 +23,7 @@ func (k *Client) IsNotFound(err error) bool {
 func (k *Client) IsAlreadyExists(err error) bool {
 	return k8serrors.IsAlreadyExists(errors.Cause(err))
 }
+
+func (k *Client) IsInvalid(err error) bool {
+	return k8serrors.IsInvalid(errors.Cause(err))
+}

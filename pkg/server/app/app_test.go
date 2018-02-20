@@ -24,18 +24,19 @@ type fakeK8sOperations struct {
 }
 
 type errK8sOperations struct {
-	Err                        error
-	NamespaceErr               error
-	QuotaErr                   error
-	SecretErr                  error
-	AutoscaleErr               error
-	DeleteNamespaceErr         error
-	SetNamespaceAnnotationsErr error
-	SetNamespaceLabelsErr      error
-	DeletePodErr               error
-	NegateIsNotFound           bool
-	NegateIsAlreadyExists      bool
-	Namespaces                 map[string]struct{}
+	Err                            error
+	NamespaceErr                   error
+	QuotaErr                       error
+	SecretErr                      error
+	AutoscaleErr                   error
+	DeleteNamespaceErr             error
+	SetNamespaceAnnotationsErr     error
+	SetNamespaceLabelsErr          error
+	DeletePodErr                   error
+	CreateOrUpdateDeployEnvVarsErr error
+	NegateIsNotFound               bool
+	NegateIsAlreadyExists          bool
+	Namespaces                     map[string]struct{}
 }
 
 func (*fakeK8sOperations) CreateNamespace(app *App, user string) error {
@@ -231,7 +232,7 @@ func (e *errK8sOperations) DeleteDeployEnvVars(namespace, name string, evNames [
 }
 
 func (e *errK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error {
-	return e.Err
+	return e.CreateOrUpdateDeployEnvVarsErr
 }
 
 func (e *errK8sOperations) DeleteNamespace(namespace string) error {
@@ -699,6 +700,26 @@ func TestAppOperationsSetEnvErrInternalServerErrorOnSaveApp(t *testing.T) {
 
 	if err := ops.SetEnv(user, app.Name, nil); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
 		t.Errorf("expected ErrInternalServerError, got %v", err)
+	}
+}
+
+func TestAppOpsSetEnvErrInvalidEnvVarName(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, nil, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+	ops.(*AppOperations).kops = &errK8sOperations{
+		CreateOrUpdateDeployEnvVarsErr: ErrInvalidEnvVarName,
+		NegateIsNotFound:               true,
+	}
+	evs := []*EnvVar{{Key: "key", Value: "value"}}
+
+	if err := ops.SetEnv(user, app.Name, evs); err != ErrInvalidEnvVarName {
+		t.Errorf("expected %v, got %v", ErrInvalidEnvVarName, err)
 	}
 }
 

@@ -6,10 +6,11 @@ import (
 )
 
 var (
-	ErrAlreadyExists    = status.Errorf(codes.AlreadyExists, "App already exists")
-	ErrNotFound         = status.Errorf(codes.NotFound, "App not found")
-	ErrProtectedEnvVar  = status.Errorf(codes.InvalidArgument, "Can't change protected env vars")
-	ErrInvalidName      = status.Errorf(codes.InvalidArgument, "Invalid App Name")
-	ErrInvalidLimits    = status.Errorf(codes.InvalidArgument, "Invalid Limits")
-	ErrInvalidAutoscale = status.Errorf(codes.InvalidArgument, "Invalid Autoscale")
+	ErrAlreadyExists     = status.Errorf(codes.AlreadyExists, "App already exists")
+	ErrNotFound          = status.Errorf(codes.NotFound, "App not found")
+	ErrProtectedEnvVar   = status.Errorf(codes.InvalidArgument, "Can't change protected env vars")
+	ErrInvalidName       = status.Errorf(codes.InvalidArgument, "Invalid App Name")
+	ErrInvalidLimits     = status.Errorf(codes.InvalidArgument, "Invalid Limits")
+	ErrInvalidAutoscale  = status.Errorf(codes.InvalidArgument, "Invalid Autoscale")
+	ErrInvalidEnvVarName = status.Errorf(codes.InvalidArgument, "Invalid Env Var Name")
 )

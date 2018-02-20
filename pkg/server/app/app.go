@@ -301,7 +301,9 @@ func (ops *AppOperations) SetEnv(user *database.User, appName string, evs []*Env
 	}
 
 	if err = ops.kops.CreateOrUpdateDeployEnvVars(appName, appName, evs); err != nil {
-		if !ops.kops.IsNotFound(err) {
+		if ops.kops.IsInvalid(err) {
+			return ErrInvalidEnvVarName
+		} else if !ops.kops.IsNotFound(err) {
 			return teresa_errors.NewInternalServerError(err)
 		}
 	}

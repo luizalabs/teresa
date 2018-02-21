@@ -10,43 +10,49 @@ type ContainerLimits struct {
 	Memory string
 }
 
-type PodVolumeMounts struct {
+type VolumeMounts struct {
 	Name      string
 	MountPath string
 	ReadOnly  bool
 }
 
-type PodVolume struct {
+type Volume struct {
 	Name       string
 	SecretName string
 }
 
-type Pod struct {
+type Container struct {
 	Name            string
 	Namespace       string
 	Image           string
 	ContainerLimits *ContainerLimits
 	Env             map[string]string
-	VolumeMounts    []*PodVolumeMounts
-	Volume          []*PodVolume
+	VolumeMounts    []*VolumeMounts
 	Args            []string
+}
+
+type Pod struct {
+	Container
+	Volumes []*Volume
 }
 
 func NewPod(name, image string, a *app.App, envVars map[string]string, fs storage.Storage) *Pod {
 	ps := &Pod{
-		Name:      name,
-		Namespace: a.Name,
-		Image:     image,
-		VolumeMounts: []*PodVolumeMounts{{
-			Name:      "storage-keys",
-			MountPath: "/var/run/secrets/deis/objectstore/creds",
-			ReadOnly:  true,
-		}},
-		Volume: []*PodVolume{{
+		Container: Container{
+			Name:      name,
+			Namespace: a.Name,
+			Image:     image,
+			VolumeMounts: []*VolumeMounts{{
+				Name:      "storage-keys",
+				MountPath: "/var/run/secrets/deis/objectstore/creds",
+				ReadOnly:  true,
+			}},
+			Env: envVars,
+		},
+		Volumes: []*Volume{{
 			Name:       "storage-keys",
 			SecretName: fs.K8sSecretName(),
 		}},
-		Env: envVars,
 	}
 	for _, e := range a.EnvVars {
 		ps.Env[e.Key] = e.Value

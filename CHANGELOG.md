@@ -10,6 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Better error message for invalid app name error
 - Better error message for invalid env var name error
+- Refactor specs to be more in line with k8s concepts
 
 ## [0.15.0] - 2018-02-14
 ### Changed

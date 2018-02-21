@@ -13,16 +13,18 @@ import (
 
 func TestPodSpecToK8sContainer(t *testing.T) {
 	ps := &spec.Pod{
-		Name:  "Teresa",
-		Image: "luizalabs/teresa:0.0.1",
-		Env:   map[string]string{"ENV-KEY": "ENV-VALUE"},
-		Args:  []string{"start", "release"},
-		VolumeMounts: []*spec.PodVolumeMounts{
-			{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
-		},
-		ContainerLimits: &spec.ContainerLimits{
-			CPU:    "800m",
-			Memory: "1Gi",
+		Container: spec.Container{
+			Name:  "Teresa",
+			Image: "luizalabs/teresa:0.0.1",
+			Env:   map[string]string{"ENV-KEY": "ENV-VALUE"},
+			Args:  []string{"start", "release"},
+			VolumeMounts: []*spec.VolumeMounts{
+				{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
+			},
+			ContainerLimits: &spec.ContainerLimits{
+				CPU:    "800m",
+				Memory: "1Gi",
+			},
 		},
 	}
 	c, err := podSpecToK8sContainer(ps)
@@ -86,7 +88,7 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 }
 
 func TestPodSpecVolumesToK8sVolumes(t *testing.T) {
-	vols := []*spec.PodVolume{
+	vols := []*spec.Volume{
 		{Name: "Vol-Test", SecretName: "Bond"},
 	}
 	k8sVols := podSpecVolumesToK8sVolumes(vols)
@@ -103,11 +105,13 @@ func TestPodSpecVolumesToK8sVolumes(t *testing.T) {
 
 func TestPodSpecToK8sPod(t *testing.T) {
 	ps := &spec.Pod{
-		Name:  "Teresa",
-		Image: "luizalabs/teresa:0.0.1",
-		Env:   map[string]string{"ENV-KEY": "ENV-VALUE"},
-		VolumeMounts: []*spec.PodVolumeMounts{
-			{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
+		Container: spec.Container{
+			Name:  "Teresa",
+			Image: "luizalabs/teresa:0.0.1",
+			Env:   map[string]string{"ENV-KEY": "ENV-VALUE"},
+			VolumeMounts: []*spec.VolumeMounts{
+				{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
+			},
 		},
 	}
 	pod, err := podSpecToK8sPod(ps)
@@ -169,9 +173,11 @@ func TestHealthCheckProbeToK8sProbe(t *testing.T) {
 func TestDeploySpecToK8sDeploy(t *testing.T) {
 	ds := &spec.Deploy{
 		Pod: spec.Pod{
-			Name:  "Teresa",
-			Image: "luizalabs/teresa:0.0.1",
-			Args:  []string{"run", "web"},
+			Container: spec.Container{
+				Name:  "Teresa",
+				Image: "luizalabs/teresa:0.0.1",
+				Args:  []string{"run", "web"},
+			},
 		},
 		TeresaYaml: spec.TeresaYaml{
 			HealthCheck: &spec.HealthCheck{
@@ -254,8 +260,10 @@ func TestIngressSpec(t *testing.T) {
 
 func TestPodSpecToK8sPodShouldAddAutomountSATokenField(t *testing.T) {
 	ps := &spec.Pod{
-		Name:  "Teresa",
-		Image: "luizalabs/teresa:0.0.1",
+		Container: spec.Container{
+			Name:  "Teresa",
+			Image: "luizalabs/teresa:0.0.1",
+		},
 	}
 
 	pod, err := podSpecToK8sPod(ps)
@@ -274,9 +282,11 @@ func TestPodSpecToK8sPodShouldAddAutomountSATokenField(t *testing.T) {
 func TestDeploySpecToK8sDeployShouldAddAutomountSATokenField(t *testing.T) {
 	ds := &spec.Deploy{
 		Pod: spec.Pod{
-			Name:  "Teresa",
-			Image: "luizalabs/teresa:0.0.1",
-			Args:  []string{"run", "web"},
+			Container: spec.Container{
+				Name:  "Teresa",
+				Image: "luizalabs/teresa:0.0.1",
+				Args:  []string{"run", "web"},
+			},
 		},
 	}
 

@@ -535,7 +535,7 @@ func TestAppOperationsInfo(t *testing.T) {
 	teamName := "luizalabs"
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: teamName}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
 		Name:  teamName,
 		Users: []database.User{*user},
 	}
@@ -654,7 +654,7 @@ func TestAppOperationsSetEnv(t *testing.T) {
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
@@ -693,7 +693,7 @@ func TestAppOperationsSetEnvErrInternalServerErrorOnSaveApp(t *testing.T) {
 	ops := NewOperations(tops, &errK8sOperations{SetNamespaceAnnotationsErr: errors.New("test")}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
@@ -708,7 +708,7 @@ func TestAppOpsSetEnvErrInvalidEnvVarName(t *testing.T) {
 	ops := NewOperations(tops, nil, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
@@ -728,7 +728,7 @@ func TestAppOperationsUnsetEnv(t *testing.T) {
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
@@ -783,7 +783,7 @@ func TestAppOperationsUnSetEnvProtectedVar(t *testing.T) {
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
@@ -798,7 +798,7 @@ func TestAppOperationsUnsetEnvErrInternalServerErrorOnSaveApp(t *testing.T) {
 	ops := NewOperations(tops, &errK8sOperations{SetNamespaceAnnotationsErr: errors.New("test")}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
@@ -813,7 +813,7 @@ func TestAppOperationsSetAutoscale(t *testing.T) {
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
@@ -850,7 +850,7 @@ func TestAppOperationsSetAutoscaleErrInternalServerErrorOnSaveApp(t *testing.T) 
 	ops := NewOperations(tops, &errK8sOperations{SetNamespaceAnnotationsErr: errors.New("test")}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
@@ -867,7 +867,7 @@ func TestAppOperationsDelete(t *testing.T) {
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
@@ -920,7 +920,7 @@ func TestAppOperationsSetReplicas(t *testing.T) {
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
@@ -955,7 +955,7 @@ func TestAppOpsDeletePodsSuccess(t *testing.T) {
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
@@ -994,7 +994,7 @@ func TestAppOpsDeletePodsInternalServerError(t *testing.T) {
 	ops := NewOperations(tops, kops, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
-	tops.(*team.FakeOperations).Storage[app.Name] = &database.Team{
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}

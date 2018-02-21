@@ -76,31 +76,21 @@ const (
 	TeresaLastUser   = "teresa.io/last-user"
 )
 
-func (ops *AppOperations) hasPerm(user *database.User, team string) bool {
-	teams, err := ops.tops.ListByUser(user.Email)
-	if err != nil {
-		return false
-	}
-	var found bool
-	for _, t := range teams {
-		if t.Name == team {
-			found = true
-			break
-		}
-	}
-	return found
-}
-
 func (ops *AppOperations) HasPermission(user *database.User, appName string) bool {
 	teamName, err := ops.TeamName(appName)
 	if err != nil {
 		return false
 	}
-	return ops.hasPerm(user, teamName)
+	hasPerm, err := ops.tops.HasUser(teamName, user.Email)
+	if err != nil {
+		return false
+	}
+	return hasPerm
 }
 
 func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
-	if !ops.hasPerm(user, app.Team) {
+	hasPerm, err := ops.tops.HasUser(app.Team, user.Email)
+	if err != nil || !hasPerm {
 		return auth.ErrPermissionDenied
 	}
 
@@ -137,7 +127,7 @@ func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 }
 
 func (ops *AppOperations) Logs(user *database.User, appName string, opts *LogOptions) (io.ReadCloser, error) {
-	team, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
+	teamName, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
 	if err != nil {
 		if ops.kops.IsNotFound(err) {
 			return nil, ErrNotFound
@@ -145,7 +135,8 @@ func (ops *AppOperations) Logs(user *database.User, appName string, opts *LogOpt
 		return nil, teresa_errors.NewInternalServerError(err)
 	}
 
-	if !ops.hasPerm(user, team) {
+	hasPerm, err := ops.tops.HasUser(teamName, user.Email)
+	if err != nil || !hasPerm {
 		return nil, auth.ErrPermissionDenied
 	}
 
@@ -191,7 +182,8 @@ func (ops *AppOperations) Info(user *database.User, appName string) (*Info, erro
 		return nil, err
 	}
 
-	if !ops.hasPerm(user, teamName) {
+	hasPerm, err := ops.tops.HasUser(teamName, user.Email)
+	if err != nil || !hasPerm {
 		return nil, auth.ErrPermissionDenied
 	}
 
@@ -260,12 +252,13 @@ func (ops *AppOperations) Get(appName string) (*App, error) {
 }
 
 func (ops *AppOperations) CheckPermAndGet(user *database.User, appName string) (*App, error) {
-	team, err := ops.TeamName(appName)
+	teamName, err := ops.TeamName(appName)
 	if err != nil {
 		return nil, err
 	}
 
-	if !ops.hasPerm(user, team) {
+	hasPerm, err := ops.tops.HasUser(teamName, user.Email)
+	if err != nil || !hasPerm {
 		return nil, auth.ErrPermissionDenied
 	}
 

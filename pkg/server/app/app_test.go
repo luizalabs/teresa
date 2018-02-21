@@ -20,7 +20,8 @@ import (
 )
 
 type fakeK8sOperations struct {
-	Namespaces map[string]struct{}
+	CreateOrUpdateAutoscaleWasCalled bool
+	Namespaces                       map[string]struct{}
 }
 
 type errK8sOperations struct {
@@ -72,7 +73,8 @@ func (*fakeK8sOperations) NamespaceLabel(namespace, label string) (string, error
 	return "luizalabs", nil
 }
 
-func (*fakeK8sOperations) CreateOrUpdateAutoscale(app *App) error {
+func (f *fakeK8sOperations) CreateOrUpdateAutoscale(app *App) error {
+	f.CreateOrUpdateAutoscaleWasCalled = true
 	return nil
 }
 
@@ -266,6 +268,28 @@ func TestAppOperationsCreate(t *testing.T) {
 
 	if err := ops.Create(user, app); err != nil {
 		t.Fatal("error creating app: ", err)
+	}
+}
+
+func TestAppOperationsCreateCronDoesNotCreateHPA(t *testing.T) {
+	tops := team.NewFakeOperations()
+	fakeSt := st.NewFake()
+	fakeK8s := &fakeK8sOperations{}
+	ops := NewOperations(tops, &fakeK8sOperations{}, fakeSt)
+	name := "luizalabs"
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: name, ProcessType: ProcessTypeCron}
+	tops.(*team.FakeOperations).Storage[name] = &database.Team{
+		Name:  name,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.Create(user, app); err != nil {
+		t.Fatal("error creating app: ", err)
+	}
+
+	if fakeK8s.CreateOrUpdateAutoscaleWasCalled {
+		t.Error("expected not hpa for crons, but was created")
 	}
 }
 

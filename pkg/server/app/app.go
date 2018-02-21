@@ -119,8 +119,10 @@ func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 		return teresa_errors.NewInternalServerError(err)
 	}
 
-	if err := ops.kops.CreateOrUpdateAutoscale(app); err != nil {
-		return teresa_errors.New(ErrInvalidAutoscale, err)
+	if app.ProcessType != ProcessTypeCron {
+		if err := ops.kops.CreateOrUpdateAutoscale(app); err != nil {
+			return teresa_errors.New(ErrInvalidAutoscale, err)
+		}
 	}
 
 	return nil

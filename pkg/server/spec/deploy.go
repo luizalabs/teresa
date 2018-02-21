@@ -40,10 +40,15 @@ type Lifecycle struct {
 	PreStop *PreStop `yaml:"preStop,omitempty"`
 }
 
+type CronArgs struct {
+	Schedule string `yaml:"schedule",omitempty"`
+}
+
 type TeresaYaml struct {
 	HealthCheck   *HealthCheck   `yaml:"healthCheck,omitempty"`
 	RollingUpdate *RollingUpdate `yaml:"rollingUpdate,omitempty"`
 	Lifecycle     *Lifecycle     `yaml:"lifecycle,omitempty"`
+	Cron          *CronArgs      `yaml:"cron,omitempty"`
 }
 
 type Deploy struct {
@@ -84,11 +89,7 @@ func NewDeploy(imgs *SlugImages, description, slugURL string, rhl int, a *app.Ap
 	}
 
 	if tYaml != nil {
-		ds.TeresaYaml = TeresaYaml{
-			HealthCheck:   tYaml.HealthCheck,
-			RollingUpdate: tYaml.RollingUpdate,
-			Lifecycle:     tYaml.Lifecycle,
-		}
+		ds.TeresaYaml = *tYaml
 	}
 
 	if ds.Lifecycle == nil {

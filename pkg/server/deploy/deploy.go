@@ -3,6 +3,7 @@ package deploy
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	context "golang.org/x/net/context"
@@ -30,6 +31,7 @@ type Operations interface {
 
 type K8sOperations interface {
 	CreateOrUpdateDeploy(deploySpec *spec.Deploy) error
+	CreateOrUpdateCronJob(cronJobSpec *spec.CronJob) error
 	ExposeDeploy(namespace, name, vHost string, w io.Writer) error
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
 	DeployRollbackToRevision(namespace, name, revision string) error
@@ -82,26 +84,11 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 		}
 
 		slugURL := fmt.Sprintf("%s/slug.tgz", buildDest)
-		releaseCmd := confFiles.Procfile[ProcfileReleaseCmd]
-		if confFiles.Procfile != nil && releaseCmd != "" {
-			if err := ops.runReleaseCmd(a, deployId, slugURL, w); err != nil {
-				errChan <- err
-				log.WithError(err).WithField("id", deployId).Errorf("Running release command %s in app %s", releaseCmd, appName)
-				return
-			}
+		if a.ProcessType == app.ProcessTypeCron {
+			ops.createOrUpdateCronJob(a, confFiles, w, errChan, slugURL, description)
+		} else {
+			ops.effectivelyDeploy(a, confFiles, w, errChan, slugURL, deployId, description)
 		}
-
-		if err := ops.createDeploy(a, confFiles.TeresaYaml, description, slugURL); err != nil {
-			errChan <- err
-			log.WithError(err).Errorf("Creating deploy app %s", appName)
-			return
-		}
-
-		if err := ops.exposeApp(a, w); err != nil {
-			errChan <- err
-			log.WithError(err).Errorf("Exposing service %s", appName)
-		}
-		fmt.Fprintln(w, fmt.Sprintf("The app %s has been successfully deployed", appName))
 	}()
 	return r, errChan
 }
@@ -139,7 +126,50 @@ func (ops *DeployOperations) buildLimits() *spec.ContainerLimits {
 	}
 }
 
-func (ops *DeployOperations) createDeploy(a *app.App, tYaml *spec.TeresaYaml, description, slugURL string) error {
+func (ops *DeployOperations) effectivelyDeploy(a *app.App, confFiles *DeployConfigFiles, w io.Writer, errChan chan error, slugURL, deployId, description string) {
+	releaseCmd := confFiles.Procfile[ProcfileReleaseCmd]
+	if confFiles.Procfile != nil && releaseCmd != "" {
+		if err := ops.runReleaseCmd(a, deployId, slugURL, w); err != nil {
+			errChan <- err
+			log.WithError(err).WithField("id", deployId).Errorf("Running release command %s in app %s", releaseCmd, a.Name)
+			return
+		}
+	}
+
+	if err := ops.createOrUpdateK8sDeploy(a, confFiles.TeresaYaml, description, slugURL); err != nil {
+		errChan <- err
+		log.WithError(err).Errorf("Creating deploy app %s", a.Name)
+		return
+	}
+
+	if err := ops.exposeApp(a, w); err != nil {
+		errChan <- err
+		log.WithError(err).Errorf("Exposing service %s", a.Name)
+	} else {
+		fmt.Fprintln(w, fmt.Sprintf("The app %s has been successfully deployed", a.Name))
+	}
+}
+
+func (ops *DeployOperations) createOrUpdateCronJob(a *app.App, confFiles *DeployConfigFiles, w io.Writer, errChan chan error, slugURL, description string) {
+	cronSpec := spec.NewCronJob(
+		ops.opts.SlugRunnerImage,
+		description,
+		slugURL,
+		confFiles.TeresaYaml.Cron.Schedule,
+		a,
+		ops.fileStorage,
+		strings.Split(confFiles.Procfile[app.ProcessTypeCron], " ")...,
+	)
+
+	if err := ops.k8s.CreateOrUpdateCronJob(cronSpec); err != nil {
+		errChan <- err
+		log.WithError(err).Errorf("Creating CronJob %s", a.Name)
+	} else {
+		fmt.Fprintln(w, fmt.Sprintf("The CronJob %s has been successfully deployed", a.Name))
+	}
+}
+
+func (ops *DeployOperations) createOrUpdateK8sDeploy(a *app.App, tYaml *spec.TeresaYaml, description, slugURL string) error {
 	imgs := &spec.SlugImages{
 		Runner: ops.opts.SlugRunnerImage,
 		Store:  ops.opts.SlugStoreImage,

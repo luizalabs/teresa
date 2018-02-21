@@ -30,7 +30,9 @@ func (f *fakeReadSeeker) Seek(offset int64, whence int) (int64, error) {
 
 type fakeK8sOperations struct {
 	lastDeploySpec           *spec.Deploy
+	lastCronJobSpec          *spec.CronJob
 	createDeployReturn       error
+	createCronJobReturn      error
 	hasSrvErr                error
 	exposeDeployWasCalled    bool
 	replicaSetListByLabelErr error
@@ -39,6 +41,11 @@ type fakeK8sOperations struct {
 func (f *fakeK8sOperations) CreateOrUpdateDeploy(deploySpec *spec.Deploy) error {
 	f.lastDeploySpec = deploySpec
 	return f.createDeployReturn
+}
+
+func (f *fakeK8sOperations) CreateOrUpdateCronJob(cronJobSpec *spec.CronJob) error {
+	f.lastCronJobSpec = cronJobSpec
+	return f.createCronJobReturn
 }
 
 func (f *fakeK8sOperations) ExposeDeploy(namespace, name, vHost string, w io.Writer) error {
@@ -135,7 +142,7 @@ func TestCreateDeploy(t *testing.T) {
 	)
 
 	deployOperations := ops.(*DeployOperations)
-	err := deployOperations.createDeploy(a, nil, expectedDescription, expectedSlugURL)
+	err := deployOperations.createOrUpdateK8sDeploy(a, nil, expectedDescription, expectedSlugURL)
 
 	if err != nil {
 		t.Fatal("error create deploy:", err)
@@ -168,7 +175,7 @@ func TestCreateDeployReturnError(t *testing.T) {
 	)
 
 	deployOperations := ops.(*DeployOperations)
-	err := deployOperations.createDeploy(
+	err := deployOperations.createOrUpdateK8sDeploy(
 		&app.App{Name: "test"},
 		nil,
 		"some desc",
@@ -176,6 +183,86 @@ func TestCreateDeployReturnError(t *testing.T) {
 	)
 
 	if err != expectedErr {
+		t.Errorf("expected %v, got %v", expectedErr, err)
+	}
+}
+
+func TestCreateCronJob(t *testing.T) {
+	expectedName := "Test cron"
+	a := &app.App{Name: expectedName, ProcessType: app.ProcessTypeCron}
+	expectedDescription := "test-description"
+	expectedSlugURL := "test-slug"
+	errChan := make(chan error, 1)
+	conf := &DeployConfigFiles{
+		Procfile: map[string]string{"cron": "echo hello world"},
+		TeresaYaml: &spec.TeresaYaml{
+			Cron: &spec.CronArgs{Schedule: "*/1 * * * *"},
+		},
+	}
+
+	fakeK8s := new(fakeK8sOperations)
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		fakeK8s,
+		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
+	)
+
+	deployOperations := ops.(*DeployOperations)
+	deployOperations.createOrUpdateCronJob(a, conf, new(bytes.Buffer), errChan, expectedSlugURL, expectedDescription)
+	errChan <- nil
+
+	if err := <-errChan; err != nil {
+		t.Fatal("error create cronJob:", err)
+	}
+
+	if fakeK8s.lastCronJobSpec.Name != expectedName {
+		t.Errorf("expected %s, got %s", expectedName, fakeK8s.lastCronJobSpec.Name)
+	}
+	if fakeK8s.lastCronJobSpec.SlugURL != expectedSlugURL {
+		t.Errorf("expected %s, got %s", expectedSlugURL, fakeK8s.lastCronJobSpec.SlugURL)
+	}
+	if fakeK8s.lastCronJobSpec.Schedule != conf.TeresaYaml.Cron.Schedule {
+		t.Errorf(
+			"expected %s, got %s",
+			conf.TeresaYaml.Cron.Schedule,
+			fakeK8s.lastCronJobSpec.Schedule,
+		)
+	}
+}
+
+func TestCreateCronJobReturnError(t *testing.T) {
+	expectedErr := errors.New("Some k8s error")
+	fakeK8s := &fakeK8sOperations{createCronJobReturn: expectedErr}
+
+	conf := &DeployConfigFiles{
+		Procfile: map[string]string{"cron": "echo hello world"},
+		TeresaYaml: &spec.TeresaYaml{
+			Cron: &spec.CronArgs{Schedule: "*/1 * * * *"},
+		},
+	}
+	errChan := make(chan error, 1)
+
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		fakeK8s,
+		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
+	)
+
+	deployOperations := ops.(*DeployOperations)
+	deployOperations.createOrUpdateCronJob(
+		&app.App{Name: "test"},
+		conf,
+		new(bytes.Buffer),
+		errChan,
+		"some slug",
+		"some desc",
+	)
+
+	if err := <-errChan; err != expectedErr {
 		t.Errorf("expected %v, got %v", expectedErr, err)
 	}
 }

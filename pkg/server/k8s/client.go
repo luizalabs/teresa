@@ -462,6 +462,24 @@ func (k *Client) CreateOrUpdateDeploy(deploySpec *spec.Deploy) error {
 	return err
 }
 
+func (c *Client) CreateOrUpdateCronJob(cronJobSpec *spec.CronJob) error {
+	kc, err := c.buildClient()
+	if err != nil {
+		return err
+	}
+
+	cronJobYaml, err := cronJobSpecToK8sCronJob(cronJobSpec)
+	if err != nil {
+		return err
+	}
+
+	_, err = kc.CronJobs(cronJobSpec.Namespace).Update(cronJobYaml)
+	if c.IsNotFound(err) {
+		_, err = kc.CronJobs(cronJobSpec.Namespace).Create(cronJobYaml)
+	}
+	return err
+}
+
 func (k *Client) PodRun(podSpec *spec.Pod) (io.ReadCloser, <-chan int, error) {
 	kc, err := k.buildClient()
 	if err != nil {

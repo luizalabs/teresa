@@ -375,3 +375,41 @@ func TestPodSpecToK8sInitContainers(t *testing.T) {
 		}
 	}
 }
+
+func TestCronJobSpecToK8sCronJob(t *testing.T) {
+	cs := &spec.CronJob{
+		Deploy: spec.Deploy{
+			Pod: spec.Pod{
+				Container: spec.Container{
+					Name:  "Teresa",
+					Image: "luizalabs/teresa:0.0.1",
+					Args:  []string{"echo", "hello"},
+				},
+			},
+		},
+		Schedule: "*/1 * * * *",
+	}
+
+	k8sCron, err := cronJobSpecToK8sCronJob(cs)
+	if err != nil {
+		t.Fatalf("error to convert spec %v", err)
+	}
+
+	actualSchedule := k8sCron.Spec.Schedule
+	if actualSchedule != cs.Schedule {
+		t.Errorf("expected %s, got %s", cs.Schedule, actualSchedule)
+	}
+
+	if len(k8sCron.Spec.JobTemplate.Spec.Template.Spec.Containers) != 1 {
+		t.Fatalf(
+			"expected 1 container, got %d",
+			len(k8sCron.Spec.JobTemplate.Spec.Template.Spec.Containers),
+		)
+	}
+	c := k8sCron.Spec.JobTemplate.Spec.Template.Spec.Containers[0]
+	for idx, arg := range cs.Args {
+		if c.Args[idx] != arg {
+			t.Errorf("expected %s, got %s", arg, c.Args[idx])
+		}
+	}
+}

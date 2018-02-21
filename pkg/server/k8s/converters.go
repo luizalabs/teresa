@@ -11,11 +11,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/apps/v1beta1"
+	k8sbatch "k8s.io/client-go/pkg/apis/batch/v1"
+	k8sv2alpha "k8s.io/client-go/pkg/apis/batch/v2alpha1"
 	k8s_extensions "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
 
 const (
 	changeCauseAnnotation = "kubernetes.io/change-cause"
+	appTypeAnnotation     = "teresa.io/app-type"
 	defaultServicePort    = 80
 )
 
@@ -195,6 +198,49 @@ func podSpecToK8sInitContainers(podSpec *spec.Pod) ([]k8sv1.Container, error) {
 		initContainers[idx] = *c
 	}
 	return initContainers, nil
+}
+
+func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv2alpha.CronJob, error) {
+	c, err := podSpecToK8sContainer(&cronJobSpec.Pod)
+	if err != nil {
+		return nil, err
+	}
+	volumes := podSpecVolumesToK8sVolumes(cronJobSpec.Volumes)
+
+	f := false
+	ps := k8sv1.PodSpec{
+		RestartPolicy: k8sv1.RestartPolicyNever,
+		Containers:    []k8sv1.Container{*c},
+		Volumes:       volumes,
+		AutomountServiceAccountToken: &f,
+	}
+
+	cj := &k8sv2alpha.CronJob{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "batch/v2alpha1",
+			Kind:       "CronJob",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cronJobSpec.Name,
+			Namespace: cronJobSpec.Namespace,
+			Annotations: map[string]string{
+				changeCauseAnnotation: cronJobSpec.Description,
+				spec.SlugAnnotation:   cronJobSpec.SlugURL,
+				appTypeAnnotation:     "cronjob",
+			},
+		},
+		Spec: k8sv2alpha.CronJobSpec{
+			Schedule: cronJobSpec.Schedule,
+			JobTemplate: k8sv2alpha.JobTemplateSpec{
+				Spec: k8sbatch.JobSpec{
+					Template: k8sv1.PodTemplateSpec{
+						Spec: ps,
+					},
+				},
+			},
+		},
+	}
+	return cj, nil
 }
 
 func rollingUpdateToK8sRollingUpdate(ru *spec.RollingUpdate) (maxSurge, maxUnavailable intstr.IntOrString) {

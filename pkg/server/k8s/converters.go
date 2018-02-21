@@ -58,7 +58,7 @@ func podSpecToK8sContainer(podSpec *spec.Pod) (*k8sv1.Container, error) {
 	return c, nil
 }
 
-func podSpecVolumesToK8sVolumes(vols []*spec.PodVolume) []k8sv1.Volume {
+func podSpecVolumesToK8sVolumes(vols []*spec.Volume) []k8sv1.Volume {
 	volumes := make([]k8sv1.Volume, 0)
 	for _, v := range vols {
 		vol := k8sv1.Volume{Name: v.Name}
@@ -75,7 +75,7 @@ func podSpecToK8sPod(podSpec *spec.Pod) (*k8sv1.Pod, error) {
 	if err != nil {
 		return nil, err
 	}
-	volumes := podSpecVolumesToK8sVolumes(podSpec.Volume)
+	volumes := podSpecVolumesToK8sVolumes(podSpec.Volumes)
 	f := false
 
 	ps := k8sv1.PodSpec{
@@ -101,7 +101,7 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.De
 	if err != nil {
 		return nil, err
 	}
-	volumes := podSpecVolumesToK8sVolumes(deploySpec.Volume)
+	volumes := podSpecVolumesToK8sVolumes(deploySpec.Volumes)
 
 	if deploySpec.HealthCheck != nil {
 		if deploySpec.HealthCheck.Liveness != nil {

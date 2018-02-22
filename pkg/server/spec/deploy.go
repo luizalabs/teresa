@@ -54,20 +54,27 @@ type Deploy struct {
 	SlugURL              string
 }
 
-func NewDeploy(image, description, slugURL string, rhl int, a *app.App, tYaml *TeresaYaml, fs storage.Storage) *Deploy {
+type SlugImages struct {
+	Runner string
+	Store  string
+}
+
+func NewDeploy(imgs *SlugImages, description, slugURL string, rhl int, a *app.App, tYaml *TeresaYaml, fs storage.Storage) *Deploy {
 	ps := NewPod(
 		a.Name,
-		image,
+		imgs.Runner,
 		a,
 		map[string]string{
-			"APP":             a.Name,
-			"PORT":            strconv.Itoa(DefaultPort),
-			"SLUG_URL":        slugURL,
-			"BUILDER_STORAGE": fs.Type(),
+			"APP":      a.Name,
+			"PORT":     strconv.Itoa(DefaultPort),
+			"SLUG_URL": slugURL,
+			"SLUG_DIR": slugVolumeMountPath,
 		},
 		fs,
 	)
 	ps.Args = []string{"start", a.ProcessType}
+	ps.VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}
+	ps.InitContainers = newInitContainers(slugURL, imgs.Store, a, fs)
 
 	ds := &Deploy{
 		Description:          description,

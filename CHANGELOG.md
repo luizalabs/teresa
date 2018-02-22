@@ -12,6 +12,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Better error message for invalid app name error
 - Better error message for invalid env var name error
 - Refactor specs to be more in line with k8s concepts
+- The slugrunner doesn't mount the storage keys anymore. An init container is
+  responsible for downloading the slug
 
 ## [0.15.0] - 2018-02-14
 ### Changed

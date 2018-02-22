@@ -13,9 +13,10 @@ func TestNewDeploySpec(t *testing.T) {
 	expectedSlugURL := "http://teresa.io/slug.tgz"
 	expectedRevisionHistoryLimit := 5
 	a := &app.App{Name: "deploy-test", ProcessType: "worker"}
+	imgs := &SlugImages{Runner: expectedImage}
 
 	ds := NewDeploy(
-		expectedImage,
+		imgs,
 		expectedDescription,
 		expectedSlugURL,
 		expectedRevisionHistoryLimit,
@@ -54,5 +55,20 @@ func TestNewDeploySpec(t *testing.T) {
 
 	if ds.Lifecycle.PreStop.DrainTimeoutSeconds != defaultDrainTimeoutSeconds {
 		t.Errorf("got %d; want %d", ds.Lifecycle.PreStop.DrainTimeoutSeconds, defaultDrainTimeoutSeconds)
+	}
+}
+
+func TestNewDeploySpecInitContainers(t *testing.T) {
+	expectedImage := "image"
+	a := &app.App{}
+	imgs := &SlugImages{Store: expectedImage}
+
+	ds := NewDeploy(imgs, "", "", 0, a, &TeresaYaml{}, storage.NewFake())
+
+	if len(ds.InitContainers) != 1 {
+		t.Errorf("got %d; want %d", len(ds.InitContainers), 1)
+	}
+	if ds.InitContainers[0].Image != expectedImage {
+		t.Errorf("got %s; want %s", ds.InitContainers[0].Image, expectedImage)
 	}
 }

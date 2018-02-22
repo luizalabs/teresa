@@ -118,6 +118,7 @@ func registerServices(s *grpc.Server, opt Options, uOps user.Operations) {
 
 	execDefaults := &exec.Defaults{
 		RunnerImage:  opt.DeployOpt.SlugRunnerImage,
+		StoreImage:   opt.DeployOpt.SlugStoreImage,
 		LimitsCPU:    opt.DeployOpt.BuildLimitCPU,
 		LimitsMemory: opt.DeployOpt.BuildLimitMemory,
 	}

@@ -20,18 +20,22 @@ const (
 )
 
 func podSpecToK8sContainer(podSpec *spec.Pod) (*k8sv1.Container, error) {
+	return containerSpecToK8sContainer(&podSpec.Container)
+}
+
+func containerSpecToK8sContainer(containerSpec *spec.Container) (*k8sv1.Container, error) {
 	c := &k8sv1.Container{
-		Name:            podSpec.Name,
+		Name:            containerSpec.Name,
 		ImagePullPolicy: k8sv1.PullIfNotPresent,
-		Image:           podSpec.Image,
+		Image:           containerSpec.Image,
 	}
 
-	if podSpec.ContainerLimits != nil {
-		cpu, err := resource.ParseQuantity(podSpec.ContainerLimits.CPU)
+	if containerSpec.ContainerLimits != nil {
+		cpu, err := resource.ParseQuantity(containerSpec.ContainerLimits.CPU)
 		if err != nil {
 			return nil, err
 		}
-		memory, err := resource.ParseQuantity(podSpec.ContainerLimits.Memory)
+		memory, err := resource.ParseQuantity(containerSpec.ContainerLimits.Memory)
 		if err != nil {
 			return nil, err
 		}
@@ -43,12 +47,12 @@ func podSpecToK8sContainer(podSpec *spec.Pod) (*k8sv1.Container, error) {
 		}
 	}
 
-	c.Args = append(c.Args, podSpec.Args...)
+	c.Args = append(c.Args, containerSpec.Args...)
 
-	for k, v := range podSpec.Env {
+	for k, v := range containerSpec.Env {
 		c.Env = append(c.Env, k8sv1.EnvVar{Name: k, Value: v})
 	}
-	for _, vm := range podSpec.VolumeMounts {
+	for _, vm := range containerSpec.VolumeMounts {
 		c.VolumeMounts = append(c.VolumeMounts, k8sv1.VolumeMount{
 			Name:      vm.Name,
 			MountPath: vm.MountPath,
@@ -62,8 +66,12 @@ func podSpecVolumesToK8sVolumes(vols []*spec.Volume) []k8sv1.Volume {
 	volumes := make([]k8sv1.Volume, 0)
 	for _, v := range vols {
 		vol := k8sv1.Volume{Name: v.Name}
-		vol.Secret = &k8sv1.SecretVolumeSource{
-			SecretName: v.SecretName,
+		if v.EmptyDir {
+			vol.EmptyDir = &k8sv1.EmptyDirVolumeSource{}
+		} else {
+			vol.Secret = &k8sv1.SecretVolumeSource{
+				SecretName: v.SecretName,
+			}
 		}
 		volumes = append(volumes, vol)
 	}
@@ -78,11 +86,17 @@ func podSpecToK8sPod(podSpec *spec.Pod) (*k8sv1.Pod, error) {
 	volumes := podSpecVolumesToK8sVolumes(podSpec.Volumes)
 	f := false
 
+	initContainers, err := podSpecToK8sInitContainers(podSpec)
+	if err != nil {
+		return nil, err
+	}
+
 	ps := k8sv1.PodSpec{
 		RestartPolicy: k8sv1.RestartPolicyNever,
 		Containers:    []k8sv1.Container{*c},
 		Volumes:       volumes,
 		AutomountServiceAccountToken: &f,
+		InitContainers:               initContainers,
 	}
 
 	pod := &k8sv1.Pod{
@@ -117,11 +131,16 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.De
 	}
 
 	f := false
+	initContainers, err := podSpecToK8sInitContainers(&deploySpec.Pod)
+	if err != nil {
+		return nil, err
+	}
 	ps := k8sv1.PodSpec{
 		RestartPolicy: k8sv1.RestartPolicyAlways,
 		Containers:    []k8sv1.Container{*c},
 		Volumes:       volumes,
 		AutomountServiceAccountToken: &f,
+		InitContainers:               initContainers,
 	}
 
 	var maxSurge, maxUnavailable *intstr.IntOrString
@@ -164,6 +183,18 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.De
 		},
 	}
 	return d, nil
+}
+
+func podSpecToK8sInitContainers(podSpec *spec.Pod) ([]k8sv1.Container, error) {
+	initContainers := make([]k8sv1.Container, len(podSpec.InitContainers))
+	for idx, p := range podSpec.InitContainers {
+		c, err := containerSpecToK8sContainer(p)
+		if err != nil {
+			return nil, err
+		}
+		initContainers[idx] = *c
+	}
+	return initContainers, nil
 }
 
 func rollingUpdateToK8sRollingUpdate(ru *spec.RollingUpdate) (maxSurge, maxUnavailable intstr.IntOrString) {

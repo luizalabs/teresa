@@ -41,6 +41,19 @@ func TestNewPodSpec(t *testing.T) {
 			t.Errorf("expected %s, got %s for key %s", v, ps.Env[k], k)
 		}
 	}
+
+	if len(ps.Volumes) != 2 {
+		t.Errorf("expected %d, got %d", 2, len(ps.Volumes))
+	}
+	if len(ps.VolumeMounts) != 0 {
+		t.Errorf("expected %d, got %d", 0, len(ps.VolumeMounts))
+	}
+	if ps.Volumes[0].Name != "storage-keys" {
+		t.Errorf("expected %s, got %s", "storage-keys", ps.Volumes[0].Name)
+	}
+	if ps.Volumes[1].Name != slugVolumeName {
+		t.Errorf("expected %s, got %s", slugVolumeName, ps.Volumes[1].Name)
+	}
 }
 
 func TestNewBuilder(t *testing.T) {
@@ -86,6 +99,13 @@ func TestNewBuilder(t *testing.T) {
 	if ps.ContainerLimits.Memory != expectedContainerLimits.Memory {
 		t.Errorf("expected %s, got %s", expectedContainerLimits.Memory, ps.ContainerLimits.Memory)
 	}
+
+	if len(ps.VolumeMounts) != 1 {
+		t.Errorf("expected 1, got %d", len(ps.VolumeMounts))
+	}
+	if ps.VolumeMounts[0].Name != "storage-keys" {
+		t.Errorf("expected %s, got %s", "storage-keys", ps.VolumeMounts[0].Name)
+	}
 }
 
 func TestNewRunner(t *testing.T) {
@@ -99,11 +119,12 @@ func TestNewRunner(t *testing.T) {
 		CPU:    "800m",
 		Memory: "1Gi",
 	}
+	imgs := &SlugImages{Runner: expectedImage}
 
 	ps := NewRunner(
 		expectedPodName,
 		expectedSlugURL,
-		expectedImage,
+		imgs,
 		a,
 		s,
 		expectedContainerLimits,
@@ -118,8 +139,7 @@ func TestNewRunner(t *testing.T) {
 	}
 
 	ev := map[string]string{
-		"SLUG_URL":        expectedSlugURL,
-		"BUILDER_STORAGE": s.Type(),
+		"SLUG_URL": expectedSlugURL,
 	}
 	for k, v := range ev {
 		if ps.Env[k] != v {
@@ -138,5 +158,41 @@ func TestNewRunner(t *testing.T) {
 		if ps.Args[i] != expectedCommand[i] {
 			t.Errorf("expected %s, got %s", v, ps.Args[i])
 		}
+	}
+}
+
+func TestNewRunnerInitContainers(t *testing.T) {
+	expectedImage := "image"
+	cmd := []string{}
+	a := &app.App{}
+	s := storage.NewFake()
+	cl := &ContainerLimits{}
+	imgs := &SlugImages{Store: expectedImage}
+
+	ps := NewRunner("", "", imgs, a, s, cl, cmd...)
+
+	if len(ps.InitContainers) != 1 {
+		t.Errorf("expected %d, got %d", 1, len(ps.InitContainers))
+	}
+	if ps.InitContainers[0].Image != expectedImage {
+		t.Errorf("expected %s, got %s", expectedImage, ps.InitContainers[0].Image)
+	}
+}
+
+func TestNewRunnerVolumeMounts(t *testing.T) {
+	expectedImage := "image"
+	cmd := []string{}
+	a := &app.App{}
+	s := storage.NewFake()
+	cl := &ContainerLimits{}
+	imgs := &SlugImages{Store: expectedImage}
+
+	ps := NewRunner("", "", imgs, a, s, cl, cmd...)
+
+	if len(ps.VolumeMounts) != 1 {
+		t.Errorf("expected %d, got %d", 1, len(ps.VolumeMounts))
+	}
+	if ps.VolumeMounts[0].Name != slugVolumeName {
+		t.Errorf("expected %s, got %s", slugVolumeName, ps.VolumeMounts[0].Name)
 	}
 }

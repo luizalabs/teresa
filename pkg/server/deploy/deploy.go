@@ -107,10 +107,14 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 }
 
 func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugURL string, stream io.Writer) error {
+	imgs := &spec.SlugImages{
+		Runner: ops.opts.SlugRunnerImage,
+		Store:  ops.opts.SlugStoreImage,
+	}
 	podSpec := spec.NewRunner(
 		fmt.Sprintf("release-%s-%s", a.Name, deployId),
 		slugURL,
-		ops.opts.SlugRunnerImage,
+		imgs,
 		a,
 		ops.fileStorage,
 		ops.buildLimits(),
@@ -136,8 +140,12 @@ func (ops *DeployOperations) buildLimits() *spec.ContainerLimits {
 }
 
 func (ops *DeployOperations) createDeploy(a *app.App, tYaml *spec.TeresaYaml, description, slugURL string) error {
+	imgs := &spec.SlugImages{
+		Runner: ops.opts.SlugRunnerImage,
+		Store:  ops.opts.SlugStoreImage,
+	}
 	deploySpec := spec.NewDeploy(
-		ops.opts.SlugRunnerImage,
+		imgs,
 		description,
 		slugURL,
 		ops.opts.RevisionHistoryLimit,

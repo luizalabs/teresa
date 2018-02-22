@@ -87,7 +87,7 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 	}
 }
 
-func TestPodSpecVolumesToK8sVolumes(t *testing.T) {
+func TestPodSpecSecretVolumesToK8s(t *testing.T) {
 	vols := []*spec.Volume{
 		{Name: "Vol-Test", SecretName: "Bond"},
 	}
@@ -103,6 +103,25 @@ func TestPodSpecVolumesToK8sVolumes(t *testing.T) {
 	}
 }
 
+func TestPodSpecEmptyDirVolumeToK8s(t *testing.T) {
+	vols := []*spec.Volume{
+		{Name: "Vol-Test", EmptyDir: true},
+	}
+	k8sVols := podSpecVolumesToK8sVolumes(vols)
+
+	for idx, vol := range vols {
+		if k8sVols[idx].Name != vol.Name {
+			t.Errorf("expected %s, got %s", vol.Name, k8sVols[idx].Name)
+		}
+		if k8sVols[idx].Secret != nil {
+			t.Errorf("expected nil, got %v", k8sVols[idx].Secret)
+		}
+		if k8sVols[idx].EmptyDir == nil {
+			t.Error("expected pointer to struct, got nil")
+		}
+	}
+}
+
 func TestPodSpecToK8sPod(t *testing.T) {
 	ps := &spec.Pod{
 		Container: spec.Container{
@@ -113,6 +132,10 @@ func TestPodSpecToK8sPod(t *testing.T) {
 				{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
 			},
 		},
+		InitContainers: []*spec.Container{{
+			Name:  "Teresa",
+			Image: "luizalabs/teresa:0.0.1",
+		}},
 	}
 	pod, err := podSpecToK8sPod(ps)
 	if err != nil {
@@ -123,6 +146,10 @@ func TestPodSpecToK8sPod(t *testing.T) {
 	}
 	if pod.ObjectMeta.Namespace != ps.Namespace {
 		t.Errorf("expected %s, got %s", ps.Namespace, pod.ObjectMeta.Namespace)
+	}
+
+	if len(pod.Spec.InitContainers) != len(ps.InitContainers) {
+		t.Errorf("expected %d, got %d", len(ps.InitContainers), len(pod.Spec.InitContainers))
 	}
 }
 
@@ -178,6 +205,10 @@ func TestDeploySpecToK8sDeploy(t *testing.T) {
 				Image: "luizalabs/teresa:0.0.1",
 				Args:  []string{"run", "web"},
 			},
+			InitContainers: []*spec.Container{{
+				Name:  "Teresa",
+				Image: "luizalabs/teresa:0.0.1",
+			}},
 		},
 		TeresaYaml: spec.TeresaYaml{
 			HealthCheck: &spec.HealthCheck{
@@ -221,6 +252,11 @@ func TestDeploySpecToK8sDeploy(t *testing.T) {
 	}
 	if *k8sRollingUpdate.MaxSurge != intstr.FromInt(3) {
 		t.Errorf("expected 3, got %v", k8sRollingUpdate.MaxSurge)
+	}
+
+	initContainers := k8sDeploy.Spec.Template.Spec.InitContainers
+	if len(initContainers) != len(ds.Pod.InitContainers) {
+		t.Errorf("expected %d, got %d", len(ds.Pod.InitContainers), len(initContainers))
 	}
 }
 
@@ -313,5 +349,29 @@ func TestAppPodListOptsToK8s(t *testing.T) {
 
 	if k8sOpts.FieldSelector != expectedFs {
 		t.Errorf("got %s, want %s", k8sOpts.FieldSelector, expectedFs)
+	}
+}
+
+func TestPodSpecToK8sInitContainers(t *testing.T) {
+	ps := &spec.Pod{
+		InitContainers: []*spec.Container{
+			{
+				Name: "name1",
+			},
+			{
+				Name: "name2",
+			},
+		},
+	}
+
+	c, err := podSpecToK8sInitContainers(ps)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for i, _ := range c {
+		if c[i].Name != ps.InitContainers[i].Name {
+			t.Errorf("got %s, want %s", c[i].Name, ps.InitContainers[i].Name)
+		}
 	}
 }

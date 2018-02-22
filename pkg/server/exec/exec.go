@@ -27,6 +27,7 @@ type K8sOperations interface {
 
 type Defaults struct {
 	RunnerImage  string
+	StoreImage   string
 	LimitsCPU    string
 	LimitsMemory string
 }
@@ -56,10 +57,14 @@ func (ops *ExecOperations) RunCommand(ctx context.Context, user *database.User, 
 		return nil, errChan
 	}
 
+	imgs := &spec.SlugImages{
+		Runner: ops.defaults.RunnerImage,
+		Store:  ops.defaults.StoreImage,
+	}
 	podSpec := spec.NewRunner(
 		fmt.Sprintf("exec-command-%s-%s", appName, uid.New()),
 		currentSlug,
-		ops.defaults.RunnerImage,
+		imgs,
 		a,
 		ops.fs,
 		&spec.ContainerLimits{

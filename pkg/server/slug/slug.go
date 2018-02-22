@@ -8,5 +8,6 @@ var (
 		"DEIS_DEBUG",
 		"BUILDER_STORAGE",
 		"APP",
+		"SLUG_DIR",
 	}
 )

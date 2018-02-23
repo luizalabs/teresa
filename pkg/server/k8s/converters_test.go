@@ -434,3 +434,21 @@ func TestCronJobSpecToK8sCronJob(t *testing.T) {
 		t.Errorf("expected %d, got %d", cs.FailedJobsHistoryLimit, *lim)
 	}
 }
+
+func TestConfigMapSpec(t *testing.T) {
+	name := "teresa"
+	namespace := "teresa"
+	data := map[string]string{"foo": "bar"}
+
+	o := configMapSpec(namespace, name, data)
+
+	if o.ObjectMeta.Name != name {
+		t.Errorf("expected %s, got %s", name, o.ObjectMeta.Name)
+	}
+	if o.ObjectMeta.Namespace != namespace {
+		t.Errorf("expected %s, got %s", namespace, o.ObjectMeta.Namespace)
+	}
+	if o.Data["foo"] != data["foo"] {
+		t.Errorf("expected %s, got %s", data["foo"], o.Data["foo"])
+	}
+}

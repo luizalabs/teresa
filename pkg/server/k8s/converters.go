@@ -367,3 +367,17 @@ func appPodListOptsToK8s(opts *app.PodListOptions) *metav1.ListOptions {
 
 	return &k8sOpts
 }
+
+func configMapSpec(namespace, name string, data map[string]string) *k8sv1.ConfigMap {
+	return &k8sv1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Data: data,
+	}
+}

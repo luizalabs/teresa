@@ -439,6 +439,20 @@ func (k *Client) Limits(namespace, name string) (*app.Limits, error) {
 	return lim, nil
 }
 
+func (k *Client) createOrUpdateConfigMap(namespace, name string, data map[string]string) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+
+	cm := configMapSpec(namespace, name, data)
+	_, err = kc.CoreV1().ConfigMaps(namespace).Update(cm)
+	if k.IsNotFound(err) {
+		_, err = kc.CoreV1().ConfigMaps(namespace).Create(cm)
+	}
+	return err
+}
+
 func (k *Client) CreateOrUpdateDeploy(deploySpec *spec.Deploy) error {
 	kc, err := k.buildClient()
 	if err != nil {

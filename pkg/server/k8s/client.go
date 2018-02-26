@@ -294,6 +294,14 @@ func (k *Client) CreateSecret(appName, secretName string, data map[string][]byte
 	return err
 }
 
+func (k *Client) DeleteSecret(appName, secretName string) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+	return kc.CoreV1().Secrets(appName).Delete(secretName, &metav1.DeleteOptions{})
+}
+
 func (k *Client) CreateOrUpdateAutoscale(a *app.App) error {
 	kc, err := k.buildClient()
 	if err != nil {
@@ -760,6 +768,9 @@ func (k *Client) NamespaceListByLabel(label, value string) ([]string, error) {
 		return nil, err
 	}
 	labelSelector := fmt.Sprintf("%s=%s", label, value)
+	if value == "" {
+		labelSelector = fmt.Sprintf("%s", label)
+	}
 	nl, err := kc.CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		return nil, err

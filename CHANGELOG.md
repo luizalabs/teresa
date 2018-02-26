@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - `app logs` support to filter by pod name
 - `app logs` support to print the logs of the previous pod instance
+- [server] `replace-storage-secret` admin command
 
 ### Changed
 - Better error message for invalid app name error

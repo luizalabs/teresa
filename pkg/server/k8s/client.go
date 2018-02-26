@@ -26,6 +26,7 @@ import (
 
 const (
 	patchDeployEnvVarsTmpl            = `{"spec":{"template":{"spec":{"containers":[{"name": "%s", "env":%s}]}}}}`
+	patchCronJobEnvVarsTmpl           = `{"spec":{"jobTemplate":{"spec": {"template": {"spec": {"containers":[{"name": "%s", "env":%s}]}}}}}}`
 	patchDeployRollbackToRevisionTmpl = `{"spec":{"rollbackTo":{"revision": %s}}}`
 	patchDeployReplicasTmpl           = `{"spec":{"replicas": %d}}`
 	revisionAnnotation                = "deployment.kubernetes.io/revision"
@@ -725,24 +726,53 @@ func (k *Client) SetNamespaceLabels(namespace string, labels map[string]string) 
 	return err
 }
 
-func (k *Client) patchDeployEnvVars(namespace, name string, v interface{}) error {
-	kc, err := k.buildClient()
+func prepareEnvVarsPath(name, template string, v interface{}) ([]byte, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to json encode env vars")
+	}
+	data := fmt.Sprintf(template, name, string(b))
+	return []byte(data), nil
+}
+
+func (c *Client) patchDeployEnvVars(namespace, name string, v interface{}) error {
+	data, err := prepareEnvVarsPath(name, patchDeployEnvVarsTmpl, v)
 	if err != nil {
 		return err
 	}
-	b, err := json.Marshal(v)
+
+	kc, err := c.buildClient()
 	if err != nil {
-		return errors.Wrap(err, "failed to json encode env vars")
+		return err
 	}
-	data := fmt.Sprintf(patchDeployEnvVarsTmpl, name, string(b))
 
 	_, err = kc.ExtensionsV1beta1().Deployments(namespace).Patch(
 		name,
 		types.StrategicMergePatchType,
-		[]byte(data),
+		data,
 	)
 
 	return errors.Wrap(err, "patch deploy failed")
+}
+
+func (c *Client) patchCronJobEnvVars(namespace, name string, v interface{}) error {
+	data, err := prepareEnvVarsPath(name, patchCronJobEnvVarsTmpl, v)
+	if err != nil {
+		return err
+	}
+
+	kc, err := c.buildClient()
+	if err != nil {
+		return err
+	}
+
+	_, err = kc.CronJobs(namespace).Patch(
+		name,
+		types.StrategicMergePatchType,
+		data,
+	)
+
+	return errors.Wrap(err, "patch cronjob failed")
 }
 
 func (k *Client) DeleteDeployEnvVars(namespace, name string, evNames []string) error {
@@ -758,7 +788,7 @@ func (k *Client) DeleteDeployEnvVars(namespace, name string, evNames []string) e
 	return k.patchDeployEnvVars(namespace, name, env)
 }
 
-func (k *Client) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*app.EnvVar) error {
+func convertAppEnvVar(evs []*app.EnvVar) interface{} {
 	type EnvVar struct {
 		Name  string `json:"name"`
 		Value string `json:"value"`
@@ -768,7 +798,15 @@ func (k *Client) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*app.
 		env[i] = &EnvVar{Name: evs[i].Key, Value: evs[i].Value}
 	}
 
-	return k.patchDeployEnvVars(namespace, name, env)
+	return env
+}
+
+func (c *Client) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*app.EnvVar) error {
+	return c.patchDeployEnvVars(namespace, name, convertAppEnvVar(evs))
+}
+
+func (c *Client) CreateOrUpdateCronJobEnvVars(namespace, name string, evs []*app.EnvVar) error {
+	return c.patchCronJobEnvVars(namespace, name, convertAppEnvVar(evs))
 }
 
 func (k *Client) DeleteNamespace(namespace string) error {

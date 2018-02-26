@@ -57,6 +57,7 @@ type K8sOperations interface {
 	SetNamespaceLabels(namespace string, labels map[string]string) error
 	DeleteDeployEnvVars(namespace, name string, evNames []string) error
 	CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error
+	CreateOrUpdateCronJobEnvVars(namespace, name string, evs []*EnvVar) error
 	DeleteNamespace(namespace string) error
 	NamespaceListByLabel(label, value string) ([]string, error)
 	DeploySetReplicas(namespace, name string, replicas int32) error
@@ -295,7 +296,13 @@ func (ops *AppOperations) SetEnv(user *database.User, appName string, evs []*Env
 		return err
 	}
 
-	if err = ops.kops.CreateOrUpdateDeployEnvVars(appName, appName, evs); err != nil {
+	if app.ProcessType == ProcessTypeCron {
+		err = ops.kops.CreateOrUpdateCronJobEnvVars(appName, appName, evs)
+	} else {
+		err = ops.kops.CreateOrUpdateDeployEnvVars(appName, appName, evs)
+	}
+
+	if err != nil {
 		if ops.kops.IsInvalid(err) {
 			return ErrInvalidEnvVarName
 		} else if !ops.kops.IsNotFound(err) {

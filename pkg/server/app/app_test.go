@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -20,24 +21,27 @@ import (
 )
 
 type fakeK8sOperations struct {
-	CreateOrUpdateAutoscaleWasCalled bool
-	Namespaces                       map[string]struct{}
+	CreateOrUpdateAutoscaleWasCalled      bool
+	CreateOrUpdateCronJobEnvVarsWasCalled bool
+	Namespaces                            map[string]struct{}
+	DefaultProcessType                    string
 }
 
 type errK8sOperations struct {
-	Err                            error
-	NamespaceErr                   error
-	QuotaErr                       error
-	SecretErr                      error
-	AutoscaleErr                   error
-	DeleteNamespaceErr             error
-	SetNamespaceAnnotationsErr     error
-	SetNamespaceLabelsErr          error
-	DeletePodErr                   error
-	CreateOrUpdateDeployEnvVarsErr error
-	NegateIsNotFound               bool
-	NegateIsAlreadyExists          bool
-	Namespaces                     map[string]struct{}
+	Err                             error
+	NamespaceErr                    error
+	QuotaErr                        error
+	SecretErr                       error
+	AutoscaleErr                    error
+	DeleteNamespaceErr              error
+	SetNamespaceAnnotationsErr      error
+	SetNamespaceLabelsErr           error
+	DeletePodErr                    error
+	CreateOrUpdateDeployEnvVarsErr  error
+	CreateOrUpdateCronJobEnvVarsErr error
+	NegateIsNotFound                bool
+	NegateIsAlreadyExists           bool
+	Namespaces                      map[string]struct{}
 }
 
 func (*fakeK8sOperations) CreateNamespace(app *App, user string) error {
@@ -65,8 +69,12 @@ func (*fakeK8sOperations) PodLogs(namespace, podName string, opts *LogOptions) (
 	return ioutil.NopCloser(r), nil
 }
 
-func (*fakeK8sOperations) NamespaceAnnotation(namespace, annotation string) (string, error) {
-	return `{"name": "test"}`, nil
+func (f *fakeK8sOperations) NamespaceAnnotation(namespace, annotation string) (string, error) {
+	dpt := f.DefaultProcessType
+	if dpt == "" {
+		dpt = "web"
+	}
+	return fmt.Sprintf(`{"name": "test", "processType": "%s"}`, dpt), nil
 }
 
 func (*fakeK8sOperations) NamespaceLabel(namespace, label string) (string, error) {
@@ -137,6 +145,11 @@ func (*fakeK8sOperations) DeleteDeployEnvVars(namespace, name string, evNames []
 }
 
 func (*fakeK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error {
+	return nil
+}
+
+func (f *fakeK8sOperations) CreateOrUpdateCronJobEnvVars(namespace, name string, evs []*EnvVar) error {
+	f.CreateOrUpdateCronJobEnvVarsWasCalled = true
 	return nil
 }
 
@@ -235,6 +248,10 @@ func (e *errK8sOperations) DeleteDeployEnvVars(namespace, name string, evNames [
 
 func (e *errK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error {
 	return e.CreateOrUpdateDeployEnvVarsErr
+}
+
+func (e *errK8sOperations) CreateOrUpdateCronJobEnvVars(namespace, name string, evs []*EnvVar) error {
+	return e.CreateOrUpdateCronJobEnvVarsErr
 }
 
 func (e *errK8sOperations) DeleteNamespace(namespace string) error {
@@ -744,6 +761,30 @@ func TestAppOpsSetEnvErrInvalidEnvVarName(t *testing.T) {
 
 	if err := ops.SetEnv(user, app.Name, evs); err != ErrInvalidEnvVarName {
 		t.Errorf("expected %v, got %v", ErrInvalidEnvVarName, err)
+	}
+}
+
+func TestAppOperationsSetEnvForACronJob(t *testing.T) {
+	tops := team.NewFakeOperations()
+	fakeK8s := &fakeK8sOperations{DefaultProcessType: ProcessTypeCron}
+	ops := NewOperations(tops, fakeK8s, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+	evs := []*EnvVar{
+		{Key: "key1", Value: "value1"},
+		{Key: "key2", Value: "value2"},
+	}
+
+	if err := ops.SetEnv(user, app.Name, evs); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+
+	if !fakeK8s.CreateOrUpdateCronJobEnvVarsWasCalled {
+		t.Error("expected create or update CRON JOB env vars was called, but dont")
 	}
 }
 

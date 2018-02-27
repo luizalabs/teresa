@@ -385,6 +385,10 @@ func TestCronJobSpecToK8sCronJob(t *testing.T) {
 					Image: "luizalabs/teresa:0.0.1",
 					Args:  []string{"echo", "hello"},
 				},
+				InitContainers: []*spec.Container{{
+					Name:  "Teresa",
+					Image: "luizalabs/init-teresa:0.0.1",
+				}},
 			},
 		},
 		Schedule: "*/1 * * * *",
@@ -411,5 +415,10 @@ func TestCronJobSpecToK8sCronJob(t *testing.T) {
 		if c.Args[idx] != arg {
 			t.Errorf("expected %s, got %s", arg, c.Args[idx])
 		}
+	}
+
+	initContainers := k8sCron.Spec.JobTemplate.Spec.Template.Spec.InitContainers
+	if len(initContainers) != len(cs.Pod.InitContainers) {
+		t.Errorf("expected %d, got %d", len(cs.Pod.InitContainers), len(initContainers))
 	}
 }

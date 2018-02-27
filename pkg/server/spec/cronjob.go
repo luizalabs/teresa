@@ -10,19 +10,21 @@ type CronJob struct {
 	Schedule string
 }
 
-func NewCronJob(image, description, slugURL, schedule string, a *app.App, fs storage.Storage, args ...string) *CronJob {
+func NewCronJob(description, slugURL, schedule string, imgs *SlugImages, a *app.App, fs storage.Storage, args ...string) *CronJob {
 	ps := NewPod(
 		a.Name,
-		image,
+		imgs.Runner,
 		a,
 		map[string]string{
-			"APP":             a.Name,
-			"SLUG_URL":        slugURL,
-			"BUILDER_STORAGE": fs.Type(),
+			"APP":      a.Name,
+			"SLUG_URL": slugURL,
+			"SLUG_DIR": slugVolumeMountPath,
 		},
 		fs,
 	)
 	ps.Args = args
+	ps.VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}
+	ps.InitContainers = newInitContainers(slugURL, imgs.Store, a, fs)
 
 	ds := Deploy{
 		Description: description,

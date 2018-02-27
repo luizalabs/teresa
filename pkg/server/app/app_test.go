@@ -23,25 +23,25 @@ import (
 type fakeK8sOperations struct {
 	CreateOrUpdateAutoscaleWasCalled      bool
 	CreateOrUpdateCronJobEnvVarsWasCalled bool
+	DeleteCronJobEnvVarsWasCalled         bool
 	Namespaces                            map[string]struct{}
 	DefaultProcessType                    string
 }
 
 type errK8sOperations struct {
-	Err                             error
-	NamespaceErr                    error
-	QuotaErr                        error
-	SecretErr                       error
-	AutoscaleErr                    error
-	DeleteNamespaceErr              error
-	SetNamespaceAnnotationsErr      error
-	SetNamespaceLabelsErr           error
-	DeletePodErr                    error
-	CreateOrUpdateDeployEnvVarsErr  error
-	CreateOrUpdateCronJobEnvVarsErr error
-	NegateIsNotFound                bool
-	NegateIsAlreadyExists           bool
-	Namespaces                      map[string]struct{}
+	Err                            error
+	NamespaceErr                   error
+	QuotaErr                       error
+	SecretErr                      error
+	AutoscaleErr                   error
+	DeleteNamespaceErr             error
+	SetNamespaceAnnotationsErr     error
+	SetNamespaceLabelsErr          error
+	DeletePodErr                   error
+	CreateOrUpdateDeployEnvVarsErr error
+	NegateIsNotFound               bool
+	NegateIsAlreadyExists          bool
+	Namespaces                     map[string]struct{}
 }
 
 func (*fakeK8sOperations) CreateNamespace(app *App, user string) error {
@@ -141,6 +141,11 @@ func (*fakeK8sOperations) SetNamespaceLabels(namespace string, labels map[string
 }
 
 func (*fakeK8sOperations) DeleteDeployEnvVars(namespace, name string, evNames []string) error {
+	return nil
+}
+
+func (f *fakeK8sOperations) DeleteCronJobEnvVars(namespace, name string, evNames []string) error {
+	f.DeleteCronJobEnvVarsWasCalled = true
 	return nil
 }
 
@@ -246,12 +251,16 @@ func (e *errK8sOperations) DeleteDeployEnvVars(namespace, name string, evNames [
 	return e.Err
 }
 
+func (e *errK8sOperations) DeleteCronJobEnvVars(namespace, name string, evNames []string) error {
+	return e.Err
+}
+
 func (e *errK8sOperations) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error {
 	return e.CreateOrUpdateDeployEnvVarsErr
 }
 
 func (e *errK8sOperations) CreateOrUpdateCronJobEnvVars(namespace, name string, evs []*EnvVar) error {
-	return e.CreateOrUpdateCronJobEnvVarsErr
+	return e.Err
 }
 
 func (e *errK8sOperations) DeleteNamespace(namespace string) error {
@@ -870,6 +879,27 @@ func TestAppOperationsUnsetEnvErrInternalServerErrorOnSaveApp(t *testing.T) {
 
 	if err := ops.UnsetEnv(user, app.Name, nil); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
 		t.Errorf("expected ErrInternalServerError, got %v", err)
+	}
+}
+
+func TestAppOperationsUnsetEnvForACronJob(t *testing.T) {
+	tops := team.NewFakeOperations()
+	fakeK8s := &fakeK8sOperations{DefaultProcessType: ProcessTypeCron}
+	ops := NewOperations(tops, fakeK8s, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+	evs := []string{"key1", "key2"}
+
+	if err := ops.UnsetEnv(user, app.Name, evs); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+
+	if !fakeK8s.DeleteCronJobEnvVarsWasCalled {
+		t.Error("expected delete CRON JOB env vars was called, but dont")
 	}
 }
 

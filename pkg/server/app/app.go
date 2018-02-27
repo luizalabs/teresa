@@ -56,6 +56,7 @@ type K8sOperations interface {
 	SetNamespaceAnnotations(namespace string, annotations map[string]string) error
 	SetNamespaceLabels(namespace string, labels map[string]string) error
 	DeleteDeployEnvVars(namespace, name string, evNames []string) error
+	DeleteCronJobEnvVars(namespace, name string, evNames []string) error
 	CreateOrUpdateDeployEnvVars(namespace, name string, evs []*EnvVar) error
 	CreateOrUpdateCronJobEnvVars(namespace, name string, evs []*EnvVar) error
 	DeleteNamespace(namespace string) error
@@ -329,7 +330,13 @@ func (ops *AppOperations) UnsetEnv(user *database.User, appName string, evNames 
 		return err
 	}
 
-	if err = ops.kops.DeleteDeployEnvVars(appName, appName, evNames); err != nil {
+	if app.ProcessType == ProcessTypeCron {
+		err = ops.kops.DeleteCronJobEnvVars(appName, appName, evNames)
+	} else {
+		err = ops.kops.DeleteDeployEnvVars(appName, appName, evNames)
+	}
+
+	if err != nil {
 		if !ops.kops.IsNotFound(err) {
 			return teresa_errors.NewInternalServerError(err)
 		}

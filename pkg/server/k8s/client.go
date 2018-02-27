@@ -775,19 +775,6 @@ func (c *Client) patchCronJobEnvVars(namespace, name string, v interface{}) erro
 	return errors.Wrap(err, "patch cronjob failed")
 }
 
-func (k *Client) DeleteDeployEnvVars(namespace, name string, evNames []string) error {
-	type EnvVar struct {
-		Name  string `json:"name"`
-		Patch string `json:"$patch"`
-	}
-	env := make([]*EnvVar, len(evNames))
-	for i := range evNames {
-		env[i] = &EnvVar{Name: evNames[i], Patch: "delete"}
-	}
-
-	return k.patchDeployEnvVars(namespace, name, env)
-}
-
 func convertAppEnvVar(evs []*app.EnvVar) interface{} {
 	type EnvVar struct {
 		Name  string `json:"name"`
@@ -801,12 +788,33 @@ func convertAppEnvVar(evs []*app.EnvVar) interface{} {
 	return env
 }
 
+func convertAppDeleteEnvVar(evNames []string) interface{} {
+	type EnvVar struct {
+		Name  string `json:"name"`
+		Patch string `json:"$patch"`
+	}
+	env := make([]*EnvVar, len(evNames))
+	for i := range evNames {
+		env[i] = &EnvVar{Name: evNames[i], Patch: "delete"}
+	}
+
+	return env
+}
+
 func (c *Client) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*app.EnvVar) error {
 	return c.patchDeployEnvVars(namespace, name, convertAppEnvVar(evs))
 }
 
 func (c *Client) CreateOrUpdateCronJobEnvVars(namespace, name string, evs []*app.EnvVar) error {
 	return c.patchCronJobEnvVars(namespace, name, convertAppEnvVar(evs))
+}
+
+func (k *Client) DeleteDeployEnvVars(namespace, name string, evNames []string) error {
+	return k.patchDeployEnvVars(namespace, name, convertAppDeleteEnvVar(evNames))
+}
+
+func (k *Client) DeleteCronJobEnvVars(namespace, name string, evNames []string) error {
+	return k.patchCronJobEnvVars(namespace, name, convertAppDeleteEnvVar(evNames))
 }
 
 func (k *Client) DeleteNamespace(namespace string) error {

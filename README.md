@@ -180,6 +180,25 @@ automatic migrations by adding this line to the `Procfile`:
 Note that a failing release will prevent the rolling update from happening, so
 you have to keep compatibility with old code.
 
+### CronJob
+
+**Q: How to create a CronJob?**
+
+    $ teresa app create <app-name> --team <team-name> --process-type cron
+
+Make sure to have the `cron` key with the cronjob command.
+
+**Q: How to define the schedule of the CronJob?**
+
+You can define the schedule of cron by adding this lines to `teresa.yaml`:
+
+```
+cron:
+  schedule: "*/30 * * * *"
+```
+
+You can change the schedule on cron on every deploy.
+
 ## Homebrew Teresa Client
 
 Run the following in your command-line:

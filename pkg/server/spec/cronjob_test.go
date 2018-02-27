@@ -10,17 +10,20 @@ import (
 
 func TestNewCronJobSpec(t *testing.T) {
 	expectedImage := "image"
+	expectedInitImage := "init-image"
 	expectedDescription := "test"
 	expectedSlugURL := "http://teresa.io/slug.tgz"
 	a := &app.App{Name: "cron-test"}
 	expectedCommand := "happy cron job"
 	expectedSchedule := "*/1 * * * *"
 
+	imgs := &SlugImages{Runner: expectedImage, Store: expectedInitImage}
+
 	cs := NewCronJob(
-		expectedImage,
 		expectedDescription,
 		expectedSlugURL,
 		expectedSchedule,
+		imgs,
 		a,
 		storage.NewFake(),
 		strings.Split(expectedCommand, " ")...,
@@ -44,5 +47,12 @@ func TestNewCronJobSpec(t *testing.T) {
 
 	if cs.Schedule != expectedSchedule {
 		t.Errorf("expected %s, got %s", expectedSchedule, cs.Schedule)
+	}
+
+	if len(cs.InitContainers) != 1 {
+		t.Errorf("expected %d, got %d", 1, len(cs.InitContainers))
+	}
+	if cs.InitContainers[0].Image != expectedInitImage {
+		t.Errorf("expected %s, got %s", expectedImage, cs.InitContainers[0].Image)
 	}
 }

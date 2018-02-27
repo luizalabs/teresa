@@ -151,11 +151,15 @@ func (ops *DeployOperations) effectivelyDeploy(a *app.App, confFiles *DeployConf
 }
 
 func (ops *DeployOperations) createOrUpdateCronJob(a *app.App, confFiles *DeployConfigFiles, w io.Writer, errChan chan error, slugURL, description string) {
+	imgs := &spec.SlugImages{
+		Runner: ops.opts.SlugRunnerImage,
+		Store:  ops.opts.SlugStoreImage,
+	}
 	cronSpec := spec.NewCronJob(
-		ops.opts.SlugRunnerImage,
 		description,
 		slugURL,
 		confFiles.TeresaYaml.Cron.Schedule,
+		imgs,
 		a,
 		ops.fileStorage,
 		strings.Split(confFiles.Procfile[app.ProcessTypeCron], " ")...,

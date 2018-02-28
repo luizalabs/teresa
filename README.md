@@ -197,7 +197,7 @@ cron:
   schedule: "*/30 * * * *"
 ```
 
-You can change the schedule on cron on every deploy.
+You can change the cron schedule on every deploy.
 
 ## Homebrew Teresa Client
 

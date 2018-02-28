@@ -132,6 +132,9 @@ func TestCreateDeploy(t *testing.T) {
 	expectedSlugURL := "test-slug"
 	opts := &Options{RevisionHistoryLimit: 3}
 
+	errChan := make(chan error, 1)
+	conf := &DeployConfigFiles{Procfile: map[string]string{"worker": "echo hello world"}}
+
 	fakeK8s := new(fakeK8sOperations)
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
@@ -141,10 +144,18 @@ func TestCreateDeploy(t *testing.T) {
 		opts,
 	)
 
-	deployOperations := ops.(*DeployOperations)
-	err := deployOperations.createOrUpdateK8sDeploy(a, nil, expectedDescription, expectedSlugURL)
+	ops.(*DeployOperations).createOrUpdateDeploy(
+		a,
+		conf,
+		new(bytes.Buffer),
+		errChan,
+		expectedSlugURL,
+		expectedDescription,
+		"123",
+	)
+	errChan <- nil
 
-	if err != nil {
+	if err := <-errChan; err != nil {
 		t.Fatal("error create deploy:", err)
 	}
 
@@ -165,6 +176,7 @@ func TestCreateDeploy(t *testing.T) {
 func TestCreateDeployReturnError(t *testing.T) {
 	expectedErr := errors.New("Some k8s error")
 	fakeK8s := &fakeK8sOperations{createDeployReturn: expectedErr}
+	errChan := make(chan error, 1)
 
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
@@ -174,15 +186,17 @@ func TestCreateDeployReturnError(t *testing.T) {
 		&Options{},
 	)
 
-	deployOperations := ops.(*DeployOperations)
-	err := deployOperations.createOrUpdateK8sDeploy(
+	ops.(*DeployOperations).createOrUpdateDeploy(
 		&app.App{Name: "test"},
-		nil,
-		"some desc",
+		&DeployConfigFiles{Procfile: map[string]string{}},
+		new(bytes.Buffer),
+		errChan,
 		"some slug",
+		"some desc",
+		"123",
 	)
 
-	if err != expectedErr {
+	if err := <-errChan; err != expectedErr {
 		t.Errorf("expected %v, got %v", expectedErr, err)
 	}
 }

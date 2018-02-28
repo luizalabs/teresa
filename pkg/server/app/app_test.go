@@ -315,7 +315,7 @@ func TestAppOperationsCreateCronDoesNotCreateHPA(t *testing.T) {
 	}
 
 	if fakeK8s.CreateOrUpdateAutoscaleWasCalled {
-		t.Error("expected not hpa for crons, but was created")
+		t.Error("expected no hpa for crons, but was created")
 	}
 }
 

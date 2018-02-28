@@ -87,7 +87,7 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 		if a.ProcessType == app.ProcessTypeCron {
 			ops.createOrUpdateCronJob(a, confFiles, w, errChan, slugURL, description)
 		} else {
-			ops.effectivelyDeploy(a, confFiles, w, errChan, slugURL, deployId, description)
+			ops.createOrUpdateDeploy(a, confFiles, w, errChan, slugURL, description, deployId)
 		}
 	}()
 	return r, errChan
@@ -126,7 +126,7 @@ func (ops *DeployOperations) buildLimits() *spec.ContainerLimits {
 	}
 }
 
-func (ops *DeployOperations) effectivelyDeploy(a *app.App, confFiles *DeployConfigFiles, w io.Writer, errChan chan error, slugURL, deployId, description string) {
+func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployConfigFiles, w io.Writer, errChan chan error, slugURL, description, deployId string) {
 	releaseCmd := confFiles.Procfile[ProcfileReleaseCmd]
 	if confFiles.Procfile != nil && releaseCmd != "" {
 		if err := ops.runReleaseCmd(a, deployId, slugURL, w); err != nil {
@@ -136,7 +136,21 @@ func (ops *DeployOperations) effectivelyDeploy(a *app.App, confFiles *DeployConf
 		}
 	}
 
-	if err := ops.createOrUpdateK8sDeploy(a, confFiles.TeresaYaml, description, slugURL); err != nil {
+	imgs := &spec.SlugImages{
+		Runner: ops.opts.SlugRunnerImage,
+		Store:  ops.opts.SlugStoreImage,
+	}
+	deploySpec := spec.NewDeploy(
+		imgs,
+		description,
+		slugURL,
+		ops.opts.RevisionHistoryLimit,
+		a,
+		confFiles.TeresaYaml,
+		ops.fileStorage,
+	)
+
+	if err := ops.k8s.CreateOrUpdateDeploy(deploySpec); err != nil {
 		errChan <- err
 		log.WithError(err).Errorf("Creating deploy app %s", a.Name)
 		return
@@ -171,23 +185,6 @@ func (ops *DeployOperations) createOrUpdateCronJob(a *app.App, confFiles *Deploy
 	} else {
 		fmt.Fprintln(w, fmt.Sprintf("The CronJob %s has been successfully deployed", a.Name))
 	}
-}
-
-func (ops *DeployOperations) createOrUpdateK8sDeploy(a *app.App, tYaml *spec.TeresaYaml, description, slugURL string) error {
-	imgs := &spec.SlugImages{
-		Runner: ops.opts.SlugRunnerImage,
-		Store:  ops.opts.SlugStoreImage,
-	}
-	deploySpec := spec.NewDeploy(
-		imgs,
-		description,
-		slugURL,
-		ops.opts.RevisionHistoryLimit,
-		a,
-		tYaml,
-		ops.fileStorage,
-	)
-	return ops.k8s.CreateOrUpdateDeploy(deploySpec)
 }
 
 func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {

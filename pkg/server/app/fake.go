@@ -173,6 +173,36 @@ func (f *FakeOperations) UnsetEnv(user *database.User, appName string, envVars [
 	return nil
 }
 
+func (f *FakeOperations) SetSecret(user *database.User, appName string, secrets []*EnvVar) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if !hasPerm(user.Email) {
+		return auth.ErrPermissionDenied
+	}
+
+	if _, found := f.Storage[appName]; !found {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
+func (f *FakeOperations) UnsetSecret(user *database.User, appName string, secrets []string) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if !hasPerm(user.Email) {
+		return auth.ErrPermissionDenied
+	}
+
+	if _, found := f.Storage[appName]; !found {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
 func (f *FakeOperations) SetAutoscale(user *database.User, appName string, as *Autoscale) error {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()

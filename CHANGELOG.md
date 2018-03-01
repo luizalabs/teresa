@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - `app logs` support to print the logs of the previous pod instance
 - [server] `replace-storage-secret` admin command
 - CronJob experimental support
+- CONTRIBUTING.md and related FAQ entry
 
 ### Changed
 - Better error message for invalid app name error

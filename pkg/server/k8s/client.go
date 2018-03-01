@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	patchDeployEnvVarsTmpl            = `{"spec":{"template":{"spec":{"containers":[{"name": "%s", "env":%s}]}}}}`
-	patchCronJobEnvVarsTmpl           = `{"spec":{"jobTemplate":{"spec": {"template": {"spec": {"containers":[{"name": "%s", "env":%s}]}}}}}}`
+	patchDeployEnvVarsTmpl            = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"template":{"spec":{"containers":[{"name": "%s", "env":%s}]}}}}`
+	patchCronJobEnvVarsTmpl           = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"jobTemplate":{"spec": {"template": {"spec": {"containers":[{"name": "%s", "env":%s}]}}}}}}`
 	patchDeployRollbackToRevisionTmpl = `{"spec":{"rollbackTo":{"revision": %s}}}`
 	patchDeployReplicasTmpl           = `{"spec":{"replicas": %d}}`
 	revisionAnnotation                = "deployment.kubernetes.io/revision"
@@ -276,7 +276,19 @@ func (k *Client) CreateQuota(a *app.App) error {
 	return err
 }
 
-func (c *Client) CreateOrUpdateSecret(appName, secretName string, data map[string][]byte) error {
+func (c *Client) GetSecret(namespace, secretName string) (map[string][]byte, error) {
+	kc, err := c.buildClient()
+	if err != nil {
+		return nil, err
+	}
+	s, err := kc.CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return s.Data, nil
+}
+
+func (c *Client) CreateOrUpdateSecret(namespace, secretName string, data map[string][]byte) error {
 	kc, err := c.buildClient()
 	if err != nil {
 		return err
@@ -286,14 +298,14 @@ func (c *Client) CreateOrUpdateSecret(appName, secretName string, data map[strin
 		Type: k8sv1.SecretTypeOpaque,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
-			Namespace: appName,
+			Namespace: namespace,
 		},
 		Data: data,
 	}
 
-	_, err = kc.CoreV1().Secrets(appName).Update(s)
+	_, err = kc.CoreV1().Secrets(namespace).Update(s)
 	if c.IsNotFound(err) {
-		_, err = kc.CoreV1().Secrets(appName).Create(s)
+		_, err = kc.CoreV1().Secrets(namespace).Create(s)
 	}
 	return err
 }
@@ -784,6 +796,35 @@ func (c *Client) patchCronJobEnvVars(namespace, name string, v interface{}) erro
 	return errors.Wrap(err, "patch cronjob failed")
 }
 
+func convertAppSecretEnvVar(secretName string, secrets []string) interface{} {
+	type secretKeyRef struct {
+		Key  string `json:"key"`
+		Name string `json:"name"`
+	}
+	type valueFrom struct {
+		SecretKeyRef secretKeyRef `json:"secretKeyRef"`
+	}
+	type envVar struct {
+		Name      string    `json:"name"`
+		ValueFrom valueFrom `json:"valueFrom"`
+	}
+
+	env := make([]*envVar, len(secrets))
+	for i := range secrets {
+		env[i] = &envVar{
+			Name: secrets[i],
+			ValueFrom: valueFrom{
+				SecretKeyRef: secretKeyRef{
+					Key:  secrets[i],
+					Name: secretName,
+				},
+			},
+		}
+	}
+
+	return env
+}
+
 func convertAppEnvVar(evs []*app.EnvVar) interface{} {
 	type EnvVar struct {
 		Name  string `json:"name"`
@@ -816,6 +857,14 @@ func (c *Client) CreateOrUpdateDeployEnvVars(namespace, name string, evs []*app.
 
 func (c *Client) CreateOrUpdateCronJobEnvVars(namespace, name string, evs []*app.EnvVar) error {
 	return c.patchCronJobEnvVars(namespace, name, convertAppEnvVar(evs))
+}
+
+func (c *Client) CreateOrUpdateDeploySecretEnvVars(namespace, name, secretName string, secrets []string) error {
+	return c.patchDeployEnvVars(namespace, name, convertAppSecretEnvVar(secretName, secrets))
+}
+
+func (c *Client) CreateOrUpdateCronJobSecretEnvVars(namespace, name, secretName string, secrets []string) error {
+	return c.patchCronJobEnvVars(namespace, name, convertAppSecretEnvVar(secretName, secrets))
 }
 
 func (k *Client) DeleteDeployEnvVars(namespace, name string, evNames []string) error {

@@ -22,7 +22,7 @@ type Options struct {
 	KeepAliveTimeout     time.Duration `split_words:"true" default:"30s"`
 	RevisionHistoryLimit int           `split_words:"true" default:"5"`
 	SlugBuilderImage     string        `split_words:"true" default:"luizalabs/slugbuilder:v3.2.0"`
-	SlugRunnerImage      string        `split_words:"true" default:"luizalabs/slugrunner:v2.4.0"`
+	SlugRunnerImage      string        `split_words:"true" default:"luizalabs/slugrunner:v3.0.0"`
 	SlugStoreImage       string        `split_words:"true" default:"luizalabs/slugstore:v1.0.0"`
 	BuildLimitCPU        string        `split_words:"true" default:"800m"`
 	BuildLimitMemory     string        `split_words:"true" default:"1Gi"`

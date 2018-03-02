@@ -11,9 +11,9 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/spec"
 )
 
-func TestPodSpecToK8sContainer(t *testing.T) {
+func TestPodSpecToK8sContainers(t *testing.T) {
 	ps := &spec.Pod{
-		Container: spec.Container{
+		Containers: []*spec.Container{{
 			Name:  "Teresa",
 			Image: "luizalabs/teresa:0.0.1",
 			Env:   map[string]string{"ENV-KEY": "ENV-VALUE"},
@@ -25,27 +25,28 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 				CPU:    "800m",
 				Memory: "1Gi",
 			},
-		},
+		}},
 	}
-	c, err := podSpecToK8sContainer(ps)
+	containers, err := podSpecToK8sContainers(ps)
+	c := containers[0]
 	if err != nil {
 		t.Fatal("error to convert spec", err)
 	}
 
-	if c.Name != ps.Name {
-		t.Errorf("expected %s, got %s", ps.Name, c.Name)
+	if c.Name != ps.Containers[0].Name {
+		t.Errorf("expected %s, got %s", ps.Containers[0].Name, c.Name)
 	}
-	if c.Image != ps.Image {
-		t.Errorf("expected %s, got %s", ps.Image, c.Image)
+	if c.Image != ps.Containers[0].Image {
+		t.Errorf("expected %s, got %s", ps.Containers[0].Image, c.Image)
 	}
 
 	for _, e := range c.Env {
-		if ps.Env[e.Name] != e.Value {
-			t.Errorf("expected %s, got %s, for key %s", e.Value, ps.Env[e.Name], e.Name)
+		if ps.Containers[0].Env[e.Name] != e.Value {
+			t.Errorf("expected %s, got %s, for key %s", e.Value, ps.Containers[0].Env[e.Name], e.Name)
 		}
 	}
 
-	for idx, vm := range ps.VolumeMounts {
+	for idx, vm := range ps.Containers[0].VolumeMounts {
 		if c.VolumeMounts[idx].Name != vm.Name {
 			t.Errorf("expected %s, got %s", vm.Name, c.VolumeMounts[idx].Name)
 		}
@@ -57,13 +58,13 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 		}
 	}
 
-	for idx, arg := range ps.Args {
+	for idx, arg := range ps.Containers[0].Args {
 		if c.Args[idx] != arg {
 			t.Errorf("expected %s, got %s", arg, c.Args[idx])
 		}
 	}
 
-	expectedCPU, err := resource.ParseQuantity(ps.ContainerLimits.CPU)
+	expectedCPU, err := resource.ParseQuantity(ps.Containers[0].ContainerLimits.CPU)
 	if err != nil {
 		t.Fatal("error in default cpu limit:", err)
 	}
@@ -74,7 +75,7 @@ func TestPodSpecToK8sContainer(t *testing.T) {
 			c.Resources.Limits[k8sv1.ResourceCPU],
 		)
 	}
-	expectedMemory, err := resource.ParseQuantity(ps.ContainerLimits.Memory)
+	expectedMemory, err := resource.ParseQuantity(ps.Containers[0].ContainerLimits.Memory)
 	if err != nil {
 		t.Fatal("error in default memory limit:", err)
 	}
@@ -124,13 +125,13 @@ func TestPodSpecEmptyDirVolumeToK8s(t *testing.T) {
 
 func TestPodSpecToK8sPod(t *testing.T) {
 	ps := &spec.Pod{
-		Container: spec.Container{
+		Containers: []*spec.Container{{
 			Name:  "Teresa",
 			Image: "luizalabs/teresa:0.0.1",
 			Env:   map[string]string{"ENV-KEY": "ENV-VALUE"},
 			VolumeMounts: []*spec.VolumeMounts{
 				{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
-			},
+			}},
 		},
 		InitContainers: []*spec.Container{{
 			Name:  "Teresa",
@@ -200,11 +201,11 @@ func TestHealthCheckProbeToK8sProbe(t *testing.T) {
 func TestDeploySpecToK8sDeploy(t *testing.T) {
 	ds := &spec.Deploy{
 		Pod: spec.Pod{
-			Container: spec.Container{
+			Containers: []*spec.Container{{
 				Name:  "Teresa",
 				Image: "luizalabs/teresa:0.0.1",
 				Args:  []string{"run", "web"},
-			},
+			}},
 			InitContainers: []*spec.Container{{
 				Name:  "Teresa",
 				Image: "luizalabs/teresa:0.0.1",
@@ -228,7 +229,7 @@ func TestDeploySpecToK8sDeploy(t *testing.T) {
 		t.Fatalf("expected 1 container, got %d", len(k8sDeploy.Spec.Template.Spec.Containers))
 	}
 	c := k8sDeploy.Spec.Template.Spec.Containers[0]
-	for idx, arg := range ds.Args {
+	for idx, arg := range ds.Containers[0].Args {
 		if c.Args[idx] != arg {
 			t.Errorf("expected %s, got %s", arg, c.Args[idx])
 		}
@@ -296,10 +297,10 @@ func TestIngressSpec(t *testing.T) {
 
 func TestPodSpecToK8sPodShouldAddAutomountSATokenField(t *testing.T) {
 	ps := &spec.Pod{
-		Container: spec.Container{
+		Containers: []*spec.Container{{
 			Name:  "Teresa",
 			Image: "luizalabs/teresa:0.0.1",
-		},
+		}},
 	}
 
 	pod, err := podSpecToK8sPod(ps)
@@ -318,11 +319,11 @@ func TestPodSpecToK8sPodShouldAddAutomountSATokenField(t *testing.T) {
 func TestDeploySpecToK8sDeployShouldAddAutomountSATokenField(t *testing.T) {
 	ds := &spec.Deploy{
 		Pod: spec.Pod{
-			Container: spec.Container{
+			Containers: []*spec.Container{{
 				Name:  "Teresa",
 				Image: "luizalabs/teresa:0.0.1",
 				Args:  []string{"run", "web"},
-			},
+			}},
 		},
 	}
 

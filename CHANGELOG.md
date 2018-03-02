@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Changed
+- Change Method `CreateSecret` to `CreateOrUpdateSecret` on k8s interfaces
+
 ## [0.16.0] - 2018-03-07
 ### Added
 - `app logs` support to filter by pod name
@@ -17,7 +21,6 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - The slugrunner doesn't mount the storage keys anymore. An init container is
   responsible for downloading the slug
 - Bump the default slugrunner version to v3.0.1
-- Change Method `CreateSecret` to `CreateOrUpdateSecret` on k8s interfaces
 
 ## [0.15.0] - 2018-02-14
 ### Changed

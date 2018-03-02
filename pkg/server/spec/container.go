@@ -5,6 +5,33 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/storage"
 )
 
+type ContainerLimits struct {
+	CPU    string
+	Memory string
+}
+
+type VolumeMounts struct {
+	Name      string
+	MountPath string
+	ReadOnly  bool
+}
+
+type Port struct {
+	Name          string
+	ContainerPort int32
+}
+
+type Container struct {
+	Name            string
+	Image           string
+	ContainerLimits *ContainerLimits
+	Env             map[string]string
+	VolumeMounts    []*VolumeMounts
+	Command         []string
+	Args            []string
+	Ports           []Port
+}
+
 func newSlugVolumeMount() *VolumeMounts {
 	return &VolumeMounts{
 		Name:      slugVolumeName,

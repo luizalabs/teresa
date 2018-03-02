@@ -9,6 +9,7 @@ import (
 
 const (
 	DefaultPort                = 5000
+	secondaryPort              = 6000
 	SlugAnnotation             = "teresa.io/slug"
 	defaultDrainTimeoutSeconds = 10
 )
@@ -77,8 +78,8 @@ func NewDeploy(imgs *SlugImages, description, slugURL string, rhl int, a *app.Ap
 		},
 		fs,
 	)
-	ps.Args = []string{"start", a.ProcessType}
-	ps.VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}
+	ps.Containers[0].Args = []string{"start", a.ProcessType}
+	ps.Containers[0].VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}
 	ps.InitContainers = newInitContainers(slugURL, imgs.Store, a, fs)
 
 	ds := &Deploy{

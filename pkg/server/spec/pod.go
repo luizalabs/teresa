@@ -10,47 +10,29 @@ const (
 	slugVolumeMountPath = "/slug"
 )
 
-type ContainerLimits struct {
-	CPU    string
-	Memory string
-}
-
-type VolumeMounts struct {
-	Name      string
-	MountPath string
-	ReadOnly  bool
-}
-
 type Volume struct {
 	Name       string
 	SecretName string
 	EmptyDir   bool
 }
 
-type Container struct {
-	Name            string
-	Namespace       string
-	Image           string
-	ContainerLimits *ContainerLimits
-	Env             map[string]string
-	VolumeMounts    []*VolumeMounts
-	Args            []string
-}
-
 type Pod struct {
-	Container
+	Name           string
+	Namespace      string
+	Containers     []*Container
 	Volumes        []*Volume
 	InitContainers []*Container
 }
 
 func NewPod(name, image string, a *app.App, envVars map[string]string, fs storage.Storage) *Pod {
 	ps := &Pod{
-		Container: Container{
-			Name:      name,
-			Namespace: a.Name,
-			Image:     image,
-			Env:       envVars,
-		},
+		Name:      name,
+		Namespace: a.Name,
+		Containers: []*Container{{
+			Name:  name,
+			Image: image,
+			Env:   envVars,
+		}},
 		Volumes: []*Volume{
 			{
 				Name:       "storage-keys",
@@ -63,10 +45,10 @@ func NewPod(name, image string, a *app.App, envVars map[string]string, fs storag
 		},
 	}
 	for _, e := range a.EnvVars {
-		ps.Env[e.Key] = e.Value
+		ps.Containers[0].Env[e.Key] = e.Value
 	}
 	for k, v := range fs.PodEnvVars() {
-		ps.Env[k] = v
+		ps.Containers[0].Env[k] = v
 	}
 	return ps
 }
@@ -83,8 +65,8 @@ func NewBuilder(name, tarBallLocation, buildDest, image string, a *app.App, fs s
 		},
 		fs,
 	)
-	ps.VolumeMounts = []*VolumeMounts{newStorageKeyVolumeMount()}
-	ps.ContainerLimits = cl
+	ps.Containers[0].VolumeMounts = []*VolumeMounts{newStorageKeyVolumeMount()}
+	ps.Containers[0].ContainerLimits = cl
 	return ps
 }
 
@@ -100,9 +82,9 @@ func NewRunner(name, slugURL string, imgs *SlugImages, a *app.App, fs storage.St
 		},
 		fs,
 	)
-	ps.Args = command
-	ps.ContainerLimits = cl
-	ps.VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}
+	ps.Containers[0].Args = command
+	ps.Containers[0].ContainerLimits = cl
+	ps.Containers[0].VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}
 	ps.InitContainers = newInitContainers(slugURL, imgs.Store, a, fs)
 	return ps
 }

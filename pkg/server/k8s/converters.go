@@ -22,47 +22,60 @@ const (
 	defaultServicePort    = 80
 )
 
-func podSpecToK8sContainer(podSpec *spec.Pod) (*k8sv1.Container, error) {
-	return containerSpecToK8sContainer(&podSpec.Container)
+func podSpecToK8sContainers(podSpec *spec.Pod) ([]k8sv1.Container, error) {
+	return containerSpecsToK8sContainers(podSpec.Containers)
 }
 
-func containerSpecToK8sContainer(containerSpec *spec.Container) (*k8sv1.Container, error) {
-	c := &k8sv1.Container{
-		Name:            containerSpec.Name,
-		ImagePullPolicy: k8sv1.PullIfNotPresent,
-		Image:           containerSpec.Image,
-	}
-
-	if containerSpec.ContainerLimits != nil {
-		cpu, err := resource.ParseQuantity(containerSpec.ContainerLimits.CPU)
-		if err != nil {
-			return nil, err
+func containerSpecsToK8sContainers(containerSpecs []*spec.Container) ([]k8sv1.Container, error) {
+	containers := make([]k8sv1.Container, len(containerSpecs))
+	for i, cs := range containerSpecs {
+		c := k8sv1.Container{
+			Name:            cs.Name,
+			ImagePullPolicy: k8sv1.PullIfNotPresent,
+			Image:           cs.Image,
 		}
-		memory, err := resource.ParseQuantity(containerSpec.ContainerLimits.Memory)
-		if err != nil {
-			return nil, err
-		}
-		c.Resources = k8sv1.ResourceRequirements{
-			Limits: k8sv1.ResourceList{
-				k8sv1.ResourceCPU:    cpu,
-				k8sv1.ResourceMemory: memory,
-			},
-		}
-	}
 
-	c.Args = append(c.Args, containerSpec.Args...)
+		if cs.ContainerLimits != nil {
+			cpu, err := resource.ParseQuantity(cs.ContainerLimits.CPU)
+			if err != nil {
+				return nil, err
+			}
+			memory, err := resource.ParseQuantity(cs.ContainerLimits.Memory)
+			if err != nil {
+				return nil, err
+			}
+			c.Resources = k8sv1.ResourceRequirements{
+				Limits: k8sv1.ResourceList{
+					k8sv1.ResourceCPU:    cpu,
+					k8sv1.ResourceMemory: memory,
+				},
+			}
+		}
 
-	for k, v := range containerSpec.Env {
-		c.Env = append(c.Env, k8sv1.EnvVar{Name: k, Value: v})
+		if len(cs.Command) > 0 {
+			c.Command = cs.Command
+		}
+		c.Args = append(c.Args, cs.Args...)
+
+		for k, v := range cs.Env {
+			c.Env = append(c.Env, k8sv1.EnvVar{Name: k, Value: v})
+		}
+		for _, vm := range cs.VolumeMounts {
+			c.VolumeMounts = append(c.VolumeMounts, k8sv1.VolumeMount{
+				Name:      vm.Name,
+				MountPath: vm.MountPath,
+				ReadOnly:  vm.ReadOnly,
+			})
+		}
+		for _, p := range cs.Ports {
+			c.Ports = append(c.Ports, k8sv1.ContainerPort{
+				Name:          p.Name,
+				ContainerPort: p.ContainerPort,
+			})
+		}
+		containers[i] = c
 	}
-	for _, vm := range containerSpec.VolumeMounts {
-		c.VolumeMounts = append(c.VolumeMounts, k8sv1.VolumeMount{
-			Name:      vm.Name,
-			MountPath: vm.MountPath,
-			ReadOnly:  vm.ReadOnly,
-		})
-	}
-	return c, nil
+	return containers, nil
 }
 
 func podSpecVolumesToK8sVolumes(vols []*spec.Volume) []k8sv1.Volume {
@@ -82,7 +95,7 @@ func podSpecVolumesToK8sVolumes(vols []*spec.Volume) []k8sv1.Volume {
 }
 
 func podSpecToK8sPod(podSpec *spec.Pod) (*k8sv1.Pod, error) {
-	c, err := podSpecToK8sContainer(podSpec)
+	containers, err := podSpecToK8sContainers(podSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +109,7 @@ func podSpecToK8sPod(podSpec *spec.Pod) (*k8sv1.Pod, error) {
 
 	ps := k8sv1.PodSpec{
 		RestartPolicy: k8sv1.RestartPolicyNever,
-		Containers:    []k8sv1.Container{*c},
+		Containers:    containers,
 		Volumes:       volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
@@ -114,7 +127,7 @@ func podSpecToK8sPod(podSpec *spec.Pod) (*k8sv1.Pod, error) {
 }
 
 func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.Deployment, error) {
-	c, err := podSpecToK8sContainer(&deploySpec.Pod)
+	containers, err := podSpecToK8sContainers(&deploySpec.Pod)
 	if err != nil {
 		return nil, err
 	}
@@ -122,15 +135,15 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.De
 
 	if deploySpec.HealthCheck != nil {
 		if deploySpec.HealthCheck.Liveness != nil {
-			c.LivenessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Liveness)
+			containers[0].LivenessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Liveness)
 		}
 		if deploySpec.HealthCheck.Readiness != nil {
-			c.ReadinessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Readiness)
+			containers[0].ReadinessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Readiness)
 		}
 	}
 
 	if deploySpec.Lifecycle != nil {
-		c.Lifecycle = lifecycleToK8sLifecycle(deploySpec.Lifecycle)
+		containers[0].Lifecycle = lifecycleToK8sLifecycle(deploySpec.Lifecycle)
 	}
 
 	f := false
@@ -140,7 +153,7 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.De
 	}
 	ps := k8sv1.PodSpec{
 		RestartPolicy: k8sv1.RestartPolicyAlways,
-		Containers:    []k8sv1.Container{*c},
+		Containers:    containers,
 		Volumes:       volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
@@ -189,15 +202,7 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.De
 }
 
 func podSpecToK8sInitContainers(podSpec *spec.Pod) ([]k8sv1.Container, error) {
-	initContainers := make([]k8sv1.Container, len(podSpec.InitContainers))
-	for idx, p := range podSpec.InitContainers {
-		c, err := containerSpecToK8sContainer(p)
-		if err != nil {
-			return nil, err
-		}
-		initContainers[idx] = *c
-	}
-	return initContainers, nil
+	return containerSpecsToK8sContainers(podSpec.InitContainers)
 }
 
 func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv2alpha.CronJob, error) {

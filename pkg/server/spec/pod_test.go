@@ -26,27 +26,27 @@ func TestNewPodSpec(t *testing.T) {
 	if ps.Namespace != a.Name {
 		t.Errorf("expected %s, got %s", a.Name, ps.Namespace)
 	}
-	if ps.Image != expectedImage {
-		t.Errorf("expected %s, got %s", expectedImage, ps.Image)
+	if ps.Containers[0].Image != expectedImage {
+		t.Errorf("expected %s, got %s", expectedImage, ps.Containers[0].Image)
 	}
 
 	for _, env := range a.EnvVars {
-		if ps.Env[env.Key] != env.Value {
-			t.Errorf("expected %s, got %s for key %s", env.Value, ps.Env[env.Key], env.Key)
+		if ps.Containers[0].Env[env.Key] != env.Value {
+			t.Errorf("expected %s, got %s for key %s", env.Value, ps.Containers[0].Env[env.Key], env.Key)
 		}
 	}
 
 	for k, v := range ev {
-		if ps.Env[k] != v {
-			t.Errorf("expected %s, got %s for key %s", v, ps.Env[k], k)
+		if ps.Containers[0].Env[k] != v {
+			t.Errorf("expected %s, got %s for key %s", v, ps.Containers[0].Env[k], k)
 		}
 	}
 
 	if len(ps.Volumes) != 2 {
 		t.Errorf("expected %d, got %d", 2, len(ps.Volumes))
 	}
-	if len(ps.VolumeMounts) != 0 {
-		t.Errorf("expected %d, got %d", 0, len(ps.VolumeMounts))
+	if len(ps.Containers[0].VolumeMounts) != 0 {
+		t.Errorf("expected %d, got %d", 0, len(ps.Containers[0].VolumeMounts))
 	}
 	if ps.Volumes[0].Name != "storage-keys" {
 		t.Errorf("expected %s, got %s", "storage-keys", ps.Volumes[0].Name)
@@ -79,8 +79,8 @@ func TestNewBuilder(t *testing.T) {
 	if ps.Name != expectedName {
 		t.Errorf("expected %s, got %s", expectedName, ps.Name)
 	}
-	if ps.Image != expectedImage {
-		t.Errorf("expected %s, got %s", expectedImage, ps.Image)
+	if ps.Containers[0].Image != expectedImage {
+		t.Errorf("expected %s, got %s", expectedImage, ps.Containers[0].Image)
 	}
 
 	ev := map[string]string{
@@ -88,23 +88,23 @@ func TestNewBuilder(t *testing.T) {
 		"PUT_PATH": expectedBuildDest,
 	}
 	for k, v := range ev {
-		if ps.Env[k] != v {
-			t.Errorf("expected %s, got %s for key %s", v, ps.Env[k], k)
+		if ps.Containers[0].Env[k] != v {
+			t.Errorf("expected %s, got %s for key %s", v, ps.Containers[0].Env[k], k)
 		}
 	}
 
-	if ps.ContainerLimits.CPU != expectedContainerLimits.CPU {
-		t.Errorf("expected %s, got %s", expectedContainerLimits.CPU, ps.ContainerLimits.CPU)
+	if ps.Containers[0].ContainerLimits.CPU != expectedContainerLimits.CPU {
+		t.Errorf("expected %s, got %s", expectedContainerLimits.CPU, ps.Containers[0].ContainerLimits.CPU)
 	}
-	if ps.ContainerLimits.Memory != expectedContainerLimits.Memory {
-		t.Errorf("expected %s, got %s", expectedContainerLimits.Memory, ps.ContainerLimits.Memory)
+	if ps.Containers[0].ContainerLimits.Memory != expectedContainerLimits.Memory {
+		t.Errorf("expected %s, got %s", expectedContainerLimits.Memory, ps.Containers[0].ContainerLimits.Memory)
 	}
 
-	if len(ps.VolumeMounts) != 1 {
-		t.Errorf("expected 1, got %d", len(ps.VolumeMounts))
+	if len(ps.Containers[0].VolumeMounts) != 1 {
+		t.Errorf("expected 1, got %d", len(ps.Containers[0].VolumeMounts))
 	}
-	if ps.VolumeMounts[0].Name != "storage-keys" {
-		t.Errorf("expected %s, got %s", "storage-keys", ps.VolumeMounts[0].Name)
+	if ps.Containers[0].VolumeMounts[0].Name != "storage-keys" {
+		t.Errorf("expected %s, got %s", "storage-keys", ps.Containers[0].VolumeMounts[0].Name)
 	}
 }
 
@@ -134,29 +134,29 @@ func TestNewRunner(t *testing.T) {
 		t.Errorf("expected %s, got %s", expectedPodName, ps.Name)
 	}
 
-	if ps.Image != expectedImage {
-		t.Errorf("expected %s, got %s", expectedImage, ps.Image)
+	if ps.Containers[0].Image != expectedImage {
+		t.Errorf("expected %s, got %s", expectedImage, ps.Containers[0].Image)
 	}
 
 	ev := map[string]string{
 		"SLUG_URL": expectedSlugURL,
 	}
 	for k, v := range ev {
-		if ps.Env[k] != v {
-			t.Errorf("expected %s, got %s for key %s", v, ps.Env[k], k)
+		if ps.Containers[0].Env[k] != v {
+			t.Errorf("expected %s, got %s for key %s", v, ps.Containers[0].Env[k], k)
 		}
 	}
 
-	if ps.ContainerLimits.CPU != expectedContainerLimits.CPU {
-		t.Errorf("expected %s, got %s", expectedContainerLimits.CPU, ps.ContainerLimits.CPU)
+	if ps.Containers[0].ContainerLimits.CPU != expectedContainerLimits.CPU {
+		t.Errorf("expected %s, got %s", expectedContainerLimits.CPU, ps.Containers[0].ContainerLimits.CPU)
 	}
-	if ps.ContainerLimits.Memory != expectedContainerLimits.Memory {
-		t.Errorf("expected %s, got %s", expectedContainerLimits.Memory, ps.ContainerLimits.Memory)
+	if ps.Containers[0].ContainerLimits.Memory != expectedContainerLimits.Memory {
+		t.Errorf("expected %s, got %s", expectedContainerLimits.Memory, ps.Containers[0].ContainerLimits.Memory)
 	}
 
 	for i, v := range expectedCommand {
-		if ps.Args[i] != expectedCommand[i] {
-			t.Errorf("expected %s, got %s", v, ps.Args[i])
+		if ps.Containers[0].Args[i] != expectedCommand[i] {
+			t.Errorf("expected %s, got %s", v, ps.Containers[0].Args[i])
 		}
 	}
 }
@@ -189,10 +189,10 @@ func TestNewRunnerVolumeMounts(t *testing.T) {
 
 	ps := NewRunner("", "", imgs, a, s, cl, cmd...)
 
-	if len(ps.VolumeMounts) != 1 {
-		t.Errorf("expected %d, got %d", 1, len(ps.VolumeMounts))
+	if len(ps.Containers[0].VolumeMounts) != 1 {
+		t.Errorf("expected %d, got %d", 1, len(ps.Containers[0].VolumeMounts))
 	}
-	if ps.VolumeMounts[0].Name != slugVolumeName {
-		t.Errorf("expected %s, got %s", slugVolumeName, ps.VolumeMounts[0].Name)
+	if ps.Containers[0].VolumeMounts[0].Name != slugVolumeName {
+		t.Errorf("expected %s, got %s", slugVolumeName, ps.Containers[0].VolumeMounts[0].Name)
 	}
 }

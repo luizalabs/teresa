@@ -25,8 +25,8 @@ func TestNewDeploySpec(t *testing.T) {
 		storage.NewFake(),
 	)
 
-	if len(ds.Args) != 2 || ds.Args[1] != a.ProcessType {
-		t.Errorf("expected [start %s], got %v", a.ProcessType, ds.Args)
+	if len(ds.Containers[0].Args) != 2 || ds.Containers[0].Args[1] != a.ProcessType {
+		t.Errorf("expected [start %s], got %v", a.ProcessType, ds.Containers[0].Args)
 	}
 
 	if ds.SlugURL != expectedSlugURL {

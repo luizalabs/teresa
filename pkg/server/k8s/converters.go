@@ -209,7 +209,7 @@ func podSpecToK8sInitContainers(podSpec *spec.Pod) ([]k8sv1.Container, error) {
 }
 
 func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv2alpha.CronJob, error) {
-	c, err := podSpecToK8sContainer(&cronJobSpec.Pod)
+	containers, err := podSpecToK8sContainers(&cronJobSpec.Pod)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +223,7 @@ func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv2alpha.CronJob, er
 	f := false
 	ps := k8sv1.PodSpec{
 		RestartPolicy: k8sv1.RestartPolicyNever,
-		Containers:    []k8sv1.Container{*c},
+		Containers:    containers,
 		Volumes:       volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,

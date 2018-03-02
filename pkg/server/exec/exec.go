@@ -57,9 +57,9 @@ func (ops *ExecOperations) RunCommand(ctx context.Context, user *database.User, 
 		return nil, errChan
 	}
 
-	imgs := &spec.SlugImages{
-		Runner: ops.defaults.RunnerImage,
-		Store:  ops.defaults.StoreImage,
+	imgs := &spec.Images{
+		SlugRunner: ops.defaults.RunnerImage,
+		SlugStore:  ops.defaults.StoreImage,
 	}
 	podSpec := spec.NewRunner(
 		fmt.Sprintf("exec-command-%s-%s", appName, uid.New()),

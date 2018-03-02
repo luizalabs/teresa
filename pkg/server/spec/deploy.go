@@ -58,35 +58,47 @@ type Deploy struct {
 	RevisionHistoryLimit int
 	Description          string
 	SlugURL              string
+	NginxConf            string
 }
 
-type SlugImages struct {
-	Runner string
-	Store  string
+type Images struct {
+	SlugRunner string
+	SlugStore  string
+	Nginx      string
 }
 
-func NewDeploy(imgs *SlugImages, description, slugURL string, rhl int, a *app.App, tYaml *TeresaYaml, fs storage.Storage) *Deploy {
+func NewDeploy(imgs *Images, nginxConf, description, slugURL string, rhl int, a *app.App, tYaml *TeresaYaml, fs storage.Storage) *Deploy {
+	hasNginx := false
+	port := DefaultPort
+	if nginxConf != "" {
+		port = secondaryPort
+		hasNginx = true
+	}
+
 	ps := NewPod(
 		a.Name,
-		imgs.Runner,
+		imgs.Nginx,
+		imgs.SlugRunner,
 		a,
 		map[string]string{
 			"APP":      a.Name,
-			"PORT":     strconv.Itoa(DefaultPort),
+			"PORT":     strconv.Itoa(port),
 			"SLUG_URL": slugURL,
 			"SLUG_DIR": slugVolumeMountPath,
 		},
 		fs,
+		hasNginx,
 	)
 	ps.Containers[0].Args = []string{"start", a.ProcessType}
 	ps.Containers[0].VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}
-	ps.InitContainers = newInitContainers(slugURL, imgs.Store, a, fs)
+	ps.InitContainers = newInitContainers(slugURL, imgs.SlugStore, a, fs)
 
 	ds := &Deploy{
 		Description:          description,
 		SlugURL:              slugURL,
 		Pod:                  *ps,
 		RevisionHistoryLimit: rhl,
+		NginxConf:            nginxConf,
 	}
 
 	if tYaml != nil {

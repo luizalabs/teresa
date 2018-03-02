@@ -16,10 +16,11 @@ type CronJob struct {
 	FailedJobsHistoryLimit     int32
 }
 
-func NewCronJob(description, slugURL, schedule string, imgs *SlugImages, a *app.App, fs storage.Storage, args ...string) *CronJob {
+func NewCronJob(description, slugURL, schedule string, imgs *Images, a *app.App, fs storage.Storage, args ...string) *CronJob {
 	ps := NewPod(
 		a.Name,
-		imgs.Runner,
+		"",
+		imgs.SlugRunner,
 		a,
 		map[string]string{
 			"APP":      a.Name,
@@ -27,10 +28,11 @@ func NewCronJob(description, slugURL, schedule string, imgs *SlugImages, a *app.
 			"SLUG_DIR": slugVolumeMountPath,
 		},
 		fs,
+		false,
 	)
-	ps.Args = args
-	ps.VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}
-	ps.InitContainers = newInitContainers(slugURL, imgs.Store, a, fs)
+	ps.Containers[0].Args = args
+	ps.Containers[0].VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}
+	ps.InitContainers = newInitContainers(slugURL, imgs.SlugStore, a, fs)
 
 	ds := Deploy{
 		Description: description,

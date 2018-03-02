@@ -94,9 +94,9 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 }
 
 func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugURL string, stream io.Writer) error {
-	imgs := &spec.SlugImages{
-		Runner: ops.opts.SlugRunnerImage,
-		Store:  ops.opts.SlugStoreImage,
+	imgs := &spec.Images{
+		SlugRunner: ops.opts.SlugRunnerImage,
+		SlugStore:  ops.opts.SlugStoreImage,
 	}
 	podSpec := spec.NewRunner(
 		fmt.Sprintf("release-%s-%s", a.Name, deployId),
@@ -136,12 +136,15 @@ func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployC
 		}
 	}
 
-	imgs := &spec.SlugImages{
-		Runner: ops.opts.SlugRunnerImage,
-		Store:  ops.opts.SlugStoreImage,
+	imgs := &spec.Images{
+		SlugRunner: ops.opts.SlugRunnerImage,
+		SlugStore:  ops.opts.SlugStoreImage,
+		Nginx:      ops.opts.NginxImage,
 	}
+
 	deploySpec := spec.NewDeploy(
 		imgs,
+		confFiles.NginxConf,
 		description,
 		slugURL,
 		ops.opts.RevisionHistoryLimit,
@@ -165,9 +168,9 @@ func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployC
 }
 
 func (ops *DeployOperations) createOrUpdateCronJob(a *app.App, confFiles *DeployConfigFiles, w io.Writer, errChan chan error, slugURL, description string) {
-	imgs := &spec.SlugImages{
-		Runner: ops.opts.SlugRunnerImage,
-		Store:  ops.opts.SlugStoreImage,
+	imgs := &spec.Images{
+		SlugRunner: ops.opts.SlugRunnerImage,
+		SlugStore:  ops.opts.SlugStoreImage,
 	}
 	if confFiles.TeresaYaml == nil || confFiles.TeresaYaml.Cron == nil {
 		errChan <- ErrCronScheduleNotFound

@@ -54,6 +54,9 @@ The app name must follow this rules:
   With virtual host
   $ teresa create foo --team bar --vhost foo.teresa.io
 
+  An internal app (without external endpoint)
+  $ teresa create foo --team bar --internal
+
   With all flags...
   $ teresa app create foo --team bar --cpu 200m --max-cpu 500m --memory 512Mi --max-memory 1Gi --scale-min 2 --scale-max 10 --scale-cpu 70 --process-type web`,
 	Run: createApp,
@@ -119,6 +122,11 @@ func createApp(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid vhost parameter")
 	}
 
+	internal, err := cmd.Flags().GetBool("internal")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid internal parameter")
+	}
+
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
@@ -162,6 +170,7 @@ func createApp(cmd *cobra.Command, args []string) {
 			VirtualHost: vHost,
 			Limits:      lim,
 			Autoscale:   as,
+			Internal:    internal,
 		},
 	)
 	if err != nil {
@@ -695,6 +704,7 @@ func init() {
 	appCreateCmd.Flags().String("max-memory", "512Mi", "when set, allows the pod to burst memory usage up to 'max-memory'")
 	appCreateCmd.Flags().String("process-type", "", "app process type")
 	appCreateCmd.Flags().String("vhost", "", "virtual host of the app")
+	appCreateCmd.Flags().Bool("internal", false, "create an internal app (without external endpoint)")
 
 	appEnvSetCmd.Flags().String("app", "", "app name")
 	appEnvSetCmd.Flags().Bool("no-input", false, "set env vars without warning")

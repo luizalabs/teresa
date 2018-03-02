@@ -39,6 +39,7 @@ message CreateRequest {
     Autoscale autoscale = 5;
 
     string virtual_host = 6;
+    bool internal = 7;
 }
 
 message ListResponse {

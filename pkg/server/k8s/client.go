@@ -33,10 +33,9 @@ const (
 )
 
 type Client struct {
-	conf               *restclient.Config
-	defaultServiceType string
-	podRunTimeout      time.Duration
-	ingress            bool
+	conf          *restclient.Config
+	podRunTimeout time.Duration
+	ingress       bool
 }
 
 func (k *Client) buildClient() (*kubernetes.Clientset, error) {
@@ -554,17 +553,17 @@ func (k *Client) hasService(namespace, appName string) (bool, error) {
 	return true, nil
 }
 
-func (k *Client) createService(namespace, appName string) error {
+func (k *Client) createService(namespace, appName, svcType string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
 	}
-	srvSpec := serviceSpec(namespace, appName, k.defaultServiceType)
+	srvSpec := serviceSpec(namespace, appName, svcType)
 	_, err = kc.CoreV1().Services(namespace).Create(srvSpec)
 	return errors.Wrap(err, "create service failed")
 }
 
-func (k *Client) hasIngress(namespace, appName string) (bool, error) {
+func (k *Client) HasIngress(namespace, appName string) (bool, error) {
 	kc, err := k.buildClient()
 	if err != nil {
 		return false, err
@@ -593,14 +592,14 @@ func (k *Client) createIngress(namespace, appName, vHost string) error {
 }
 
 // ExposeDeploy creates a service and/or a ingress if needed
-func (k *Client) ExposeDeploy(namespace, appName, vHost string, w io.Writer) error {
+func (k *Client) ExposeDeploy(namespace, appName, vHost, svcType string, w io.Writer) error {
 	hasSrv, err := k.hasService(namespace, appName)
 	if err != nil {
 		return err
 	}
 	if !hasSrv {
 		fmt.Fprintln(w, "Exposing service")
-		if err := k.createService(namespace, appName); err != nil {
+		if err := k.createService(namespace, appName, svcType); err != nil {
 			return err
 		}
 	}
@@ -608,7 +607,7 @@ func (k *Client) ExposeDeploy(namespace, appName, vHost string, w io.Writer) err
 	if !k.ingress {
 		return nil
 	}
-	hasIgs, err := k.hasIngress(namespace, appName)
+	hasIgs, err := k.HasIngress(namespace, appName)
 	if err != nil {
 		return err
 	}
@@ -922,9 +921,8 @@ func newInClusterK8sClient(conf *Config) (*Client, error) {
 		return nil, err
 	}
 	return &Client{
-		conf:               k8sConf,
-		defaultServiceType: conf.DefaultServiceType,
-		ingress:            conf.Ingress,
+		conf:    k8sConf,
+		ingress: conf.Ingress,
 	}, nil
 }
 
@@ -934,8 +932,7 @@ func newOutOfClusterK8sClient(conf *Config) (*Client, error) {
 		return nil, err
 	}
 	return &Client{
-		conf:               k8sConf,
-		defaultServiceType: conf.DefaultServiceType,
-		podRunTimeout:      conf.PodRunTimeout,
+		conf:          k8sConf,
+		podRunTimeout: conf.PodRunTimeout,
 	}, nil
 }

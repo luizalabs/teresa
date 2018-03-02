@@ -27,6 +27,7 @@ type Options struct {
 	NginxImage           string        `split_words:"true" default:"nginx:1.13-alpine"`
 	BuildLimitCPU        string        `split_words:"true" default:"800m"`
 	BuildLimitMemory     string        `split_words:"true" default:"1Gi"`
+	DefaultServiceType   string        `split_words:"true" default:"LoadBalancer"`
 }
 
 type Service struct {

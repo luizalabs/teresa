@@ -21,6 +21,7 @@ import (
 const (
 	ProcfileReleaseCmd = "release"
 	runLabel           = "run"
+	internalSvcType    = "ClusterIP"
 )
 
 type Operations interface {
@@ -32,7 +33,7 @@ type Operations interface {
 type K8sOperations interface {
 	CreateOrUpdateDeploy(deploySpec *spec.Deploy) error
 	CreateOrUpdateCronJob(cronJobSpec *spec.CronJob) error
-	ExposeDeploy(namespace, name, vHost string, w io.Writer) error
+	ExposeDeploy(namespace, name, vHost, svcType string, w io.Writer) error
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
 	DeployRollbackToRevision(namespace, name, revision string) error
 }
@@ -198,7 +199,8 @@ func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {
 	if a.ProcessType != app.ProcessTypeWeb {
 		return nil
 	}
-	if err := ops.k8s.ExposeDeploy(a.Name, a.Name, a.VirtualHost, w); err != nil {
+	svcType := ops.serviceType(a)
+	if err := ops.k8s.ExposeDeploy(a.Name, a.Name, a.VirtualHost, svcType, w); err != nil {
 		return err
 	}
 	return nil // already exposed
@@ -274,6 +276,13 @@ func (ops *DeployOperations) Rollback(user *database.User, appName, revision str
 	}
 
 	return nil
+}
+
+func (ops *DeployOperations) serviceType(a *app.App) string {
+	if a.Internal {
+		return internalSvcType
+	}
+	return ops.opts.DefaultServiceType
 }
 
 func NewDeployOperations(aOps app.Operations, k8s K8sOperations, s st.Storage, execOps exec.Operations, opts *Options) Operations {

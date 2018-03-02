@@ -13,24 +13,12 @@ var validServiceTypes = map[api.ServiceType]bool{
 }
 
 type Config struct {
-	ConfigFile         string        `split_words:"true"`
-	DefaultServiceType string        `split_words:"true" default:"LoadBalancer"`
-	PodRunTimeout      time.Duration `split_words:"true" default:"30m"`
-	Ingress            bool          `split_words:"true" default:"false"`
-}
-
-func validateConfig(conf *Config) error {
-	serviceType := api.ServiceType(conf.DefaultServiceType)
-	if _, ok := validServiceTypes[serviceType]; !ok {
-		return ErrInvalidServiceType
-	}
-	return nil
+	ConfigFile    string        `split_words:"true"`
+	PodRunTimeout time.Duration `split_words:"true" default:"30m"`
+	Ingress       bool          `split_words:"true" default:"false"`
 }
 
 func New(conf *Config) (*Client, error) {
-	if err := validateConfig(conf); err != nil {
-		return nil, err
-	}
 	if conf.ConfigFile == "" {
 		return newInClusterK8sClient(conf)
 	}

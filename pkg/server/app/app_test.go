@@ -26,6 +26,9 @@ type fakeK8sOperations struct {
 	DeleteCronJobEnvVarsWasCalled         bool
 	Namespaces                            map[string]struct{}
 	DefaultProcessType                    string
+	AppInternal                           bool
+	AppVirtualHost                        string
+	AppIngress                            bool
 }
 
 type errK8sOperations struct {
@@ -74,7 +77,12 @@ func (f *fakeK8sOperations) NamespaceAnnotation(namespace, annotation string) (s
 	if dpt == "" {
 		dpt = "web"
 	}
-	return fmt.Sprintf(`{"name": "test", "processType": "%s"}`, dpt), nil
+	return fmt.Sprintf(
+		`{"name": "test", "processType": "%s", "internal": %t, "virtualHost": "%s"}`,
+		dpt,
+		f.AppInternal,
+		f.AppVirtualHost,
+	), nil
 }
 
 func (*fakeK8sOperations) NamespaceLabel(namespace, label string) (string, error) {
@@ -179,6 +187,10 @@ func (f *fakeK8sOperations) DeletePod(namespace, podName string) error {
 	return nil
 }
 
+func (f *fakeK8sOperations) HasIngress(namespace, name string) (bool, error) {
+	return f.AppIngress, nil
+}
+
 func (e *errK8sOperations) CreateNamespace(app *App, user string) error {
 	return e.NamespaceErr
 }
@@ -278,6 +290,10 @@ func (e *errK8sOperations) NamespaceListByLabel(label, value string) ([]string, 
 
 func (e *errK8sOperations) DeletePod(namespace, podName string) error {
 	return e.DeletePodErr
+}
+
+func (e *errK8sOperations) HasIngress(namespace, name string) (bool, error) {
+	return false, nil
 }
 
 func TestAppOperationsCreate(t *testing.T) {
@@ -639,6 +655,50 @@ func TestAppOperationsInfoErrNotFound(t *testing.T) {
 
 	if _, err := ops.Info(user, "teresa"); teresa_errors.Get(err) != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", teresa_errors.Get(err))
+	}
+}
+
+func TestAppOpsInfoInternalApp(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{AppInternal: true}, nil)
+	teamName := "luizalabs"
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: teamName, Internal: true}
+	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
+		Name:  teamName,
+		Users: []database.User{*user},
+	}
+
+	info, err := ops.Info(user, app.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	hostname := info.Addresses[0].Hostname
+	if hostname != "test.test" {
+		t.Errorf("expected test.test, got %s", hostname)
+	}
+}
+
+func TestAppOpsInfoIngress(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{AppVirtualHost: "test", AppIngress: true}, nil)
+	teamName := "luizalabs"
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: teamName, Internal: true}
+	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
+		Name:  teamName,
+		Users: []database.User{*user},
+	}
+
+	info, err := ops.Info(user, app.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	hostname := info.Addresses[0].Hostname
+	if hostname != "test" {
+		t.Errorf("expected test, got %s", hostname)
 	}
 }
 

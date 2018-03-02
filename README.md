@@ -115,6 +115,13 @@ You also have to adjust the `Procfile` to have a corresponding `worker` key.
 There's nothing special with the name `worker`, it can be anything different
 from `web` with a matching `Procfile` line.
 
+**Q: How to create an internal app (without a external endpoint) ?**
+
+    $ teresa app create <app-name> --team <team-name> --internal
+
+The app is only visible inside the cluster. The flag `--internal` only works
+with the `web` process type (the default).
+
 **Q: How to get info about an app?**
 
     $ teresa app info <app-name>

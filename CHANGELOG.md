@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - Support Nginx as sidecar
+- support for internal apps
 
 ## [0.16.0] - 2018-03-07
 ### Added

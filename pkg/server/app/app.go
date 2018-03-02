@@ -63,6 +63,7 @@ type K8sOperations interface {
 	NamespaceListByLabel(label, value string) ([]string, error)
 	DeploySetReplicas(namespace, name string, replicas int32) error
 	DeletePod(namespace, podName string) error
+	HasIngress(namespace, name string) (bool, error)
 }
 
 type AppOperations struct {
@@ -198,7 +199,7 @@ func (ops *AppOperations) Info(user *database.User, appName string) (*Info, erro
 		return nil, err
 	}
 
-	addr, err := ops.kops.AddressList(appName)
+	addrs, err := ops.addresses(appMeta)
 	if err != nil {
 		return nil, teresa_errors.NewInternalServerError(err)
 	}
@@ -220,7 +221,7 @@ func (ops *AppOperations) Info(user *database.User, appName string) (*Info, erro
 
 	info := &Info{
 		Team:      teamName,
-		Addresses: addr,
+		Addresses: addrs,
 		Status:    stat,
 		Autoscale: as,
 		Limits:    lim,
@@ -351,6 +352,24 @@ func (ops *AppOperations) UnsetEnv(user *database.User, appName string, evNames 
 	}
 
 	return nil
+}
+
+func (ops *AppOperations) addresses(app *App) ([]*Address, error) {
+	if app.Internal {
+		return []*Address{{fmt.Sprintf("%s.%s", app.Name, app.Name)}}, nil
+	}
+	// Optimize for common case
+	if app.VirtualHost == "" {
+		return ops.kops.AddressList(app.Name)
+	}
+	hasIngress, err := ops.kops.HasIngress(app.Name, app.Name)
+	if err != nil {
+		return nil, err
+	}
+	if hasIngress {
+		return []*Address{{app.VirtualHost}}, nil
+	}
+	return nil, nil
 }
 
 func checkForProtectedEnvVars(evsNames []string) error {

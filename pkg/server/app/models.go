@@ -36,6 +36,7 @@ type App struct {
 	Limits      *Limits    `json:"-"`
 	Autoscale   *Autoscale `json:"-"`
 	EnvVars     []*EnvVar  `json:"envVars"`
+	Internal    bool       `json:"internal"`
 }
 
 type Pod struct {
@@ -129,6 +130,7 @@ func newApp(req *appb.CreateRequest) *App {
 		VirtualHost: req.VirtualHost,
 		Team:        req.Team,
 		EnvVars:     []*EnvVar{},
+		Internal:    req.Internal,
 	}
 	return app
 }

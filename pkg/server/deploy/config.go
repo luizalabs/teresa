@@ -15,6 +15,7 @@ const (
 	ProcfileFileName       = "Procfile"
 	teresaYamlFileNameTmpl = "teresa%s%s.yaml"
 	maxDrainTimeoutSeconds = 30
+	nginxConfFileName      = "nginx.conf"
 )
 
 type Procfile map[string]string
@@ -22,22 +23,40 @@ type Procfile map[string]string
 type DeployConfigFiles struct {
 	TeresaYaml *spec.TeresaYaml
 	Procfile   Procfile
+	NginxConf  string
 }
 
 func (d *DeployConfigFiles) fillTeresaYaml(r io.Reader) error {
 	d.TeresaYaml = new(spec.TeresaYaml)
-	if err := readFileFromTarBall(r, d.TeresaYaml); err != nil {
+	if err := readYAMLFromTarBall(r, d.TeresaYaml); err != nil {
 		return err
 	}
 	return validateTeresaYaml(d.TeresaYaml)
 }
 
-func readFileFromTarBall(r io.Reader, t interface{}) error {
+func readFileFromTarBall(r io.Reader) (string, error) {
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+func readYAMLFromTarBall(r io.Reader, t interface{}) error {
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return err
 	}
 	return yaml.Unmarshal(b, t)
+}
+
+func isConfigFile(name string, confFiles ...string) bool {
+	for _, cf := range confFiles {
+		if name == cf {
+			return true
+		}
+	}
+	return false
 }
 
 func getDeployConfigFilesFromTarBall(tarBall io.ReadSeeker, processType string) (*DeployConfigFiles, error) {
@@ -60,7 +79,7 @@ func getDeployConfigFilesFromTarBall(tarBall io.ReadSeeker, processType string) 
 			return nil, err
 		}
 
-		if hdr.Name != tYamlFilename && hdr.Name != tYamlProcessTypeFileName && hdr.Name != ProcfileFileName {
+		if !isConfigFile(hdr.Name, tYamlFilename, tYamlProcessTypeFileName, ProcfileFileName, nginxConfFileName) {
 			continue
 		}
 
@@ -74,9 +93,14 @@ func getDeployConfigFilesFromTarBall(tarBall io.ReadSeeker, processType string) 
 					return nil, err
 				}
 			}
+		} else if hdr.Name == nginxConfFileName {
+			deployFiles.NginxConf, err = readFileFromTarBall(tarReader)
+			if err != nil {
+				return nil, err
+			}
 		} else {
 			deployFiles.Procfile = make(map[string]string)
-			if err := readFileFromTarBall(tarReader, deployFiles.Procfile); err != nil {
+			if err := readYAMLFromTarBall(tarReader, deployFiles.Procfile); err != nil {
 				return nil, err
 			}
 		}

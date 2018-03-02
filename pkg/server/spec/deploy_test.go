@@ -13,10 +13,11 @@ func TestNewDeploySpec(t *testing.T) {
 	expectedSlugURL := "http://teresa.io/slug.tgz"
 	expectedRevisionHistoryLimit := 5
 	a := &app.App{Name: "deploy-test", ProcessType: "worker"}
-	imgs := &SlugImages{Runner: expectedImage}
+	imgs := &Images{SlugRunner: expectedImage}
 
 	ds := NewDeploy(
 		imgs,
+		"",
 		expectedDescription,
 		expectedSlugURL,
 		expectedRevisionHistoryLimit,
@@ -61,9 +62,9 @@ func TestNewDeploySpec(t *testing.T) {
 func TestNewDeploySpecInitContainers(t *testing.T) {
 	expectedImage := "image"
 	a := &app.App{}
-	imgs := &SlugImages{Store: expectedImage}
+	imgs := &Images{SlugStore: expectedImage}
 
-	ds := NewDeploy(imgs, "", "", 0, a, &TeresaYaml{}, storage.NewFake())
+	ds := NewDeploy(imgs, "", "", "", 0, a, &TeresaYaml{}, storage.NewFake())
 
 	if len(ds.InitContainers) != 1 {
 		t.Errorf("got %d; want %d", len(ds.InitContainers), 1)

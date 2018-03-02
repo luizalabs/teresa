@@ -1,8 +1,19 @@
 package spec
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/storage"
+)
+
+const (
+	nginxConfTmplDir = "/etc/nginx/template/"
+	nginxConfDir     = "/etc/nginx/"
+	nginxConfFile    = "nginx.conf"
+	nginxArgTmpl     = "envsubst < %s%s > %s%s && nginx -g 'daemon off;'"
+	nginxBackendTmpl = "http://localhost:%d"
 )
 
 type ContainerLimits struct {
@@ -49,9 +60,8 @@ func newStorageKeyVolumeMount() *VolumeMounts {
 
 func newInitContainers(slugURL, image string, a *app.App, fs storage.Storage) []*Container {
 	return []*Container{{
-		Name:      "slugstore",
-		Namespace: a.Name,
-		Image:     image,
+		Name:  "slugstore",
+		Image: image,
 		Env: map[string]string{
 			"BUILDER_STORAGE": fs.Type(),
 			"SLUG_URL":        slugURL,
@@ -62,4 +72,52 @@ func newInitContainers(slugURL, image string, a *app.App, fs storage.Storage) []
 			newSlugVolumeMount(),
 		},
 	}}
+}
+
+func newNginxVolumeMount() *VolumeMounts {
+	return &VolumeMounts{
+		Name:      "nginx-conf",
+		MountPath: nginxConfTmplDir,
+		ReadOnly:  true,
+	}
+}
+
+func newNginxContainer(image string) *Container {
+	args := fmt.Sprintf(nginxArgTmpl, nginxConfTmplDir, nginxConfFile, nginxConfDir, nginxConfFile)
+	port := strconv.Itoa(DefaultPort)
+	backend := fmt.Sprintf(nginxBackendTmpl, secondaryPort)
+
+	return &Container{
+		Name:    "nginx",
+		Image:   image,
+		Command: []string{"/bin/sh"},
+		Args:    []string{"-c", args},
+		Ports: []Port{{
+			Name:          "nginx",
+			ContainerPort: int32(DefaultPort),
+		}},
+		Env: map[string]string{
+			"NGINX_PORT":    port,
+			"NGINX_BACKEND": backend,
+		},
+		VolumeMounts: []*VolumeMounts{
+			newNginxVolumeMount(),
+		},
+	}
+}
+
+func newAppContainer(image string, envVars map[string]string, hasNginx bool) *Container {
+	port := DefaultPort
+	if hasNginx {
+		port = secondaryPort
+	}
+	return &Container{
+		Name:  "app",
+		Image: image,
+		Env:   envVars,
+		Ports: []Port{{
+			Name:          "app",
+			ContainerPort: int32(port),
+		}},
+	}
 }

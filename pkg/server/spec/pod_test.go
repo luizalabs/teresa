@@ -19,7 +19,7 @@ func TestNewPodSpec(t *testing.T) {
 	expectedName := "test"
 	expectedImage := "docker/teresa-test:0.0.1"
 
-	ps := NewPod(expectedName, expectedImage, a, ev, storage.NewFake())
+	ps := NewPod(expectedName, "", expectedImage, a, ev, storage.NewFake(), false)
 	if ps.Name != expectedName {
 		t.Errorf("expected %s, got %s", expectedName, ps.Name)
 	}
@@ -119,7 +119,7 @@ func TestNewRunner(t *testing.T) {
 		CPU:    "800m",
 		Memory: "1Gi",
 	}
-	imgs := &SlugImages{Runner: expectedImage}
+	imgs := &Images{SlugRunner: expectedImage}
 
 	ps := NewRunner(
 		expectedPodName,
@@ -167,7 +167,7 @@ func TestNewRunnerInitContainers(t *testing.T) {
 	a := &app.App{}
 	s := storage.NewFake()
 	cl := &ContainerLimits{}
-	imgs := &SlugImages{Store: expectedImage}
+	imgs := &Images{SlugStore: expectedImage}
 
 	ps := NewRunner("", "", imgs, a, s, cl, cmd...)
 
@@ -185,7 +185,7 @@ func TestNewRunnerVolumeMounts(t *testing.T) {
 	a := &app.App{}
 	s := storage.NewFake()
 	cl := &ContainerLimits{}
-	imgs := &SlugImages{Store: expectedImage}
+	imgs := &Images{SlugStore: expectedImage}
 
 	ps := NewRunner("", "", imgs, a, s, cl, cmd...)
 

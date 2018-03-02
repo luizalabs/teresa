@@ -25,26 +25,44 @@ type Pod struct {
 	InitContainers []*Container
 }
 
-func NewPod(name, image string, a *app.App, envVars map[string]string, fs storage.Storage) *Pod {
-	ps := &Pod{
-		Name:      name,
-		Namespace: a.Name,
-		Containers: []*Container{{
-			Name:  name,
-			Image: image,
-			Env:   envVars,
-		}},
-		Volumes: []*Volume{
-			{
-				Name:       "storage-keys",
-				SecretName: fs.K8sSecretName(),
-			},
-			{
-				Name:     slugVolumeName,
-				EmptyDir: true,
-			},
+func newPodVolumes(appName string, fs storage.Storage, hasNginx bool) []*Volume {
+	volumes := []*Volume{
+		{
+			Name:       "storage-keys",
+			SecretName: fs.K8sSecretName(),
+		},
+		{
+			Name:     slugVolumeName,
+			EmptyDir: true,
 		},
 	}
+	if hasNginx {
+		volumes = append(volumes, &Volume{
+			Name:          "nginx-conf",
+			ConfigMapName: appName,
+		})
+	}
+	return volumes
+}
+
+func newPodContainers(appImage, nginxImage string, envVars map[string]string, hasNginx bool) []*Container {
+	c := []*Container{
+		newAppContainer(appImage, envVars, hasNginx),
+	}
+	if hasNginx {
+		c = append(c, newNginxContainer(nginxImage))
+	}
+	return c
+}
+
+func NewPod(name, nginxImage, image string, a *app.App, envVars map[string]string, fs storage.Storage, hasNginx bool) *Pod {
+	ps := &Pod{
+		Name:       name,
+		Namespace:  a.Name,
+		Containers: newPodContainers(image, nginxImage, envVars, hasNginx),
+		Volumes:    newPodVolumes(a.Name, fs, hasNginx),
+	}
+
 	for _, e := range a.EnvVars {
 		ps.Containers[0].Env[e.Key] = e.Value
 	}
@@ -57,6 +75,7 @@ func NewPod(name, image string, a *app.App, envVars map[string]string, fs storag
 func NewBuilder(name, tarBallLocation, buildDest, image string, a *app.App, fs storage.Storage, cl *ContainerLimits) *Pod {
 	ps := NewPod(
 		name,
+		"",
 		image,
 		a,
 		map[string]string{
@@ -65,16 +84,18 @@ func NewBuilder(name, tarBallLocation, buildDest, image string, a *app.App, fs s
 			"BUILDER_STORAGE": fs.Type(),
 		},
 		fs,
+		false,
 	)
 	ps.Containers[0].VolumeMounts = []*VolumeMounts{newStorageKeyVolumeMount()}
 	ps.Containers[0].ContainerLimits = cl
 	return ps
 }
 
-func NewRunner(name, slugURL string, imgs *SlugImages, a *app.App, fs storage.Storage, cl *ContainerLimits, command ...string) *Pod {
+func NewRunner(name, slugURL string, imgs *Images, a *app.App, fs storage.Storage, cl *ContainerLimits, command ...string) *Pod {
 	ps := NewPod(
 		name,
-		imgs.Runner,
+		"",
+		imgs.SlugRunner,
 		a,
 		map[string]string{
 			"APP":      a.Name,
@@ -82,10 +103,11 @@ func NewRunner(name, slugURL string, imgs *SlugImages, a *app.App, fs storage.St
 			"SLUG_DIR": slugVolumeMountPath,
 		},
 		fs,
+		false,
 	)
 	ps.Containers[0].Args = command
 	ps.Containers[0].ContainerLimits = cl
 	ps.Containers[0].VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}
-	ps.InitContainers = newInitContainers(slugURL, imgs.Store, a, fs)
+	ps.InitContainers = newInitContainers(slugURL, imgs.SlugStore, a, fs)
 	return ps
 }

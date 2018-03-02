@@ -17,7 +17,7 @@ func TestNewCronJobSpec(t *testing.T) {
 	expectedCommand := "happy cron job"
 	expectedSchedule := "*/1 * * * *"
 
-	imgs := &SlugImages{Runner: expectedImage, Store: expectedInitImage}
+	imgs := &Images{SlugRunner: expectedImage, SlugStore: expectedInitImage}
 
 	cs := NewCronJob(
 		expectedDescription,
@@ -29,8 +29,9 @@ func TestNewCronJobSpec(t *testing.T) {
 		strings.Split(expectedCommand, " ")...,
 	)
 
-	if len(cs.Args) != 3 || strings.Join(cs.Args, " ") != expectedCommand {
-		t.Errorf("expected [%s], got %v", expectedCommand, cs.Args)
+	csArgs := cs.Containers[0].Args
+	if len(csArgs) != 3 || strings.Join(csArgs, " ") != expectedCommand {
+		t.Errorf("expected [%s], got %v", expectedCommand, csArgs)
 	}
 
 	if cs.SlugURL != expectedSlugURL {

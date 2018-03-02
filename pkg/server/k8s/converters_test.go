@@ -406,11 +406,11 @@ func TestCronJobSpecToK8sCronJob(t *testing.T) {
 	cs := &spec.CronJob{
 		Deploy: spec.Deploy{
 			Pod: spec.Pod{
-				Container: spec.Container{
+				Containers: []*spec.Container{{
 					Name:  "Teresa",
 					Image: "luizalabs/teresa:0.0.1",
 					Args:  []string{"echo", "hello"},
-				},
+				}},
 				InitContainers: []*spec.Container{{
 					Name:  "Teresa",
 					Image: "luizalabs/init-teresa:0.0.1",
@@ -439,7 +439,7 @@ func TestCronJobSpecToK8sCronJob(t *testing.T) {
 		)
 	}
 	c := k8sCron.Spec.JobTemplate.Spec.Template.Spec.Containers[0]
-	for idx, arg := range cs.Args {
+	for idx, arg := range cs.Containers[0].Args {
 		if c.Args[idx] != arg {
 			t.Errorf("expected %s, got %s", arg, c.Args[idx])
 		}

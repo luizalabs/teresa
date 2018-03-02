@@ -117,7 +117,32 @@ func TestPodSpecEmptyDirVolumeToK8s(t *testing.T) {
 		if k8sVols[idx].Secret != nil {
 			t.Errorf("expected nil, got %v", k8sVols[idx].Secret)
 		}
+		if k8sVols[idx].ConfigMap != nil {
+			t.Errorf("expected nil, got %v", k8sVols[idx].ConfigMap)
+		}
 		if k8sVols[idx].EmptyDir == nil {
+			t.Error("expected pointer to struct, got nil")
+		}
+	}
+}
+
+func TestPodSpecConfigMapVolumeToK8s(t *testing.T) {
+	vols := []*spec.Volume{
+		{Name: "Vol-Test", ConfigMapName: "test"},
+	}
+	k8sVols := podSpecVolumesToK8sVolumes(vols)
+
+	for idx, vol := range vols {
+		if k8sVols[idx].Name != vol.Name {
+			t.Errorf("expected %s, got %s", vol.Name, k8sVols[idx].Name)
+		}
+		if k8sVols[idx].Secret != nil {
+			t.Errorf("expected nil, got %v", k8sVols[idx].Secret)
+		}
+		if k8sVols[idx].EmptyDir != nil {
+			t.Errorf("expected nil, got %v", k8sVols[idx].EmptyDir)
+		}
+		if k8sVols[idx].ConfigMap == nil {
 			t.Error("expected pointer to struct, got nil")
 		}
 	}

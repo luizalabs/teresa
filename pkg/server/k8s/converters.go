@@ -84,10 +84,13 @@ func podSpecVolumesToK8sVolumes(vols []*spec.Volume) []k8sv1.Volume {
 		vol := k8sv1.Volume{Name: v.Name}
 		if v.EmptyDir {
 			vol.EmptyDir = &k8sv1.EmptyDirVolumeSource{}
-		} else {
+		} else if v.SecretName != "" {
 			vol.Secret = &k8sv1.SecretVolumeSource{
 				SecretName: v.SecretName,
 			}
+		} else if v.ConfigMapName != "" {
+			vol.ConfigMap = &k8sv1.ConfigMapVolumeSource{}
+			vol.ConfigMap.Name = v.ConfigMapName
 		}
 		volumes = append(volumes, vol)
 	}

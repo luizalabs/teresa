@@ -11,9 +11,10 @@ const (
 )
 
 type Volume struct {
-	Name       string
-	SecretName string
-	EmptyDir   bool
+	Name          string
+	SecretName    string
+	ConfigMapName string
+	EmptyDir      bool
 }
 
 type Pod struct {

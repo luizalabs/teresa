@@ -276,8 +276,8 @@ func (k *Client) CreateQuota(a *app.App) error {
 	return err
 }
 
-func (k *Client) CreateSecret(appName, secretName string, data map[string][]byte) error {
-	kc, err := k.buildClient()
+func (c *Client) CreateOrUpdateSecret(appName, secretName string, data map[string][]byte) error {
+	kc, err := c.buildClient()
 	if err != nil {
 		return err
 	}
@@ -291,7 +291,10 @@ func (k *Client) CreateSecret(appName, secretName string, data map[string][]byte
 		Data: data,
 	}
 
-	_, err = kc.CoreV1().Secrets(appName).Create(s)
+	_, err = kc.CoreV1().Secrets(appName).Update(s)
+	if c.IsNotFound(err) {
+		_, err = kc.CoreV1().Secrets(appName).Create(s)
+	}
 	return err
 }
 

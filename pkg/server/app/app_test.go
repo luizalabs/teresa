@@ -52,7 +52,7 @@ func (*fakeK8sOperations) CreateQuota(app *App) error {
 	return nil
 }
 
-func (*fakeK8sOperations) CreateSecret(appName, secretName string, data map[string][]byte) error {
+func (*fakeK8sOperations) CreateOrUpdateSecret(appName, secretName string, data map[string][]byte) error {
 	return nil
 }
 
@@ -187,7 +187,7 @@ func (e *errK8sOperations) CreateQuota(app *App) error {
 	return e.QuotaErr
 }
 
-func (e *errK8sOperations) CreateSecret(appName, secretName string, data map[string][]byte) error {
+func (e *errK8sOperations) CreateOrUpdateSecret(appName, secretName string, data map[string][]byte) error {
 	return e.SecretErr
 }
 

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/luizalabs/teresa/pkg/server/app"
@@ -49,12 +48,8 @@ func replaceStorageSecret(cmd *cobra.Command, args []string) {
 		log.WithError(err).Fatal("can't get app list")
 	}
 	for _, app := range apps {
-		if err := k8s.DeleteSecret(string(app), secretName); err != nil {
-			log.WithError(err).Fatalf("can't delete secret from app %s", app)
-		}
-		time.Sleep(1 * time.Second)
-		if err := k8s.CreateSecret(string(app), secretName, data); err != nil {
-			log.WithError(err).Fatalf("can't create secret for app %s", app)
+		if err := k8s.CreateOrUpdateSecret(string(app), secretName, data); err != nil {
+			log.WithError(err).Fatalf("can't update secret for app %s", app)
 		}
 	}
 

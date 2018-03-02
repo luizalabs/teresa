@@ -44,7 +44,7 @@ type K8sOperations interface {
 	PodLogs(namespace, podName string, opts *LogOptions) (io.ReadCloser, error)
 	CreateNamespace(app *App, userEmail string) error
 	CreateQuota(app *App) error
-	CreateSecret(appName, secretName string, data map[string][]byte) error
+	CreateOrUpdateSecret(appName, secretName string, data map[string][]byte) error
 	CreateOrUpdateAutoscale(app *App) error
 	AddressList(namespace string) ([]*Address, error)
 	Status(namespace string) (*Status, error)
@@ -117,7 +117,7 @@ func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 
 	secretName := ops.st.K8sSecretName()
 	data := ops.st.AccessData()
-	if err := ops.kops.CreateSecret(app.Name, secretName, data); err != nil {
+	if err := ops.kops.CreateOrUpdateSecret(app.Name, secretName, data); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
 

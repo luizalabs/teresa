@@ -298,14 +298,6 @@ func (c *Client) CreateOrUpdateSecret(appName, secretName string, data map[strin
 	return err
 }
 
-func (k *Client) DeleteSecret(appName, secretName string) error {
-	kc, err := k.buildClient()
-	if err != nil {
-		return err
-	}
-	return kc.CoreV1().Secrets(appName).Delete(secretName, &metav1.DeleteOptions{})
-}
-
 func (k *Client) CreateOrUpdateAutoscale(a *app.App) error {
 	kc, err := k.buildClient()
 	if err != nil {

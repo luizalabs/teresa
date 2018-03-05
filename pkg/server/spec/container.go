@@ -41,6 +41,7 @@ type Container struct {
 	Command         []string
 	Args            []string
 	Ports           []Port
+	Secrets         []string
 }
 
 func newSlugVolumeMount() *VolumeMounts {
@@ -110,11 +111,12 @@ func newNginxContainer(image string) *Container {
 	}
 }
 
-func newAppContainer(name, image string, envVars map[string]string, port int) *Container {
+func newAppContainer(name, image string, envVars map[string]string, port int, secrets []string) *Container {
 	return &Container{
-		Name:  name,
-		Image: image,
-		Env:   envVars,
+		Name:    name,
+		Image:   image,
+		Env:     envVars,
+		Secrets: secrets,
 		Ports: []Port{{
 			Name:          "app",
 			ContainerPort: int32(port),

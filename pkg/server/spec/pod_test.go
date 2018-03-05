@@ -10,7 +10,8 @@ import (
 func TestNewPodSpec(t *testing.T) {
 	expectedAppName := "app-test"
 	a := &app.App{
-		Name: expectedAppName,
+		Name:    expectedAppName,
+		Secrets: []string{"APP-SECRET-1", "APP-SECRET-2"},
 		EnvVars: []*app.EnvVar{
 			{Key: "APP-ENV-KEY", Value: "APP-ENV-VALUE"},
 		},
@@ -39,6 +40,15 @@ func TestNewPodSpec(t *testing.T) {
 	for k, v := range ev {
 		if ps.Containers[0].Env[k] != v {
 			t.Errorf("expected %s, got %s for key %s", v, ps.Containers[0].Env[k], k)
+		}
+	}
+
+	if len(a.Secrets) != len(ps.Containers[0].Secrets) {
+		t.Fatalf("expected %d, got %d", len(a.Secrets), len(ps.Containers[0].Secrets))
+	}
+	for i := range a.Secrets {
+		if ps.Containers[0].Secrets[i] != a.Secrets[i] {
+			t.Errorf("expected %s, got %s", a.Secrets[i], ps.Containers[0].Secrets[i])
 		}
 	}
 

@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Change Method `CreateSecret` to `CreateOrUpdateSecret` on k8s interfaces
 - Default max-cpu app limit to 400m
+- [HELM] Bump minio version to v0.5.5
 
 ### Added
 - Support Nginx as sidecar
@@ -26,8 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Better error message for invalid app name error
 - Better error message for invalid env var name error
 - Refactor specs to be more in line with k8s concepts
-- The slugrunner doesn't mount the storage keys anymore. An init container is
-  responsible for downloading the slug
+- The slugrunner doesn't mount the storage keys anymore. An init container is responsible for downloading the slug
 - Bump the default slugrunner version to v3.0.1
 
 ## [0.15.0] - 2018-02-14

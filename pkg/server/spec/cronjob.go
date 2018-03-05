@@ -5,9 +5,15 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/storage"
 )
 
+const (
+	defaultJobHistoryLimit = 3
+)
+
 type CronJob struct {
 	Deploy
-	Schedule string
+	Schedule                   string
+	SuccessfulJobsHistoryLimit int32
+	FailedJobsHistoryLimit     int32
 }
 
 func NewCronJob(description, slugURL, schedule string, imgs *SlugImages, a *app.App, fs storage.Storage, args ...string) *CronJob {
@@ -33,8 +39,10 @@ func NewCronJob(description, slugURL, schedule string, imgs *SlugImages, a *app.
 	}
 
 	cs := &CronJob{
-		Deploy:   ds,
-		Schedule: schedule,
+		Deploy:                     ds,
+		Schedule:                   schedule,
+		SuccessfulJobsHistoryLimit: defaultJobHistoryLimit,
+		FailedJobsHistoryLimit:     defaultJobHistoryLimit,
 	}
 
 	return cs

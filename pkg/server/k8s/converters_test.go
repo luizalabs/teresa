@@ -391,7 +391,9 @@ func TestCronJobSpecToK8sCronJob(t *testing.T) {
 				}},
 			},
 		},
-		Schedule: "*/1 * * * *",
+		Schedule:                   "*/1 * * * *",
+		SuccessfulJobsHistoryLimit: 42,
+		FailedJobsHistoryLimit:     33,
 	}
 
 	k8sCron, err := cronJobSpecToK8sCronJob(cs)
@@ -420,5 +422,15 @@ func TestCronJobSpecToK8sCronJob(t *testing.T) {
 	initContainers := k8sCron.Spec.JobTemplate.Spec.Template.Spec.InitContainers
 	if len(initContainers) != len(cs.Pod.InitContainers) {
 		t.Errorf("expected %d, got %d", len(cs.Pod.InitContainers), len(initContainers))
+	}
+
+	lim := k8sCron.Spec.SuccessfulJobsHistoryLimit
+	if *lim != cs.SuccessfulJobsHistoryLimit {
+		t.Errorf("expected %d, got %d", cs.SuccessfulJobsHistoryLimit, *lim)
+	}
+
+	lim = k8sCron.Spec.FailedJobsHistoryLimit
+	if *lim != cs.FailedJobsHistoryLimit {
+		t.Errorf("expected %d, got %d", cs.FailedJobsHistoryLimit, *lim)
 	}
 }

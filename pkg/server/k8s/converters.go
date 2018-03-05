@@ -221,6 +221,8 @@ func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv2alpha.CronJob, er
 		InitContainers:               initContainers,
 	}
 
+	successfulLim := cronJobSpec.SuccessfulJobsHistoryLimit
+	failedLim := cronJobSpec.FailedJobsHistoryLimit
 	cj := &k8sv2alpha.CronJob{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "batch/v2alpha1",
@@ -244,6 +246,8 @@ func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv2alpha.CronJob, er
 					},
 				},
 			},
+			SuccessfulJobsHistoryLimit: &successfulLim,
+			FailedJobsHistoryLimit:     &failedLim,
 		},
 	}
 	return cj, nil

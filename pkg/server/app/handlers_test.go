@@ -209,6 +209,42 @@ func TestSetEnvPermissionDenied(t *testing.T) {
 	}
 }
 
+func TestSetSecretSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	if _, err := s.SetSecret(ctx, &appb.SetEnvRequest{Name: name}); err != nil {
+		t.Error("Got error on set env: ", err)
+	}
+}
+
+func TestSetSecretAppNotFound(t *testing.T) {
+	s := NewService(NewFakeOperations())
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	if _, err := s.SetSecret(ctx, &appb.SetEnvRequest{Name: "teresa"}); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestSetSecretPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	if _, err := s.SetSecret(ctx, &appb.SetEnvRequest{Name: name}); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
 func TestUnsetEnvSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
@@ -241,6 +277,42 @@ func TestUnsetEnvPermissionDenied(t *testing.T) {
 	ctx := context.WithValue(context.Background(), "user", user)
 
 	if _, err := s.UnsetEnv(ctx, &appb.UnsetEnvRequest{Name: name}); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestUnsetSecretSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	if _, err := s.UnsetSecret(ctx, &appb.UnsetEnvRequest{Name: name}); err != nil {
+		t.Error("Got error on unset env: ", err)
+	}
+}
+
+func TestUnsetSecretAppNotFound(t *testing.T) {
+	s := NewService(NewFakeOperations())
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	if _, err := s.UnsetSecret(ctx, &appb.UnsetEnvRequest{Name: "teresa"}); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestUnsetSecretPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	if _, err := s.UnsetSecret(ctx, &appb.UnsetEnvRequest{Name: name}); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }

@@ -99,6 +99,27 @@ func (s *Service) UnsetEnv(ctx context.Context, req *appb.UnsetEnvRequest) (*app
 	return &appb.Empty{}, nil
 }
 
+func (s *Service) SetSecret(ctx context.Context, req *appb.SetEnvRequest) (*appb.Empty, error) {
+	user := ctx.Value("user").(*database.User)
+	evs := newEnvVars(req)
+
+	if err := s.ops.SetSecret(user, req.Name, evs); err != nil {
+		return nil, err
+	}
+
+	return &appb.Empty{}, nil
+}
+
+func (s *Service) UnsetSecret(ctx context.Context, req *appb.UnsetEnvRequest) (*appb.Empty, error) {
+	user := ctx.Value("user").(*database.User)
+
+	if err := s.ops.UnsetSecret(user, req.Name, req.EnvVars); err != nil {
+		return nil, err
+	}
+
+	return &appb.Empty{}, nil
+}
+
 func (s *Service) List(ctx context.Context, _ *appb.Empty) (*appb.ListResponse, error) {
 	user := ctx.Value("user").(*database.User)
 

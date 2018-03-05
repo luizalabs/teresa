@@ -13,6 +13,8 @@ service App {
     rpc Delete (DeleteRequest) returns (Empty);
     rpc SetReplicas  (SetReplicasRequest) returns (Empty);
     rpc DeletePods (DeletePodsRequest) returns (Empty);
+    rpc SetSecret(SetEnvRequest) returns (Empty);
+    rpc UnsetSecret(UnsetEnvRequest) returns (Empty);
 }
 
 message CreateRequest {

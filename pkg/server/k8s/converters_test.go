@@ -14,10 +14,11 @@ import (
 func TestPodSpecToK8sContainers(t *testing.T) {
 	ps := &spec.Pod{
 		Containers: []*spec.Container{{
-			Name:  "Teresa",
-			Image: "luizalabs/teresa:0.0.1",
-			Env:   map[string]string{"ENV-KEY": "ENV-VALUE"},
-			Args:  []string{"start", "release"},
+			Name:    "Teresa",
+			Image:   "luizalabs/teresa:0.0.1",
+			Env:     map[string]string{"ENV-KEY": "ENV-VALUE"},
+			Args:    []string{"start", "release"},
+			Secrets: []string{"SECRET-1", "SECRET-2"},
 			VolumeMounts: []*spec.VolumeMounts{
 				{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
 			},
@@ -43,6 +44,25 @@ func TestPodSpecToK8sContainers(t *testing.T) {
 	for _, e := range c.Env {
 		if ps.Containers[0].Env[e.Name] != e.Value {
 			t.Errorf("expected %s, got %s, for key %s", e.Value, ps.Containers[0].Env[e.Name], e.Name)
+		}
+	}
+
+	for _, secret := range ps.Containers[0].Secrets {
+		found := false
+		for _, e := range c.Env {
+			found = e.Name == secret
+			if found {
+				if e.ValueFrom.SecretKeyRef.Key != secret {
+					t.Errorf("expected an env with secret key ref for secret %s", secret)
+				}
+				if e.ValueFrom.SecretKeyRef.Name != app.TeresaAppSecrets {
+					t.Errorf("expected an env with secret key ref with name %s", app.TeresaAppSecrets)
+				}
+				break
+			}
+		}
+		if !found {
+			t.Errorf("expected env with secret for secret %s", secret)
 		}
 	}
 

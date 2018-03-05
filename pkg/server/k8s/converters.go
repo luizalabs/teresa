@@ -60,6 +60,19 @@ func containerSpecsToK8sContainers(containerSpecs []*spec.Container) ([]k8sv1.Co
 		for k, v := range cs.Env {
 			c.Env = append(c.Env, k8sv1.EnvVar{Name: k, Value: v})
 		}
+		for _, secret := range cs.Secrets {
+			c.Env = append(c.Env, k8sv1.EnvVar{
+				Name: secret,
+				ValueFrom: &k8sv1.EnvVarSource{
+					SecretKeyRef: &k8sv1.SecretKeySelector{
+						Key: secret,
+						LocalObjectReference: k8sv1.LocalObjectReference{
+							Name: app.TeresaAppSecrets,
+						},
+					},
+				},
+			})
+		}
 		for _, vm := range cs.VolumeMounts {
 			c.VolumeMounts = append(c.VolumeMounts, k8sv1.VolumeMount{
 				Name:      vm.Name,

@@ -400,6 +400,10 @@ func (ops *AppOperations) SetAutoscale(user *database.User, appName string, as *
 		return err
 	}
 
+	if app.ProcessType == ProcessTypeCron {
+		return ErrInvalidActionForCronJob
+	}
+
 	old, err := ops.kops.Autoscale(appName)
 	if err != nil {
 		return teresa_errors.NewInternalServerError(err)
@@ -438,6 +442,10 @@ func (ops *AppOperations) SetReplicas(user *database.User, appName string, repli
 	app, err := ops.CheckPermAndGet(user, appName)
 	if err != nil {
 		return err
+	}
+
+	if app.ProcessType == ProcessTypeCron {
+		return ErrInvalidActionForCronJob
 	}
 
 	if err := ops.kops.DeploySetReplicas(app.Name, app.Name, replicas); err != nil {

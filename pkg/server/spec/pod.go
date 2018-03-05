@@ -45,9 +45,9 @@ func newPodVolumes(appName string, fs storage.Storage, hasNginx bool) []*Volume 
 	return volumes
 }
 
-func newPodContainers(appImage, nginxImage string, envVars map[string]string, hasNginx bool) []*Container {
+func newPodContainers(name, appImage, nginxImage string, envVars map[string]string, hasNginx bool) []*Container {
 	c := []*Container{
-		newAppContainer(appImage, envVars, hasNginx),
+		newAppContainer(name, appImage, envVars, hasNginx),
 	}
 	if hasNginx {
 		c = append(c, newNginxContainer(nginxImage))
@@ -59,7 +59,7 @@ func NewPod(name, nginxImage, image string, a *app.App, envVars map[string]strin
 	ps := &Pod{
 		Name:       name,
 		Namespace:  a.Name,
-		Containers: newPodContainers(image, nginxImage, envVars, hasNginx),
+		Containers: newPodContainers(name, image, nginxImage, envVars, hasNginx),
 		Volumes:    newPodVolumes(a.Name, fs, hasNginx),
 	}
 

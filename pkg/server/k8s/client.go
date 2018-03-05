@@ -152,6 +152,7 @@ func (k *Client) PodLogs(namespace string, podName string, opts *app.LogOptions)
 			Follow:    opts.Follow,
 			TailLines: &opts.Lines,
 			Previous:  opts.Previous,
+			Container: opts.Container,
 		},
 	)
 

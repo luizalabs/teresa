@@ -180,6 +180,23 @@ automatic migrations by adding this line to the `Procfile`:
 Note that a failing release will prevent the rolling update from happening, so
 you have to keep compatibility with old code.
 
+**Q: How To use a nginx as sidecar?**
+Create a nginx.conf file in root of your project with your nginx config, like:
+```
+events {
+  worker_connections  1024;
+}
+
+http{
+  server {
+    listen $NGINX_PORT;
+    location / {
+        proxy_pass $NGINX_BACKEND;
+    }
+  }
+}
+```
+
 ### CronJob
 
 **Q: How to create a CronJob?**

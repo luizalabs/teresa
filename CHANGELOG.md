@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Change Method `CreateSecret` to `CreateOrUpdateSecret` on k8s interfaces
 
+### Added
+- Support Nginx as sidecar
+
 ## [0.16.0] - 2018-03-07
 ### Added
 - `app logs` support to filter by pod name

@@ -33,7 +33,7 @@ debug: false
 useMinio: false
 minio:
   serviceType: ClusterIP
-  bucketDefault:
+  defaultBucket:
     enabled: true
     name: teresa
     policy: public

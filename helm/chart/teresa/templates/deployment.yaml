@@ -76,13 +76,26 @@ spec:
         - name: TERESA_SECRETS_PUBLIC_KEY
           value: /etc/teresa-keys/teresa.rsa.pub
         - name: TERESA_STORAGE_TYPE
+        {{- if .Values.useMinio }}
+          value: "minio"
+        {{- else }}
           value: {{ .Values.storage.type }}
+        {{- end }}
         {{- if .Values.useMinio }}
         - name: TERESA_STORAGE_AWS_ENDPOINT
-          value: {{ template "minio.fullname" . }}
+          value: {{ .Release.Name }}-minio-svc.{{ .Release.Namespace }}:9000
+        - name: TERESA_STORAGE_AWS_DISABLE_SSL
+          value: "true"
         {{- else if .Values.aws.s3.endpoint }}
         - name: TERESA_STORAGE_AWS_ENDPOINT
           value: {{ quote .Values.aws.s3.endpoint }}
+        {{- end }}
+        {{- if .Values.useMinio}}
+        - name: TERESA_STORAGE_AWS_S3_FORCE_PATH_STYLE
+          value: "true"
+        {{- else if .Values.aws.s3.force_path_style }}
+        - name: TERESA_STORAGE_AWS_S3_FORCE_PATH_STYLE
+          value: {{ quote .Values.aws.s3.force_path_style }}
         {{- end }}
         - name: TERESA_STORAGE_AWS_BUCKET
           {{- if .Values.useMinio }}
@@ -90,13 +103,11 @@ spec:
           {{- else }}
           value: {{ .Values.aws.s3.bucket }}
           {{- end }}
-        - name: TERESA_STORAGE_AWS_S3_FORCE_PATH_STYLE
-          value: {{ quote .Values.aws.s3.force_path_style }}
         - name: TERESA_STORAGE_AWS_KEY
           valueFrom:
             secretKeyRef:
               {{- if .Values.useMinio }}
-              name: {{ template "minio.fullname" . }}-user
+              name: {{ .Release.Name }}-minio-user
               key: accesskey
               {{- else }}
               name: {{ template "fullname" . }}-aws
@@ -106,7 +117,7 @@ spec:
           valueFrom:
             secretKeyRef:
               {{- if .Values.useMinio }}
-              name: {{ template "minio.fullname" . }}-user
+              name: {{ .Release.Name  }}-minio-user
               key: secretkey
               {{- else }}
               name: {{ template "fullname" . }}-aws
@@ -137,6 +148,7 @@ spec:
         - mountPath: /etc/teresa-keys
           name: {{ template "fullname" . }}-keys
           readOnly: true
+      dnsPolicy: ClusterFirst
       volumes:
       {{- if .Values.tls.crt }}
       - name: {{ template "fullname" . }}-tls

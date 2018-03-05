@@ -106,13 +106,13 @@ func newNginxContainer(image string) *Container {
 	}
 }
 
-func newAppContainer(image string, envVars map[string]string, hasNginx bool) *Container {
+func newAppContainer(name, image string, envVars map[string]string, hasNginx bool) *Container {
 	port := DefaultPort
 	if hasNginx {
 		port = secondaryPort
 	}
 	return &Container{
-		Name:  "app",
+		Name:  name,
 		Image: image,
 		Env:   envVars,
 		Ports: []Port{{

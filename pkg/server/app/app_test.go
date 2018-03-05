@@ -920,6 +920,23 @@ func TestAppOperationsSetAutoscale(t *testing.T) {
 	}
 }
 
+func TestAppOperationsSetAutoscaleInvalidActionForCronJob(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{DefaultProcessType: ProcessTypeCron}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs", ProcessType: ProcessTypeCron}
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+	req := newAutoscaleRequest("teresa")
+	as := newAutoscale(req)
+
+	if err := ops.SetAutoscale(user, app.Name, as); err != ErrInvalidActionForCronJob {
+		t.Errorf("expected ErrInvalidActionForCronJob, got %v", err)
+	}
+}
+
 func TestAppOperationsSetAutoscaleErrPermissionDenied(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
@@ -1022,6 +1039,21 @@ func TestAppOperationsSetReplicas(t *testing.T) {
 
 	if err := ops.SetReplicas(user, app.Name, 1); err != nil {
 		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func TestAppOperationsSetReplicasInvalidForCronJob(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{DefaultProcessType: ProcessTypeCron}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs", ProcessType: ProcessTypeCron}
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.SetReplicas(user, app.Name, 1); err != ErrInvalidActionForCronJob {
+		t.Errorf("expected ErrInvalidActionForCronJob, got %v", err)
 	}
 }
 

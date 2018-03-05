@@ -16,7 +16,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Refactor specs to be more in line with k8s concepts
 - The slugrunner doesn't mount the storage keys anymore. An init container is
   responsible for downloading the slug
-- Bump the default slugrunner version to v3.0.0
+- Bump the default slugrunner version to v3.0.1
 
 ## [0.15.0] - 2018-02-14
 ### Changed

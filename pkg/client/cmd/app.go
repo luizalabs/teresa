@@ -700,7 +700,7 @@ func init() {
 	appCreateCmd.Flags().Int32("scale-cpu", 70, "auto scale target cpu percentage to scale")
 	appCreateCmd.Flags().String("cpu", "200m", "allocated pod cpu")
 	appCreateCmd.Flags().String("memory", "512Mi", "allocated pod memory")
-	appCreateCmd.Flags().String("max-cpu", "200m", "when set, allows the pod to burst cpu usage up to 'max-cpu'")
+	appCreateCmd.Flags().String("max-cpu", "400m", "when set, allows the pod to burst cpu usage up to 'max-cpu'")
 	appCreateCmd.Flags().String("max-memory", "512Mi", "when set, allows the pod to burst memory usage up to 'max-memory'")
 	appCreateCmd.Flags().String("process-type", "", "app process type")
 	appCreateCmd.Flags().String("vhost", "", "virtual host of the app")

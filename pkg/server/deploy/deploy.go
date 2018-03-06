@@ -169,6 +169,10 @@ func (ops *DeployOperations) createOrUpdateCronJob(a *app.App, confFiles *Deploy
 		Runner: ops.opts.SlugRunnerImage,
 		Store:  ops.opts.SlugStoreImage,
 	}
+	if confFiles.TeresaYaml == nil || confFiles.TeresaYaml.Cron == nil {
+		errChan <- ErrCronScheduleNotFound
+		return
+	}
 	cronSpec := spec.NewCronJob(
 		description,
 		slugURL,

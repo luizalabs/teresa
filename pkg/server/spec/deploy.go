@@ -62,17 +62,16 @@ type Deploy struct {
 }
 
 type Images struct {
-	SlugRunner string
-	SlugStore  string
-	Nginx      string
+	SlugRunner  string
+	SlugBuilder string
+	SlugStore   string
+	Nginx       string
 }
 
 func NewDeploy(imgs *Images, nginxConf, description, slugURL string, rhl int, a *app.App, tYaml *TeresaYaml, fs storage.Storage) *Deploy {
-	hasNginx := false
 	port := DefaultPort
 	if nginxConf != "" {
 		port = secondaryPort
-		hasNginx = true
 	}
 
 	ps := NewPod(
@@ -87,7 +86,6 @@ func NewDeploy(imgs *Images, nginxConf, description, slugURL string, rhl int, a 
 			"SLUG_DIR": slugVolumeMountPath,
 		},
 		fs,
-		hasNginx,
 	)
 	ps.Containers[0].Args = []string{"start", a.ProcessType}
 	ps.Containers[0].VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}

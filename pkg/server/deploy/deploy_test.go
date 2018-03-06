@@ -281,6 +281,30 @@ func TestCreateCronJobReturnError(t *testing.T) {
 	}
 }
 
+func TestCreateCronJobScheduleNotFound(t *testing.T) {
+	a := &app.App{Name: "test", ProcessType: app.ProcessTypeCron}
+	errChan := make(chan error, 1)
+	conf := &DeployConfigFiles{
+		Procfile:   map[string]string{"cron": "echo hello world"},
+		TeresaYaml: &spec.TeresaYaml{},
+	}
+	fakeK8s := new(fakeK8sOperations)
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		fakeK8s,
+		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
+	)
+
+	deployOperations := ops.(*DeployOperations)
+	deployOperations.createOrUpdateCronJob(a, conf, new(bytes.Buffer), errChan, "test", "test")
+
+	if err := <-errChan; err != ErrCronScheduleNotFound {
+		t.Errorf("expected %v, got %v", ErrCronScheduleNotFound, err)
+	}
+}
+
 func TestExposeApp(t *testing.T) {
 	var testCases = []struct {
 		appProcessType                string

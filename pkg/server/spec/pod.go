@@ -45,21 +45,29 @@ func newPodVolumes(appName string, fs storage.Storage, hasNginx bool) []*Volume 
 	return volumes
 }
 
-func newPodContainers(name, appImage, nginxImage string, envVars map[string]string, hasNginx bool) []*Container {
-	c := []*Container{
-		newAppContainer(name, appImage, envVars, hasNginx),
+func newPodContainers(name, nginxImage, appImage string, envVars map[string]string) []*Container {
+	appPort := DefaultPort
+	if nginxImage != "" {
+		appPort = secondaryPort
 	}
-	if hasNginx {
+
+	c := []*Container{
+		newAppContainer(name, appImage, envVars, appPort),
+	}
+	if nginxImage != "" {
 		c = append(c, newNginxContainer(nginxImage))
 	}
 	return c
 }
 
-func NewPod(name, nginxImage, image string, a *app.App, envVars map[string]string, fs storage.Storage, hasNginx bool) *Pod {
+func NewPod(name, nginxImage, image string, a *app.App, envVars map[string]string, fs storage.Storage) *Pod {
+	hasNginx := false
+	hasNginx = nginxImage != ""
+
 	ps := &Pod{
 		Name:       name,
 		Namespace:  a.Name,
-		Containers: newPodContainers(name, image, nginxImage, envVars, hasNginx),
+		Containers: newPodContainers(name, nginxImage, image, envVars),
 		Volumes:    newPodVolumes(a.Name, fs, hasNginx),
 	}
 
@@ -84,7 +92,6 @@ func NewBuilder(name, tarBallLocation, buildDest, image string, a *app.App, fs s
 			"BUILDER_STORAGE": fs.Type(),
 		},
 		fs,
-		false,
 	)
 	ps.Containers[0].VolumeMounts = []*VolumeMounts{newStorageKeyVolumeMount()}
 	ps.Containers[0].ContainerLimits = cl
@@ -103,7 +110,6 @@ func NewRunner(name, slugURL string, imgs *Images, a *app.App, fs storage.Storag
 			"SLUG_DIR": slugVolumeMountPath,
 		},
 		fs,
-		false,
 	)
 	ps.Containers[0].Args = command
 	ps.Containers[0].ContainerLimits = cl

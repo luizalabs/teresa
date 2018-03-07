@@ -58,7 +58,6 @@ type Deploy struct {
 	RevisionHistoryLimit int
 	Description          string
 	SlugURL              string
-	NginxConf            string
 }
 
 type Images struct {
@@ -68,9 +67,9 @@ type Images struct {
 	Nginx       string
 }
 
-func NewDeploy(imgs *Images, nginxConf, description, slugURL string, rhl int, a *app.App, tYaml *TeresaYaml, fs storage.Storage) *Deploy {
+func NewDeploy(imgs *Images, description, slugURL string, rhl int, a *app.App, tYaml *TeresaYaml, fs storage.Storage) *Deploy {
 	port := DefaultPort
-	if nginxConf != "" {
+	if imgs.Nginx != "" {
 		port = secondaryPort
 	}
 
@@ -96,7 +95,6 @@ func NewDeploy(imgs *Images, nginxConf, description, slugURL string, rhl int, a 
 		SlugURL:              slugURL,
 		Pod:                  *ps,
 		RevisionHistoryLimit: rhl,
-		NginxConf:            nginxConf,
 	}
 
 	if tYaml != nil {

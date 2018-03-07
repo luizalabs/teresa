@@ -52,6 +52,19 @@ The [configuration](#configuration) section lists the parameters that can be con
 
 > **Tip**: List all releases using `helm list`
 
+## Install using minio as storage backend
+
+```console
+$ helm repo add luizalabs http://helm.k8s.magazineluiza.com
+$ helm install luizalabs/teresa \
+  --name my-release \
+  --namespace my-teresa \
+  --set rsa.private=$TERESA_RSA_PRIVATE \
+  --set rsa.public=$TERESA_RSA_PUBLIC \
+  --set useMinio=true
+```
+This will deploy [minio](https://www.minio.io/) using the minio [chart](https://github.com/kubernetes/charts/tree/master/stable/minio) and use it as storage backend to teresa.
+
 ## Uninstalling the Chart
 
 To uninstall/delete the `my-release` deployment:

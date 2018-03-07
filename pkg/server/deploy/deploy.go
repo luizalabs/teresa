@@ -36,6 +36,7 @@ type K8sOperations interface {
 	ExposeDeploy(namespace, name, vHost, svcType string, w io.Writer) error
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
 	DeployRollbackToRevision(namespace, name, revision string) error
+	CreateOrUpdateConfigMap(namespace, name string, data map[string]string) error
 }
 
 type DeployOperations struct {
@@ -140,12 +141,19 @@ func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployC
 	imgs := &spec.Images{
 		SlugRunner: ops.opts.SlugRunnerImage,
 		SlugStore:  ops.opts.SlugStoreImage,
-		Nginx:      ops.opts.NginxImage,
+	}
+	if confFiles.NginxConf != "" {
+		imgs.Nginx = ops.opts.NginxImage
+		data := map[string]string{"nginx.conf": confFiles.NginxConf}
+		if err := ops.k8s.CreateOrUpdateConfigMap(a.Name, a.Name, data); err != nil {
+			errChan <- err
+			log.WithError(err).Errorf("Creating config to nginx of app %s", a.Name)
+			return
+		}
 	}
 
 	deploySpec := spec.NewDeploy(
 		imgs,
-		confFiles.NginxConf,
 		description,
 		slugURL,
 		ops.opts.RevisionHistoryLimit,

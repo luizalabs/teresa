@@ -439,7 +439,7 @@ func (k *Client) Limits(namespace, name string) (*app.Limits, error) {
 	return lim, nil
 }
 
-func (k *Client) createOrUpdateConfigMap(namespace, name string, data map[string]string) error {
+func (k *Client) CreateOrUpdateConfigMap(namespace, name string, data map[string]string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err

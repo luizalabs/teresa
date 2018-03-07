@@ -17,7 +17,6 @@ func TestNewDeploySpec(t *testing.T) {
 
 	ds := NewDeploy(
 		imgs,
-		"",
 		expectedDescription,
 		expectedSlugURL,
 		expectedRevisionHistoryLimit,
@@ -64,7 +63,7 @@ func TestNewDeploySpecInitContainers(t *testing.T) {
 	a := &app.App{}
 	imgs := &Images{SlugStore: expectedImage}
 
-	ds := NewDeploy(imgs, "", "", "", 0, a, &TeresaYaml{}, storage.NewFake())
+	ds := NewDeploy(imgs, "", "", 0, a, &TeresaYaml{}, storage.NewFake())
 
 	if len(ds.InitContainers) != 1 {
 		t.Errorf("got %d; want %d", len(ds.InitContainers), 1)

@@ -36,6 +36,12 @@ type fakeK8sOperations struct {
 	hasSrvErr                error
 	exposeDeployWasCalled    bool
 	replicaSetListByLabelErr error
+	createConfigMapWasCalled bool
+}
+
+func (f *fakeK8sOperations) CreateOrUpdateConfigMap(namespace, name string, data map[string]string) error {
+	f.createConfigMapWasCalled = true
+	return nil
 }
 
 func (f *fakeK8sOperations) CreateOrUpdateDeploy(deploySpec *spec.Deploy) error {

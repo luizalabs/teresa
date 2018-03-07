@@ -24,5 +24,6 @@ jobs:
     - stage: build and release client
       script:
         - if [ -z "$TRAVIS_TAG" ]; then exit 0; fi
-        - curl -sL http://git.io/goreleaser | bash
-        - goreleaser --release-notes <(python release-notes.py)
+        - curl -sL http://git.io/goreleaser -o goreleaser.sh
+        - chmod +x goreleaser.sh
+        - ./goreleaser.sh --release-notes <(python release-notes.py)

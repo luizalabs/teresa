@@ -38,7 +38,7 @@ func (s *Service) Logs(req *appb.LogsRequest, stream appb.App_LogsServer) error 
 		Follow:    req.Follow,
 		PodName:   req.PodName,
 		Previous:  req.Previous,
-		Container: req.Name,
+		Container: req.Container,
 	}
 
 	rc, err := s.ops.Logs(user, req.Name, opts)

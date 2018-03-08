@@ -499,6 +499,153 @@ func appEnvUnset(cmd *cobra.Command, args []string) {
 	fmt.Println("Env vars updated with success")
 }
 
+var appSecretSetCmd = &cobra.Command{
+	Use:   "secret-set [KEY=value, ...]",
+	Short: "Set secert (as env vars) for the app",
+	Long: `Create or update a secret for the app.
+
+You can add a new secret for the app, or update if it already exists.
+
+WARNING:
+  If you need to set more than one secret to the application, provide all at once.
+  Every time this command is called, the application needs to be restared.`,
+	Example: `  To add an new secret called "FOO":
+
+  $ teresa app secret-set FOO=bar --app myapp
+
+  You can also provide more than one env var at a time:
+
+  $ teresa app secret-set FOO=bar BAR=foo --app myapp`,
+	Run: appSecretSet,
+}
+
+func appSecretSet(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		cmd.Usage()
+		return
+	}
+
+	appName, err := cmd.Flags().GetString("app")
+	if err != nil || appName == "" {
+		client.PrintErrorAndExit("Invalid app parameter")
+	}
+
+	evs := make([]*appb.SetEnvRequest_EnvVar, len(args))
+	for i, item := range args {
+		tmp := strings.SplitN(item, "=", 2)
+		if len(tmp) != 2 {
+			client.PrintErrorAndExit("Env vars must be in the format FOO=bar")
+		}
+		evs[i] = &appb.SetEnvRequest_EnvVar{Key: tmp[0], Value: tmp[1]}
+	}
+
+	currentClusterName := cfgCluster
+	if currentClusterName == "" {
+		currentClusterName, err = getCurrentClusterName()
+		if err != nil {
+			client.PrintErrorAndExit("error reading config file: %v", err)
+		}
+	}
+
+	fmt.Printf("Setting secrets and %s %s on %s...\n", color.YellowString("restarting"), color.CyanString(`"%s"`, appName), color.YellowString(`"%s"`, currentClusterName))
+	for _, ev := range evs {
+		fmt.Printf("  %s: %s\n", ev.Key, ev.Value)
+	}
+
+	noinput, err := cmd.Flags().GetBool("no-input")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid no-input parameter")
+	}
+	if !noinput {
+		s, _ := client.GetInput("Are you sure? (yes/NO)? ")
+		if s != "yes" {
+			return
+		}
+	}
+
+	conn, err := connection.New(cfgFile, currentClusterName)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %s", err)
+	}
+	defer conn.Close()
+
+	cli := appb.NewAppClient(conn)
+	req := &appb.SetEnvRequest{Name: appName, EnvVars: evs}
+	if _, err := cli.SetSecret(context.Background(), req); err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+	fmt.Println("Env vars updated with success")
+}
+
+var appSecretUnSetCmd = &cobra.Command{
+	Use:   "secret-unset [KEY, ...]",
+	Short: "Unset secrets for the app",
+	Long: `Unset a secrets for the app.
+
+You can remove one or more secrets from the application.
+
+WARNING:
+  If you need to unset more than one secrets from the application, provide all at once.
+  Every time this command is called, the application needs to be restarted.`,
+	Example: `  To unset a secret called "FOO":
+
+  $ teresa app secret-unset FOO --app myapp
+
+You can also provide more than one env var at a time:
+
+  $ teresa app secret-unset FOO BAR --app myapp`,
+	Run: appSecretUnset,
+}
+
+func appSecretUnset(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		cmd.Usage()
+		return
+	}
+
+	appName, err := cmd.Flags().GetString("app")
+	if err != nil || appName == "" {
+		client.PrintErrorAndExit("Invalid app parameter")
+	}
+
+	currentClusterName := cfgCluster
+	if currentClusterName == "" {
+		currentClusterName, err = getCurrentClusterName()
+		if err != nil {
+			client.PrintErrorAndExit("error reading config file: %v", err)
+		}
+	}
+
+	fmt.Printf("Unsetting secrets and %s %s on %s...\n", color.YellowString("restarting"), color.CyanString(`"%s"`, appName), color.YellowString(`"%s"`, currentClusterName))
+	for _, ev := range args {
+		fmt.Printf("  %s\n", ev)
+	}
+
+	noinput, err := cmd.Flags().GetBool("no-input")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid no-input parameter")
+	}
+	if !noinput {
+		s, _ := client.GetInput("Are you sure? (yes/NO)? ")
+		if s != "yes" {
+			return
+		}
+	}
+
+	conn, err := connection.New(cfgFile, currentClusterName)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %s", err)
+	}
+	defer conn.Close()
+
+	cli := appb.NewAppClient(conn)
+	req := &appb.UnsetEnvRequest{Name: appName, EnvVars: args}
+	if _, err := cli.UnsetSecret(context.Background(), req); err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+	fmt.Println("Secrets updated with success")
+}
+
 var appLogsCmd = &cobra.Command{
 	Use:   "logs <name>",
 	Short: "Show app logs",
@@ -692,6 +839,8 @@ func init() {
 	appCmd.AddCommand(appInfoCmd)
 	appCmd.AddCommand(appEnvSetCmd)
 	appCmd.AddCommand(appEnvUnSetCmd)
+	appCmd.AddCommand(appSecretSetCmd)
+	appCmd.AddCommand(appSecretUnSetCmd)
 	appCmd.AddCommand(appLogsCmd)
 	appCmd.AddCommand(appAutoscaleSetCmd)
 	appCmd.AddCommand(appStartCmd)
@@ -712,9 +861,15 @@ func init() {
 
 	appEnvSetCmd.Flags().String("app", "", "app name")
 	appEnvSetCmd.Flags().Bool("no-input", false, "set env vars without warning")
-	// App unset env vars
+
 	appEnvUnSetCmd.Flags().String("app", "", "app name")
 	appEnvUnSetCmd.Flags().Bool("no-input", false, "unset env vars without warning")
+
+	appSecretSetCmd.Flags().String("app", "", "app name")
+	appSecretSetCmd.Flags().Bool("no-input", false, "set env vars without warning")
+
+	appSecretUnSetCmd.Flags().String("app", "", "app name")
+	appSecretUnSetCmd.Flags().Bool("no-input", false, "unset env vars without warning")
 	// App logs
 	appLogsCmd.Flags().Int64P("lines", "n", 10, "number of lines")
 	appLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")

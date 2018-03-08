@@ -11,6 +11,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Support Nginx as sidecar
 - support for internal apps
 
+### Fixed
+- Storage env vars on spec of Init Container
+
 ## [0.16.0] - 2018-03-07
 ### Added
 - `app logs` support to filter by pod name

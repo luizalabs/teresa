@@ -59,7 +59,7 @@ func newStorageKeyVolumeMount() *VolumeMounts {
 }
 
 func newInitContainers(slugURL, image string, a *app.App, fs storage.Storage) []*Container {
-	return []*Container{{
+	ic := &Container{
 		Name:  "slugstore",
 		Image: image,
 		Env: map[string]string{
@@ -71,7 +71,11 @@ func newInitContainers(slugURL, image string, a *app.App, fs storage.Storage) []
 			newStorageKeyVolumeMount(),
 			newSlugVolumeMount(),
 		},
-	}}
+	}
+	for k, v := range fs.PodEnvVars() {
+		ic.Env[k] = v
+	}
+	return []*Container{ic}
 }
 
 func newNginxVolumeMount() *VolumeMounts {

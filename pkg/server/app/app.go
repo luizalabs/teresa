@@ -151,6 +151,9 @@ func (ops *AppOperations) Logs(user *database.User, appName string, opts *LogOpt
 	if err != nil {
 		return nil, teresa_errors.NewInternalServerError(err)
 	}
+	if opts.Container == "" {
+		opts.Container = appName
+	}
 
 	r, w := io.Pipe()
 	var wg sync.WaitGroup

@@ -516,6 +516,10 @@ WARNING:
 
   $ teresa app logs foo --pod mypod-1234
 
+  To filter by container name:
+
+  $ teresa app logs foo --container nginx
+
   You can also simulate tail -f:
 
   $ teresa app logs foo --lines=20 --follow`,
@@ -716,6 +720,7 @@ func init() {
 	appLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")
 	appLogsCmd.Flags().String("pod", "", "filter logs by pod name")
 	appLogsCmd.Flags().BoolP("previous", "p", false, "print the logs for the previous instance")
+	appLogsCmd.Flags().String("container", "", "filter logs by container name")
 	// App autoscale
 	appAutoscaleSetCmd.Flags().Int32("min", flagNotDefined, "Minimum number of replicas")
 	appAutoscaleSetCmd.Flags().Int32("max", flagNotDefined, "Maximum number of replicas")
@@ -753,6 +758,11 @@ func appLogs(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid previous parameter")
 	}
 
+	container, err := cmd.Flags().GetString("container")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid container parameter")
+	}
+
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
@@ -761,11 +771,12 @@ func appLogs(cmd *cobra.Command, args []string) {
 
 	cli := appb.NewAppClient(conn)
 	req := &appb.LogsRequest{
-		Name:     appName,
-		Lines:    lines,
-		Follow:   follow,
-		PodName:  pod,
-		Previous: previous,
+		Name:      appName,
+		Lines:     lines,
+		Follow:    follow,
+		PodName:   pod,
+		Previous:  previous,
+		Container: container,
 	}
 	stream, err := cli.Logs(context.Background(), req)
 	if err != nil {

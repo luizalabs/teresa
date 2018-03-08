@@ -59,6 +59,7 @@ message LogsRequest {
     bool follow = 3;
     string pod_name = 4;
     bool previous = 5;
+    string container = 6;
 }
 
 message LogsResponse {

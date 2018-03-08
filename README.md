@@ -187,8 +187,9 @@ automatic migrations by adding this line to the `Procfile`:
 Note that a failing release will prevent the rolling update from happening, so
 you have to keep compatibility with old code.
 
-**Q: How To use a nginx as sidecar?**
-Create a nginx.conf file in root of your project with your nginx config, like:
+**Q: How to use nginx in front of my app (sidecar)?**
+Create a nginx.conf file in the project root directory, for example:
+
 ```
 events {
   worker_connections  1024;
@@ -203,6 +204,15 @@ http{
   }
 }
 ```
+
+Note that this must be the **full** nginx configuration and the environment
+variables will be automatically filled.
+
+**Q: How to get nginx logs?**
+
+Filter the logs by container name:
+
+    $ teresa app logs <app-name> --container nginx
 
 ### CronJob
 

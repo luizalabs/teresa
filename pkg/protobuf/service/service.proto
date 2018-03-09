@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package service;
+
+service Service {
+    rpc EnableSSL(EnableSSLRequest) returns (Empty);
+}
+
+message EnableSSLRequest {
+    string app_name = 1;
+    string cert = 2;
+    bool only = 3;
+}
+
+message Empty {}

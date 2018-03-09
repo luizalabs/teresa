@@ -214,6 +214,14 @@ Filter the logs by container name:
 
     $ teresa app logs <app-name> --container nginx
 
+**Q: How to enable ssl?**
+
+For now we only support AWS and you need the certificate ARN:
+
+    $ teresa service enable-ssl --app myapp --cert arn:aws:iam::xxxxx:server-certificate/cert-name
+
+To only use SSL pass the flag `--only`.
+
 ### CronJob
 
 **Q: How to create a CronJob?**

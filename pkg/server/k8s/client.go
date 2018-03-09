@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/deploy"
+	"github.com/luizalabs/teresa/pkg/server/service"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/pkg/errors"
 
@@ -29,6 +31,7 @@ const (
 	patchCronJobEnvVarsTmpl           = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"template":{"metadata":{"annotations":{"date": "%s"}}}, "jobTemplate":{"spec": {"template": {"spec": {"containers":[{"name": "%s", "env":%s}]}}}}}}`
 	patchDeployRollbackToRevisionTmpl = `{"spec":{"rollbackTo":{"revision": %s}}}`
 	patchDeployReplicasTmpl           = `{"spec":{"replicas": %d}}`
+	patchServiceAnnotationsTmpl       = `{"metadata":{"annotations": %s}}`
 	revisionAnnotation                = "deployment.kubernetes.io/revision"
 )
 
@@ -962,6 +965,72 @@ func (k *Client) DeploySetReplicas(namespace, name string, replicas int32) error
 	)
 
 	return errors.Wrap(err, "patch deploy failed")
+}
+
+func (c *Client) CloudProviderName() (string, error) {
+	kc, err := c.buildClient()
+	if err != nil {
+		return "", err
+	}
+	ls := "kubernetes.io/role=master"
+	nodes, err := kc.CoreV1().Nodes().List(metav1.ListOptions{LabelSelector: ls})
+	if err != nil {
+		return "", errors.Wrap(err, "node list failed")
+	}
+	if len(nodes.Items) == 0 {
+		return "", errors.New("empty cluster")
+	}
+	id := nodes.Items[0].Spec.ProviderID
+	idx := strings.Index(id, "://")
+	if idx <= 0 {
+		return "", errors.New("invalid provider id")
+	}
+	return id[:idx], nil
+}
+
+func (c *Client) SetServiceAnnotations(namespace, svcName string, annotations map[string]string) error {
+	return c.patchServiceAnnotations(namespace, svcName, annotations)
+}
+
+func (c *Client) UpdateServicePorts(namespace, svcName string, ports []service.ServicePort) error {
+	kc, err := c.buildClient()
+	if err != nil {
+		return err
+	}
+	svc, err := kc.CoreV1().Services(namespace).Get(svcName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	k8sPorts := servicePortsToK8sServicePorts(ports)
+	svc.Spec.Ports = k8sPorts
+	_, err = kc.CoreV1().Services(namespace).Update(svc)
+	return errors.Wrap(err, "update service failed")
+}
+
+func (c *Client) patchServiceAnnotations(namespace, svcName string, annotations map[string]string) error {
+	data, err := prepareServiceAnnotations(patchServiceAnnotationsTmpl, annotations)
+	if err != nil {
+		return err
+	}
+	kc, err := c.buildClient()
+	if err != nil {
+		return err
+	}
+	_, err = kc.CoreV1().Services(namespace).Patch(
+		svcName,
+		types.StrategicMergePatchType,
+		data,
+	)
+	return errors.Wrap(err, "patch namespace failed")
+}
+
+func prepareServiceAnnotations(tmpl string, annotations map[string]string) ([]byte, error) {
+	b, err := json.Marshal(annotations)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to json encode")
+	}
+	data := fmt.Sprintf(tmpl, string(b))
+	return []byte(data), nil
 }
 
 func newInClusterK8sClient(conf *Config) (*Client, error) {

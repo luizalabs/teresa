@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
+	"github.com/luizalabs/teresa/pkg/server/service"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -401,4 +402,20 @@ func configMapSpec(namespace, name string, data map[string]string) *k8sv1.Config
 		},
 		Data: data,
 	}
+}
+
+func servicePortsToK8sServicePorts(ports []service.ServicePort) []k8sv1.ServicePort {
+	k8sPorts := make([]k8sv1.ServicePort, len(ports))
+	for i := range ports {
+		p := ports[i].Port
+		if p == 0 {
+			p = defaultServicePort
+		}
+		k8sPorts[i] = k8sv1.ServicePort{
+			Name:       ports[i].Name,
+			Port:       int32(p),
+			TargetPort: intstr.FromInt(ports[i].TargetPort),
+		}
+	}
+	return k8sPorts
 }

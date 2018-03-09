@@ -8,6 +8,7 @@ import (
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
+	"github.com/luizalabs/teresa/pkg/server/service"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 )
 
@@ -496,5 +497,34 @@ func TestConfigMapSpec(t *testing.T) {
 	}
 	if o.Data["foo"] != data["foo"] {
 		t.Errorf("expected %s, got %s", data["foo"], o.Data["foo"])
+	}
+}
+
+func TestServicePortsToK8sServicePorts(t *testing.T) {
+	ports := []service.ServicePort{
+		{Name: "port1", TargetPort: 1},
+		{Name: "port2", Port: 2, TargetPort: 2},
+	}
+
+	k8sPorts := servicePortsToK8sServicePorts(ports)
+
+	if len(k8sPorts) != len(ports) {
+		t.Errorf("got %d; want %d", len(k8sPorts), len(ports))
+	}
+	for i := range ports {
+		if ports[i].Name != k8sPorts[i].Name {
+			t.Errorf("got %s; want %s", k8sPorts[i].Name, ports[i].Name)
+		}
+		tp := intstr.FromInt(ports[i].TargetPort)
+		if tp != k8sPorts[i].TargetPort {
+			t.Errorf("got %v; want %v", k8sPorts[i].TargetPort, tp)
+		}
+		p := ports[i].Port
+		if i == 0 {
+			p = defaultServicePort
+		}
+		if int32(p) != k8sPorts[i].Port {
+			t.Errorf("got %d; want %d", k8sPorts[i].Port, p)
+		}
 	}
 }

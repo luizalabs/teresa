@@ -15,10 +15,12 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/cloudprovider"
 	"github.com/luizalabs/teresa/pkg/server/deploy"
 	"github.com/luizalabs/teresa/pkg/server/exec"
 	"github.com/luizalabs/teresa/pkg/server/healthcheck"
 	"github.com/luizalabs/teresa/pkg/server/k8s"
+	"github.com/luizalabs/teresa/pkg/server/service"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/team"
 	"github.com/luizalabs/teresa/pkg/server/user"
@@ -101,7 +103,7 @@ func createServerOps(opt Options, uOps user.Operations) []grpc.ServerOption {
 	return sOpts
 }
 
-func registerServices(s *grpc.Server, opt Options, uOps user.Operations) {
+func registerServices(s *grpc.Server, opt Options, uOps user.Operations) error {
 	us := user.NewService(uOps)
 	us.RegisterService(s)
 
@@ -129,6 +131,16 @@ func registerServices(s *grpc.Server, opt Options, uOps user.Operations) {
 	dOps := deploy.NewDeployOperations(appOps, opt.K8s, opt.Storage, execOps, opt.DeployOpt)
 	d := deploy.NewService(dOps, opt.DeployOpt)
 	d.RegisterService(s)
+
+	cpOps, err := cloudprovider.NewOperations(opt.K8s)
+	if err != nil {
+		return err
+	}
+
+	svcOps := service.NewOperations(appOps, cpOps, opt.K8s)
+	svc := service.NewService(svcOps)
+	svc.RegisterService(s)
+	return nil
 }
 
 func New(opt Options) (*Server, error) {
@@ -140,7 +152,9 @@ func New(opt Options) (*Server, error) {
 	uOps := user.NewDatabaseOperations(opt.DB, opt.Auth)
 	sOpts := createServerOps(opt, uOps)
 	s := grpc.NewServer(sOpts...)
-	registerServices(s, opt, uOps)
+	if err := registerServices(s, opt, uOps); err != nil {
+		return nil, err
+	}
 
 	hcServer := healthcheck.New(opt.K8s, opt.DB)
 	return &Server{listener: l, grpcServer: s, hcServer: hcServer, opt: &opt}, nil

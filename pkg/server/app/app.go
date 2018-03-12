@@ -228,13 +228,23 @@ func (ops *AppOperations) Info(user *database.User, appName string) (*Info, erro
 		return nil, teresa_errors.NewInternalServerError(err)
 	}
 
+	envVars := make([]*EnvVar, len(appMeta.EnvVars)+len(appMeta.Secrets))
+	for i, ev := range appMeta.EnvVars {
+		envVars[i] = &EnvVar{Key: ev.Key, Value: ev.Value}
+	}
+	for i, s := range appMeta.Secrets {
+		envVars[len(appMeta.EnvVars)+i] = &EnvVar{
+			Key: s, Value: "*****",
+		}
+	}
+
 	info := &Info{
 		Team:      teamName,
 		Addresses: addrs,
 		Status:    stat,
 		Autoscale: as,
 		Limits:    lim,
-		EnvVars:   appMeta.EnvVars,
+		EnvVars:   envVars,
 	}
 	return info, nil
 }

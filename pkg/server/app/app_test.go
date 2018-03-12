@@ -79,8 +79,16 @@ func (f *fakeK8sOperations) NamespaceAnnotation(namespace, annotation string) (s
 	if dpt == "" {
 		dpt = "web"
 	}
+	tmpl := `{
+		"name": "test",
+		"processType": "%s",
+		"internal": %t,
+		"virtualHost": "%s",
+		"envVars": [{"key": "ENV-KEY", "value": "ENV-VALUE"}],
+		"secrets": ["SECRET-1", "SECRET-2"]
+	}`
 	return fmt.Sprintf(
-		`{"name": "test", "processType": "%s", "internal": %t, "virtualHost": "%s"}`,
+		tmpl,
 		dpt,
 		f.AppInternal,
 		f.AppVirtualHost,
@@ -626,7 +634,12 @@ func TestAppOperationsInfo(t *testing.T) {
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	teamName := "luizalabs"
 	user := &database.User{Email: "teresa@luizalabs.com"}
-	app := &App{Name: "teresa", Team: teamName}
+	app := &App{
+		Name:    "teresa",
+		Team:    teamName,
+		EnvVars: []*EnvVar{&EnvVar{Key: "ENV-KEY", Value: "ENV-VALUE"}},
+		Secrets: []string{"SECRET-1", "SECRET-2"},
+	}
 	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
 		Name:  teamName,
 		Users: []database.User{*user},
@@ -661,6 +674,28 @@ func TestAppOperationsInfo(t *testing.T) {
 	ndefReq := len(info.Limits.DefaultRequest)
 	if ndefReq != 2 {
 		t.Errorf("expected 2, got %d", ndefReq)
+	}
+
+	if len(info.EnvVars) != 3 { // see fakeK8sOperations.NamespaceAnnotation
+		t.Errorf("expected 3, got %d", len(info.EnvVars))
+	}
+	for i, ev := range app.EnvVars {
+		if info.EnvVars[i].Key != ev.Key {
+			t.Errorf("expected %s, got %s", ev.Key, info.EnvVars[i].Key)
+		}
+		if info.EnvVars[i].Value != ev.Value {
+			t.Errorf("expected %s, got %s", ev.Value, info.EnvVars[i].Value)
+		}
+	}
+	for i, s := range app.Secrets {
+		idx := len(app.EnvVars) + i
+		if info.EnvVars[idx].Key != s {
+			t.Errorf("expected %s, got %s", s, info.EnvVars[idx].Key)
+		}
+		expected := "*****"
+		if info.EnvVars[idx].Value != expected {
+			t.Errorf("expected %s, got %s", expected, info.EnvVars[idx].Value)
+		}
 	}
 }
 

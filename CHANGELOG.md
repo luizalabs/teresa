@@ -10,8 +10,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - Support Nginx as sidecar
-- support for internal apps
-- support to filter app logs by container name
+- Support for internal apps
+- Support to filter app logs by container name
+- Support to Secrets as env var
 
 ### Fixed
 - Storage env vars on spec of Init Container

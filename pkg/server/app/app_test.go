@@ -1090,7 +1090,6 @@ func TestAppOpsSetSecretErrInvalidEnvVarName(t *testing.T) {
 	ops.(*AppOperations).kops = &errK8sOperations{
 		CreateOrUpdateDeploySecretEnvVarsErr: ErrInvalidEnvVarName,
 		GetSecretErr:                         ErrNotFound,
-		NamespaceErr:                         nil,
 	}
 	secrets := []*EnvVar{{Key: "key", Value: "value"}}
 

@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	patchDeployEnvVarsTmpl            = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"template":{"spec":{"containers":[{"name": "%s", "env":%s}]}}}}`
-	patchCronJobEnvVarsTmpl           = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"jobTemplate":{"spec": {"template": {"spec": {"containers":[{"name": "%s", "env":%s}]}}}}}}`
+	patchDeployEnvVarsTmpl            = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"template":{"metadata": {"annotations": {"date": "%s"}}, "spec":{"containers":[{"name": "%s", "env":%s}]}}}}`
+	patchCronJobEnvVarsTmpl           = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"template":{"metadata":{"annotations":{"date": "%s"}}}, "jobTemplate":{"spec": {"template": {"spec": {"containers":[{"name": "%s", "env":%s}]}}}}}}`
 	patchDeployRollbackToRevisionTmpl = `{"spec":{"rollbackTo":{"revision": %s}}}`
 	patchDeployReplicasTmpl           = `{"spec":{"replicas": %d}}`
 	revisionAnnotation                = "deployment.kubernetes.io/revision"
@@ -752,7 +752,7 @@ func prepareEnvVarsPath(name, template string, v interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to json encode env vars")
 	}
-	data := fmt.Sprintf(template, name, string(b))
+	data := fmt.Sprintf(template, time.Now(), name, string(b))
 	return []byte(data), nil
 }
 

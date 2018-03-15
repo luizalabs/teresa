@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Added
 - `service` command, for now only used to enable ssl support
+- `service info` command
 
 ### Changed
 - Update `gorm` version to v1.9.1

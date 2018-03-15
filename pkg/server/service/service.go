@@ -21,11 +21,13 @@ type ServicePort struct {
 
 type CloudProviderOperations interface {
 	CreateOrUpdateSSL(appName, cert string, port int) error
+	SSLInfo(appName string) (*SSLInfo, error)
 }
 
 type K8sOperations interface {
 	UpdateServicePorts(namespace, svcName string, ports []ServicePort) error
 	IsNotFound(err error) bool
+	ServicePorts(namespace, svcName string) ([]*ServicePort, error)
 }
 
 type AppOperations interface {
@@ -34,6 +36,7 @@ type AppOperations interface {
 
 type Operations interface {
 	EnableSSL(user *database.User, appName, cert string, only bool) error
+	Info(user *database.User, appName string) (*Info, error)
 }
 
 type ServiceOperations struct {
@@ -63,6 +66,28 @@ func (ops *ServiceOperations) EnableSSL(user *database.User, appName, cert strin
 		return teresa_errors.NewInternalServerError(err)
 	}
 	return nil
+}
+
+func (ops *ServiceOperations) Info(user *database.User, appName string) (*Info, error) {
+	if !ops.aops.HasPermission(user, appName) {
+		return nil, auth.ErrPermissionDenied
+	}
+	ssl, err := ops.cops.SSLInfo(appName)
+	if err != nil {
+		return nil, err
+	}
+	ports, err := ops.k8s.ServicePorts(appName, appName)
+	if err != nil {
+		if ops.k8s.IsNotFound(err) {
+			return nil, ErrNotFound
+		}
+		return nil, teresa_errors.NewInternalServerError(err)
+	}
+	info := &Info{
+		SSLInfo:      ssl,
+		ServicePorts: ports,
+	}
+	return info, nil
 }
 
 func NewOperations(aops AppOperations, cops CloudProviderOperations, k8s K8sOperations) *ServiceOperations {

@@ -1024,6 +1024,38 @@ func (c *Client) patchServiceAnnotations(namespace, svcName string, annotations 
 	return errors.Wrap(err, "patch namespace failed")
 }
 
+func (c *Client) ServiceAnnotations(namespace, svcName string) (map[string]string, error) {
+	kc, err := c.buildClient()
+	if err != nil {
+		return nil, err
+	}
+	svc, err := kc.CoreV1().Services(namespace).Get(svcName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return svc.Annotations, nil
+}
+
+func (c *Client) ServicePorts(namespace, svcName string) ([]*service.ServicePort, error) {
+	kc, err := c.buildClient()
+	if err != nil {
+		return nil, err
+	}
+	svc, err := kc.CoreV1().Services(namespace).Get(svcName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	ports := make([]*service.ServicePort, len(svc.Spec.Ports))
+	for i := range svc.Spec.Ports {
+		ports[i] = &service.ServicePort{
+			Port:       int(svc.Spec.Ports[i].Port),
+			Name:       svc.Spec.Ports[i].Name,
+			TargetPort: int(svc.Spec.Ports[i].TargetPort.IntVal),
+		}
+	}
+	return ports, nil
+}
+
 func prepareServiceAnnotations(tmpl string, annotations map[string]string) ([]byte, error) {
 	b, err := json.Marshal(annotations)
 	if err != nil {

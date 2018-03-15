@@ -21,6 +21,15 @@ func (svc *Service) EnableSSL(ctx context.Context, req *svcpb.EnableSSLRequest) 
 	return &svcpb.Empty{}, nil
 }
 
+func (svc *Service) Info(ctx context.Context, req *svcpb.InfoRequest) (*svcpb.InfoResponse, error) {
+	user := ctx.Value("user").(*database.User)
+	info, err := svc.ops.Info(user, req.AppName)
+	if err != nil {
+		return nil, err
+	}
+	return newInfoResponse(info), nil
+}
+
 func (svc *Service) RegisterService(grpcServer *grpc.Server) {
 	svcpb.RegisterServiceServer(grpcServer, svc)
 }

@@ -3,6 +3,7 @@ package deploy
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -208,13 +209,14 @@ func TestCreateDeployReturnError(t *testing.T) {
 }
 
 func TestCreateCronJob(t *testing.T) {
+	validCronPt := fmt.Sprintf("%s-hw", app.ProcessTypeCronPrefix)
 	expectedName := "Test cron"
-	a := &app.App{Name: expectedName, ProcessType: app.ProcessTypeCron}
+	a := &app.App{Name: expectedName, ProcessType: validCronPt}
 	expectedDescription := "test-description"
 	expectedSlugURL := "test-slug"
 	errChan := make(chan error, 1)
 	conf := &DeployConfigFiles{
-		Procfile: map[string]string{"cron": "echo hello world"},
+		Procfile: map[string]string{validCronPt: "echo hello world"},
 		TeresaYaml: &spec.TeresaYaml{
 			Cron: &spec.CronArgs{Schedule: "*/1 * * * *"},
 		},
@@ -288,10 +290,11 @@ func TestCreateCronJobReturnError(t *testing.T) {
 }
 
 func TestCreateCronJobScheduleNotFound(t *testing.T) {
-	a := &app.App{Name: "test", ProcessType: app.ProcessTypeCron}
+	validCronPt := fmt.Sprintf("%s-hw", app.ProcessTypeCronPrefix)
+	a := &app.App{Name: "test", ProcessType: validCronPt}
 	errChan := make(chan error, 1)
 	conf := &DeployConfigFiles{
-		Procfile:   map[string]string{"cron": "echo hello world"},
+		Procfile:   map[string]string{validCronPt: "echo hello world"},
 		TeresaYaml: &spec.TeresaYaml{},
 	}
 	fakeK8s := new(fakeK8sOperations)

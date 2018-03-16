@@ -128,7 +128,7 @@ func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 		return teresa_errors.NewInternalServerError(err)
 	}
 
-	if app.ProcessType == ProcessTypeCron {
+	if IsCronJob(app.ProcessType) {
 		return nil
 	}
 
@@ -319,7 +319,7 @@ func (ops *AppOperations) SetEnv(user *database.User, appName string, evs []*Env
 		return err
 	}
 
-	if app.ProcessType == ProcessTypeCron {
+	if IsCronJob(app.ProcessType) {
 		err = ops.kops.CreateOrUpdateCronJobEnvVars(appName, appName, evs)
 	} else {
 		err = ops.kops.CreateOrUpdateDeployEnvVars(appName, appName, evs)
@@ -352,7 +352,7 @@ func (ops *AppOperations) UnsetEnv(user *database.User, appName string, evNames 
 		return err
 	}
 
-	if app.ProcessType == ProcessTypeCron {
+	if IsCronJob(app.ProcessType) {
 		err = ops.kops.DeleteCronJobEnvVars(appName, appName, evNames)
 	} else {
 		err = ops.kops.DeleteDeployEnvVars(appName, appName, evNames)
@@ -425,7 +425,7 @@ func (ops *AppOperations) SetSecret(user *database.User, appName string, secrets
 		return teresa_errors.NewInternalServerError(err)
 	}
 
-	if app.ProcessType == ProcessTypeCron {
+	if IsCronJob(app.ProcessType) {
 		err = ops.kops.CreateOrUpdateCronJobSecretEnvVars(appName, appName, TeresaAppSecrets, names)
 	} else {
 		err = ops.kops.CreateOrUpdateDeploySecretEnvVars(appName, appName, TeresaAppSecrets, names)
@@ -479,7 +479,7 @@ func (ops *AppOperations) UnsetSecret(user *database.User, appName string, secre
 		return teresa_errors.NewInternalServerError(err)
 	}
 
-	if app.ProcessType == ProcessTypeCron {
+	if IsCronJob(app.ProcessType) {
 		err = ops.kops.DeleteCronJobEnvVars(appName, appName, secrets)
 	} else {
 		err = ops.kops.DeleteDeployEnvVars(appName, appName, secrets)
@@ -547,7 +547,7 @@ func (ops *AppOperations) SetAutoscale(user *database.User, appName string, as *
 		return err
 	}
 
-	if app.ProcessType == ProcessTypeCron {
+	if IsCronJob(app.ProcessType) {
 		return ErrInvalidActionForCronJob
 	}
 
@@ -591,7 +591,7 @@ func (ops *AppOperations) SetReplicas(user *database.User, appName string, repli
 		return err
 	}
 
-	if app.ProcessType == ProcessTypeCron {
+	if IsCronJob(app.ProcessType) {
 		return ErrInvalidActionForCronJob
 	}
 

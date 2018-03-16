@@ -348,13 +348,14 @@ func TestAppOperationsCreate(t *testing.T) {
 }
 
 func TestAppOperationsCreateCronDoesNotCreateHPA(t *testing.T) {
+	validCronPt := fmt.Sprintf("%s-test", ProcessTypeCronPrefix)
 	tops := team.NewFakeOperations()
 	fakeSt := st.NewFake()
 	fakeK8s := &fakeK8sOperations{}
 	ops := NewOperations(tops, &fakeK8sOperations{}, fakeSt)
 	name := "luizalabs"
 	user := &database.User{Email: "teresa@luizalabs.com"}
-	app := &App{Name: "teresa", Team: name, ProcessType: ProcessTypeCron}
+	app := &App{Name: "teresa", Team: name, ProcessType: validCronPt}
 	tops.(*team.FakeOperations).Storage[name] = &database.Team{
 		Name:  name,
 		Users: []database.User{*user},
@@ -895,8 +896,9 @@ func TestAppOpsSetEnvErrInvalidEnvVarName(t *testing.T) {
 }
 
 func TestAppOperationsSetEnvForACronJob(t *testing.T) {
+	validCronPt := fmt.Sprintf("%s-test", ProcessTypeCronPrefix)
 	tops := team.NewFakeOperations()
-	fakeK8s := &fakeK8sOperations{DefaultProcessType: ProcessTypeCron}
+	fakeK8s := &fakeK8sOperations{DefaultProcessType: validCronPt}
 	ops := NewOperations(tops, fakeK8s, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
@@ -1004,8 +1006,9 @@ func TestAppOperationsUnsetEnvErrInternalServerErrorOnSaveApp(t *testing.T) {
 }
 
 func TestAppOperationsUnsetEnvForACronJob(t *testing.T) {
+	validCronPt := fmt.Sprintf("%s-test", ProcessTypeCronPrefix)
 	tops := team.NewFakeOperations()
-	fakeK8s := &fakeK8sOperations{DefaultProcessType: ProcessTypeCron}
+	fakeK8s := &fakeK8sOperations{DefaultProcessType: validCronPt}
 	ops := NewOperations(tops, fakeK8s, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
@@ -1167,10 +1170,11 @@ func TestAppOperationsSetAutoscale(t *testing.T) {
 }
 
 func TestAppOperationsSetAutoscaleInvalidActionForCronJob(t *testing.T) {
+	validCronPt := fmt.Sprintf("%s-test", ProcessTypeCronPrefix)
 	tops := team.NewFakeOperations()
-	ops := NewOperations(tops, &fakeK8sOperations{DefaultProcessType: ProcessTypeCron}, nil)
+	ops := NewOperations(tops, &fakeK8sOperations{DefaultProcessType: validCronPt}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
-	app := &App{Name: "teresa", Team: "luizalabs", ProcessType: ProcessTypeCron}
+	app := &App{Name: "teresa", Team: "luizalabs"}
 	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},
@@ -1289,10 +1293,11 @@ func TestAppOperationsSetReplicas(t *testing.T) {
 }
 
 func TestAppOperationsSetReplicasInvalidForCronJob(t *testing.T) {
+	validCronPt := fmt.Sprintf("%s-test", ProcessTypeCronPrefix)
 	tops := team.NewFakeOperations()
-	ops := NewOperations(tops, &fakeK8sOperations{DefaultProcessType: ProcessTypeCron}, nil)
+	ops := NewOperations(tops, &fakeK8sOperations{DefaultProcessType: validCronPt}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
-	app := &App{Name: "teresa", Team: "luizalabs", ProcessType: ProcessTypeCron}
+	app := &App{Name: "teresa", Team: "luizalabs"}
 	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},

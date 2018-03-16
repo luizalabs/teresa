@@ -86,7 +86,7 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 		}
 
 		slugURL := fmt.Sprintf("%s/slug.tgz", buildDest)
-		if a.ProcessType == app.ProcessTypeCron {
+		if app.IsCronJob(a.ProcessType) {
 			ops.createOrUpdateCronJob(a, confFiles, w, errChan, slugURL, description)
 		} else {
 			ops.createOrUpdateDeploy(a, confFiles, w, errChan, slugURL, description, deployId)
@@ -192,7 +192,7 @@ func (ops *DeployOperations) createOrUpdateCronJob(a *app.App, confFiles *Deploy
 		imgs,
 		a,
 		ops.fileStorage,
-		strings.Split(confFiles.Procfile[app.ProcessTypeCron], " ")...,
+		strings.Split(confFiles.Procfile[a.ProcessType], " ")...,
 	)
 
 	if err := ops.k8s.CreateOrUpdateCronJob(cronSpec); err != nil {

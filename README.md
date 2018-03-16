@@ -218,11 +218,10 @@ Filter the logs by container name:
 
 **Q: How to create a CronJob?**
 
+Teresa will infer if an app is a cronjob by checking if the prefix of _process-type_
+is `cron` (e.g. `cron`, `cronjob`, `cron-method-a`).
+
     $ teresa app create <app-name> --team <team-name> --process-type cron
-
-Make sure to have the `cron` key with the cronjob command.
-
-**Q: How to define the schedule of the CronJob?**
 
 You can define the schedule of cron by adding this lines to `teresa.yaml`:
 
@@ -230,6 +229,8 @@ You can define the schedule of cron by adding this lines to `teresa.yaml`:
 cron:
   schedule: "*/30 * * * *"
 ```
+
+Make sure to have the related (i.e. same value of the process-type) key with the cronjob command on the `Procfile`.
 
 ### Development
 

@@ -3,8 +3,8 @@ package app
 import appb "github.com/luizalabs/teresa/pkg/protobuf/app"
 
 const (
-	ProcessTypeWeb  = "web"
-	ProcessTypeCron = "cron"
+	ProcessTypeWeb        = "web"
+	ProcessTypeCronPrefix = "cron"
 )
 
 type LimitRangeQuantity struct {

@@ -31,7 +31,7 @@ func containerSpecsToK8sContainers(containerSpecs []*spec.Container) ([]k8sv1.Co
 	for i, cs := range containerSpecs {
 		c := k8sv1.Container{
 			Name:            cs.Name,
-			ImagePullPolicy: k8sv1.PullIfNotPresent,
+			ImagePullPolicy: k8sv1.PullAlways,
 			Image:           cs.Image,
 		}
 

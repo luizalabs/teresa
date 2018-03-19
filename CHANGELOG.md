@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [HELM] Bump minio version to v0.5.5
 - [server] Change the pull policy to always pull
 - Infer if an app is a cronjob by `cron` prefix on process type
+- Bump the default slugbuilder version to v3.3.0
 
 ### Added
 - Support Nginx as sidecar

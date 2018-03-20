@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/luizalabs/teresa",
-	"GoVersion": "go1.8",
+	"GoVersion": "go1.9",
 	"GodepVersion": "v79",
 	"Packages": [
 		"./..."
@@ -286,18 +286,18 @@
 		},
 		{
 			"ImportPath": "github.com/jinzhu/gorm",
-			"Comment": "v1.0-50-ga646b13",
-			"Rev": "a646b13548ec0aa812fe805b2780f460dd2771b6"
+			"Comment": "v1.9.1",
+			"Rev": "6ed508ec6a4ecb3531899a69cbc746ccf65a4166"
 		},
 		{
 			"ImportPath": "github.com/jinzhu/gorm/dialects/mysql",
-			"Comment": "v1.0-50-ga646b13",
-			"Rev": "a646b13548ec0aa812fe805b2780f460dd2771b6"
+			"Comment": "v1.9.1",
+			"Rev": "6ed508ec6a4ecb3531899a69cbc746ccf65a4166"
 		},
 		{
 			"ImportPath": "github.com/jinzhu/gorm/dialects/sqlite",
-			"Comment": "v1.0-50-ga646b13",
-			"Rev": "a646b13548ec0aa812fe805b2780f460dd2771b6"
+			"Comment": "v1.9.1",
+			"Rev": "6ed508ec6a4ecb3531899a69cbc746ccf65a4166"
 		},
 		{
 			"ImportPath": "github.com/jinzhu/inflection",
@@ -388,10 +388,6 @@
 		{
 			"ImportPath": "github.com/pkg/sftp",
 			"Rev": "4d0e916071f68db74f8a73926335f809396d6b42"
-		},
-		{
-			"ImportPath": "github.com/prometheus/common/log",
-			"Rev": "ebdfc6da46522d58825777cf1f90490a5b1ef1d8"
 		},
 		{
 			"ImportPath": "github.com/soheilhy/cmux",

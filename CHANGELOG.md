@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [NEXT_RELEASE]
+## [0.17.0] - 2018-03-20
 ### Changed
 - Change Method `CreateSecret` to `CreateOrUpdateSecret` on k8s interfaces
 - Default max-cpu app limit to 400m

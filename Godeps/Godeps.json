@@ -390,6 +390,10 @@
 			"Rev": "4d0e916071f68db74f8a73926335f809396d6b42"
 		},
 		{
+			"ImportPath": "github.com/sabhiram/go-gitignore",
+			"Rev": "362f9845770f1606d61ba3ddf9cfb1f0780d2ffe"
+		},
+		{
 			"ImportPath": "github.com/soheilhy/cmux",
 			"Comment": "v0.1.2-13-g34a8ab6",
 			"Rev": "34a8ab6cda23238fe53bfa79c2f3fd77a9896540"

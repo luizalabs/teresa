@@ -11,6 +11,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Update `gorm` version to v1.9.1
 - Update `go-sql-driver/mysql`
 
+### Fixed
+- `.teresaignore` behavior (to work like `.gitignore`)
+
 ## [0.17.0] - 2018-03-20
 ### Changed
 - Change Method `CreateSecret` to `CreateOrUpdateSecret` on k8s interfaces

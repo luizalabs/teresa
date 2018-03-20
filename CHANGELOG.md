@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Update `gorm` version to v1.9.1
+- Update `go-sql-driver/mysql`
 
 ## [0.17.0] - 2018-03-20
 ### Changed

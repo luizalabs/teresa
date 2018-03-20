@@ -198,8 +198,8 @@
 		},
 		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
-			"Comment": "v1.2-198-g0b58b37",
-			"Rev": "0b58b37b664c21f3010e836f1b931e1d0b0b0685"
+			"Comment": "v1.3-59-g1a676ac",
+			"Rev": "1a676ac6e4dce68e9303a1800773861350374a9e"
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",

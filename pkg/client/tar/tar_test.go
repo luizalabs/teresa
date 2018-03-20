@@ -93,23 +93,41 @@ func TestCreateTempSuccess(t *testing.T) {
 }
 
 func TestCreateTempIgnorePatternsSuccess(t *testing.T) {
-	tmp, err := CreateTemp("testdata/create", "test", []string{"dir"})
-	if err != nil {
-		t.Fatal(err)
+	var testCases = []struct {
+		patterns      []string
+		expectedFiles []string
+	}{
+		{[]string{"dir/"}, []string{"file1.txt"}},
+		{[]string{"dir"}, []string{"file1.txt"}},
+		{[]string{"dir/file2.txt"}, []string{"file1.txt"}},
+		{[]string{"file2.txt"}, []string{"file1.txt"}},
+		{[]string{"file1.txt"}, []string{"dir/file2.txt"}},
+		{[]string{"file1.txt/"}, []string{"dir/file2.txt", "file1.txt"}},
+		{[]string{"*.txt"}, []string{}},
+		{[]string{"*.sqlite"}, []string{"dir/file2.txt", "file1.txt"}},
 	}
-	defer os.Remove(tmp)
 
-	names, err := extractTar(tmp)
-	if err != nil {
-		t.Fatal(err)
-	}
+	for _, tc := range testCases {
+		tmp, err := CreateTemp("testdata/create", "test", tc.patterns)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer os.Remove(tmp)
 
-	if len(names) != 1 {
-		t.Errorf("want 1; got %d", len(names))
-	}
+		names, err := extractTar(tmp)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	if names[0] != "file1.txt" {
-		t.Errorf("want file1.txt; got %s", names[0])
+		if len(names) != len(tc.expectedFiles) {
+			t.Errorf("expected %d; got %d", len(tc.expectedFiles), len(names))
+		}
+
+		for i := range names {
+			if names[i] != tc.expectedFiles[i] {
+				t.Errorf("expected %s, got %s", tc.expectedFiles[i], names[i])
+			}
+		}
 	}
 }
 

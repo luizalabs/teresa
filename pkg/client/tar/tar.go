@@ -8,42 +8,40 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/pkg/errors"
-)
-
-const (
-	PathSeparator = "/"
+	gitignore "github.com/sabhiram/go-gitignore"
 )
 
 func addAll(tw *tar.Writer, dir string, ignorePatterns []string) error {
+	ig, err := gitignore.CompileIgnoreLines(ignorePatterns...)
+	if err != nil {
+		return errors.Wrap(err, "compiling ignore patterns list")
+	}
+
 	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return errors.Wrap(err, "on walk call")
 		}
 
-		for _, ip := range ignorePatterns {
-			if matched, _ := filepath.Match(ip, info.Name()); matched {
-				if info.IsDir() {
-					return filepath.SkipDir
-				}
-				return nil
+		basePath := filepath.ToSlash(fmt.Sprintf("%s%c", filepath.Clean(dir), filepath.Separator))
+		name := filepath.ToSlash(strings.Replace(path, basePath, "", 1))
+
+		if info.IsDir() {
+			name = fmt.Sprintf("%s/", name)
+		}
+
+		if ig.MatchesPath(name) {
+			if info.IsDir() {
+				return filepath.SkipDir
 			}
+			return nil
 		}
 
 		if info.IsDir() {
 			return nil
 		}
-
-		basePath := fmt.Sprintf("%s%c", filepath.Clean(dir), filepath.Separator)
-		name := strings.Replace(path, basePath, "", 1)
-		if runtime.GOOS == "windows" {
-			path = strings.Replace(path, string(filepath.Separator), PathSeparator, -1)
-			name = strings.Replace(name, string(filepath.Separator), PathSeparator, -1)
-		}
-
 		return addFile(tw, path, name, info)
 	})
 }

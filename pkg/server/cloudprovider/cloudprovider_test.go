@@ -23,10 +23,14 @@ func TestNewOperationsCloudProviderNameFail(t *testing.T) {
 	}
 }
 
-func TestNewOperationsInvalidCloudProvider(t *testing.T) {
+func TestNewOperationsReturnsFallbackOperations(t *testing.T) {
 	k8s := &FakeK8sOperations{CloudProviderNameValue: "test"}
 
-	if _, err := NewOperations(k8s); err != ErrInvalidCloudProvider {
-		t.Errorf("got %v; want %v", err, ErrInvalidCloudProvider)
+	ops, err := NewOperations(k8s)
+	if err != nil {
+		t.Fatal("error creating a new operation")
+	}
+	if _, ok := ops.(*fallbackOperations); !ok {
+		t.Error("expected fallbackOperations, but another struct was created")
 	}
 }

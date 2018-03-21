@@ -28,6 +28,6 @@ func NewOperations(k8s K8sOperations) (Operations, error) {
 	case "gce":
 		return &gceOperations{k8s: k8s}, nil
 	default:
-		return nil, ErrInvalidCloudProvider
+		return &fallbackOperations{}, nil
 	}
 }

@@ -45,6 +45,14 @@ func (f *fakeK8sOperations) CreateOrUpdateConfigMap(namespace, name string, data
 	return nil
 }
 
+func (f *fakeK8sOperations) DeleteConfigMap(namespace, name string) error {
+	return nil
+}
+
+func (f *fakeK8sOperations) IsNotFound(err error) bool {
+	return true
+}
+
 func (f *fakeK8sOperations) CreateOrUpdateDeploy(deploySpec *spec.Deploy) error {
 	f.lastDeploySpec = deploySpec
 	return f.createDeployReturn

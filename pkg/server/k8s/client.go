@@ -469,6 +469,15 @@ func (k *Client) CreateOrUpdateConfigMap(namespace, name string, data map[string
 	return err
 }
 
+func (k *Client) DeleteConfigMap(namespace, name string) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+	err = kc.CoreV1().ConfigMaps(namespace).Delete(name, &metav1.DeleteOptions{})
+	return errors.Wrap(err, "delete configMap failed")
+}
+
 func (k *Client) CreateOrUpdateDeploy(deploySpec *spec.Deploy) error {
 	kc, err := k.buildClient()
 	if err != nil {

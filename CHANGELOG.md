@@ -21,6 +21,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Update `gorm` version to v1.9.1
 - Update `go-sql-driver/mysql`
+- Delete configmap if a deploy remove the nginx
 
 ### Fixed
 - `.teresaignore` behavior (to work like `.gitignore`)

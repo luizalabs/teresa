@@ -98,7 +98,7 @@ func TestOpsRunCommandBySpec(t *testing.T) {
 }
 
 func TestRunCommandBySpecNoZeroExitCode(t *testing.T) {
-	k8sOps := &fakeK8sOperations{exitCodePodRun: 1}
+	k8sOps := &fakeK8sOperations{exitCodePodRun: ExitCodeError}
 	ops := NewOperations(app.NewFakeOperations(), k8sOps, storage.NewFake(), &Defaults{})
 
 	rc, errChan := ops.RunCommandBySpec(context.Background(), &spec.Pod{})
@@ -106,6 +106,18 @@ func TestRunCommandBySpecNoZeroExitCode(t *testing.T) {
 
 	if err := <-errChan; err != ErrNonZeroExitCode {
 		t.Errorf("expected ErrNonZeroExitCode, got %v", err)
+	}
+}
+
+func TestRunCommandBySpecTimeoutExitCode(t *testing.T) {
+	k8sOps := &fakeK8sOperations{exitCodePodRun: ExitCodeTimeout}
+	ops := NewOperations(app.NewFakeOperations(), k8sOps, storage.NewFake(), &Defaults{})
+
+	rc, errChan := ops.RunCommandBySpec(context.Background(), &spec.Pod{})
+	defer rc.Close()
+
+	if err := <-errChan; err != ErrTimeout {
+		t.Errorf("expected ErrTimeout, got %v", err)
 	}
 }
 

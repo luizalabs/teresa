@@ -246,6 +246,9 @@ func (ops *DeployOperations) podRun(ctx context.Context, podSpec *spec.Pod, stre
 	go io.Copy(stream, podStream)
 
 	if err := <-runErrChan; err != nil {
+		if err == exec.ErrTimeout {
+			return err
+		}
 		return ErrPodRunFail
 	}
 

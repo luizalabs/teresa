@@ -37,8 +37,9 @@ message ListResponse {
     message Deploy {
         string revision = 1;
         string description = 2;
-        int64 age  = 3;
+        reserved 3;
         bool current = 4;
+        string created_at = 5;
     }
     repeated Deploy deploys = 1;
 }

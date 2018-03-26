@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/fatih/color"
 	"github.com/luizalabs/teresa/pkg/client"
@@ -322,7 +321,7 @@ func deployList(cmd *cobra.Command, args []string) {
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"REVISION", "AGE", "DESCRIPTION"})
+	table.SetHeader([]string{"REVISION", "CREATED AT", "DESCRIPTION"})
 	table.SetRowLine(true)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetRowSeparator("-")
@@ -335,7 +334,7 @@ func deployList(cmd *cobra.Command, args []string) {
 		}
 		r := []string{
 			d.Revision,
-			shortHumanDuration(time.Duration(d.Age)),
+			d.CreatedAt,
 			d.Description,
 		}
 		table.Append(r)

@@ -937,7 +937,7 @@ func (k *Client) ReplicaSetListByLabel(namespace, label, value string) ([]*deplo
 	for i, item := range rs.Items {
 		resp[i] = &deploy.ReplicaSetListItem{
 			Revision:    item.Annotations[revisionAnnotation],
-			Age:         int64(time.Since(item.CreationTimestamp.Time)),
+			CreatedAt:   item.CreationTimestamp.Time.String(),
 			Current:     item.Status.ReadyReplicas > 0,
 			Description: item.Annotations[changeCauseAnnotation],
 		}

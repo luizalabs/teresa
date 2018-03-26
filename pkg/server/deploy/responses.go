@@ -9,8 +9,8 @@ import (
 type ReplicaSetListItem struct {
 	Revision    string
 	Description string
-	Age         int64
 	Current     bool
+	CreatedAt   string
 }
 
 type ByRevision []*dpb.ListResponse_Deploy
@@ -48,8 +48,8 @@ func newListResponse(items []*ReplicaSetListItem) *dpb.ListResponse {
 		resp.Deploys[i] = &dpb.ListResponse_Deploy{
 			Revision:    item.Revision,
 			Description: item.Description,
-			Age:         item.Age,
 			Current:     item.Current,
+			CreatedAt:   item.CreatedAt,
 		}
 	}
 

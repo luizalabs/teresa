@@ -37,6 +37,8 @@ type K8sOperations interface {
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
 	DeployRollbackToRevision(namespace, name, revision string) error
 	CreateOrUpdateConfigMap(namespace, name string, data map[string]string) error
+	DeleteConfigMap(namespace, name string) error
+	IsNotFound(err error) bool
 }
 
 type DeployOperations struct {
@@ -148,6 +150,12 @@ func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployC
 		if err := ops.k8s.CreateOrUpdateConfigMap(a.Name, a.Name, data); err != nil {
 			errChan <- err
 			log.WithError(err).Errorf("Creating config to nginx of app %s", a.Name)
+			return
+		}
+	} else {
+		err := ops.k8s.DeleteConfigMap(a.Name, a.Name)
+		if err != nil && !ops.k8s.IsNotFound(err) {
+			errChan <- err
 			return
 		}
 	}

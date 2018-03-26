@@ -13,6 +13,11 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/uid"
 )
 
+const (
+	ExitCodeTimeout = 124
+	ExitCodeError   = 1
+)
+
 type Operations interface {
 	RunCommand(ctx context.Context, user *database.User, appName string, command ...string) (io.ReadCloser, <-chan error)
 	RunCommandBySpec(ctx context.Context, podSpec *spec.Pod) (io.ReadCloser, <-chan error)
@@ -98,7 +103,9 @@ func (ops *ExecOperations) RunCommandBySpec(ctx context.Context, podSpec *spec.P
 			go ops.k8s.DeletePod(podSpec.Namespace, podSpec.Name)
 			errChan <- ctx.Err()
 		case ec := <-exitCodeChain:
-			if ec != 0 {
+			if ec == ExitCodeTimeout {
+				errChan <- ErrTimeout
+			} else if ec != 0 {
 				errChan <- ErrNonZeroExitCode
 			}
 		}

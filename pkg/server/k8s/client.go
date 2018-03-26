@@ -9,6 +9,7 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/deploy"
+	"github.com/luizalabs/teresa/pkg/server/exec"
 	"github.com/luizalabs/teresa/pkg/server/service"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/pkg/errors"
@@ -529,22 +530,34 @@ func (k *Client) PodRun(podSpec *spec.Pod) (io.ReadCloser, <-chan int, error) {
 		}()
 
 		if err := k.waitPodStart(pod, 1*time.Second, 5*time.Minute); err != nil {
+			if err == wait.ErrWaitTimeout {
+				exitCodeChan <- exec.ExitCodeTimeout
+			} else {
+				exitCodeChan <- exec.ExitCodeError
+			}
 			return
 		}
 
 		opts := &app.LogOptions{Lines: 10, Follow: true}
 		stream, err := k.PodLogs(podSpec.Namespace, podSpec.Name, opts)
 		if err != nil {
+			exitCodeChan <- exec.ExitCodeError
 			return
 		}
 		io.Copy(w, stream)
 
 		if err = k.waitPodEnd(pod, 3*time.Second, k.podRunTimeout); err != nil {
+			if err == wait.ErrWaitTimeout {
+				exitCodeChan <- exec.ExitCodeTimeout
+			} else {
+				exitCodeChan <- exec.ExitCodeError
+			}
 			return
 		}
 
 		exitCode, err := k.podExitCode(pod)
 		if err != nil {
+			exitCodeChan <- exec.ExitCodeError
 			return
 		}
 		exitCodeChan <- exitCode

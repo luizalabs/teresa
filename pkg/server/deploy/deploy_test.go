@@ -355,7 +355,9 @@ func TestBuildApp(t *testing.T) {
 		commandErr  error
 		expectedErr error
 	}{
-		{nil, nil}, {exec.ErrNonZeroExitCode, ErrBuildFail},
+		{nil, nil},
+		{exec.ErrNonZeroExitCode, ErrBuildFail},
+		{exec.ErrTimeout, exec.ErrTimeout},
 	}
 
 	for _, tc := range testCases {

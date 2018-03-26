@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - `.teresaignore` behavior (to work like `.gitignore`)
+- Protect nginx vars from being interpreted as env vars
 
 ## [0.17.0] - 2018-03-20
 ### Changed

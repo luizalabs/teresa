@@ -3,6 +3,7 @@ package spec
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/storage"
@@ -12,7 +13,7 @@ const (
 	nginxConfTmplDir = "/etc/nginx/template/"
 	nginxConfDir     = "/etc/nginx/"
 	nginxConfFile    = "nginx.conf"
-	nginxArgTmpl     = "envsubst < %s%s > %s%s && nginx -g 'daemon off;'"
+	nginxArgTmpl     = "envsubst '%s' < %s%s > %s%s && nginx -g 'daemon off;'"
 	nginxBackendTmpl = "http://localhost:%d"
 )
 
@@ -88,9 +89,13 @@ func newNginxVolumeMount() *VolumeMounts {
 }
 
 func newNginxContainer(image string) *Container {
-	args := fmt.Sprintf(nginxArgTmpl, nginxConfTmplDir, nginxConfFile, nginxConfDir, nginxConfFile)
 	port := strconv.Itoa(DefaultPort)
 	backend := fmt.Sprintf(nginxBackendTmpl, secondaryPort)
+	env := map[string]string{
+		"NGINX_PORT":    port,
+		"NGINX_BACKEND": backend,
+	}
+	args := newNginxContainerArgs(env)
 
 	return &Container{
 		Name:    "nginx",
@@ -101,14 +106,29 @@ func newNginxContainer(image string) *Container {
 			Name:          "nginx",
 			ContainerPort: int32(DefaultPort),
 		}},
-		Env: map[string]string{
-			"NGINX_PORT":    port,
-			"NGINX_BACKEND": backend,
-		},
+		Env: env,
 		VolumeMounts: []*VolumeMounts{
 			newNginxVolumeMount(),
 		},
 	}
+}
+
+func newNginxContainerArgs(env map[string]string) string {
+	tmp := make([]string, len(env))
+	var i int
+	for key, _ := range env {
+		tmp[i] = fmt.Sprintf("$%s", key)
+		i++
+	}
+	args := fmt.Sprintf(
+		nginxArgTmpl,
+		strings.Join(tmp, " "),
+		nginxConfTmplDir,
+		nginxConfFile,
+		nginxConfDir,
+		nginxConfFile,
+	)
+	return args
 }
 
 func newAppContainer(name, image string, envVars map[string]string, port int, secrets []string) *Container {

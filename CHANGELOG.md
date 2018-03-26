@@ -6,6 +6,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Return error with timeout message when there's no resources for build, release phase and command exec
 
+### Changed
+- Show CREATED AT instead of AGE in deploy list
+
+
 ## [0.18.0] - 2018-03-27
 ### Added
 - `service` command, for now only used to enable ssl support

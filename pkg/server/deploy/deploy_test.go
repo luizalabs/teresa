@@ -65,13 +65,13 @@ func (f *fakeK8sOperations) ReplicaSetListByLabel(namespace, label, value string
 		{
 			Revision:    "1",
 			Description: "Test 1",
-			Age:         1,
+			CreatedAt:   "1",
 			Current:     false,
 		},
 		{
 			Revision:    "2",
 			Description: "Test 2",
-			Age:         2,
+			CreatedAt:   "2",
 			Current:     true,
 		},
 	}
@@ -452,8 +452,8 @@ func TestDeployListSuccess(t *testing.T) {
 		t.Errorf("expected 'Test 2', got %s", item.Description)
 	}
 
-	if item.Age != 2 {
-		t.Errorf("expected 2, got %d", item.Age)
+	if item.CreatedAt != "2" {
+		t.Errorf("expected 2, got %s", item.CreatedAt)
 	}
 
 	if !item.Current {

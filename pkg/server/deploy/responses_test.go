@@ -13,13 +13,13 @@ func TestNewListResponse(t *testing.T) {
 		{
 			Revision:    "1",
 			Description: "Test 1",
-			Age:         1,
+			CreatedAt:   "1",
 			Current:     false,
 		},
 		{
 			Revision:    "2",
 			Description: "Test 2",
-			Age:         2,
+			CreatedAt:   "2",
 			Current:     true,
 		},
 	}
@@ -36,13 +36,13 @@ func TestSortListResponseByRevision(t *testing.T) {
 		{
 			Revision:    "2",
 			Description: "Test 2",
-			Age:         2,
+			CreatedAt:   "2",
 			Current:     false,
 		},
 		{
 			Revision:    "1",
 			Description: "Test 1",
-			Age:         1,
+			CreatedAt:   "1",
 			Current:     true,
 		},
 	}

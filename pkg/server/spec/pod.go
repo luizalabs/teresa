@@ -6,8 +6,10 @@ import (
 )
 
 const (
-	slugVolumeName      = "slug"
-	slugVolumeMountPath = "/slug"
+	slugVolumeName        = "slug"
+	slugVolumeMountPath   = "/slug"
+	sharedVolumeName      = "shared-data"
+	sharedVolumeMountPath = "/app"
 )
 
 type Volume struct {
@@ -37,10 +39,10 @@ func newPodVolumes(appName string, fs storage.Storage, hasNginx bool) []*Volume 
 		},
 	}
 	if hasNginx {
-		volumes = append(volumes, &Volume{
-			Name:          "nginx-conf",
-			ConfigMapName: appName,
-		})
+		volumes = append(volumes,
+			&Volume{Name: "nginx-conf", ConfigMapName: appName},
+			&Volume{Name: sharedVolumeName, EmptyDir: true},
+		)
 	}
 	return volumes
 }
@@ -55,6 +57,12 @@ func newPodContainers(name, nginxImage, appImage string, envVars map[string]stri
 		newAppContainer(name, appImage, envVars, appPort, secrets),
 	}
 	if nginxImage != "" {
+		c[0].VolumeMounts = []*VolumeMounts{
+			&VolumeMounts{
+				Name:      sharedVolumeName,
+				MountPath: sharedVolumeMountPath,
+			},
+		}
 		c = append(c, newNginxContainer(nginxImage))
 	}
 	return c

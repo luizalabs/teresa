@@ -18,7 +18,6 @@ func TestNewNginxContainerArgs(t *testing.T) {
 	)
 
 	got := newNginxContainerArgs(env)
-
 	if got != want {
 		t.Errorf("got %s; want %s", got, want)
 	}

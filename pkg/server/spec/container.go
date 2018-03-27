@@ -2,6 +2,7 @@ package spec
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -120,6 +121,8 @@ func newNginxContainerArgs(env map[string]string) string {
 		tmp[i] = fmt.Sprintf("$%s", key)
 		i++
 	}
+	sort.Strings(tmp)
+
 	args := fmt.Sprintf(
 		nginxArgTmpl,
 		strings.Join(tmp, " "),

@@ -188,6 +188,7 @@ Note that a failing release will prevent the rolling update from happening, so
 you have to keep compatibility with old code.
 
 **Q: How to use nginx in front of my app (sidecar)?**
+
 Create a nginx.conf file in the project root directory, for example:
 
 ```
@@ -208,6 +209,17 @@ http{
 
 Note that this must be the **full** nginx configuration and the environment
 variables will be automatically filled.
+
+**Q: How to use nginx to serve static files?**
+
+When you activate nginx sidecar Teresa will share the `/app` ($HOME of apps) directory
+with nginx container, so you can use a simple _location_ rule on your nginx.conf
+
+```
+    location /static {
+        alias /app/static/;
+    }
+```
 
 **Q: How to get nginx logs?**
 

@@ -81,11 +81,17 @@ func newInitContainers(slugURL, image string, a *app.App, fs storage.Storage) []
 	return []*Container{ic}
 }
 
-func newNginxVolumeMount() *VolumeMounts {
-	return &VolumeMounts{
-		Name:      "nginx-conf",
-		MountPath: nginxConfTmplDir,
-		ReadOnly:  true,
+func newNginxVolumeMounts() []*VolumeMounts {
+	return []*VolumeMounts{
+		&VolumeMounts{
+			Name:      "nginx-conf",
+			MountPath: nginxConfTmplDir,
+			ReadOnly:  true,
+		},
+		&VolumeMounts{
+			Name:      sharedVolumeName,
+			MountPath: sharedVolumeMountPath,
+		},
 	}
 }
 
@@ -107,10 +113,8 @@ func newNginxContainer(image string) *Container {
 			Name:          "nginx",
 			ContainerPort: int32(DefaultPort),
 		}},
-		Env: env,
-		VolumeMounts: []*VolumeMounts{
-			newNginxVolumeMount(),
-		},
+		Env:          env,
+		VolumeMounts: newNginxVolumeMounts(),
 	}
 }
 

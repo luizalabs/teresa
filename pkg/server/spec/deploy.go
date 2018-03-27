@@ -87,7 +87,8 @@ func NewDeploy(imgs *Images, description, slugURL string, rhl int, a *app.App, t
 		fs,
 	)
 	ps.Containers[0].Args = []string{"start", a.ProcessType}
-	ps.Containers[0].VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}
+	ps.Containers[0].VolumeMounts = append(ps.Containers[0].VolumeMounts, newSlugVolumeMount())
+
 	ps.InitContainers = newInitContainers(slugURL, imgs.SlugStore, a, fs)
 
 	ds := &Deploy{

@@ -20,7 +20,7 @@ func TestNewPodSpec(t *testing.T) {
 	expectedName := "test"
 	expectedImage := "docker/teresa-test:0.0.1"
 
-	ps := NewPod(expectedName, "", expectedImage, a, ev, storage.NewFake())
+	ps := NewPod(expectedName, "nginx", expectedImage, a, ev, storage.NewFake())
 	if ps.Name != expectedName {
 		t.Errorf("expected %s, got %s", expectedName, ps.Name)
 	}
@@ -52,17 +52,23 @@ func TestNewPodSpec(t *testing.T) {
 		}
 	}
 
-	if len(ps.Volumes) != 2 {
+	if len(ps.Volumes) != 4 {
 		t.Errorf("expected %d, got %d", 2, len(ps.Volumes))
 	}
-	if len(ps.Containers[0].VolumeMounts) != 0 {
-		t.Errorf("expected %d, got %d", 0, len(ps.Containers[0].VolumeMounts))
+	if len(ps.Containers[0].VolumeMounts) != 1 {
+		t.Errorf("expected %d, got %d", 1, len(ps.Containers[0].VolumeMounts))
 	}
 	if ps.Volumes[0].Name != "storage-keys" {
 		t.Errorf("expected %s, got %s", "storage-keys", ps.Volumes[0].Name)
 	}
 	if ps.Volumes[1].Name != slugVolumeName {
 		t.Errorf("expected %s, got %s", slugVolumeName, ps.Volumes[1].Name)
+	}
+	if ps.Volumes[2].Name != "nginx-conf" {
+		t.Errorf("expected nginx-conf, got %s", ps.Volumes[2].Name)
+	}
+	if ps.Volumes[3].Name != sharedVolumeName {
+		t.Errorf("expected %s, got %s", sharedVolumeName, ps.Volumes[3].Name)
 	}
 }
 

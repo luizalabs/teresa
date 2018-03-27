@@ -9,6 +9,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Show CREATED AT instead of AGE in deploy list
 
+### Added
+- Share application directory with nginx sidecar
 
 ## [0.18.0] - 2018-03-27
 ### Added

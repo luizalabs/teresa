@@ -152,10 +152,16 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.De
 
 	if deploySpec.HealthCheck != nil {
 		if deploySpec.HealthCheck.Liveness != nil {
-			containers[0].LivenessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Liveness)
+			containers[0].LivenessProbe = healthCheckProbeToK8sProbe(
+				deploySpec.HealthCheck.Liveness,
+				containers[0].Ports[0].ContainerPort,
+			)
 		}
 		if deploySpec.HealthCheck.Readiness != nil {
-			containers[0].ReadinessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Readiness)
+			containers[0].ReadinessProbe = healthCheckProbeToK8sProbe(
+				deploySpec.HealthCheck.Readiness,
+				containers[0].Ports[0].ContainerPort,
+			)
 		}
 	}
 
@@ -286,7 +292,7 @@ func rollingUpdateToK8sRollingUpdate(ru *spec.RollingUpdate) (maxSurge, maxUnava
 	return conv(ru.MaxSurge), conv(ru.MaxUnavailable)
 }
 
-func healthCheckProbeToK8sProbe(probe *spec.HealthCheckProbe) *k8sv1.Probe {
+func healthCheckProbeToK8sProbe(probe *spec.HealthCheckProbe, port int32) *k8sv1.Probe {
 	return &k8sv1.Probe{
 		InitialDelaySeconds: probe.InitialDelaySeconds,
 		TimeoutSeconds:      probe.TimeoutSeconds,
@@ -295,7 +301,7 @@ func healthCheckProbeToK8sProbe(probe *spec.HealthCheckProbe) *k8sv1.Probe {
 		SuccessThreshold:    probe.SuccessThreshold,
 		Handler: k8sv1.Handler{
 			HTTPGet: &k8sv1.HTTPGetAction{
-				Port: intstr.FromInt(spec.DefaultPort),
+				Port: intstr.FromInt(int(port)),
 				Path: probe.Path,
 			},
 		},

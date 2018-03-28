@@ -222,7 +222,8 @@ func TestHealthCheckProbeToK8sProbe(t *testing.T) {
 		TimeoutSeconds:      3,
 		Path:                "/hc/",
 	}
-	k8sHC := healthCheckProbeToK8sProbe(hc)
+	var expectedPort int32 = 6000
+	k8sHC := healthCheckProbeToK8sProbe(hc, expectedPort)
 
 	if k8sHC.InitialDelaySeconds != hc.InitialDelaySeconds {
 		t.Errorf("expected %d, got %d", hc.InitialDelaySeconds, k8sHC.InitialDelaySeconds)
@@ -242,6 +243,9 @@ func TestHealthCheckProbeToK8sProbe(t *testing.T) {
 	if k8sHC.Handler.HTTPGet.Path != hc.Path {
 		t.Errorf("expected %s, got %s", hc.Path, k8sHC.Handler.HTTPGet.Path)
 	}
+	if k8sHC.Handler.HTTPGet.Port != intstr.FromInt(int(expectedPort)) {
+		t.Errorf("expected %d, got %v", expectedPort, k8sHC.Handler.HTTPGet.Port)
+	}
 }
 
 func TestDeploySpecToK8sDeploy(t *testing.T) {
@@ -251,6 +255,9 @@ func TestDeploySpecToK8sDeploy(t *testing.T) {
 				Name:  "Teresa",
 				Image: "luizalabs/teresa:0.0.1",
 				Args:  []string{"run", "web"},
+				Ports: []spec.Port{{
+					ContainerPort: 5000,
+				}},
 			}},
 			InitContainers: []*spec.Container{{
 				Name:  "Teresa",
@@ -269,7 +276,7 @@ func TestDeploySpecToK8sDeploy(t *testing.T) {
 	var expectedReplicas int32 = 5
 	k8sDeploy, err := deploySpecToK8sDeploy(ds, expectedReplicas)
 	if err != nil {
-		t.Fatalf("error to convert specL %v", err)
+		t.Fatalf("error to convert spec %v", err)
 	}
 	if len(k8sDeploy.Spec.Template.Spec.Containers) != 1 {
 		t.Fatalf("expected 1 container, got %d", len(k8sDeploy.Spec.Template.Spec.Containers))

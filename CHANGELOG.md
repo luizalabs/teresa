@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Fixed
 - Return error with timeout message when there's no resources for build, release phase and command exec
+- Health Checks ports on deploys with nginx sidecar
 
 ### Changed
 - Show CREATED AT instead of AGE in deploy list

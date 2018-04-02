@@ -24,7 +24,7 @@ type Options struct {
 	SlugBuilderImage     string        `split_words:"true" default:"luizalabs/slugbuilder:v3.3.0"`
 	SlugRunnerImage      string        `split_words:"true" default:"luizalabs/slugrunner:v3.0.1"`
 	SlugStoreImage       string        `split_words:"true" default:"luizalabs/slugstore:v1.0.0"`
-	NginxImage           string        `split_words:"true" default:"nginx:1.13-alpine"`
+	NginxImage           string        `split_words:"true" default:"nginx:1.13-alpine-perl"`
 	BuildLimitCPU        string        `split_words:"true" default:"800m"`
 	BuildLimitMemory     string        `split_words:"true" default:"1Gi"`
 	DefaultServiceType   string        `split_words:"true" default:"LoadBalancer"`

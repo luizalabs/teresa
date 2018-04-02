@@ -227,6 +227,35 @@ Filter the logs by container name:
 
     $ teresa app logs <app-name> --container nginx
 
+**Q: How to build a dynamic nginx configuration based on the app's env vars?**
+
+By default teresa uses a nginx image with perl support, so an example
+configuration with a conditional redirect would be:
+
+```
+load_module modules/ngx_http_perl_module-debug.so;
+
+env MY_VAR;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    perl_set $my_var 'sub { return $ENV{"MY_VAR"}; }';
+    server {
+        listen $NGINX_PORT;
+        if ($my_var = "my_value") {
+            return 301 https://mydomain;
+        }
+        location / {
+            proxy_set_header HOST $host;
+            proxy_pass $NGINX_BACKEND;
+        }
+    }
+}
+```
+
 **Q: How to enable ssl?**
 
 For now we only support AWS and you need the certificate ARN:

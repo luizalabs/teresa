@@ -80,7 +80,9 @@ func NewPod(name, nginxImage, image string, a *app.App, envVars map[string]strin
 	}
 
 	for _, e := range a.EnvVars {
-		ps.Containers[0].Env[e.Key] = e.Value
+		for i := range ps.Containers {
+			ps.Containers[i].Env[e.Key] = e.Value
+		}
 	}
 	for k, v := range fs.PodEnvVars() {
 		ps.Containers[0].Env[k] = v

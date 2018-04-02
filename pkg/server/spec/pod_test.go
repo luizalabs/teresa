@@ -31,9 +31,18 @@ func TestNewPodSpec(t *testing.T) {
 		t.Errorf("expected %s, got %s", expectedImage, ps.Containers[0].Image)
 	}
 
+	if len(ps.Containers) != 2 {
+		t.Fatalf("expected 2 containers (app + nginx), got %d", len(ps.Containers))
+	}
 	for _, env := range a.EnvVars {
-		if ps.Containers[0].Env[env.Key] != env.Value {
-			t.Errorf("expected %s, got %s for key %s", env.Value, ps.Containers[0].Env[env.Key], env.Key)
+		for i := range ps.Containers {
+			if ps.Containers[i].Env[env.Key] != env.Value {
+				t.Errorf(
+					"expected %s, got %s for key %s",
+					env.Value,
+					ps.Containers[i].Env[env.Key], env.Key,
+				)
+			}
 		}
 	}
 

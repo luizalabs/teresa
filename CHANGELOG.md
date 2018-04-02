@@ -10,10 +10,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Show CREATED AT instead of AGE in deploy list
 - Delete configmap if a deploy remove the nginx
+- Default nginx image to nginx:1.13-alpine-perl
 
 ### Added
 - Share application directory with nginx sidecar
 - Share application environment vars nginx sidecar
+- FAQ entry with an example dynamic nginx configuration
 
 ## [0.18.0] - 2018-03-27
 ### Added

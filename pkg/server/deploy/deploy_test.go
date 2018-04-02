@@ -38,6 +38,7 @@ type fakeK8sOperations struct {
 	exposeDeployWasCalled    bool
 	replicaSetListByLabelErr error
 	createConfigMapWasCalled bool
+	deleteConfigMapWasCalled bool
 }
 
 func (f *fakeK8sOperations) CreateOrUpdateConfigMap(namespace, name string, data map[string]string) error {
@@ -46,6 +47,7 @@ func (f *fakeK8sOperations) CreateOrUpdateConfigMap(namespace, name string, data
 }
 
 func (f *fakeK8sOperations) DeleteConfigMap(namespace, name string) error {
+	f.deleteConfigMapWasCalled = true
 	return nil
 }
 
@@ -186,6 +188,74 @@ func TestCreateDeploy(t *testing.T) {
 	if fakeK8s.lastDeploySpec.RevisionHistoryLimit != opts.RevisionHistoryLimit {
 		t.Errorf("expected %d, got %d", opts.RevisionHistoryLimit, fakeK8s.lastDeploySpec.RevisionHistoryLimit)
 	}
+}
+
+func TestCreateDeployCreateNginxConfigMap(t *testing.T) {
+	errChan := make(chan error, 1)
+	conf := &DeployConfigFiles{NginxConf: "nginx conf"}
+
+	fakeK8s := new(fakeK8sOperations)
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		fakeK8s,
+		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
+	)
+
+	ops.(*DeployOperations).createOrUpdateDeploy(
+		&app.App{},
+		conf,
+		new(bytes.Buffer),
+		errChan,
+		"test-slug",
+		"test-description",
+		"123",
+	)
+	errChan <- nil
+
+	if err := <-errChan; err != nil {
+		t.Fatal("error create deploy:", err)
+	}
+
+	if !fakeK8s.createConfigMapWasCalled {
+		t.Error("expected create config map was called, but don't")
+	}
+
+}
+
+func TestCreateDeployDeleteNginxConfigMap(t *testing.T) {
+	errChan := make(chan error, 1)
+	conf := &DeployConfigFiles{}
+
+	fakeK8s := new(fakeK8sOperations)
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		fakeK8s,
+		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
+	)
+
+	ops.(*DeployOperations).createOrUpdateDeploy(
+		&app.App{},
+		conf,
+		new(bytes.Buffer),
+		errChan,
+		"test-slug",
+		"test-description",
+		"123",
+	)
+	errChan <- nil
+
+	if err := <-errChan; err != nil {
+		t.Fatal("error create deploy:", err)
+	}
+
+	if !fakeK8s.deleteConfigMapWasCalled {
+		t.Error("expected delete config map was called, but don't")
+	}
+
 }
 
 func TestCreateDeployReturnError(t *testing.T) {

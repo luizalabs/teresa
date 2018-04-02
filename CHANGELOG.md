@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - Share application directory with nginx sidecar
+- Share application environment vars nginx sidecar
 
 ## [0.18.0] - 2018-03-27
 ### Added

@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Show CREATED AT instead of AGE in deploy list
 - Delete configmap if a deploy remove the nginx
 - Default nginx image to nginx:1.13-alpine-perl
+- Bump the default slugrunner version to v3.1.0
 
 ### Added
 - Share application directory with nginx sidecar

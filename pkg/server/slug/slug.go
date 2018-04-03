@@ -9,5 +9,7 @@ var (
 		"BUILDER_STORAGE",
 		"APP",
 		"SLUG_DIR",
+		"NGINX_PORT",
+		"NGINX_BACKEND",
 	}
 )

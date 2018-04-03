@@ -28,8 +28,8 @@ import (
 )
 
 const (
-	patchDeployEnvVarsTmpl            = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"template":{"metadata": {"annotations": {"date": "%s"}}, "spec":{"containers":[{"name": "%s", "env":%s}]}}}}`
-	patchCronJobEnvVarsTmpl           = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"template":{"metadata":{"annotations":{"date": "%s"}}}, "jobTemplate":{"spec": {"template": {"spec": {"containers":[{"name": "%s", "env":%s}]}}}}}}`
+	patchDeployEnvVarsTmpl            = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"template":{"metadata": {"annotations": {"date": "%s"}}, "spec":{"containers":%s}}}}`
+	patchCronJobEnvVarsTmpl           = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"template":{"metadata":{"annotations":{"date": "%s"}}}, "jobTemplate":{"spec": {"template": {"spec": {"containers":%s}}}}}}`
 	patchDeployRollbackToRevisionTmpl = `{"spec":{"rollbackTo":{"revision": %s}}}`
 	patchDeployReplicasTmpl           = `{"spec":{"replicas": %d}}`
 	patchServiceAnnotationsTmpl       = `{"metadata":{"annotations": %s}}`
@@ -772,17 +772,53 @@ func (k *Client) SetNamespaceLabels(namespace string, labels map[string]string) 
 	return err
 }
 
-func prepareEnvVarsPath(name, template string, v interface{}) ([]byte, error) {
-	b, err := json.Marshal(v)
+func (c Client) getDeployContainerList(namespace, deploy string) ([]string, error) {
+	kc, err := c.buildClient()
+	if err != nil {
+		return nil, err
+	}
+
+	d, err := kc.AppsV1beta1().
+		Deployments(namespace).
+		Get(deploy, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get deploy spec")
+	}
+
+	containers := make([]string, len(d.Spec.Template.Spec.Containers))
+	for i, c := range d.Spec.Template.Spec.Containers {
+		containers[i] = c.Name
+	}
+	return containers, nil
+}
+
+func prepareEnvVarsPath(name, template string, containers []string, v interface{}) ([]byte, error) {
+	type containerEnvVars struct {
+		Name string      `json:"name"`
+		Env  interface{} `json:"env"`
+	}
+	containersEnvVars := make([]containerEnvVars, len(containers))
+	for i, container := range containers {
+		containersEnvVars[i] = containerEnvVars{
+			Name: container, Env: v,
+		}
+	}
+	b, err := json.Marshal(containersEnvVars)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to json encode env vars")
 	}
-	data := fmt.Sprintf(template, time.Now(), name, string(b))
+
+	data := fmt.Sprintf(template, time.Now(), string(b))
 	return []byte(data), nil
 }
 
 func (c *Client) patchDeployEnvVars(namespace, name string, v interface{}) error {
-	data, err := prepareEnvVarsPath(name, patchDeployEnvVarsTmpl, v)
+	containers, err := c.getDeployContainerList(namespace, name)
+	if err != nil {
+		return err
+	}
+
+	data, err := prepareEnvVarsPath(name, patchDeployEnvVarsTmpl, containers, v)
 	if err != nil {
 		return err
 	}
@@ -802,7 +838,7 @@ func (c *Client) patchDeployEnvVars(namespace, name string, v interface{}) error
 }
 
 func (c *Client) patchCronJobEnvVars(namespace, name string, v interface{}) error {
-	data, err := prepareEnvVarsPath(name, patchCronJobEnvVarsTmpl, v)
+	data, err := prepareEnvVarsPath(name, patchCronJobEnvVarsTmpl, []string{name}, v)
 	if err != nil {
 		return err
 	}

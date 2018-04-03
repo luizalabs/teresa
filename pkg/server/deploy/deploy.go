@@ -12,6 +12,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/exec"
+	"github.com/luizalabs/teresa/pkg/server/slug"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
@@ -39,6 +40,7 @@ type K8sOperations interface {
 	CreateOrUpdateConfigMap(namespace, name string, data map[string]string) error
 	DeleteConfigMap(namespace, name string) error
 	IsNotFound(err error) bool
+	ContainerExplicitEnvVars(namespace, deployName, containerName string) ([]*app.EnvVar, error)
 }
 
 type DeployOperations struct {
@@ -281,19 +283,28 @@ func (ops *DeployOperations) List(user *database.User, appName string) ([]*Repli
 }
 
 func (ops *DeployOperations) Rollback(user *database.User, appName, revision string) error {
-	app, err := ops.appOps.CheckPermAndGet(user, appName)
+	a, err := ops.appOps.CheckPermAndGet(user, appName)
 	if err != nil {
 		return err
 	}
-
 	if err = ops.k8s.DeployRollbackToRevision(appName, appName, revision); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
-
-	if err := ops.appOps.SaveApp(app, user.Email); err != nil {
+	env, err := ops.k8s.ContainerExplicitEnvVars(appName, appName, appName)
+	if err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
-
+	appEnv := []*app.EnvVar{}
+	for _, ev := range env {
+		if isProtectedEnvVar(ev.Key) {
+			continue
+		}
+		appEnv = append(appEnv, ev)
+	}
+	a.EnvVars = appEnv
+	if err := ops.appOps.SaveApp(a, user.Email); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
 	return nil
 }
 
@@ -302,6 +313,15 @@ func (ops *DeployOperations) serviceType(a *app.App) string {
 		return internalSvcType
 	}
 	return ops.opts.DefaultServiceType
+}
+
+func isProtectedEnvVar(key string) bool {
+	for _, name := range slug.ProtectedEnvVars {
+		if name == key {
+			return true
+		}
+	}
+	return false
 }
 
 func NewDeployOperations(aOps app.Operations, k8s K8sOperations, s st.Storage, execOps exec.Operations, opts *Options) Operations {

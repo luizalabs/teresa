@@ -425,3 +425,17 @@ func servicePortsToK8sServicePorts(ports []service.ServicePort) []k8sv1.ServiceP
 	}
 	return k8sPorts
 }
+
+func k8sExplicitEnvToAppEnv(env []k8sv1.EnvVar) []*app.EnvVar {
+	evs := []*app.EnvVar{}
+	for _, e := range env {
+		if e.ValueFrom != nil {
+			continue
+		}
+		evs = append(evs, &app.EnvVar{
+			Key:   e.Name,
+			Value: e.Value,
+		})
+	}
+	return evs
+}

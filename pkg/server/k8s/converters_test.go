@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"reflect"
 	"testing"
 
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -533,5 +534,19 @@ func TestServicePortsToK8sServicePorts(t *testing.T) {
 		if int32(p) != k8sPorts[i].Port {
 			t.Errorf("got %d; want %d", k8sPorts[i].Port, p)
 		}
+	}
+}
+
+func TestK8sExplicitEnvToAppEnv(t *testing.T) {
+	env := []k8sv1.EnvVar{
+		{Name: "name1", Value: "value1"},
+		{Name: "name2", Value: "value2", ValueFrom: &k8sv1.EnvVarSource{}},
+	}
+	want := []*app.EnvVar{{Key: "name1", Value: "value1"}}
+
+	got := k8sExplicitEnvToAppEnv(env)
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v; want %v", got, want)
 	}
 }

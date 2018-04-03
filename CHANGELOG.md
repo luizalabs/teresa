@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Fixed
+- Make deploy rollback update the app env vars
+
 ## [0.19.0] - 2018-04-05
 ### Fixed
 - Return error with timeout message when there's no resources for build, release phase and command exec

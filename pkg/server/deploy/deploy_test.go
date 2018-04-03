@@ -30,15 +30,17 @@ func (f *fakeReadSeeker) Seek(offset int64, whence int) (int64, error) {
 }
 
 type fakeK8sOperations struct {
-	lastDeploySpec           *spec.Deploy
-	lastCronJobSpec          *spec.CronJob
-	createDeployReturn       error
-	createCronJobReturn      error
-	hasSrvErr                error
-	exposeDeployWasCalled    bool
-	replicaSetListByLabelErr error
-	createConfigMapWasCalled bool
-	deleteConfigMapWasCalled bool
+	lastDeploySpec                *spec.Deploy
+	lastCronJobSpec               *spec.CronJob
+	createDeployReturn            error
+	createCronJobReturn           error
+	hasSrvErr                     error
+	exposeDeployWasCalled         bool
+	replicaSetListByLabelErr      error
+	createConfigMapWasCalled      bool
+	deleteConfigMapWasCalled      bool
+	containerExplicitEnvVarsErr   error
+	containerExplicitEnvVarsValue []*app.EnvVar
 }
 
 func (f *fakeK8sOperations) CreateOrUpdateConfigMap(namespace, name string, data map[string]string) error {
@@ -90,6 +92,10 @@ func (f *fakeK8sOperations) ReplicaSetListByLabel(namespace, label, value string
 
 func (f *fakeK8sOperations) DeployRollbackToRevision(namespace, name, revision string) error {
 	return nil
+}
+
+func (f *fakeK8sOperations) ContainerExplicitEnvVars(namespace, deployName, containerName string) ([]*app.EnvVar, error) {
+	return f.containerExplicitEnvVarsValue, f.containerExplicitEnvVarsErr
 }
 
 func TestDeployPermissionDenied(t *testing.T) {
@@ -629,5 +635,39 @@ func TestRollbackOpsErrNotFound(t *testing.T) {
 
 	if err := ops.Rollback(user, name, ""); err != app.ErrNotFound {
 		t.Errorf("expected app.ErrNotFound, got %s", err)
+	}
+}
+
+func TestRollbackErrorFromContainerEnvVars(t *testing.T) {
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		&fakeK8sOperations{containerExplicitEnvVarsErr: errors.New("test")},
+		st.NewFake(),
+		exec.NewFakeOperations(),
+		&Options{},
+	)
+	user := &database.User{Email: "gopher@luizalabs.com"}
+
+	want := teresa_errors.ErrInternalServerError
+	if err := ops.Rollback(user, "teresa", ""); teresa_errors.Get(err) != want {
+		t.Errorf("got %v; want %v", teresa_errors.Get(err), want)
+	}
+}
+
+func TestIsProtectedEnvVar(t *testing.T) {
+	var testCases = []struct {
+		name string
+		want bool
+	}{
+		{"TEST", false},
+		{"APP", true},
+		{"PORT", true},
+	}
+
+	for _, tc := range testCases {
+		got := isProtectedEnvVar(tc.name)
+		if got != tc.want {
+			t.Errorf("got %v; want %v", got, tc.want)
+		}
 	}
 }

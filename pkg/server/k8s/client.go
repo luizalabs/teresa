@@ -1114,6 +1114,28 @@ func (c *Client) ServicePorts(namespace, svcName string) ([]*service.ServicePort
 	return ports, nil
 }
 
+func (c *Client) ContainerExplicitEnvVars(namespace, deployName, containerName string) ([]*app.EnvVar, error) {
+	kc, err := c.buildClient()
+	if err != nil {
+		return nil, err
+	}
+	deploy, err := kc.AppsV1beta1().
+		Deployments(namespace).
+		Get(deployName, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrap(err, "get deploy failed")
+	}
+	var con k8sv1.Container
+	s := deploy.Spec.Template.Spec.Containers
+	for _, c := range s {
+		if c.Name == containerName {
+			con = c
+			break
+		}
+	}
+	return k8sExplicitEnvToAppEnv(con.Env), nil
+}
+
 func prepareServiceAnnotations(tmpl string, annotations map[string]string) ([]byte, error) {
 	b, err := json.Marshal(annotations)
 	if err != nil {

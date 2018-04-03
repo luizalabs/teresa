@@ -12,6 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Delete configmap if a deploy remove the nginx
 - Default nginx image to nginx:1.13-alpine-perl
 - Bump the default slugrunner version to v3.1.0
+- Update environment vars (`env-set` and `env-unset`) on each pod container
 
 ### Added
 - Share application directory with nginx sidecar

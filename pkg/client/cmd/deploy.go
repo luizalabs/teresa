@@ -22,6 +22,13 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+const (
+	rollBackWarning = `
+WARNING: Teresa currently doesn't roll back nginx configurations or secrets.
+         In theses cases a new deploy might be a better option.
+`
+)
+
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Everything about deploys",
@@ -123,6 +130,7 @@ func init() {
 	deployListCmd.Flags().String("app", "", "app name (required)")
 
 	deployRollbackCmd.Flags().String("revision", "", "app revision (required)")
+	deployRollbackCmd.Flags().Bool("no-input", false, "rollback deploy without warning")
 }
 
 func deployApp(cmd *cobra.Command, args []string) {
@@ -147,22 +155,11 @@ func deployApp(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid no-input parameter")
 	}
 
-	currentClusterName := cfgCluster
-	if currentClusterName == "" {
-		currentClusterName, err = getCurrentClusterName()
-		if err != nil {
-			client.PrintErrorAndExit("error reading config file: %v", err)
-		}
-	}
-
+	currentClusterName := currentClusterNameOrExit()
 	fmt.Printf("Deploying app %s to the cluster %s...\n", color.CyanString(`"%s"`, appName), color.YellowString(`"%s"`, currentClusterName))
 
 	if !noInput {
-		fmt.Print("Are you sure? (yes/NO)? ")
-		s, _ := bufio.NewReader(os.Stdin).ReadString('\n')
-		if !strings.HasPrefix(strings.ToLower(s), "yes") {
-			return
-		}
+		readStdinYesOrExit()
 	}
 
 	path, cleanup := fetchApp(appURL)
@@ -354,6 +351,25 @@ func deployRollback(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("invalid revision parameter")
 	}
 
+	noInput, err := cmd.Flags().GetBool("no-input")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid no-input parameter")
+	}
+
+	currentClusterName := currentClusterNameOrExit()
+
+	fmt.Printf(
+		"Rolling back app %s to revision %s on cluster %s...\n",
+		color.CyanString(`"%s"`, appName),
+		color.CyanString(`"%s"`, revision),
+		color.YellowString(`"%s"`, currentClusterName),
+	)
+
+	fmt.Println(color.YellowString(rollBackWarning))
+	if !noInput {
+		readStdinYesOrExit()
+	}
+
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
@@ -370,4 +386,24 @@ func deployRollback(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Println("rollback done")
+}
+
+func currentClusterNameOrExit() string {
+	name := cfgCluster
+	if name == "" {
+		var err error
+		name, err = getCurrentClusterName()
+		if err != nil {
+			client.PrintErrorAndExit("error reading config file: %v", err)
+		}
+	}
+	return name
+}
+
+func readStdinYesOrExit() {
+	fmt.Print("Are you sure? (yes/NO)? ")
+	s, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+	if !strings.HasPrefix(strings.ToLower(s), "yes") {
+		os.Exit(0)
+	}
 }

@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Make deploy rollback update the app env vars
 
+### Changed
+- Improve `deploy rollback` usability
+
 ## [0.19.0] - 2018-04-05
 ### Fixed
 - Return error with timeout message when there's no resources for build, release phase and command exec

@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [NEXT_RELEASE]
+## [0.19.0] - 2018-04-05
 ### Fixed
 - Return error with timeout message when there's no resources for build, release phase and command exec
 - Health Checks ports on deploys with nginx sidecar

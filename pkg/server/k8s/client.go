@@ -16,9 +16,11 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api"
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/pkg/apis/apps/v1beta1"
 	asv1 "k8s.io/client-go/pkg/apis/autoscaling/v1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1136,6 +1138,41 @@ func (c *Client) ContainerExplicitEnvVars(namespace, deployName, containerName s
 	return k8sExplicitEnvToAppEnv(con.Env), nil
 }
 
+func (c *Client) WatchDeploy(namespace, deployName string) error {
+	kc, err := c.buildClient()
+	if err != nil {
+		return err
+	}
+	opts := metav1.ListOptions{
+		Watch:         true,
+		FieldSelector: fmt.Sprintf("metadata.name=%s", deployName),
+	}
+	ts := time.Now()
+	for {
+		w, err := kc.AppsV1beta1().Deployments(namespace).Watch(opts)
+		if err != nil {
+			return errors.Wrap(err, "watch deploy failed")
+		}
+		ch := watch.Filter(w, filterDeployEvents).ResultChan()
+	inner:
+		for {
+			select {
+			case ev, ok := <-ch:
+				if !ok {
+					break inner
+				}
+				d := ev.Object.(*v1beta1.Deployment)
+				cond := d.Status.Conditions[len(d.Status.Conditions)-1]
+				if cond.LastUpdateTime.After(ts) && isRollingUpdateFinished(cond) {
+					return nil
+				} else if isRollingUpdateStalled(cond) {
+					return errors.New("rolling update stalled, still running the old deploy")
+				}
+			}
+		}
+	}
+}
+
 func prepareServiceAnnotations(tmpl string, annotations map[string]string) ([]byte, error) {
 	b, err := json.Marshal(annotations)
 	if err != nil {
@@ -1143,6 +1180,22 @@ func prepareServiceAnnotations(tmpl string, annotations map[string]string) ([]by
 	}
 	data := fmt.Sprintf(tmpl, string(b))
 	return []byte(data), nil
+}
+
+func filterDeployEvents(in watch.Event) (watch.Event, bool) {
+	_, ok := in.Object.(*v1beta1.Deployment)
+	if !ok || (string(in.Type) != "MODIFIED" && string(in.Type) != "ADDED") {
+		return in, false
+	}
+	return in, true
+}
+
+func isRollingUpdateFinished(cond v1beta1.DeploymentCondition) bool {
+	return string(cond.Status) == "True" && cond.Reason == "NewReplicaSetAvailable"
+}
+
+func isRollingUpdateStalled(cond v1beta1.DeploymentCondition) bool {
+	return string(cond.Status) == "False" && cond.Reason == "ProgressDeadlineExceeded"
 }
 
 func newInClusterK8sClient(conf *Config) (*Client, error) {

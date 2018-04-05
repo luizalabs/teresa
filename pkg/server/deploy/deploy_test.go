@@ -19,16 +19,6 @@ import (
 	context "golang.org/x/net/context"
 )
 
-type fakeReadSeeker struct{}
-
-func (f *fakeReadSeeker) Read(p []byte) (n int, err error) {
-	return 0, nil
-}
-
-func (f *fakeReadSeeker) Seek(offset int64, whence int) (int64, error) {
-	return 0, nil
-}
-
 type fakeK8sOperations struct {
 	lastDeploySpec                *spec.Deploy
 	lastCronJobSpec               *spec.CronJob
@@ -106,13 +96,13 @@ func TestDeployPermissionDenied(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
 	u := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.Background()
-	_, errChan := ops.Deploy(ctx, u, "teresa", &fakeReadSeeker{}, "test")
+	_, errChan := ops.Deploy(ctx, u, "teresa", &test.FakeReadSeeker{}, "test")
 
 	if err := <-errChan; err != auth.ErrPermissionDenied {
 		t.Errorf("expecter ErrPermissionDenied, got %v", err)

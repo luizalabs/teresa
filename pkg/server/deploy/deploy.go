@@ -41,6 +41,7 @@ type K8sOperations interface {
 	DeleteConfigMap(namespace, name string) error
 	IsNotFound(err error) bool
 	ContainerExplicitEnvVars(namespace, deployName, containerName string) ([]*app.EnvVar, error)
+	WatchDeploy(namespace, deployName string) error
 }
 
 type DeployOperations struct {
@@ -88,13 +89,17 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 			log.WithError(err).WithField("id", deployId).Errorf("Building app %s", appName)
 			return
 		}
-
 		slugURL := fmt.Sprintf("%s/slug.tgz", buildDest)
 		if app.IsCronJob(a.ProcessType) {
-			ops.createOrUpdateCronJob(a, confFiles, w, errChan, slugURL, description)
+			err = ops.createOrUpdateCronJob(a, confFiles, w, slugURL, description)
 		} else {
-			ops.createOrUpdateDeploy(a, confFiles, w, errChan, slugURL, description, deployId)
+			err = ops.createOrUpdateDeploy(a, confFiles, w, slugURL, description, deployId)
 		}
+		if err != nil {
+			errChan <- err
+			return
+		}
+		ops.watchDeploy(appName, deployId, w, errChan)
 	}()
 	return r, errChan
 }
@@ -132,13 +137,12 @@ func (ops *DeployOperations) buildLimits() *spec.ContainerLimits {
 	}
 }
 
-func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployConfigFiles, w io.Writer, errChan chan error, slugURL, description, deployId string) {
+func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployConfigFiles, w io.Writer, slugURL, description, deployId string) error {
 	releaseCmd := confFiles.Procfile[ProcfileReleaseCmd]
 	if confFiles.Procfile != nil && releaseCmd != "" {
 		if err := ops.runReleaseCmd(a, deployId, slugURL, w); err != nil {
-			errChan <- err
 			log.WithError(err).WithField("id", deployId).Errorf("Running release command %s in app %s", releaseCmd, a.Name)
-			return
+			return err
 		}
 	}
 
@@ -150,15 +154,13 @@ func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployC
 		imgs.Nginx = ops.opts.NginxImage
 		data := map[string]string{"nginx.conf": confFiles.NginxConf}
 		if err := ops.k8s.CreateOrUpdateConfigMap(a.Name, a.Name, data); err != nil {
-			errChan <- err
 			log.WithError(err).Errorf("Creating config to nginx of app %s", a.Name)
-			return
+			return err
 		}
 	} else {
 		err := ops.k8s.DeleteConfigMap(a.Name, a.Name)
 		if err != nil && !ops.k8s.IsNotFound(err) {
-			errChan <- err
-			return
+			return err
 		}
 	}
 
@@ -173,27 +175,25 @@ func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployC
 	)
 
 	if err := ops.k8s.CreateOrUpdateDeploy(deploySpec); err != nil {
-		errChan <- err
 		log.WithError(err).Errorf("Creating deploy app %s", a.Name)
-		return
+		return err
 	}
 
 	if err := ops.exposeApp(a, w); err != nil {
-		errChan <- err
 		log.WithError(err).Errorf("Exposing service %s", a.Name)
-	} else {
-		fmt.Fprintln(w, fmt.Sprintf("The app %s has been successfully deployed", a.Name))
+		return err
 	}
+	fmt.Fprintln(w, fmt.Sprintf("The app %s has been successfully deployed", a.Name))
+	return nil
 }
 
-func (ops *DeployOperations) createOrUpdateCronJob(a *app.App, confFiles *DeployConfigFiles, w io.Writer, errChan chan error, slugURL, description string) {
+func (ops *DeployOperations) createOrUpdateCronJob(a *app.App, confFiles *DeployConfigFiles, w io.Writer, slugURL, description string) error {
 	imgs := &spec.Images{
 		SlugRunner: ops.opts.SlugRunnerImage,
 		SlugStore:  ops.opts.SlugStoreImage,
 	}
 	if confFiles.TeresaYaml == nil || confFiles.TeresaYaml.Cron == nil {
-		errChan <- ErrCronScheduleNotFound
-		return
+		return ErrCronScheduleNotFound
 	}
 	cronSpec := spec.NewCronJob(
 		description,
@@ -206,11 +206,11 @@ func (ops *DeployOperations) createOrUpdateCronJob(a *app.App, confFiles *Deploy
 	)
 
 	if err := ops.k8s.CreateOrUpdateCronJob(cronSpec); err != nil {
-		errChan <- err
 		log.WithError(err).Errorf("Creating CronJob %s", a.Name)
-	} else {
-		fmt.Fprintln(w, fmt.Sprintf("The CronJob %s has been successfully deployed", a.Name))
+		return err
 	}
+	fmt.Fprintln(w, fmt.Sprintf("The CronJob %s has been successfully deployed", a.Name))
+	return nil
 }
 
 func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {
@@ -322,6 +322,15 @@ func isProtectedEnvVar(key string) bool {
 		}
 	}
 	return false
+}
+
+func (ops *DeployOperations) watchDeploy(appName, deployId string, w io.Writer, errChan chan<- error) {
+	fmt.Fprintln(w, "\nMonitoring rolling update...(hit Ctrl-C to quit)")
+	if err := ops.k8s.WatchDeploy(appName, appName); err != nil {
+		errChan <- err
+		return
+	}
+	fmt.Fprintln(w, "Rolling update finished successfully")
 }
 
 func NewDeployOperations(aOps app.Operations, k8s K8sOperations, s st.Storage, execOps exec.Operations, opts *Options) Operations {

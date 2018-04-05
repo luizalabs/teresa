@@ -98,6 +98,10 @@ func (f *fakeK8sOperations) ContainerExplicitEnvVars(namespace, deployName, cont
 	return f.containerExplicitEnvVarsValue, f.containerExplicitEnvVarsErr
 }
 
+func (f *fakeK8sOperations) WatchDeploy(namespace, deployName string) error {
+	return nil
+}
+
 func TestDeployPermissionDenied(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
@@ -155,7 +159,6 @@ func TestCreateDeploy(t *testing.T) {
 	expectedSlugURL := "test-slug"
 	opts := &Options{RevisionHistoryLimit: 3}
 
-	errChan := make(chan error, 1)
 	conf := &DeployConfigFiles{Procfile: map[string]string{"worker": "echo hello world"}}
 
 	fakeK8s := new(fakeK8sOperations)
@@ -167,18 +170,16 @@ func TestCreateDeploy(t *testing.T) {
 		opts,
 	)
 
-	ops.(*DeployOperations).createOrUpdateDeploy(
+	err := ops.(*DeployOperations).createOrUpdateDeploy(
 		a,
 		conf,
 		new(bytes.Buffer),
-		errChan,
 		expectedSlugURL,
 		expectedDescription,
 		"123",
 	)
-	errChan <- nil
 
-	if err := <-errChan; err != nil {
+	if err != nil {
 		t.Fatal("error create deploy:", err)
 	}
 
@@ -197,7 +198,6 @@ func TestCreateDeploy(t *testing.T) {
 }
 
 func TestCreateDeployCreateNginxConfigMap(t *testing.T) {
-	errChan := make(chan error, 1)
 	conf := &DeployConfigFiles{NginxConf: "nginx conf"}
 
 	fakeK8s := new(fakeK8sOperations)
@@ -209,18 +209,16 @@ func TestCreateDeployCreateNginxConfigMap(t *testing.T) {
 		&Options{},
 	)
 
-	ops.(*DeployOperations).createOrUpdateDeploy(
+	err := ops.(*DeployOperations).createOrUpdateDeploy(
 		&app.App{},
 		conf,
 		new(bytes.Buffer),
-		errChan,
 		"test-slug",
 		"test-description",
 		"123",
 	)
-	errChan <- nil
 
-	if err := <-errChan; err != nil {
+	if err != nil {
 		t.Fatal("error create deploy:", err)
 	}
 
@@ -231,7 +229,6 @@ func TestCreateDeployCreateNginxConfigMap(t *testing.T) {
 }
 
 func TestCreateDeployDeleteNginxConfigMap(t *testing.T) {
-	errChan := make(chan error, 1)
 	conf := &DeployConfigFiles{}
 
 	fakeK8s := new(fakeK8sOperations)
@@ -243,18 +240,16 @@ func TestCreateDeployDeleteNginxConfigMap(t *testing.T) {
 		&Options{},
 	)
 
-	ops.(*DeployOperations).createOrUpdateDeploy(
+	err := ops.(*DeployOperations).createOrUpdateDeploy(
 		&app.App{},
 		conf,
 		new(bytes.Buffer),
-		errChan,
 		"test-slug",
 		"test-description",
 		"123",
 	)
-	errChan <- nil
 
-	if err := <-errChan; err != nil {
+	if err != nil {
 		t.Fatal("error create deploy:", err)
 	}
 
@@ -267,7 +262,6 @@ func TestCreateDeployDeleteNginxConfigMap(t *testing.T) {
 func TestCreateDeployReturnError(t *testing.T) {
 	expectedErr := errors.New("Some k8s error")
 	fakeK8s := &fakeK8sOperations{createDeployReturn: expectedErr}
-	errChan := make(chan error, 1)
 
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
@@ -277,17 +271,16 @@ func TestCreateDeployReturnError(t *testing.T) {
 		&Options{},
 	)
 
-	ops.(*DeployOperations).createOrUpdateDeploy(
+	err := ops.(*DeployOperations).createOrUpdateDeploy(
 		&app.App{Name: "test"},
 		&DeployConfigFiles{Procfile: map[string]string{}},
 		new(bytes.Buffer),
-		errChan,
 		"some slug",
 		"some desc",
 		"123",
 	)
 
-	if err := <-errChan; err != expectedErr {
+	if err != expectedErr {
 		t.Errorf("expected %v, got %v", expectedErr, err)
 	}
 }
@@ -298,7 +291,6 @@ func TestCreateCronJob(t *testing.T) {
 	a := &app.App{Name: expectedName, ProcessType: validCronPt}
 	expectedDescription := "test-description"
 	expectedSlugURL := "test-slug"
-	errChan := make(chan error, 1)
 	conf := &DeployConfigFiles{
 		Procfile: map[string]string{validCronPt: "echo hello world"},
 		TeresaYaml: &spec.TeresaYaml{
@@ -316,10 +308,9 @@ func TestCreateCronJob(t *testing.T) {
 	)
 
 	deployOperations := ops.(*DeployOperations)
-	deployOperations.createOrUpdateCronJob(a, conf, new(bytes.Buffer), errChan, expectedSlugURL, expectedDescription)
-	errChan <- nil
+	err := deployOperations.createOrUpdateCronJob(a, conf, new(bytes.Buffer), expectedSlugURL, expectedDescription)
 
-	if err := <-errChan; err != nil {
+	if err != nil {
 		t.Fatal("error create cronJob:", err)
 	}
 
@@ -348,7 +339,6 @@ func TestCreateCronJobReturnError(t *testing.T) {
 			Cron: &spec.CronArgs{Schedule: "*/1 * * * *"},
 		},
 	}
-	errChan := make(chan error, 1)
 
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
@@ -359,16 +349,15 @@ func TestCreateCronJobReturnError(t *testing.T) {
 	)
 
 	deployOperations := ops.(*DeployOperations)
-	deployOperations.createOrUpdateCronJob(
+	err := deployOperations.createOrUpdateCronJob(
 		&app.App{Name: "test"},
 		conf,
 		new(bytes.Buffer),
-		errChan,
 		"some slug",
 		"some desc",
 	)
 
-	if err := <-errChan; err != expectedErr {
+	if err != expectedErr {
 		t.Errorf("expected %v, got %v", expectedErr, err)
 	}
 }
@@ -376,7 +365,6 @@ func TestCreateCronJobReturnError(t *testing.T) {
 func TestCreateCronJobScheduleNotFound(t *testing.T) {
 	validCronPt := fmt.Sprintf("%s-hw", app.ProcessTypeCronPrefix)
 	a := &app.App{Name: "test", ProcessType: validCronPt}
-	errChan := make(chan error, 1)
 	conf := &DeployConfigFiles{
 		Procfile:   map[string]string{validCronPt: "echo hello world"},
 		TeresaYaml: &spec.TeresaYaml{},
@@ -391,9 +379,9 @@ func TestCreateCronJobScheduleNotFound(t *testing.T) {
 	)
 
 	deployOperations := ops.(*DeployOperations)
-	deployOperations.createOrUpdateCronJob(a, conf, new(bytes.Buffer), errChan, "test", "test")
+	err := deployOperations.createOrUpdateCronJob(a, conf, new(bytes.Buffer), "test", "test")
 
-	if err := <-errChan; err != ErrCronScheduleNotFound {
+	if err != ErrCronScheduleNotFound {
 		t.Errorf("expected %v, got %v", ErrCronScheduleNotFound, err)
 	}
 }

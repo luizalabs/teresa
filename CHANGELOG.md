@@ -8,6 +8,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Improve `deploy rollback` usability
+- [server] Monitor the rolling update after the deploy, returning an error if
+  the former is stalled
 
 ## [0.19.0] - 2018-04-05
 ### Fixed

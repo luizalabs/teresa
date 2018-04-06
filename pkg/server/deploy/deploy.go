@@ -14,7 +14,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/exec"
 	"github.com/luizalabs/teresa/pkg/server/slug"
 	"github.com/luizalabs/teresa/pkg/server/spec"
-	st "github.com/luizalabs/teresa/pkg/server/storage"
+	"github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 	"github.com/luizalabs/teresa/pkg/server/uid"
 )
@@ -46,9 +46,9 @@ type K8sOperations interface {
 
 type DeployOperations struct {
 	appOps      app.Operations
-	fileStorage st.Storage
-	k8s         K8sOperations
 	execOps     exec.Operations
+	fileStorage storage.Storage
+	k8s         K8sOperations
 	opts        *Options
 }
 
@@ -333,12 +333,13 @@ func (ops *DeployOperations) watchDeploy(appName, deployId string, w io.Writer, 
 	fmt.Fprintln(w, "Rolling update finished successfully")
 }
 
-func NewDeployOperations(aOps app.Operations, k8s K8sOperations, s st.Storage, execOps exec.Operations, opts *Options) Operations {
+func NewDeployOperations(aOps app.Operations, k8s K8sOperations, s storage.Storage, execOps exec.Operations, opts *Options) Operations {
 	return &DeployOperations{
 		appOps:      aOps,
 		k8s:         k8s,
 		fileStorage: s,
 		execOps:     execOps,
 		opts:        opts,
+		buildOps:    buildOps,
 	}
 }

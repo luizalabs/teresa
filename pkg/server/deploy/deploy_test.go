@@ -9,14 +9,16 @@ import (
 	"path/filepath"
 	"testing"
 
+	context "golang.org/x/net/context"
+
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/exec"
 	"github.com/luizalabs/teresa/pkg/server/spec"
-	st "github.com/luizalabs/teresa/pkg/server/storage"
+	"github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
-	context "golang.org/x/net/context"
+	"github.com/luizalabs/teresa/pkg/server/test"
 )
 
 type fakeK8sOperations struct {
@@ -124,7 +126,7 @@ func TestDeploy(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
@@ -155,7 +157,7 @@ func TestCreateDeploy(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		fakeK8s,
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		opts,
 	)
@@ -194,7 +196,7 @@ func TestCreateDeployCreateNginxConfigMap(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		fakeK8s,
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
@@ -225,7 +227,7 @@ func TestCreateDeployDeleteNginxConfigMap(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		fakeK8s,
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
@@ -256,7 +258,7 @@ func TestCreateDeployReturnError(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		fakeK8s,
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
@@ -292,7 +294,7 @@ func TestCreateCronJob(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		fakeK8s,
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
@@ -333,7 +335,7 @@ func TestCreateCronJobReturnError(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		fakeK8s,
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
@@ -363,7 +365,7 @@ func TestCreateCronJobScheduleNotFound(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		fakeK8s,
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
@@ -395,7 +397,7 @@ func TestExposeApp(t *testing.T) {
 		ops := NewDeployOperations(
 			app.NewFakeOperations(),
 			fakeK8s,
-			st.NewFake(),
+			storage.NewFake(),
 			exec.NewFakeOperations(),
 			&Options{},
 		)
@@ -429,7 +431,7 @@ func TestBuildApp(t *testing.T) {
 		ops := NewDeployOperations(
 			app.NewFakeOperations(),
 			&fakeK8sOperations{},
-			st.NewFake(),
+			storage.NewFake(),
 			fakeExec,
 			&Options{},
 		)
@@ -488,7 +490,7 @@ func TestDeployListSuccess(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
@@ -527,7 +529,7 @@ func TestDeployListErrPermissionDenied(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
@@ -542,7 +544,7 @@ func TestDeployListErrNotFound(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
@@ -557,7 +559,7 @@ func TestDeployListInternalServerError(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		&fakeK8sOperations{replicaSetListByLabelErr: errors.New("test")},
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
@@ -572,7 +574,7 @@ func TestRollbackOpsSuccess(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
@@ -588,7 +590,7 @@ func TestRollbackOpsErrPermissionDenied(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)
@@ -604,7 +606,7 @@ func TestRollbackOpsErrNotFound(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		&fakeK8sOperations{},
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
 		&Options{},
 	)

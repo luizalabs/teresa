@@ -197,7 +197,7 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.De
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      deploySpec.Name,
 			Namespace: deploySpec.Namespace,
-			Labels:    map[string]string{"run": deploySpec.Name},
+			Labels:    deploySpec.Labels,
 			Annotations: map[string]string{
 				changeCauseAnnotation: deploySpec.Description,
 				spec.SlugAnnotation:   deploySpec.SlugURL,
@@ -214,7 +214,7 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.De
 			},
 			Template: k8sv1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{"run": deploySpec.Name},
+					Labels: deploySpec.Labels,
 				},
 				Spec: ps,
 			},

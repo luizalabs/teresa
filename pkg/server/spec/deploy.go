@@ -86,6 +86,7 @@ func NewDeploy(imgs *Images, description, slugURL string, rhl int, a *app.App, t
 		},
 		fs,
 	)
+	ps.Labels["run"] = a.Name
 	ps.Containers[0].Args = []string{"start", a.ProcessType}
 	ps.Containers[0].VolumeMounts = append(ps.Containers[0].VolumeMounts, newSlugVolumeMount())
 

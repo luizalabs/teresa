@@ -10,6 +10,7 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/build"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/exec"
 	"github.com/luizalabs/teresa/pkg/server/slug"
@@ -47,6 +48,7 @@ type K8sOperations interface {
 type DeployOperations struct {
 	appOps      app.Operations
 	execOps     exec.Operations
+	buildOps    build.Operations
 	fileStorage storage.Storage
 	k8s         K8sOperations
 	opts        *Options
@@ -79,12 +81,21 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 	}
 
 	deployId := uid.New()
+	buildIn := fmt.Sprintf("deploys/%s/%s/in", a.Name, deployId)
 	buildDest := fmt.Sprintf("deploys/%s/%s/out", appName, deployId)
 
 	r, w := io.Pipe()
 	go func() {
 		defer w.Close()
-		if err = ops.buildApp(ctx, tarBall, a, deployId, buildDest, w); err != nil {
+		err = ops.buildOps.CreateByOpts(ctx, &build.CreateOptions{
+			App:       a,
+			BuildName: deployId,
+			SlugIn:    buildIn,
+			SlugDest:  buildDest,
+			TarBall:   tarBall,
+			Stream:    w,
+		})
+		if err != nil {
 			errChan <- err
 			log.WithError(err).WithField("id", deployId).Errorf("Building app %s", appName)
 			return
@@ -224,33 +235,6 @@ func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {
 	return nil // already exposed
 }
 
-func (ops *DeployOperations) buildApp(ctx context.Context, tarBall io.ReadSeeker, a *app.App, deployId, buildDest string, stream io.Writer) error {
-	tarBall.Seek(0, 0)
-	tarBallLocation := fmt.Sprintf("deploys/%s/%s/in/app.tar.gz", a.Name, deployId)
-	if err := ops.fileStorage.UploadFile(tarBallLocation, tarBall); err != nil {
-		fmt.Fprintln(stream, "The Deploy failed to upload the tarBall to slug storage")
-		return err
-	}
-
-	podSpec := spec.NewBuilder(
-		fmt.Sprintf("build-%s", deployId),
-		tarBallLocation,
-		buildDest,
-		ops.opts.SlugBuilderImage,
-		a,
-		ops.fileStorage,
-		ops.buildLimits(),
-	)
-
-	if err := ops.podRun(ctx, podSpec, stream); err != nil {
-		if err == ErrPodRunFail {
-			return ErrBuildFail
-		}
-		return err
-	}
-	return nil
-}
-
 func (ops *DeployOperations) podRun(ctx context.Context, podSpec *spec.Pod, stream io.Writer) error {
 	podStream, runErrChan := ops.execOps.RunCommandBySpec(ctx, podSpec)
 	go io.Copy(stream, podStream)
@@ -333,7 +317,7 @@ func (ops *DeployOperations) watchDeploy(appName, deployId string, w io.Writer, 
 	fmt.Fprintln(w, "Rolling update finished successfully")
 }
 
-func NewDeployOperations(aOps app.Operations, k8s K8sOperations, s storage.Storage, execOps exec.Operations, opts *Options) Operations {
+func NewDeployOperations(aOps app.Operations, k8s K8sOperations, s storage.Storage, execOps exec.Operations, buildOps build.Operations, opts *Options) Operations {
 	return &DeployOperations{
 		appOps:      aOps,
 		k8s:         k8s,

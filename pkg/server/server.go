@@ -15,6 +15,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/build"
 	"github.com/luizalabs/teresa/pkg/server/cloudprovider"
 	"github.com/luizalabs/teresa/pkg/server/deploy"
 	"github.com/luizalabs/teresa/pkg/server/exec"
@@ -128,7 +129,14 @@ func registerServices(s *grpc.Server, opt Options, uOps user.Operations) error {
 	e := exec.NewService(execOps)
 	e.RegisterService(s)
 
-	dOps := deploy.NewDeployOperations(appOps, opt.K8s, opt.Storage, execOps, opt.DeployOpt)
+	buildOpts := &build.Options{
+		SlugBuilderImage: opt.DeployOpt.SlugBuilderImage,
+		BuildLimitCPU:    opt.DeployOpt.BuildLimitCPU,
+		BuildLimitMemory: opt.DeployOpt.BuildLimitMemory,
+	}
+	bOps := build.NewBuildOperations(opt.Storage, execOps, buildOpts)
+
+	dOps := deploy.NewDeployOperations(appOps, opt.K8s, opt.Storage, execOps, bOps, opt.DeployOpt)
 	d := deploy.NewService(dOps, opt.DeployOpt)
 	d.RegisterService(s)
 

@@ -13,6 +13,7 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
+	"github.com/luizalabs/teresa/pkg/server/build"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/exec"
 	"github.com/luizalabs/teresa/pkg/server/spec"
@@ -100,6 +101,7 @@ func TestDeployPermissionDenied(t *testing.T) {
 		&fakeK8sOperations{},
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 	u := &database.User{Email: "bad-user@luizalabs.com"}
@@ -128,6 +130,7 @@ func TestDeploy(t *testing.T) {
 		&fakeK8sOperations{},
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 	u := &database.User{Email: "gopher@luizalabs.com"}
@@ -159,6 +162,7 @@ func TestCreateDeploy(t *testing.T) {
 		fakeK8s,
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		opts,
 	)
 
@@ -198,6 +202,7 @@ func TestCreateDeployCreateNginxConfigMap(t *testing.T) {
 		fakeK8s,
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 
@@ -229,6 +234,7 @@ func TestCreateDeployDeleteNginxConfigMap(t *testing.T) {
 		fakeK8s,
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 
@@ -260,6 +266,7 @@ func TestCreateDeployReturnError(t *testing.T) {
 		fakeK8s,
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 
@@ -296,6 +303,7 @@ func TestCreateCronJob(t *testing.T) {
 		fakeK8s,
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 
@@ -337,6 +345,7 @@ func TestCreateCronJobReturnError(t *testing.T) {
 		fakeK8s,
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 
@@ -367,6 +376,7 @@ func TestCreateCronJobScheduleNotFound(t *testing.T) {
 		fakeK8s,
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 
@@ -399,6 +409,7 @@ func TestExposeApp(t *testing.T) {
 			fakeK8s,
 			storage.NewFake(),
 			exec.NewFakeOperations(),
+			build.NewFakeOperations(),
 			&Options{},
 		)
 		deployOperations := ops.(*DeployOperations)
@@ -410,44 +421,6 @@ func TestExposeApp(t *testing.T) {
 				tc.expectedExposeDeployWasCalled,
 				fakeK8s.exposeDeployWasCalled,
 			)
-		}
-	}
-}
-
-func TestBuildApp(t *testing.T) {
-	var testCases = []struct {
-		commandErr  error
-		expectedErr error
-	}{
-		{nil, nil},
-		{exec.ErrNonZeroExitCode, ErrBuildFail},
-		{exec.ErrTimeout, exec.ErrTimeout},
-	}
-
-	for _, tc := range testCases {
-		fakeExec := exec.NewFakeOperations()
-		fakeExec.ExpectedErr = tc.commandErr
-
-		ops := NewDeployOperations(
-			app.NewFakeOperations(),
-			&fakeK8sOperations{},
-			storage.NewFake(),
-			fakeExec,
-			&Options{},
-		)
-
-		deployOperations := ops.(*DeployOperations)
-		err := deployOperations.buildApp(
-			context.Background(),
-			&fakeReadSeeker{},
-			&app.App{Name: "Test"},
-			"123456",
-			"/slug.tgz",
-			new(bytes.Buffer),
-		)
-
-		if err != tc.expectedErr {
-			t.Errorf("expected %v, got %v", tc.expectedErr, err)
 		}
 	}
 }
@@ -467,8 +440,9 @@ func TestRunReleaseCmd(t *testing.T) {
 		ops := NewDeployOperations(
 			app.NewFakeOperations(),
 			&fakeK8sOperations{},
-			st.NewFake(),
+			storage.NewFake(),
 			fakeExec,
+			build.NewFakeOperations(),
 			&Options{},
 		)
 
@@ -492,6 +466,7 @@ func TestDeployListSuccess(t *testing.T) {
 		&fakeK8sOperations{},
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
@@ -531,6 +506,7 @@ func TestDeployListErrPermissionDenied(t *testing.T) {
 		&fakeK8sOperations{},
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
@@ -546,6 +522,7 @@ func TestDeployListErrNotFound(t *testing.T) {
 		&fakeK8sOperations{},
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
@@ -561,6 +538,7 @@ func TestDeployListInternalServerError(t *testing.T) {
 		&fakeK8sOperations{replicaSetListByLabelErr: errors.New("test")},
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
@@ -576,6 +554,7 @@ func TestRollbackOpsSuccess(t *testing.T) {
 		&fakeK8sOperations{},
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
@@ -592,6 +571,7 @@ func TestRollbackOpsErrPermissionDenied(t *testing.T) {
 		&fakeK8sOperations{},
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
@@ -608,6 +588,7 @@ func TestRollbackOpsErrNotFound(t *testing.T) {
 		&fakeK8sOperations{},
 		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
@@ -622,8 +603,9 @@ func TestRollbackErrorFromContainerEnvVars(t *testing.T) {
 	ops := NewDeployOperations(
 		app.NewFakeOperations(),
 		&fakeK8sOperations{containerExplicitEnvVarsErr: errors.New("test")},
-		st.NewFake(),
+		storage.NewFake(),
 		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
 		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}

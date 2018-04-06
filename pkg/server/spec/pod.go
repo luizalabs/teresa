@@ -12,6 +12,8 @@ const (
 	sharedVolumeMountPath = "/app"
 )
 
+type Labels map[string]string
+
 type Volume struct {
 	Name          string
 	SecretName    string
@@ -25,6 +27,7 @@ type Pod struct {
 	Containers     []*Container
 	Volumes        []*Volume
 	InitContainers []*Container
+	Labels         Labels
 }
 
 func newPodVolumes(appName string, fs storage.Storage, hasNginx bool) []*Volume {
@@ -69,14 +72,13 @@ func newPodContainers(name, nginxImage, appImage string, envVars map[string]stri
 }
 
 func NewPod(name, nginxImage, image string, a *app.App, envVars map[string]string, fs storage.Storage) *Pod {
-	hasNginx := false
-	hasNginx = nginxImage != ""
-
+	hasNginx := nginxImage != ""
 	ps := &Pod{
 		Name:       name,
 		Namespace:  a.Name,
 		Containers: newPodContainers(name, nginxImage, image, envVars, a.Secrets),
 		Volumes:    newPodVolumes(a.Name, fs, hasNginx),
+		Labels:     make(map[string]string),
 	}
 
 	for _, e := range a.EnvVars {

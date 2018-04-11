@@ -322,31 +322,27 @@ func lifecycleToK8sLifecycle(lc *spec.Lifecycle) *k8sv1.Lifecycle {
 	return k8sLc
 }
 
-func serviceSpec(namespace, name, srvType string) *k8sv1.Service {
-	serviceType := k8sv1.ServiceType(srvType)
+func serviceSpecToK8s(svcSpec *spec.Service) *k8sv1.Service {
+	serviceType := k8sv1.ServiceType(svcSpec.Type)
 	return &k8sv1.Service{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Service",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: map[string]string{
-				"run": name,
-			},
-			Name:      name,
-			Namespace: namespace,
+			Labels:    svcSpec.Labels,
+			Name:      svcSpec.Name,
+			Namespace: svcSpec.Namespace,
 		},
 		Spec: k8sv1.ServiceSpec{
 			Type:            serviceType,
 			SessionAffinity: k8sv1.ServiceAffinityNone,
-			Selector: map[string]string{
-				"run": name,
-			},
+			Selector:        svcSpec.Labels,
 			Ports: []k8sv1.ServicePort{
 				{
 					Port:       80,
 					Protocol:   k8sv1.ProtocolTCP,
-					TargetPort: intstr.FromInt(spec.DefaultPort),
+					TargetPort: intstr.FromInt(svcSpec.TargetPort),
 				},
 			},
 		},

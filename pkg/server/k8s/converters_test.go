@@ -317,15 +317,14 @@ func TestDeploySpecToK8sDeploy(t *testing.T) {
 
 func TestServiceSpec(t *testing.T) {
 	name := "teresa"
-	namespace := "teresa"
 	srvType := "LoadBalancer"
 
-	s := serviceSpec(namespace, name, srvType)
+	s := serviceSpecToK8s(spec.NewDefaultService(name, srvType))
 	if s.ObjectMeta.Name != name {
 		t.Errorf("expected %s, got %s", name, s.ObjectMeta.Name)
 	}
-	if s.ObjectMeta.Namespace != namespace {
-		t.Errorf("expected %s, got %s", namespace, s.ObjectMeta.Namespace)
+	if s.ObjectMeta.Namespace != name {
+		t.Errorf("expected %s, got %s", name, s.ObjectMeta.Namespace)
 	}
 	if s.Spec.Type != k8sv1.ServiceType(srvType) {
 		t.Errorf("expected %s, got %v", srvType, s.Spec.Type)

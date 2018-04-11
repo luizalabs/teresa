@@ -592,13 +592,13 @@ func (k *Client) hasService(namespace, appName string) (bool, error) {
 	return true, nil
 }
 
-func (k *Client) createService(namespace, appName, svcType string) error {
+func (k *Client) CreateService(svcSpec *spec.Service) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
 	}
-	srvSpec := serviceSpec(namespace, appName, svcType)
-	_, err = kc.CoreV1().Services(namespace).Create(srvSpec)
+	ss := serviceSpecToK8s(svcSpec)
+	_, err = kc.CoreV1().Services(svcSpec.Namespace).Create(ss)
 	return errors.Wrap(err, "create service failed")
 }
 
@@ -638,7 +638,8 @@ func (k *Client) ExposeDeploy(namespace, appName, vHost, svcType string, w io.Wr
 	}
 	if !hasSrv {
 		fmt.Fprintln(w, "Exposing service")
-		if err := k.createService(namespace, appName, svcType); err != nil {
+		svcSpec := spec.NewDefaultService(appName, svcType)
+		if err := k.CreateService(svcSpec); err != nil {
 			return err
 		}
 	}

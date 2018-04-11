@@ -11,10 +11,11 @@ service App {
     rpc List(Empty) returns (ListResponse);
     rpc SetAutoscale(SetAutoscaleRequest) returns (Empty);
     rpc Delete (DeleteRequest) returns (Empty);
-    rpc SetReplicas  (SetReplicasRequest) returns (Empty);
+    rpc SetReplicas (SetReplicasRequest) returns (Empty);
     rpc DeletePods (DeletePodsRequest) returns (Empty);
     rpc SetSecret(SetEnvRequest) returns (Empty);
     rpc UnsetSecret(UnsetEnvRequest) returns (Empty);
+    rpc ChangeTeam(ChangeTeamRequest) returns (Empty);
 }
 
 message CreateRequest {
@@ -157,6 +158,11 @@ message DeleteRequest {
 message DeletePodsRequest {
     string name = 1;
     repeated string pods_names = 2;
+}
+
+message ChangeTeamRequest {
+    string app_name = 1;
+    string team_name = 2;
 }
 
 message Empty {}

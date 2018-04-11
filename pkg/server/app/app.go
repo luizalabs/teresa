@@ -606,6 +606,9 @@ func (ops *AppOperations) SetReplicas(user *database.User, appName string, repli
 func (ops *AppOperations) ChangeTeam(appName, teamName string) error {
 	label := map[string]string{TeresaTeamLabel: teamName}
 	if err := ops.kops.SetNamespaceLabels(appName, label); err != nil {
+		if ops.kops.IsNotFound(err) {
+			return ErrNotFound
+		}
 		return teresa_errors.NewInternalServerError(err)
 	}
 	return nil

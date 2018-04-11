@@ -1272,8 +1272,8 @@ func TestAppOperationsChangeTeamErrNotFound(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &errK8sOperations{SetNamespaceLabelsErr: ErrNotFound}, nil)
 
-	if err := ops.ChangeTeam("gophers", "teresa"); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
-		t.Errorf("expected ErrInternalServerError, got %v", err)
+	if err := ops.ChangeTeam("gophers", "teresa"); teresa_errors.Get(err) != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", teresa_errors.Get(err))
 	}
 }
 

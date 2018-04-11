@@ -351,6 +351,12 @@ Kubernetes pod):
 
     $ teresa-server create-super-user --email <admin-email> --password <admin-password>
 
+**Q: How to change the app team?**
+
+You need to be an admin to change the team:
+
+    $ teresa-server app change-team <app-name> <team-name>
+
 ## Development
 
 **Q: How to contribute?**

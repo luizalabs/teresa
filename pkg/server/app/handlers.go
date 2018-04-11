@@ -9,6 +9,7 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/goutil"
 	appb "github.com/luizalabs/teresa/pkg/protobuf/app"
+	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
 )
 
@@ -169,6 +170,17 @@ func (s *Service) DeletePods(ctx context.Context, req *appb.DeletePodsRequest) (
 		return nil, err
 	}
 
+	return &appb.Empty{}, nil
+}
+
+func (s *Service) ChangeTeam(ctx context.Context, req *appb.ChangeTeamRequest) (*appb.Empty, error) {
+	user := ctx.Value("user").(*database.User)
+	if !user.IsAdmin {
+		return nil, auth.ErrPermissionDenied
+	}
+	if err := s.ops.ChangeTeam(req.AppName, req.TeamName); err != nil {
+		return nil, err
+	}
 	return &appb.Empty{}, nil
 }
 

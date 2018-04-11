@@ -820,6 +820,7 @@ func init() {
 	appCmd.AddCommand(appStartCmd)
 	appCmd.AddCommand(appStopCmd)
 	appCmd.AddCommand(appDeletePodsCmd)
+	appCmd.AddCommand(appChangeTeamCmd)
 
 	appCreateCmd.Flags().String("team", "", "team owner of the app")
 	appCreateCmd.Flags().Int32("scale-min", 1, "minimum number of replicas")
@@ -963,6 +964,43 @@ func appDeletePods(cmd *cobra.Command, args []string) {
 		return
 	}
 	fmt.Println("Pods will be deleted in a few seconds")
+}
+
+var appChangeTeamCmd = &cobra.Command{
+	Use:   "change-team <app-name> <team-name>",
+	Short: "Change app team",
+	Long:  "Change app team",
+	Example: `  To change myapp team to myteam:
+
+  $ teresa app change-team myapp myteam`,
+	Run: appChangeTeam,
+}
+
+func appChangeTeam(cmd *cobra.Command, args []string) {
+	if len(args) != 2 {
+		cmd.Usage()
+		return
+	}
+	appName := args[0]
+	teamName := args[1]
+
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
+
+	cli := appb.NewAppClient(conn)
+	if err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+
+	req := &appb.ChangeTeamRequest{AppName: appName, TeamName: teamName}
+	_, err = cli.ChangeTeam(context.Background(), req)
+	if err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+	fmt.Println("Team changed successfully")
 }
 
 // Shamelessly copied from Kubernetes

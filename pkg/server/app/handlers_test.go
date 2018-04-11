@@ -491,3 +491,31 @@ func TestDeletePodsErrPermissionDenied(t *testing.T) {
 		t.Errorf("expected %v, got %v", auth.ErrPermissionDenied, teresa_errors.Get(err))
 	}
 }
+
+func TestChangeTeamSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.(*FakeOperations).Storage[name] = &App{Name: name, Team: "test"}
+	s := NewService(fake)
+	user := &database.User{Email: "gopher@luizalabs.com", IsAdmin: true}
+	ctx := context.WithValue(context.Background(), "user", user)
+	req := &appb.ChangeTeamRequest{AppName: name, TeamName: "team"}
+
+	if _, err := s.ChangeTeam(ctx, req); err != nil {
+		t.Error("got unexpected error:", err)
+	}
+}
+
+func TestChangeTeamErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.(*FakeOperations).Storage[name] = &App{Name: name, Team: "test"}
+	s := NewService(fake)
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+	req := &appb.ChangeTeamRequest{AppName: name, TeamName: "team"}
+
+	if _, err := s.ChangeTeam(ctx, req); teresa_errors.Get(err) != auth.ErrPermissionDenied {
+		t.Errorf("got %v; want %v", teresa_errors.Get(err), auth.ErrPermissionDenied)
+	}
+}

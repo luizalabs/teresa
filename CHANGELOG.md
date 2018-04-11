@@ -11,6 +11,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] Monitor the rolling update after the deploy, returning an error if
   the former is stalled
 
+### Added
+- `app change-team` command
+
 ## [0.19.0] - 2018-04-05
 ### Fixed
 - Return error with timeout message when there's no resources for build, release phase and command exec

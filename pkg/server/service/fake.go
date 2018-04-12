@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/spec"
 )
 
 type FakeOperations struct {
@@ -24,7 +25,7 @@ type FakeK8sOperations struct {
 	UpdateServicePortsErr error
 	IsNotFoundErr         bool
 	ServicePortsErr       error
-	ServicePortsValue     []*ServicePort
+	ServicePortsValue     []*spec.ServicePort
 }
 
 func (f *FakeOperations) EnableSSL(user *database.User, appName, cert string, only bool) error {
@@ -47,7 +48,7 @@ func (f *FakeAppOperations) HasPermission(user *database.User, appName string) b
 	return !f.NegateHasPermission
 }
 
-func (f *FakeK8sOperations) UpdateServicePorts(namespace, svcName string, ports []ServicePort) error {
+func (f *FakeK8sOperations) UpdateServicePorts(namespace, svcName string, ports []spec.ServicePort) error {
 	return f.UpdateServicePortsErr
 }
 
@@ -55,6 +56,6 @@ func (f *FakeK8sOperations) IsNotFound(err error) bool {
 	return f.IsNotFoundErr
 }
 
-func (f *FakeK8sOperations) ServicePorts(namespace, svcName string) ([]*ServicePort, error) {
+func (f *FakeK8sOperations) ServicePorts(namespace, svcName string) ([]*spec.ServicePort, error) {
 	return f.ServicePortsValue, f.ServicePortsErr
 }

@@ -2,7 +2,7 @@ package spec
 
 import "testing"
 
-func TestNewRegularExposeDeploy(t *testing.T) {
+func TestNewDefaultService(t *testing.T) {
 	expectedAppName := "test"
 	expectedServiceType := "LoadBalancer"
 
@@ -16,8 +16,8 @@ func TestNewRegularExposeDeploy(t *testing.T) {
 	if ss.Type != expectedServiceType {
 		t.Errorf("expected %s, got %s", expectedServiceType, ss.Type)
 	}
-	if ss.TargetPort != DefaultPort {
-		t.Errorf("expected %d, got %d", DefaultPort, ss.TargetPort)
+	if ss.Ports[0].TargetPort != DefaultPort {
+		t.Errorf("expected %d, got %d", DefaultPort, ss.Ports[0].TargetPort)
 	}
 	if name := ss.Labels["run"]; name != expectedAppName {
 		t.Errorf("expected label run with value %s, got %s", expectedAppName, name)

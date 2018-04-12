@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/luizalabs/teresa/pkg/server/service"
+	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 )
 
@@ -48,7 +49,7 @@ func (ops *awsOperations) SSLInfo(appName string) (*service.SSLInfo, error) {
 	}
 	info := &service.SSLInfo{
 		Cert: an[awsSSLCertAnnotation],
-		ServicePort: &service.ServicePort{
+		ServicePort: &spec.ServicePort{
 			Port: port,
 		},
 	}

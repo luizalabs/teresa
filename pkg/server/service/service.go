@@ -13,21 +13,15 @@ const (
 	sslPort            = 443
 )
 
-type ServicePort struct {
-	Name       string
-	Port       int
-	TargetPort int
-}
-
 type CloudProviderOperations interface {
 	CreateOrUpdateSSL(appName, cert string, port int) error
 	SSLInfo(appName string) (*SSLInfo, error)
 }
 
 type K8sOperations interface {
-	UpdateServicePorts(namespace, svcName string, ports []ServicePort) error
+	UpdateServicePorts(namespace, svcName string, ports []spec.ServicePort) error
 	IsNotFound(err error) bool
-	ServicePorts(namespace, svcName string) ([]*ServicePort, error)
+	ServicePorts(namespace, svcName string) ([]*spec.ServicePort, error)
 }
 
 type AppOperations interface {
@@ -52,7 +46,7 @@ func (ops *ServiceOperations) EnableSSL(user *database.User, appName, cert strin
 	if err := ops.cops.CreateOrUpdateSSL(appName, cert, sslPort); err != nil {
 		return err
 	}
-	ports := []ServicePort{
+	ports := []spec.ServicePort{
 		{Name: defaultPortName, TargetPort: spec.DefaultPort},
 		{Name: defaultSSLPortName, Port: sslPort, TargetPort: spec.DefaultPort},
 	}

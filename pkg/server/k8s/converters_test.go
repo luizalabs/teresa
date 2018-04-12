@@ -9,7 +9,6 @@ import (
 	k8sv1 "k8s.io/client-go/pkg/api/v1"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
-	"github.com/luizalabs/teresa/pkg/server/service"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 )
 
@@ -508,7 +507,7 @@ func TestConfigMapSpec(t *testing.T) {
 }
 
 func TestServicePortsToK8sServicePorts(t *testing.T) {
-	ports := []service.ServicePort{
+	ports := []spec.ServicePort{
 		{Name: "port1", TargetPort: 1},
 		{Name: "port2", Port: 2, TargetPort: 2},
 	}

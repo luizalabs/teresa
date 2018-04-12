@@ -10,7 +10,6 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/deploy"
 	"github.com/luizalabs/teresa/pkg/server/exec"
-	"github.com/luizalabs/teresa/pkg/server/service"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/pkg/errors"
 
@@ -1053,7 +1052,7 @@ func (c *Client) SetServiceAnnotations(namespace, svcName string, annotations ma
 	return c.patchServiceAnnotations(namespace, svcName, annotations)
 }
 
-func (c *Client) UpdateServicePorts(namespace, svcName string, ports []service.ServicePort) error {
+func (c *Client) UpdateServicePorts(namespace, svcName string, ports []spec.ServicePort) error {
 	kc, err := c.buildClient()
 	if err != nil {
 		return err
@@ -1097,7 +1096,7 @@ func (c *Client) ServiceAnnotations(namespace, svcName string) (map[string]strin
 	return svc.Annotations, nil
 }
 
-func (c *Client) ServicePorts(namespace, svcName string) ([]*service.ServicePort, error) {
+func (c *Client) ServicePorts(namespace, svcName string) ([]*spec.ServicePort, error) {
 	kc, err := c.buildClient()
 	if err != nil {
 		return nil, err
@@ -1106,9 +1105,9 @@ func (c *Client) ServicePorts(namespace, svcName string) ([]*service.ServicePort
 	if err != nil {
 		return nil, err
 	}
-	ports := make([]*service.ServicePort, len(svc.Spec.Ports))
+	ports := make([]*spec.ServicePort, len(svc.Spec.Ports))
 	for i := range svc.Spec.Ports {
-		ports[i] = &service.ServicePort{
+		ports[i] = &spec.ServicePort{
 			Port:       int(svc.Spec.Ports[i].Port),
 			Name:       svc.Spec.Ports[i].Name,
 			TargetPort: int(svc.Spec.Ports[i].TargetPort.IntVal),

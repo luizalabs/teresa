@@ -2,14 +2,16 @@ package service
 
 import (
 	"testing"
+
+	"github.com/luizalabs/teresa/pkg/server/spec"
 )
 
 func TestNewInfoResponse(t *testing.T) {
 	info := &Info{
-		ServicePorts: []*ServicePort{{Port: 1}, {Port: 2}},
+		ServicePorts: []*spec.ServicePort{{Port: 1}, {Port: 2}},
 		SSLInfo: &SSLInfo{
 			Cert:        "cert",
-			ServicePort: &ServicePort{Port: 2},
+			ServicePort: &spec.ServicePort{Port: 2},
 		},
 	}
 

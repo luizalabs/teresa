@@ -2,15 +2,16 @@ package service
 
 import (
 	svcpb "github.com/luizalabs/teresa/pkg/protobuf/service"
+	"github.com/luizalabs/teresa/pkg/server/spec"
 )
 
 type SSLInfo struct {
-	ServicePort *ServicePort
+	ServicePort *spec.ServicePort
 	Cert        string
 }
 
 type Info struct {
-	ServicePorts []*ServicePort
+	ServicePorts []*spec.ServicePort
 	SSLInfo      *SSLInfo
 }
 

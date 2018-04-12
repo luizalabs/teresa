@@ -57,8 +57,12 @@ The app name must follow this rules:
   An internal app (without external endpoint)
   $ teresa create foo --team bar --internal
 
+  An app that uses the grpc protocol:
+  $ teresa create foo --team bar --protocol grpc
+
   With all flags...
-  $ teresa app create foo --team bar --cpu 200m --max-cpu 500m --memory 512Mi --max-memory 1Gi --scale-min 2 --scale-max 10 --scale-cpu 70 --process-type web`,
+  $ teresa app create foo --team bar --cpu 200m --max-cpu 500m --memory 512Mi --max-memory 1Gi \
+    --scale-min 2 --scale-max 10 --scale-cpu 70 --process-type web --protocol http`,
 	Run: createApp,
 }
 
@@ -127,6 +131,11 @@ func createApp(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid internal parameter")
 	}
 
+	protocol, err := cmd.Flags().GetString("protocol")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid protocol parameter")
+	}
+
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
@@ -171,6 +180,7 @@ func createApp(cmd *cobra.Command, args []string) {
 			Limits:      lim,
 			Autoscale:   as,
 			Internal:    internal,
+			Protocol:    protocol,
 		},
 	)
 	if err != nil {
@@ -304,6 +314,9 @@ func appInfo(cmd *cobra.Command, args []string) {
 		for _, addr := range info.Addresses {
 			fmt.Printf("  %s\n", addr.Hostname)
 		}
+	}
+	if info.Protocol != "" {
+		fmt.Println(bold("protocol:"), info.Protocol)
 	}
 	if len(info.EnvVars) > 0 {
 		client.SortEnvsByKey(info.EnvVars)
@@ -833,6 +846,7 @@ func init() {
 	appCreateCmd.Flags().String("process-type", "", "app process type")
 	appCreateCmd.Flags().String("vhost", "", "virtual host of the app")
 	appCreateCmd.Flags().Bool("internal", false, "create an internal app (without external endpoint)")
+	appCreateCmd.Flags().String("protocol", "", "app protocol: http, http2, grpc, etc.")
 
 	appEnvSetCmd.Flags().String("app", "", "app name")
 	appEnvSetCmd.Flags().Bool("no-input", false, "set env vars without warning")

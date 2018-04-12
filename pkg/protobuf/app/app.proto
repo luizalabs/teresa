@@ -43,6 +43,7 @@ message CreateRequest {
 
     string virtual_host = 6;
     bool internal = 7;
+    string protocol = 8;
 }
 
 message ListResponse {
@@ -118,6 +119,7 @@ message InfoResponse {
         repeated LimitRangeQuantity default_request = 2;
     }
     Limits limits = 6;
+    string protocol = 7;
 }
 
 message SetEnvRequest {

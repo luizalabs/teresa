@@ -29,6 +29,7 @@ type fakeK8sOperations struct {
 	AppInternal                           bool
 	AppVirtualHost                        string
 	AppIngress                            bool
+	AppProtocol                           string
 }
 
 type errK8sOperations struct {
@@ -85,13 +86,15 @@ func (f *fakeK8sOperations) NamespaceAnnotation(namespace, annotation string) (s
 		"internal": %t,
 		"virtualHost": "%s",
 		"envVars": [{"key": "ENV-KEY", "value": "ENV-VALUE"}],
-		"secrets": ["SECRET-1", "SECRET-2"]
+		"secrets": ["SECRET-1", "SECRET-2"],
+		"protocol": "%s"
 	}`
 	return fmt.Sprintf(
 		tmpl,
 		dpt,
 		f.AppInternal,
 		f.AppVirtualHost,
+		f.AppProtocol,
 	), nil
 }
 
@@ -632,7 +635,7 @@ func TestAppOperationsCreateErrAutoscale(t *testing.T) {
 
 func TestAppOperationsInfo(t *testing.T) {
 	tops := team.NewFakeOperations()
-	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	ops := NewOperations(tops, &fakeK8sOperations{AppProtocol: "test"}, nil)
 	teamName := "luizalabs"
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{
@@ -697,6 +700,10 @@ func TestAppOperationsInfo(t *testing.T) {
 		if info.EnvVars[idx].Value != expected {
 			t.Errorf("expected %s, got %s", expected, info.EnvVars[idx].Value)
 		}
+	}
+
+	if info.Protocol != "test" {
+		t.Errorf("got %s; want grpc", info.Protocol)
 	}
 }
 

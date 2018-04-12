@@ -29,7 +29,7 @@ func cmpAppWithCreateRequest(app *App, req *appb.CreateRequest) bool {
 	return test.DeepEqual(&tmp, req)
 }
 
-func newCreateRequest() *appb.CreateRequest {
+func newCreateRequest(processType, protocol string) *appb.CreateRequest {
 	lrq1 := &appb.CreateRequest_Limits_LimitRangeQuantity{
 		Quantity: "1",
 		Resource: "resource1",
@@ -64,19 +64,54 @@ func newCreateRequest() *appb.CreateRequest {
 	return &appb.CreateRequest{
 		Name:        "name",
 		Team:        "team",
-		ProcessType: "process_type",
+		ProcessType: processType,
 		VirtualHost: "test.teresa-apps.io",
 		Autoscale:   as,
 		Limits:      lim,
+		Protocol:    protocol,
 	}
 }
 
 func TestNewApp(t *testing.T) {
-	req := newCreateRequest()
+	req := newCreateRequest("test", "test")
 	app := newApp(req)
 
 	if !cmpAppWithCreateRequest(app, req) {
 		t.Errorf("expected %v, got %v", req, app)
+	}
+}
+
+func TestNewAppDefaults(t *testing.T) {
+	var testCases = []struct {
+		req         *appb.CreateRequest
+		processType string
+		protocol    string
+	}{
+		{
+			newCreateRequest("", ""),
+			ProcessTypeWeb,
+			defaultAppProtocol,
+		},
+		{
+			newCreateRequest("", "test"),
+			ProcessTypeWeb,
+			"test",
+		},
+		{
+			newCreateRequest("test", ""),
+			"test",
+			"",
+		},
+	}
+
+	for _, tc := range testCases {
+		app := newApp(tc.req)
+		if app.ProcessType != tc.processType {
+			t.Errorf("got %s; want %s", app.ProcessType, tc.processType)
+		}
+		if app.Protocol != tc.protocol {
+			t.Errorf("got %s; want %s", app.Protocol, tc.protocol)
+		}
 	}
 }
 

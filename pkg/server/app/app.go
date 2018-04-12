@@ -245,6 +245,7 @@ func (ops *AppOperations) Info(user *database.User, appName string) (*Info, erro
 		Autoscale: as,
 		Limits:    lim,
 		EnvVars:   envVars,
+		Protocol:  appMeta.Protocol,
 	}
 	return info, nil
 }

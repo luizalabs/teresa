@@ -5,6 +5,7 @@ import appb "github.com/luizalabs/teresa/pkg/protobuf/app"
 const (
 	ProcessTypeWeb        = "web"
 	ProcessTypeCronPrefix = "cron"
+	defaultAppProtocol    = "http"
 )
 
 type LimitRangeQuantity struct {
@@ -38,6 +39,7 @@ type App struct {
 	EnvVars     []*EnvVar  `json:"envVars"`
 	Internal    bool       `json:"internal"`
 	Secrets     []string   `json:"secrets"`
+	Protocol    string     `json:"protocol"`
 }
 
 type Pod struct {
@@ -64,6 +66,7 @@ type Info struct {
 	Status    *Status
 	Autoscale *Autoscale
 	Limits    *Limits
+	Protocol  string
 }
 
 type AppListItem struct {
@@ -119,6 +122,10 @@ func newApp(req *appb.CreateRequest) *App {
 	if processType == "" {
 		processType = ProcessTypeWeb
 	}
+	protocol := req.Protocol
+	if processType == ProcessTypeWeb && protocol == "" {
+		protocol = defaultAppProtocol
+	}
 
 	app := &App{
 		Autoscale: as,
@@ -132,6 +139,7 @@ func newApp(req *appb.CreateRequest) *App {
 		Team:        req.Team,
 		EnvVars:     []*EnvVar{},
 		Internal:    req.Internal,
+		Protocol:    protocol,
 	}
 	return app
 }
@@ -210,6 +218,7 @@ func newInfoResponse(info *Info) *appb.InfoResponse {
 		Status:    stat,
 		Autoscale: as,
 		Limits:    lim,
+		Protocol:  info.Protocol,
 	}
 }
 

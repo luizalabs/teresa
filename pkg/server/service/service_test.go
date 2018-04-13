@@ -4,13 +4,14 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 )
 
 func setupTestOps() *ServiceOperations {
-	fakeAppOps := &FakeAppOperations{}
+	fakeAppOps := &FakeAppOperations{App: &app.App{}}
 	fakeCloudProviderOps := &FakeCloudProviderOperations{}
 	fakeK8sOps := &FakeK8sOperations{}
 	return NewOperations(fakeAppOps, fakeCloudProviderOps, fakeK8sOps)

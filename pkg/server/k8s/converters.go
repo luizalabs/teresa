@@ -19,7 +19,6 @@ import (
 const (
 	changeCauseAnnotation = "kubernetes.io/change-cause"
 	appTypeAnnotation     = "teresa.io/app-type"
-	defaultServicePort    = 80
 )
 
 func podSpecToK8sContainers(podSpec *spec.Pod) ([]k8sv1.Container, error) {
@@ -363,7 +362,7 @@ func ingressSpec(namespace, name, vHost string) *k8s_extensions.Ingress {
 									Path: "/",
 									Backend: k8s_extensions.IngressBackend{
 										ServiceName: name,
-										ServicePort: intstr.FromInt(defaultServicePort),
+										ServicePort: intstr.FromInt(spec.DefaultExternalPort),
 									},
 								},
 							},
@@ -402,13 +401,9 @@ func configMapSpec(namespace, name string, data map[string]string) *k8sv1.Config
 func servicePortsToK8sServicePorts(ports []spec.ServicePort) []k8sv1.ServicePort {
 	k8sPorts := make([]k8sv1.ServicePort, len(ports))
 	for i := range ports {
-		p := ports[i].Port
-		if p == 0 {
-			p = defaultServicePort
-		}
 		k8sPorts[i] = k8sv1.ServicePort{
 			Name:       ports[i].Name,
-			Port:       int32(p),
+			Port:       int32(ports[i].Port),
 			TargetPort: intstr.FromInt(ports[i].TargetPort),
 		}
 	}

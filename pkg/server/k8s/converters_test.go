@@ -318,7 +318,7 @@ func TestServiceSpec(t *testing.T) {
 	name := "teresa"
 	srvType := "LoadBalancer"
 
-	s := serviceSpecToK8s(spec.NewDefaultService(name, srvType))
+	s := serviceSpecToK8s(spec.NewDefaultService(name, srvType, "protocol"))
 	if s.ObjectMeta.Name != name {
 		t.Errorf("expected %s, got %s", name, s.ObjectMeta.Name)
 	}
@@ -525,12 +525,8 @@ func TestServicePortsToK8sServicePorts(t *testing.T) {
 		if tp != k8sPorts[i].TargetPort {
 			t.Errorf("got %v; want %v", k8sPorts[i].TargetPort, tp)
 		}
-		p := ports[i].Port
-		if i == 0 {
-			p = defaultServicePort
-		}
-		if int32(p) != k8sPorts[i].Port {
-			t.Errorf("got %d; want %d", k8sPorts[i].Port, p)
+		if int32(ports[i].Port) != k8sPorts[i].Port {
+			t.Errorf("got %d; want %d", k8sPorts[i].Port, ports[i].Port)
 		}
 	}
 }

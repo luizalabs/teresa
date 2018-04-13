@@ -630,14 +630,14 @@ func (k *Client) createIngress(namespace, appName, vHost string) error {
 }
 
 // ExposeDeploy creates a service and/or a ingress if needed
-func (k *Client) ExposeDeploy(namespace, appName, vHost, svcType string, w io.Writer) error {
+func (k *Client) ExposeDeploy(namespace, appName, vHost, svcType, portName string, w io.Writer) error {
 	hasSrv, err := k.hasService(namespace, appName)
 	if err != nil {
 		return err
 	}
 	if !hasSrv {
 		fmt.Fprintln(w, "Exposing service")
-		svcSpec := spec.NewDefaultService(appName, svcType)
+		svcSpec := spec.NewDefaultService(appName, svcType, portName)
 		if err := k.CreateService(svcSpec); err != nil {
 			return err
 		}

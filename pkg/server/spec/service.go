@@ -1,5 +1,9 @@
 package spec
 
+const (
+	defaultPortName = "tcp"
+)
+
 type ServicePort struct {
 	Name       string
 	Port       int
@@ -24,8 +28,8 @@ func NewService(namespace, name, sType string, ports []ServicePort, labels map[s
 	}
 }
 
-func NewDefaultService(appName, sType string) *Service {
-	ports := []ServicePort{{TargetPort: DefaultPort}}
+func NewDefaultService(appName, sType, portName string) *Service {
+	ports := []ServicePort{*NewDefaultServicePort(portName)}
 	return NewService(
 		appName,
 		appName,
@@ -33,4 +37,19 @@ func NewDefaultService(appName, sType string) *Service {
 		ports,
 		map[string]string{"run": appName},
 	)
+}
+
+func NewServicePort(name string, port, targetPort int) *ServicePort {
+	return &ServicePort{
+		Name:       name,
+		Port:       port,
+		TargetPort: targetPort,
+	}
+}
+
+func NewDefaultServicePort(name string) *ServicePort {
+	if name == "" {
+		name = defaultPortName
+	}
+	return NewServicePort(name, DefaultExternalPort, DefaultPort)
 }

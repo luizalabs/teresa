@@ -1,6 +1,8 @@
 package service
 
 import (
+	"github.com/luizalabs/teresa/pkg/server/app"
+	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 )
@@ -19,6 +21,7 @@ type FakeCloudProviderOperations struct {
 
 type FakeAppOperations struct {
 	NegateHasPermission bool
+	App                 *app.App
 }
 
 type FakeK8sOperations struct {
@@ -46,6 +49,14 @@ func (f *FakeCloudProviderOperations) SSLInfo(appName string) (*SSLInfo, error) 
 
 func (f *FakeAppOperations) HasPermission(user *database.User, appName string) bool {
 	return !f.NegateHasPermission
+}
+
+func (f *FakeAppOperations) CheckPermAndGet(user *database.User, appName string) (*app.App, error) {
+	var err error
+	if f.NegateHasPermission {
+		err = auth.ErrPermissionDenied
+	}
+	return f.App, err
 }
 
 func (f *FakeK8sOperations) UpdateServicePorts(namespace, svcName string, ports []spec.ServicePort) error {

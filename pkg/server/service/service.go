@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/spec"
@@ -8,7 +9,6 @@ import (
 )
 
 const (
-	defaultPortName    = "tcp"
 	defaultSSLPortName = "ssl"
 	sslPort            = 443
 )
@@ -26,6 +26,7 @@ type K8sOperations interface {
 
 type AppOperations interface {
 	HasPermission(user *database.User, appName string) bool
+	CheckPermAndGet(user *database.User, appName string) (*app.App, error)
 }
 
 type Operations interface {
@@ -40,15 +41,16 @@ type ServiceOperations struct {
 }
 
 func (ops *ServiceOperations) EnableSSL(user *database.User, appName, cert string, only bool) error {
-	if !ops.aops.HasPermission(user, appName) {
-		return auth.ErrPermissionDenied
+	app, err := ops.aops.CheckPermAndGet(user, appName)
+	if err != nil {
+		return err
 	}
 	if err := ops.cops.CreateOrUpdateSSL(appName, cert, sslPort); err != nil {
 		return err
 	}
 	ports := []spec.ServicePort{
-		{Name: defaultPortName, TargetPort: spec.DefaultPort},
-		{Name: defaultSSLPortName, Port: sslPort, TargetPort: spec.DefaultPort},
+		*spec.NewDefaultServicePort(app.Protocol),
+		*spec.NewServicePort(defaultSSLPortName, sslPort, spec.DefaultPort),
 	}
 	if only {
 		ports = ports[1:]

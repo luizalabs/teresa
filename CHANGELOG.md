@@ -10,6 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Improve `deploy rollback` usability
 - [server] Monitor the rolling update after the deploy, returning an error if
   the former is stalled
+- [server] Name service ports with the protocol
 
 ### Added
 - `app change-team` command

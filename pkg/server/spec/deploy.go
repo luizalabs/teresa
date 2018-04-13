@@ -12,6 +12,7 @@ const (
 	secondaryPort              = 6000
 	SlugAnnotation             = "teresa.io/slug"
 	defaultDrainTimeoutSeconds = 10
+	DefaultExternalPort        = 80
 )
 
 type HealthCheckProbe struct {

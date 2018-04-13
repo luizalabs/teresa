@@ -135,6 +135,7 @@ func podSpecToK8sPod(podSpec *spec.Pod) (*k8sv1.Pod, error) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podSpec.Name,
 			Namespace: podSpec.Namespace,
+			Labels:    podSpec.Labels,
 		},
 		Spec: ps,
 	}

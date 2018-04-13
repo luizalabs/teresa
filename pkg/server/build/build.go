@@ -7,6 +7,7 @@ import (
 	context "golang.org/x/net/context"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
+	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/exec"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/luizalabs/teresa/pkg/server/storage"
@@ -14,18 +15,31 @@ import (
 
 type Operations interface {
 	CreateByOpts(ctx context.Context, opts *CreateOptions) error
+	Create(ctx context.Context, appName, buildName string, u *database.User, tarBall io.ReadSeeker, runApp bool) (io.ReadCloser, <-chan error)
+}
+
+type K8sOperations interface {
+	CreateService(svcSpec *spec.Service) error
+	DeletePod(namespace, name string) error
+	DeleteService(namespace, name string) error
+	WatchServiceURL(namespace, name string) ([]string, error)
 }
 
 type Options struct {
-	SlugBuilderImage string
-	BuildLimitCPU    string
-	BuildLimitMemory string
+	SlugBuilderImage   string
+	SlugRunnerImage    string
+	SlugStoreImage     string
+	BuildLimitCPU      string
+	BuildLimitMemory   string
+	DefaultServiceType string
 }
 
 type BuildOperations struct {
 	fileStorage storage.Storage
 	execOps     exec.Operations
+	appOps      app.Operations
 	opts        *Options
+	k8s         K8sOperations
 }
 
 // CreateOptions define arguments of method `CreateByOpts`
@@ -38,7 +52,46 @@ type CreateOptions struct {
 	Stream    io.Writer
 }
 
-func (ops BuildOperations) CreateByOpts(ctx context.Context, opts *CreateOptions) error {
+func formatPodName(appName, buildName string) string {
+	return fmt.Sprintf("run-%s-build-%s", appName, buildName)
+}
+
+func (ops *BuildOperations) Create(ctx context.Context, appName, buildName string, u *database.User, tarBall io.ReadSeeker, runApp bool) (io.ReadCloser, <-chan error) {
+	errChan := make(chan error, 1)
+
+	a, err := ops.appOps.CheckPermAndGet(u, appName)
+	if err != nil {
+		errChan <- err
+		return nil, errChan
+	}
+
+	r, w := io.Pipe()
+	go func() {
+		defer w.Close()
+
+		err = ops.CreateByOpts(ctx, &CreateOptions{
+			App:       a,
+			BuildName: buildName,
+			SlugIn:    fmt.Sprintf("builds/%s/%s/in", a.Name, buildName),
+			SlugDest:  fmt.Sprintf("builds/%s/%s/out", a.Name, buildName),
+			TarBall:   tarBall,
+			Stream:    w,
+		})
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		if runApp {
+			if err := ops.runInternal(ctx, a, buildName, w); err != nil {
+				errChan <- err
+			}
+		}
+	}()
+	return r, errChan
+}
+
+func (ops *BuildOperations) CreateByOpts(ctx context.Context, opts *CreateOptions) error {
 	opts.TarBall.Seek(0, 0)
 	if err := ops.fileStorage.UploadFile(opts.SlugIn, opts.TarBall); err != nil {
 		fmt.Fprintln(opts.Stream, "The Build failed to upload the TarBall to slug storage")
@@ -71,6 +124,68 @@ func (ops BuildOperations) CreateByOpts(ctx context.Context, opts *CreateOptions
 	return nil
 }
 
-func NewBuildOperations(s storage.Storage, e exec.Operations, o *Options) *BuildOperations {
-	return &BuildOperations{fileStorage: s, execOps: e, opts: o}
+func (ops *BuildOperations) runInternal(ctx context.Context, a *app.App, buildName string, w io.Writer) error {
+	slugURL := fmt.Sprintf("builds/%s/%s/out/slug.tgz", a.Name, buildName)
+	imgs := &spec.Images{
+		SlugRunner: ops.opts.SlugRunnerImage,
+		SlugStore:  ops.opts.SlugStoreImage,
+	}
+	podSpec := spec.NewRunner(
+		formatPodName(a.Name, buildName),
+		slugURL,
+		imgs,
+		a,
+		ops.fileStorage,
+		nil,
+		"start",
+		a.ProcessType,
+	)
+	podSpec.Labels["build"] = buildName
+
+	if a.ProcessType == app.ProcessTypeWeb {
+		fmt.Fprintln(w, "\nExposing temporary service")
+		url, err := ops.createService(a.Name, buildName, podSpec.Labels)
+		if err != nil {
+			return err
+		}
+		defer ops.k8s.DeleteService(a.Name, buildName)
+
+		fmt.Fprintf(w, "Temporary URL: %s\n\n", url)
+	}
+
+	fmt.Fprintln(w, "Starting application")
+	podStream, runErrChan := ops.execOps.RunCommandBySpec(ctx, podSpec)
+	go io.Copy(w, podStream)
+	defer ops.k8s.DeletePod(a.Name, formatPodName(a.Name, buildName))
+
+	if err := <-runErrChan; err != nil {
+		if err == exec.ErrTimeout {
+			return err
+		}
+		return ErrBuildFail
+	}
+	return nil
+}
+
+func (ops *BuildOperations) createService(appName, buildName string, labels map[string]string) (string, error) {
+	svcSpec := spec.NewService(
+		appName,
+		buildName,
+		ops.opts.DefaultServiceType,
+		[]spec.ServicePort{*spec.NewDefaultServicePort("")},
+		labels,
+	)
+	if err := ops.k8s.CreateService(svcSpec); err != nil {
+		return "", err
+	}
+
+	urls, err := ops.k8s.WatchServiceURL(appName, buildName)
+	if err != nil {
+		return "", err
+	}
+	return urls[0], err
+}
+
+func NewBuildOperations(s storage.Storage, a app.Operations, e exec.Operations, k K8sOperations, o *Options) *BuildOperations {
+	return &BuildOperations{appOps: a, fileStorage: s, execOps: e, k8s: k, opts: o}
 }

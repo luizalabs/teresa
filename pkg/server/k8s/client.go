@@ -601,6 +601,15 @@ func (k *Client) CreateService(svcSpec *spec.Service) error {
 	return errors.Wrap(err, "create service failed")
 }
 
+func (k *Client) DeleteService(namespace, name string) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+	err = kc.CoreV1().Services(namespace).Delete(name, &metav1.DeleteOptions{})
+	return errors.Wrap(err, "delete service failed")
+}
+
 func (k *Client) HasIngress(namespace, appName string) (bool, error) {
 	kc, err := k.buildClient()
 	if err != nil {
@@ -702,6 +711,44 @@ func (k *Client) waitPodEnd(pod *k8sv1.Pod, checkInterval, timeout time.Duration
 		result := p.Status.Phase == k8sv1.PodSucceeded || p.Status.Phase == k8sv1.PodFailed
 		return result, nil
 	})
+}
+
+func (c *Client) WatchServiceURL(namespace, name string) ([]string, error) {
+	kc, err := c.buildClient()
+	if err != nil {
+		return nil, err
+	}
+	opts := metav1.ListOptions{
+		Watch:         true,
+		FieldSelector: fmt.Sprintf("metadata.name=%s", name),
+	}
+	for {
+		w, err := kc.CoreV1().Services(namespace).Watch(opts)
+		if err != nil {
+			return nil, errors.Wrap(err, "watch service failed")
+		}
+		ch := watch.Filter(w, filterServiceEvents).ResultChan()
+
+		ev, ok := <-ch
+		if !ok {
+			continue
+		}
+
+		srv, ok := ev.Object.(*k8sv1.Service)
+		if !ok {
+			continue
+		}
+
+		urls := make([]string, len(srv.Status.LoadBalancer.Ingress))
+		for i, v := range srv.Status.LoadBalancer.Ingress {
+			url := v.Hostname
+			if url == "" {
+				url = v.IP
+			}
+			urls[i] = url
+		}
+		return urls, nil
+	}
 }
 
 func (k *Client) podExitCode(pod *k8sv1.Pod) (int, error) {
@@ -1185,6 +1232,14 @@ func prepareServiceAnnotations(tmpl string, annotations map[string]string) ([]by
 func filterDeployEvents(in watch.Event) (watch.Event, bool) {
 	_, ok := in.Object.(*v1beta1.Deployment)
 	if !ok || (string(in.Type) != "MODIFIED" && string(in.Type) != "ADDED") {
+		return in, false
+	}
+	return in, true
+}
+
+func filterServiceEvents(in watch.Event) (watch.Event, bool) {
+	_, ok := in.Object.(*k8sv1.Service)
+	if !ok || string(in.Type) != "MODIFIED" {
 		return in, false
 	}
 	return in, true

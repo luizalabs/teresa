@@ -149,8 +149,7 @@ func (ops *DeployOperations) buildLimits() *spec.ContainerLimits {
 }
 
 func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployConfigFiles, w io.Writer, slugURL, description, deployId string) error {
-	releaseCmd := confFiles.Procfile[ProcfileReleaseCmd]
-	if confFiles.Procfile != nil && releaseCmd != "" {
+	if releaseCmd := confFiles.Procfile[ProcfileReleaseCmd]; releaseCmd != "" {
 		if err := ops.runReleaseCmd(a, deployId, slugURL, w); err != nil {
 			log.WithError(err).WithField("id", deployId).Errorf("Running release command %s in app %s", releaseCmd, a.Name)
 			return err

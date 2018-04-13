@@ -109,7 +109,7 @@ func TestDeployPermissionDenied(t *testing.T) {
 	_, errChan := ops.Deploy(ctx, u, "teresa", &test.FakeReadSeeker{}, "test")
 
 	if err := <-errChan; err != auth.ErrPermissionDenied {
-		t.Errorf("expecter ErrPermissionDenied, got %v", err)
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }
 

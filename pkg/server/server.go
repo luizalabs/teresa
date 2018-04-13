@@ -130,11 +130,14 @@ func registerServices(s *grpc.Server, opt Options, uOps user.Operations) error {
 	e.RegisterService(s)
 
 	buildOpts := &build.Options{
-		SlugBuilderImage: opt.DeployOpt.SlugBuilderImage,
-		BuildLimitCPU:    opt.DeployOpt.BuildLimitCPU,
-		BuildLimitMemory: opt.DeployOpt.BuildLimitMemory,
+		SlugBuilderImage:   opt.DeployOpt.SlugBuilderImage,
+		SlugRunnerImage:    opt.DeployOpt.SlugRunnerImage,
+		SlugStoreImage:     opt.DeployOpt.SlugStoreImage,
+		BuildLimitCPU:      opt.DeployOpt.BuildLimitCPU,
+		BuildLimitMemory:   opt.DeployOpt.BuildLimitMemory,
+		DefaultServiceType: opt.DeployOpt.DefaultServiceType,
 	}
-	bOps := build.NewBuildOperations(opt.Storage, execOps, buildOpts)
+	bOps := build.NewBuildOperations(opt.Storage, appOps, execOps, opt.K8s, buildOpts)
 
 	dOps := deploy.NewDeployOperations(appOps, opt.K8s, opt.Storage, execOps, bOps, opt.DeployOpt)
 	d := deploy.NewService(dOps, opt.DeployOpt)

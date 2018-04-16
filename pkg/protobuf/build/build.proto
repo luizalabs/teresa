@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package build;
+
+service Build {
+    rpc Make(stream BuildRequest) returns (stream BuildResponse);
+}
+
+message BuildRequest {
+    message Info {
+        string app = 1;
+        string name = 2;
+        bool run = 3;
+    }
+
+    message File {
+        bytes chunk = 1;
+    }
+
+    oneof value {
+        Info info = 1;
+        File file = 2;
+    }
+}
+
+message BuildResponse {
+    string text = 1;
+}

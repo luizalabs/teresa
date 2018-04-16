@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - `app change-team` command
 - App protocol field
+- Experimental `build` feature
 
 ## [0.19.0] - 2018-04-05
 ### Fixed

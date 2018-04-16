@@ -138,6 +138,8 @@ func registerServices(s *grpc.Server, opt Options, uOps user.Operations) error {
 		DefaultServiceType: opt.DeployOpt.DefaultServiceType,
 	}
 	bOps := build.NewBuildOperations(opt.Storage, appOps, execOps, opt.K8s, buildOpts)
+	b := build.NewService(bOps, opt.DeployOpt.KeepAliveTimeout)
+	b.RegisterService(s)
 
 	dOps := deploy.NewDeployOperations(appOps, opt.K8s, opt.Storage, execOps, bOps, opt.DeployOpt)
 	d := deploy.NewService(dOps, opt.DeployOpt)

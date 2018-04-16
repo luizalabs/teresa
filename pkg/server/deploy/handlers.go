@@ -11,11 +11,8 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/goutil"
 	dpb "github.com/luizalabs/teresa/pkg/protobuf/deploy"
+	"github.com/luizalabs/teresa/pkg/server/build"
 	"github.com/luizalabs/teresa/pkg/server/database"
-)
-
-const (
-	keepAliveMessage = "\u200B" // Zero width space
 )
 
 type Options struct {
@@ -72,7 +69,7 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 	for {
 		select {
 		case <-time.After(s.options.KeepAliveTimeout):
-			msg = keepAliveMessage
+			msg = build.KeepAliveMessage
 		case err := <-errChan:
 			return err
 		case m, ok := <-deployMsgs:

@@ -43,18 +43,18 @@ var deployCreateCmd = &cobra.Command{
 	Short: "Deploy an app",
 	Long: `Deploy an application.
 	
-	To deploy an app you have to pass it's name, the team the app
-	belongs and the path, filename or url to the source code. You
-	might want to describe your deployments through --description,
-	as that'll eventually help on rollbacks.
-	
-	eg.:
-	
-	  $ teresa deploy create . --app webapi --description "release 1.2 with new checkout"
+To deploy an app you have to pass it's name and the path,
+filename or url to the source code. You might want to describe
+your deployments through --description, as that'll
+eventually help on rollbacks.
 
-	  $ teresa deploy create /my/path/webapi.tgz --app webapi --description "release 1.2 with new checkout"
+eg.:
 
-	  $ teresa deploy create 'https://api.github.com/repos/owner/webapi/tarball/v1.0?access_token=xxx' --app webapi --description "release 1.0"
+  $ teresa deploy create . --app webapi --description "release 1.2 with new checkout"
+
+  $ teresa deploy create /my/path/webapi.tgz --app webapi --description "release 1.2 with new checkout"
+
+  $ teresa deploy create 'https://api.github.com/repos/owner/webapi/tarball/v1.0?access_token=xxx' --app webapi --description "release 1.0"
 	`,
 	Run: deployApp,
 }

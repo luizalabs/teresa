@@ -23,6 +23,7 @@ type K8sOperations interface {
 	DeletePod(namespace, name string) error
 	DeleteService(namespace, name string) error
 	WatchServiceURL(namespace, name string) ([]string, error)
+	IsInvalid(err error) bool
 }
 
 type Options struct {
@@ -117,6 +118,8 @@ func (ops *BuildOperations) CreateByOpts(ctx context.Context, opts *CreateOption
 	if err := <-runErrChan; err != nil {
 		if err == exec.ErrTimeout {
 			return err
+		} else if ops.k8s.IsInvalid(err) {
+			return ErrInvalidBuildName
 		}
 		return ErrBuildFail
 	}

@@ -37,6 +37,10 @@ func (f *fakeK8sOperations) WatchServiceURL(namespace string, name string) ([]st
 	return []string{"url1", "url2"}, nil
 }
 
+func (f *fakeK8sOperations) IsInvalid(err error) bool {
+	return false
+}
+
 func consumeReader(rc io.ReadCloser) {
 	for {
 		b := make([]byte, 64)

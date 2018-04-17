@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Changed
+- [server] Add app label to the pods
+
 ## [0.20.0]
 ### Fixed
 - Make deploy rollback update the app env vars

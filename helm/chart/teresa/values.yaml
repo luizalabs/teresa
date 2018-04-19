@@ -24,7 +24,7 @@ aws:
 docker:
   registry: luizalabs
   image: teresa
-  tag: v0.19.0
+  tag: v0.20.0
 build:
   limits:
     cpu: 500m

@@ -2,7 +2,6 @@ package cloudprovider
 
 import (
 	"github.com/luizalabs/teresa/pkg/server/service"
-	"github.com/pkg/errors"
 )
 
 type Operations interface {
@@ -17,17 +16,17 @@ type K8sOperations interface {
 	IsNotFound(err error) bool
 }
 
-func NewOperations(k8s K8sOperations) (Operations, error) {
+func NewOperations(k8s K8sOperations) Operations {
 	name, err := k8s.CloudProviderName()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get cloud provider name")
+		return &fallbackOperations{}
 	}
 	switch name {
 	case "aws":
-		return &awsOperations{k8s: k8s}, nil
+		return &awsOperations{k8s: k8s}
 	case "gce":
-		return &gceOperations{k8s: k8s}, nil
+		return &gceOperations{k8s: k8s}
 	default:
-		return &fallbackOperations{}, nil
+		return &fallbackOperations{}
 	}
 }

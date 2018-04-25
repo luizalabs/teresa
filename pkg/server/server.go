@@ -145,10 +145,7 @@ func registerServices(s *grpc.Server, opt Options, uOps user.Operations) error {
 	d := deploy.NewService(dOps, opt.DeployOpt)
 	d.RegisterService(s)
 
-	cpOps, err := cloudprovider.NewOperations(opt.K8s)
-	if err != nil {
-		return err
-	}
+	cpOps := cloudprovider.NewOperations(opt.K8s)
 
 	svcOps := service.NewOperations(appOps, cpOps, opt.K8s)
 	svc := service.NewService(svcOps)

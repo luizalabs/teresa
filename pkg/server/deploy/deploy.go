@@ -110,7 +110,9 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 			errChan <- err
 			return
 		}
-		ops.watchDeploy(appName, deployId, w, errChan)
+		if !app.IsCronJob(a.ProcessType) {
+			ops.watchDeploy(appName, deployId, w, errChan)
+		}
 	}()
 	return r, errChan
 }

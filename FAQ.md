@@ -237,6 +237,8 @@ http{
         proxy_set_header HOST $host;
         proxy_pass $NGINX_BACKEND;
     }
+    
+    server_tokens off;
   }
 }
 ```

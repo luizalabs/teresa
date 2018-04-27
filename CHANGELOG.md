@@ -4,7 +4,6 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [NEXT_RELEASE]
 ### Changed
-- [server] Add app label to the pods
 - [server] Always return `fallback` cloudprovider operations for unknown cloud providers
 
 ### Fixed

@@ -71,14 +71,14 @@ func newPodContainers(name, nginxImage, appImage string, envVars map[string]stri
 	return c
 }
 
-func NewPod(name, nginxImage, image string, a *app.App, envVars map[string]string, labels Labels, fs storage.Storage) *Pod {
+func NewPod(name, nginxImage, image string, a *app.App, envVars map[string]string, fs storage.Storage) *Pod {
 	hasNginx := nginxImage != ""
 	ps := &Pod{
 		Name:       name,
 		Namespace:  a.Name,
 		Containers: newPodContainers(name, nginxImage, image, envVars, a.Secrets),
 		Volumes:    newPodVolumes(a.Name, fs, hasNginx),
-		Labels:     labels,
+		Labels:     make(map[string]string),
 	}
 
 	for _, e := range a.EnvVars {
@@ -103,7 +103,6 @@ func NewBuilder(name, tarBallLocation, buildDest, image string, a *app.App, fs s
 			"PUT_PATH":        buildDest,
 			"BUILDER_STORAGE": fs.Type(),
 		},
-		Labels{},
 		fs,
 	)
 	ps.Containers[0].VolumeMounts = []*VolumeMounts{newStorageKeyVolumeMount()}
@@ -122,7 +121,6 @@ func NewRunner(name, slugURL string, imgs *Images, a *app.App, fs storage.Storag
 			"SLUG_URL": slugURL,
 			"SLUG_DIR": slugVolumeMountPath,
 		},
-		Labels{},
 		fs,
 	)
 	ps.Containers[0].Args = command

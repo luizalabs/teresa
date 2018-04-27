@@ -27,7 +27,6 @@ func NewCronJob(description, slugURL, schedule string, imgs *Images, a *app.App,
 			"SLUG_URL": slugURL,
 			"SLUG_DIR": slugVolumeMountPath,
 		},
-		Labels{},
 		fs,
 	)
 	ps.Containers[0].Args = args

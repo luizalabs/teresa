@@ -20,7 +20,7 @@ func TestNewPodSpec(t *testing.T) {
 	expectedName := "test"
 	expectedImage := "docker/teresa-test:0.0.1"
 
-	ps := NewPod(expectedName, "nginx", expectedImage, a, ev, Labels{}, storage.NewFake())
+	ps := NewPod(expectedName, "nginx", expectedImage, a, ev, storage.NewFake())
 	if ps.Name != expectedName {
 		t.Errorf("expected %s, got %s", expectedName, ps.Name)
 	}

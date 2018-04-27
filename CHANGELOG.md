@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Changed
+- [server] Update client-go to v6.0.0 and bump minimum k8s version to 1.9
+
 ## [0.21.0] - 2018-05-02
 ### Changed
 - [server] Always return `fallback` cloudprovider operations for unknown cloud providers

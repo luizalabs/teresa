@@ -6,14 +6,14 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/spec"
+	"k8s.io/api/apps/v1beta2"
+	k8sbatch "k8s.io/api/batch/v1"
+	k8sv1beta1 "k8s.io/api/batch/v1beta1"
+	k8sv1 "k8s.io/api/core/v1"
+	k8s_extensions "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	k8sv1 "k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/apis/apps/v1beta1"
-	k8sbatch "k8s.io/client-go/pkg/apis/batch/v1"
-	k8sv2alpha "k8s.io/client-go/pkg/apis/batch/v2alpha1"
-	k8s_extensions "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
 
 const (
@@ -142,7 +142,7 @@ func podSpecToK8sPod(podSpec *spec.Pod) (*k8sv1.Pod, error) {
 	return pod, nil
 }
 
-func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.Deployment, error) {
+func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta2.Deployment, error) {
 	containers, err := podSpecToK8sContainers(&deploySpec.Pod)
 	if err != nil {
 		return nil, err
@@ -188,9 +188,9 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.De
 	}
 
 	rhl := int32(deploySpec.RevisionHistoryLimit)
-	d := &v1beta1.Deployment{
+	d := &v1beta2.Deployment{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "extensions/v1beta1",
+			APIVersion: "extensions/v1beta2",
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -202,11 +202,11 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta1.De
 				spec.SlugAnnotation:   deploySpec.SlugURL,
 			},
 		},
-		Spec: v1beta1.DeploymentSpec{
+		Spec: v1beta2.DeploymentSpec{
 			Replicas: &replicas,
-			Strategy: v1beta1.DeploymentStrategy{
-				Type: v1beta1.RollingUpdateDeploymentStrategyType,
-				RollingUpdate: &v1beta1.RollingUpdateDeployment{
+			Strategy: v1beta2.DeploymentStrategy{
+				Type: v1beta2.RollingUpdateDeploymentStrategyType,
+				RollingUpdate: &v1beta2.RollingUpdateDeployment{
 					MaxUnavailable: maxUnavailable,
 					MaxSurge:       maxSurge,
 				},
@@ -227,7 +227,7 @@ func podSpecToK8sInitContainers(podSpec *spec.Pod) ([]k8sv1.Container, error) {
 	return containerSpecsToK8sContainers(podSpec.InitContainers)
 }
 
-func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv2alpha.CronJob, error) {
+func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv1beta1.CronJob, error) {
 	containers, err := podSpecToK8sContainers(&cronJobSpec.Pod)
 	if err != nil {
 		return nil, err
@@ -250,9 +250,9 @@ func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv2alpha.CronJob, er
 
 	successfulLim := cronJobSpec.SuccessfulJobsHistoryLimit
 	failedLim := cronJobSpec.FailedJobsHistoryLimit
-	cj := &k8sv2alpha.CronJob{
+	cj := &k8sv1beta1.CronJob{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "batch/v2alpha1",
+			APIVersion: "batch/v1beta1",
 			Kind:       "CronJob",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -264,9 +264,9 @@ func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv2alpha.CronJob, er
 				appTypeAnnotation:     "cronjob",
 			},
 		},
-		Spec: k8sv2alpha.CronJobSpec{
+		Spec: k8sv1beta1.CronJobSpec{
 			Schedule: cronJobSpec.Schedule,
-			JobTemplate: k8sv2alpha.JobTemplateSpec{
+			JobTemplate: k8sv1beta1.JobTemplateSpec{
 				Spec: k8sbatch.JobSpec{
 					Template: k8sv1.PodTemplateSpec{
 						Spec: ps,

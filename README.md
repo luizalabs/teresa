@@ -12,7 +12,7 @@ It uses a client-server model: the client sends high level commands (create appl
 
 Server requirements:
 
-- Kubernetes cluster (>= 1.7)
+- Kubernetes cluster (>= 1.9)
 
 - database backend to store users and teams (SQLite or MySQL)
 

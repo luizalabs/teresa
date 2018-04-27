@@ -13,14 +13,13 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/pkg/errors"
 
+	"k8s.io/api/apps/v1beta2"
+	asv1 "k8s.io/api/autoscaling/v1"
+	k8sv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/pkg/api"
-	k8sv1 "k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/apis/apps/v1beta1"
-	asv1 "k8s.io/client-go/pkg/apis/autoscaling/v1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -78,7 +77,7 @@ func (k *Client) DeployAnnotation(namespace, deployName, annotation string) (str
 		return "", err
 	}
 
-	d, err := kc.AppsV1beta1().
+	d, err := kc.AppsV1beta2().
 		Deployments(namespace).
 		Get(deployName, metav1.GetOptions{})
 
@@ -132,7 +131,7 @@ func (k *Client) PodList(namespace string, opts *app.PodListOptions) ([]*app.Pod
 			} else if status.State.Terminated != nil {
 				p.State = status.State.Terminated.Reason
 			} else if status.State.Running != nil {
-				p.State = string(api.PodRunning)
+				p.State = string(k8sv1.PodRunning)
 			}
 			p.Restarts = status.RestartCount
 			p.Ready = status.Ready
@@ -491,9 +490,9 @@ func (k *Client) CreateOrUpdateDeploy(deploySpec *spec.Deploy) error {
 		return err
 	}
 
-	_, err = kc.AppsV1beta1().Deployments(deploySpec.Namespace).Update(deployYaml)
+	_, err = kc.AppsV1beta2().Deployments(deploySpec.Namespace).Update(deployYaml)
 	if k.IsNotFound(err) {
-		_, err = kc.AppsV1beta1().Deployments(deploySpec.Namespace).Create(deployYaml)
+		_, err = kc.AppsV1beta2().Deployments(deploySpec.Namespace).Create(deployYaml)
 	}
 	return err
 }
@@ -509,9 +508,9 @@ func (c *Client) CreateOrUpdateCronJob(cronJobSpec *spec.CronJob) error {
 		return err
 	}
 
-	_, err = kc.CronJobs(cronJobSpec.Namespace).Update(cronJobYaml)
+	_, err = kc.BatchV1beta1().CronJobs(cronJobSpec.Namespace).Update(cronJobYaml)
 	if c.IsNotFound(err) {
-		_, err = kc.CronJobs(cronJobSpec.Namespace).Create(cronJobYaml)
+		_, err = kc.BatchV1beta1().CronJobs(cronJobSpec.Namespace).Create(cronJobYaml)
 	}
 	return err
 }
@@ -526,7 +525,7 @@ func (k *Client) PodRun(podSpec *spec.Pod) (io.ReadCloser, <-chan int, error) {
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "define build pod spec failed")
 	}
-	pod, err := kc.Pods(podSpec.Namespace).Create(podYaml)
+	pod, err := kc.CoreV1().Pods(podSpec.Namespace).Create(podYaml)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "pod create failed")
 	}
@@ -674,7 +673,7 @@ func (k *Client) DeletePod(namespace, podName string) error {
 	if err != nil {
 		return err
 	}
-	err = kc.Pods(namespace).Delete(podName, &metav1.DeleteOptions{})
+	err = kc.CoreV1().Pods(namespace).Delete(podName, &metav1.DeleteOptions{})
 	return errors.Wrap(err, "could not delete pod")
 }
 
@@ -683,7 +682,7 @@ func (k *Client) waitPodStart(pod *k8sv1.Pod, checkInterval, timeout time.Durati
 	if err != nil {
 		return err
 	}
-	podsClient := kc.Pods(pod.Namespace)
+	podsClient := kc.CoreV1().Pods(pod.Namespace)
 	return wait.PollImmediate(checkInterval, timeout, func() (bool, error) {
 		p, err := podsClient.Get(pod.Name, metav1.GetOptions{})
 		if err != nil {
@@ -702,7 +701,7 @@ func (k *Client) waitPodEnd(pod *k8sv1.Pod, checkInterval, timeout time.Duration
 	if err != nil {
 		return err
 	}
-	podsClient := kc.Pods(pod.Namespace)
+	podsClient := kc.CoreV1().Pods(pod.Namespace)
 	return wait.PollImmediate(checkInterval, timeout, func() (bool, error) {
 		p, err := podsClient.Get(pod.Name, metav1.GetOptions{})
 		if err != nil {
@@ -757,7 +756,7 @@ func (k *Client) podExitCode(pod *k8sv1.Pod) (int, error) {
 		return 1, err
 	}
 
-	p, err := kc.Pods(pod.Namespace).Get(pod.Name, metav1.GetOptions{})
+	p, err := kc.CoreV1().Pods(pod.Namespace).Get(pod.Name, metav1.GetOptions{})
 	if err != nil {
 		return 1, err
 	}
@@ -777,7 +776,7 @@ func (k *Client) currentPodReplicasFromDeploy(namespace, appName string) int32 {
 		return 1
 	}
 
-	d, err := kc.AppsV1beta1().Deployments(
+	d, err := kc.AppsV1beta2().Deployments(
 		namespace).Get(appName, metav1.GetOptions{})
 	if err != nil || d.Status.Replicas < 1 {
 		return 1
@@ -827,7 +826,7 @@ func (c Client) getDeployContainerList(namespace, deploy string) ([]string, erro
 		return nil, err
 	}
 
-	d, err := kc.AppsV1beta1().
+	d, err := kc.AppsV1beta2().
 		Deployments(namespace).
 		Get(deploy, metav1.GetOptions{})
 	if err != nil {
@@ -897,7 +896,7 @@ func (c *Client) patchCronJobEnvVars(namespace, name string, v interface{}) erro
 		return err
 	}
 
-	_, err = kc.CronJobs(namespace).Patch(
+	_, err = kc.BatchV1beta1().CronJobs(namespace).Patch(
 		name,
 		types.StrategicMergePatchType,
 		data,
@@ -1168,7 +1167,7 @@ func (c *Client) ContainerExplicitEnvVars(namespace, deployName, containerName s
 	if err != nil {
 		return nil, err
 	}
-	deploy, err := kc.AppsV1beta1().
+	deploy, err := kc.AppsV1beta2().
 		Deployments(namespace).
 		Get(deployName, metav1.GetOptions{})
 	if err != nil {
@@ -1196,7 +1195,7 @@ func (c *Client) WatchDeploy(namespace, deployName string) error {
 	}
 	ts := time.Now()
 	for {
-		w, err := kc.AppsV1beta1().Deployments(namespace).Watch(opts)
+		w, err := kc.AppsV1beta2().Deployments(namespace).Watch(opts)
 		if err != nil {
 			return errors.Wrap(err, "watch deploy failed")
 		}
@@ -1208,7 +1207,7 @@ func (c *Client) WatchDeploy(namespace, deployName string) error {
 				if !ok {
 					break inner
 				}
-				d := ev.Object.(*v1beta1.Deployment)
+				d := ev.Object.(*v1beta2.Deployment)
 				cond := d.Status.Conditions[len(d.Status.Conditions)-1]
 				if cond.LastUpdateTime.After(ts) && isRollingUpdateFinished(cond) {
 					return nil
@@ -1230,7 +1229,7 @@ func prepareServiceAnnotations(tmpl string, annotations map[string]string) ([]by
 }
 
 func filterDeployEvents(in watch.Event) (watch.Event, bool) {
-	_, ok := in.Object.(*v1beta1.Deployment)
+	_, ok := in.Object.(*v1beta2.Deployment)
 	if !ok || (string(in.Type) != "MODIFIED" && string(in.Type) != "ADDED") {
 		return in, false
 	}
@@ -1245,11 +1244,11 @@ func filterServiceEvents(in watch.Event) (watch.Event, bool) {
 	return in, true
 }
 
-func isRollingUpdateFinished(cond v1beta1.DeploymentCondition) bool {
+func isRollingUpdateFinished(cond v1beta2.DeploymentCondition) bool {
 	return string(cond.Status) == "True" && cond.Reason == "NewReplicaSetAvailable"
 }
 
-func isRollingUpdateStalled(cond v1beta1.DeploymentCondition) bool {
+func isRollingUpdateStalled(cond v1beta2.DeploymentCondition) bool {
 	return string(cond.Status) == "False" && cond.Reason == "ProgressDeadlineExceeded"
 }
 

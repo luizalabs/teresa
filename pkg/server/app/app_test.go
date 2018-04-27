@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"k8s.io/client-go/pkg/api"
+	k8sv1 "k8s.io/api/core/v1"
 
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
@@ -64,8 +64,8 @@ func (*fakeK8sOperations) CreateOrUpdateSecret(appName, secretName string, data 
 
 func (*fakeK8sOperations) PodList(namespace string, opts *PodListOptions) ([]*Pod, error) {
 	pl := []*Pod{
-		{Name: "pod 1", State: string(api.PodRunning), Age: 2, Restarts: 0},
-		{Name: "pod 2", State: string(api.PodRunning), Age: 5, Restarts: 1},
+		{Name: "pod 1", State: string(k8sv1.PodRunning), Age: 2, Restarts: 0},
+		{Name: "pod 2", State: string(k8sv1.PodRunning), Age: 5, Restarts: 1},
 	}
 	return pl, nil
 }
@@ -116,9 +116,9 @@ func (*fakeK8sOperations) Status(namespace string) (*Status, error) {
 	stat := &Status{
 		CPU: 33,
 		Pods: []*Pod{
-			{Name: "pod 1", State: string(api.PodRunning), Age: 1, Restarts: 1},
-			{Name: "pod 2", State: string(api.PodPending), Age: 2, Restarts: 2},
-			{Name: "pod 3", State: string(api.PodRunning), Age: 3, Restarts: 3},
+			{Name: "pod 1", State: string(k8sv1.PodRunning), Age: 1, Restarts: 1},
+			{Name: "pod 2", State: string(k8sv1.PodPending), Age: 2, Restarts: 2},
+			{Name: "pod 3", State: string(k8sv1.PodRunning), Age: 3, Restarts: 3},
 		},
 	}
 	return stat, nil

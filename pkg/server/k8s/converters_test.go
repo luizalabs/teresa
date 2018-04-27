@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
+	k8sv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	k8sv1 "k8s.io/client-go/pkg/api/v1"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/spec"

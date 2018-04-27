@@ -3,13 +3,13 @@ package k8s
 import (
 	"time"
 
-	"k8s.io/client-go/pkg/api"
+	k8sv1 "k8s.io/api/core/v1"
 )
 
-var validServiceTypes = map[api.ServiceType]bool{
-	api.ServiceTypeLoadBalancer: true,
-	api.ServiceTypeNodePort:     true,
-	api.ServiceTypeClusterIP:    true,
+var validServiceTypes = map[k8sv1.ServiceType]bool{
+	k8sv1.ServiceTypeLoadBalancer: true,
+	k8sv1.ServiceTypeNodePort:     true,
+	k8sv1.ServiceTypeClusterIP:    true,
 }
 
 type Config struct {

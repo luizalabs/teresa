@@ -69,6 +69,7 @@ type K8sOperations interface {
 	DeploySetReplicas(namespace, name string, replicas int32) error
 	DeletePod(namespace, podName string) error
 	HasIngress(namespace, name string) (bool, error)
+	IngressEnabled() bool
 }
 
 type AppOperations struct {
@@ -101,6 +102,10 @@ func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 	hasPerm, err := ops.tops.HasUser(app.Team, user.Email)
 	if err != nil || !hasPerm {
 		return auth.ErrPermissionDenied
+	}
+
+	if ops.kops.IngressEnabled() && app.VirtualHost == "" && app.ProcessType == ProcessTypeWeb {
+		return ErrMissingVirtualHost
 	}
 
 	if err := ops.kops.CreateNamespace(app, user.Email); err != nil {

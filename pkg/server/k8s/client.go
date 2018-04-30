@@ -1219,6 +1219,10 @@ func (c *Client) WatchDeploy(namespace, deployName string) error {
 	}
 }
 
+func (c *Client) IngressEnabled() bool {
+	return c.ingress
+}
+
 func prepareServiceAnnotations(tmpl string, annotations map[string]string) ([]byte, error) {
 	b, err := json.Marshal(annotations)
 	if err != nil {

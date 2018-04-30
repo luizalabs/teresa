@@ -30,6 +30,7 @@ type fakeK8sOperations struct {
 	AppVirtualHost                        string
 	AppIngress                            bool
 	AppProtocol                           string
+	IngressEnabledValue                   bool
 }
 
 type errK8sOperations struct {
@@ -216,6 +217,10 @@ func (f *fakeK8sOperations) HasIngress(namespace, name string) (bool, error) {
 	return f.AppIngress, nil
 }
 
+func (f *fakeK8sOperations) IngressEnabled() bool {
+	return f.IngressEnabledValue
+}
+
 func (e *errK8sOperations) CreateNamespace(app *App, user string) error {
 	return e.NamespaceErr
 }
@@ -331,6 +336,10 @@ func (e *errK8sOperations) DeletePod(namespace, podName string) error {
 
 func (e *errK8sOperations) HasIngress(namespace, name string) (bool, error) {
 	return false, nil
+}
+
+func (e *errK8sOperations) IngressEnabled() bool {
+	return false
 }
 
 func TestAppOperationsCreate(t *testing.T) {
@@ -466,6 +475,24 @@ func TestAppCreateErrAppAlreadyExistsShouldNotTouchNamespace(t *testing.T) {
 
 	if _, ok := errK8s.Namespaces[name]; !ok {
 		t.Errorf("expected namespace %s, got none", name)
+	}
+}
+
+func TestAppCreateErrMissingVirtualHost(t *testing.T) {
+	tops := team.NewFakeOperations()
+	fakeSt := st.NewFake()
+	teamName := "luizalabs"
+	fakeK8s := &fakeK8sOperations{IngressEnabledValue: true}
+	ops := NewOperations(tops, fakeK8s, fakeSt)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: teamName, ProcessType: ProcessTypeWeb}
+	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
+		Name:  teamName,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.Create(user, app); err != ErrMissingVirtualHost {
+		t.Errorf("want %v; got %v", ErrMissingVirtualHost, err)
 	}
 }
 

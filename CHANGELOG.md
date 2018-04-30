@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - [server] Update client-go to v6.0.0 and bump minimum k8s version to 1.9
 - [server] Use an explicit selector for the deploy spec
+- [server] `app create` requires vhost when ingress is enabled
 
 ## [0.21.0] - 2018-05-02
 ### Changed

@@ -218,6 +218,9 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta2.De
 				Spec: ps,
 			},
 			RevisionHistoryLimit: &rhl,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: deploySpec.MatchLabels,
+			},
 		},
 	}
 	return d, nil

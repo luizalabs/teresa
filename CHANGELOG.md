@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Changed
 - [server] Update client-go to v6.0.0 and bump minimum k8s version to 1.9
+- [server] Use an explicit selector for the deploy spec
 
 ## [0.21.0] - 2018-05-02
 ### Changed

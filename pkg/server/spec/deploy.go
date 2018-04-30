@@ -59,6 +59,7 @@ type Deploy struct {
 	RevisionHistoryLimit int
 	Description          string
 	SlugURL              string
+	MatchLabels          Labels
 }
 
 type Images struct {
@@ -98,6 +99,7 @@ func NewDeploy(imgs *Images, description, slugURL string, rhl int, a *app.App, t
 		SlugURL:              slugURL,
 		Pod:                  *ps,
 		RevisionHistoryLimit: rhl,
+		MatchLabels:          Labels{"run": a.Name},
 	}
 
 	if tYaml != nil {

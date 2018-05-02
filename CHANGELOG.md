@@ -8,6 +8,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] Use an explicit selector for the deploy spec
 - [server] `app create` requires vhost when ingress is enabled
 
+### Fixed
+- [server] Return not implemented error when enabling ssl with ingress on aws
+
 ## [0.21.0] - 2018-05-02
 ### Changed
 - [server] Always return `fallback` cloudprovider operations for unknown cloud providers

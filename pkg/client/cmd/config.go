@@ -61,6 +61,18 @@ eg.:
 	Run: setCluster,
 }
 
+var rmClusterCmd = &cobra.Command{
+	Use:   "rm-cluster name",
+	Short: "removes a cluster entry from the config file",
+	Long: `Remove a cluster entry.
+
+eg.:
+
+  $ teresa config rm-cluster aws_staging
+	`,
+	Run: rmCluster,
+}
+
 var useClusterCmd = &cobra.Command{
 	Use:   "use-cluster name",
 	Short: "sets a cluster as the current in the config file",
@@ -86,6 +98,7 @@ func init() {
 	configCmd.AddCommand(setClusterCmd)
 
 	configCmd.AddCommand(useClusterCmd)
+	configCmd.AddCommand(rmClusterCmd)
 }
 
 func useCluster(cmd *cobra.Command, args []string) {
@@ -156,6 +169,31 @@ func setCluster(cmd *cobra.Command, args []string) {
 
 	if err = client.SaveConfigFile(cfgFile, c); err != nil {
 		client.PrintErrorAndExit("Erro trying to save config file: %v", err)
+	}
+}
+
+// rmCluster removes a server from the config file
+func rmCluster(cmd *cobra.Command, args []string) {
+	if len(args) == 0 || args[0] == "" {
+		cmd.Usage()
+		return
+	}
+
+	name := args[0]
+
+	c, err := client.ReadConfigFile(cfgFile)
+	if err != nil {
+		client.PrintErrorAndExit("Error trying to read config file: %v", err)
+	}
+
+	if _, found := c.Clusters[name]; found {
+		delete(c.Clusters, name)
+		if err = client.SaveConfigFile(cfgFile, c); err != nil {
+			client.PrintErrorAndExit("Error trying to save config file: %v", err)
+		}
+		fmt.Printf("Config %s removed\n", name)
+	} else {
+		client.PrintErrorAndExit("Config %s not found", name)
 	}
 }
 

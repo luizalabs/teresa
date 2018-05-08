@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [NEXT_RELEASE]
+### Added
+- [client] Add support to remoVe remove cluster from configuration file
+
 ### Changed
 - [client] Print app name and current cluster on command `app delete`
 

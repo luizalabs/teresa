@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [NEXT_RELEASE]
+### Added
+- [client] Add support to remoVe remove cluster from configuration file
+
 ### Changed
 - [server] Update client-go to v6.0.0 and bump minimum k8s version to 1.9
 - [server] Use an explicit selector for the deploy spec

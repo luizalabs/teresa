@@ -7,6 +7,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] Update client-go to v6.0.0 and bump minimum k8s version to 1.9
 - [server] Use an explicit selector for the deploy spec
 - [server] `app create` requires vhost when ingress is enabled
+- Bump the default slugrunner version to v3.2.0
+- Bump the default slugbuilder version to v3.4.0
 
 ### Fixed
 - [server] Return not implemented error when enabling ssl with ingress on aws

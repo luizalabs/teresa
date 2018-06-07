@@ -259,7 +259,12 @@ func appDel(cmd *cobra.Command, args []string) {
 	}
 	name := args[0]
 
-	conn, err := connection.New(cfgFile, cfgCluster)
+	currentClusterName, err := getClusterName()
+	if err != nil {
+		client.PrintErrorAndExit("error reading config file: %v", err)
+	}
+
+	conn, err := connection.New(cfgFile, currentClusterName)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
@@ -271,7 +276,12 @@ func appDel(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Print()
-	s, _ := client.GetInput("Are you sure? (yes/NO)? ")
+	inputMsg := fmt.Sprintf(
+		"Are you sure you want to delete %s on %s? (yes/NO) ",
+		color.CyanString(name),
+		color.YellowString(currentClusterName),
+	)
+	s, _ := client.GetInput(inputMsg)
 	if s != "yes" {
 		fmt.Println("Delete process aborted!")
 		return

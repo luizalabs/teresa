@@ -232,6 +232,18 @@ func appList(cmd *cobra.Command, args []string) {
 	table.Render()
 }
 
+func getClusterName() (string, error) {
+	currentClusterName := cfgCluster
+	if currentClusterName == "" {
+		var err error
+		currentClusterName, err = getCurrentClusterName()
+		if err != nil {
+			return "", err
+		}
+	}
+	return currentClusterName, nil
+}
+
 var appDelCmd = &cobra.Command{
 	Use:     "delete <name>",
 	Short:   "Delete app",
@@ -425,13 +437,9 @@ WARNING:
 }
 
 func appEnvSet(cmd *cobra.Command, args []string) {
-	currentClusterName := cfgCluster
-	if currentClusterName == "" {
-		var err error
-		currentClusterName, err = getCurrentClusterName()
-		if err != nil {
-			client.PrintErrorAndExit("error reading config file: %v", err)
-		}
+	currentClusterName, err := getClusterName()
+	if err != nil {
+		client.PrintErrorAndExit("error reading config file: %v", err)
 	}
 
 	req, err := prepareEnvAndSecretSet("Env vars", currentClusterName, cmd, args)
@@ -504,13 +512,9 @@ You can also provide more than one env var at a time:
 }
 
 func appEnvUnset(cmd *cobra.Command, args []string) {
-	currentClusterName := cfgCluster
-	if currentClusterName == "" {
-		var err error
-		currentClusterName, err = getCurrentClusterName()
-		if err != nil {
-			client.PrintErrorAndExit("error reading config file: %v", err)
-		}
+	currentClusterName, err := getClusterName()
+	if err != nil {
+		client.PrintErrorAndExit("error reading config file: %v", err)
 	}
 
 	req, err := prepareEnvAndSecretUnSet("Env vars", currentClusterName, cmd, args)
@@ -554,13 +558,9 @@ WARNING:
 }
 
 func appSecretSet(cmd *cobra.Command, args []string) {
-	currentClusterName := cfgCluster
-	if currentClusterName == "" {
-		var err error
-		currentClusterName, err = getCurrentClusterName()
-		if err != nil {
-			client.PrintErrorAndExit("error reading config file: %v", err)
-		}
+	currentClusterName, err := getClusterName()
+	if err != nil {
+		client.PrintErrorAndExit("error reading config file: %v", err)
 	}
 
 	req, err := prepareEnvAndSecretSet("Secrets", currentClusterName, cmd, args)
@@ -604,13 +604,9 @@ You can also provide more than one env var at a time:
 }
 
 func appSecretUnset(cmd *cobra.Command, args []string) {
-	currentClusterName := cfgCluster
-	if currentClusterName == "" {
-		var err error
-		currentClusterName, err = getCurrentClusterName()
-		if err != nil {
-			client.PrintErrorAndExit("error reading config file: %v", err)
-		}
+	currentClusterName, err := getClusterName()
+	if err != nil {
+		client.PrintErrorAndExit("error reading config file: %v", err)
 	}
 
 	req, err := prepareEnvAndSecretUnSet("Secrets", currentClusterName, cmd, args)

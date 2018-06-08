@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - [client] Print app name and current cluster on command `app delete`
 
+### Fixed
+- [server] Fix cloud provider detection on gce
+
 ## [0.22.0] - 2018-06-07
 ### Changed
 - [server] Update client-go to v6.0.0 and bump minimum k8s version to 1.9

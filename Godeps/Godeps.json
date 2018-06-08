@@ -7,6 +7,11 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "cloud.google.com/go/compute/metadata",
+			"Comment": "v0.23.0-10-gc338ed1",
+			"Rev": "c338ed132971aadcd5157ddef26adf1c9bed7523"
+		},
+		{
 			"ImportPath": "github.com/PuerkitoBio/purell",
 			"Comment": "v1.0.0",
 			"Rev": "8a290539e2e8629dbc4e6bad948158f790ec31f4"
@@ -517,6 +522,10 @@
 			"Rev": "a6577fac2d73be281a500b310739095313165611"
 		},
 		{
+			"ImportPath": "golang.org/x/net/context/ctxhttp",
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
+		},
+		{
 			"ImportPath": "golang.org/x/net/http2",
 			"Rev": "a6577fac2d73be281a500b310739095313165611"
 		},
@@ -539,6 +548,26 @@
 		{
 			"ImportPath": "golang.org/x/net/trace",
 			"Rev": "a6577fac2d73be281a500b310739095313165611"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "770e5ebd4ab27c4d70b0983674d138217f5e2c72"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/google",
+			"Rev": "770e5ebd4ab27c4d70b0983674d138217f5e2c72"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/internal",
+			"Rev": "770e5ebd4ab27c4d70b0983674d138217f5e2c72"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/jws",
+			"Rev": "770e5ebd4ab27c4d70b0983674d138217f5e2c72"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/jwt",
+			"Rev": "770e5ebd4ab27c4d70b0983674d138217f5e2c72"
 		},
 		{
 			"ImportPath": "golang.org/x/sync/errgroup",
@@ -1177,12 +1206,22 @@
 			"Rev": "78700dec6369ba22221b72770783300f143df150"
 		},
 		{
+			"ImportPath": "k8s.io/client-go/plugin/pkg/client/auth/gcp",
+			"Comment": "v6.0.0",
+			"Rev": "78700dec6369ba22221b72770783300f143df150"
+		},
+		{
 			"ImportPath": "k8s.io/client-go/rest",
 			"Comment": "v6.0.0",
 			"Rev": "78700dec6369ba22221b72770783300f143df150"
 		},
 		{
 			"ImportPath": "k8s.io/client-go/rest/watch",
+			"Comment": "v6.0.0",
+			"Rev": "78700dec6369ba22221b72770783300f143df150"
+		},
+		{
+			"ImportPath": "k8s.io/client-go/third_party/forked/golang/template",
 			"Comment": "v6.0.0",
 			"Rev": "78700dec6369ba22221b72770783300f143df150"
 		},
@@ -1243,6 +1282,11 @@
 		},
 		{
 			"ImportPath": "k8s.io/client-go/util/integer",
+			"Comment": "v6.0.0",
+			"Rev": "78700dec6369ba22221b72770783300f143df150"
+		},
+		{
+			"ImportPath": "k8s.io/client-go/util/jsonpath",
 			"Comment": "v6.0.0",
 			"Rev": "78700dec6369ba22221b72770783300f143df150"
 		},

@@ -17,12 +17,12 @@ import (
 	asv1 "k8s.io/api/autoscaling/v1"
 	k8sv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -1078,8 +1078,7 @@ func (c *Client) CloudProviderName() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	ls := "kubernetes.io/role=master"
-	nodes, err := kc.CoreV1().Nodes().List(metav1.ListOptions{LabelSelector: ls})
+	nodes, err := kc.CoreV1().Nodes().List(metav1.ListOptions{Limit: 1})
 	if err != nil {
 		return "", errors.Wrap(err, "node list failed")
 	}
@@ -1089,7 +1088,7 @@ func (c *Client) CloudProviderName() (string, error) {
 	id := nodes.Items[0].Spec.ProviderID
 	idx := strings.Index(id, "://")
 	if idx <= 0 {
-		return "", errors.New("invalid provider id")
+		return "", errors.New("invalid cloud provider id")
 	}
 	return id[:idx], nil
 }

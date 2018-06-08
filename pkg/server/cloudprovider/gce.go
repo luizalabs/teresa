@@ -13,3 +13,7 @@ func (ops *gceOperations) CreateOrUpdateSSL(appName, cert string, port int) erro
 func (ops *gceOperations) SSLInfo(appName string) (*service.SSLInfo, error) {
 	return nil, ErrNotImplemented
 }
+
+func (ops *gceOperations) Name() string {
+	return "gce"
+}

@@ -11,3 +11,7 @@ func (*fallbackOperations) SSLInfo(appName string) (*service.SSLInfo, error) {
 func (*fallbackOperations) CreateOrUpdateSSL(appName, cert string, port int) error {
 	return ErrNotImplemented
 }
+
+func (*fallbackOperations) Name() string {
+	return "fallback"
+}

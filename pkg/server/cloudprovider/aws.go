@@ -58,3 +58,7 @@ func (ops *awsOperations) SSLInfo(appName string) (*service.SSLInfo, error) {
 	}
 	return info, nil
 }
+
+func (ops *awsOperations) Name() string {
+	return "aws"
+}

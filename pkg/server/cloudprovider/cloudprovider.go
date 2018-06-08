@@ -7,6 +7,7 @@ import (
 type Operations interface {
 	CreateOrUpdateSSL(appName, cert string, port int) error
 	SSLInfo(appName string) (*service.SSLInfo, error)
+	Name() string
 }
 
 type K8sOperations interface {

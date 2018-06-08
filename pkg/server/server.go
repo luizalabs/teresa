@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/jinzhu/gorm"
@@ -146,6 +147,7 @@ func registerServices(s *grpc.Server, opt Options, uOps user.Operations) error {
 	d.RegisterService(s)
 
 	cpOps := cloudprovider.NewOperations(opt.K8s)
+	log.Infoln("cloud provider operations:", cpOps.Name())
 
 	svcOps := service.NewOperations(appOps, cpOps, opt.K8s)
 	svc := service.NewService(svcOps)

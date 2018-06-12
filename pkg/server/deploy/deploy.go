@@ -56,7 +56,7 @@ type DeployOperations struct {
 
 func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, appName string, tarBall io.ReadSeeker, description string) (io.ReadCloser, <-chan error) {
 	errChan := make(chan error, 1)
-	a, err := ops.appOps.Get(appName)
+	a, err := ops.appOps.CheckPermAndGet(user, appName)
 	if err != nil {
 		errChan <- err
 		return nil, errChan
@@ -68,11 +68,6 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 		return nil, errChan
 	}
 	a.Team = teamName
-
-	if !ops.appOps.HasPermission(user, appName) {
-		errChan <- auth.ErrPermissionDenied
-		return nil, errChan
-	}
 
 	confFiles, err := getDeployConfigFilesFromTarBall(tarBall, a.ProcessType)
 	if err != nil {

@@ -2,6 +2,7 @@ package exec
 
 import (
 	"testing"
+	"time"
 
 	context "golang.org/x/net/context"
 
@@ -19,7 +20,7 @@ func (sw *streamWrapper) Context() context.Context {
 }
 
 func TestCommand(t *testing.T) {
-	s := NewService(NewFakeOperations())
+	s := NewService(NewFakeOperations(), 1*time.Minute)
 
 	user := &database.User{}
 	ctx := context.WithValue(context.Background(), "user", user)

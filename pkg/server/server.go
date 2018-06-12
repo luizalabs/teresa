@@ -127,7 +127,7 @@ func registerServices(s *grpc.Server, opt Options, uOps user.Operations) error {
 		LimitsMemory: opt.DeployOpt.BuildLimitMemory,
 	}
 	execOps := exec.NewOperations(appOps, opt.K8s, opt.Storage, execDefaults)
-	e := exec.NewService(execOps)
+	e := exec.NewService(execOps, opt.DeployOpt.KeepAliveTimeout)
 	e.RegisterService(s)
 
 	buildOpts := &build.Options{

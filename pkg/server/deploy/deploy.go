@@ -105,6 +105,11 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 			errChan <- err
 			return
 		}
+
+		if err := ops.appOps.SaveApp(a, user.Email); err != nil {
+			log.WithError(err).WithField("id", deployId).Errorf("Saving last deploy user (%s) of app %s", user.Name, appName)
+		}
+
 		if !app.IsCronJob(a.ProcessType) {
 			ops.watchDeploy(appName, deployId, w, errChan)
 		}

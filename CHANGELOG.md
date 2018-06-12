@@ -12,6 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - [server] Fix cloud provider detection on gce
+- [server] Save last user of deploy
 
 ## [0.22.0] - 2018-06-07
 ### Changed

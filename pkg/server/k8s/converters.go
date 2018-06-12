@@ -21,6 +21,8 @@ const (
 	appTypeAnnotation     = "teresa.io/app-type"
 )
 
+var defaultCronjobBackofflimit = int32(3)
+
 func podSpecToK8sContainers(podSpec *spec.Pod) ([]k8sv1.Container, error) {
 	return containerSpecsToK8sContainers(podSpec.Containers)
 }
@@ -274,6 +276,7 @@ func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv1beta1.CronJob, er
 					Template: k8sv1.PodTemplateSpec{
 						Spec: ps,
 					},
+					BackoffLimit: &defaultCronjobBackofflimit,
 				},
 			},
 			SuccessfulJobsHistoryLimit: &successfulLim,

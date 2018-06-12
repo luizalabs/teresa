@@ -486,6 +486,10 @@ func TestCronJobSpecToK8sCronJob(t *testing.T) {
 	if *lim != cs.FailedJobsHistoryLimit {
 		t.Errorf("expected %d, got %d", cs.FailedJobsHistoryLimit, *lim)
 	}
+
+	if actual := *k8sCron.Spec.JobTemplate.Spec.BackoffLimit; actual != int32(3) {
+		t.Errorf("expected 3, got %d", actual)
+	}
 }
 
 func TestConfigMapSpec(t *testing.T) {

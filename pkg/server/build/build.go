@@ -72,7 +72,7 @@ func (ops *BuildOperations) Create(ctx context.Context, appName, buildName strin
 		err = ops.CreateByOpts(ctx, &CreateOptions{
 			App:       a,
 			BuildName: buildName,
-			SlugIn:    fmt.Sprintf("builds/%s/%s/in", a.Name, buildName),
+			SlugIn:    fmt.Sprintf("builds/%s/%s/in/app.tgz", a.Name, buildName),
 			SlugDest:  fmt.Sprintf("builds/%s/%s/out", a.Name, buildName),
 			TarBall:   tarBall,
 			Stream:    w,

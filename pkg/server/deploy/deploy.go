@@ -76,7 +76,7 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 	}
 
 	deployId := uid.New()
-	buildIn := fmt.Sprintf("deploys/%s/%s/in", a.Name, deployId)
+	buildIn := fmt.Sprintf("deploys/%s/%s/in/app.tgz", a.Name, deployId)
 	buildDest := fmt.Sprintf("deploys/%s/%s/out", appName, deployId)
 
 	r, w := io.Pipe()

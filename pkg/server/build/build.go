@@ -27,12 +27,11 @@ type K8sOperations interface {
 }
 
 type Options struct {
-	SlugBuilderImage   string
-	SlugRunnerImage    string
-	SlugStoreImage     string
-	BuildLimitCPU      string
-	BuildLimitMemory   string
-	DefaultServiceType string
+	SlugBuilderImage string
+	SlugRunnerImage  string
+	SlugStoreImage   string
+	BuildLimitCPU    string
+	BuildLimitMemory string
 }
 
 type BuildOperations struct {
@@ -174,7 +173,7 @@ func (ops *BuildOperations) createService(appName, buildName string, labels map[
 	svcSpec := spec.NewService(
 		appName,
 		buildName,
-		ops.opts.DefaultServiceType,
+		"LoadBalancer",
 		[]spec.ServicePort{*spec.NewDefaultServicePort("")},
 		labels,
 	)

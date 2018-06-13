@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - [client] Print app name and current cluster on command `app delete`
 - [server] Set default backoff limit to 3 on cronjobs
+- [server] Always use service type LoadBalancer on builds
 
 ### Fixed
 - [server] Fix cloud provider detection on gce

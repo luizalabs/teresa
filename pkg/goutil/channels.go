@@ -2,24 +2,21 @@ package goutil
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 )
 
-func ChannelFromReader(r io.Reader, ln bool) <-chan string {
-	fn := fmt.Sprint
-	if ln {
-		fn = fmt.Sprintln
-	}
-
-	c := make(chan string)
+func LineGenerator(r io.Reader) (<-chan string, <-chan error) {
+	ch := make(chan string)
+	errCh := make(chan error)
 	go func() {
-		defer close(c)
-		scanner := bufio.NewScanner(r)
-		for scanner.Scan() {
-			c <- fn(scanner.Text())
+		defer close(ch)
+		sc := bufio.NewScanner(r)
+		for sc.Scan() {
+			ch <- sc.Text()
+		}
+		if err := sc.Err(); err != nil {
+			errCh <- err
 		}
 	}()
-
-	return c
+	return ch, errCh
 }

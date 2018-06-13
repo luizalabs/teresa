@@ -1,26 +1,26 @@
 package goutil
 
 import (
-	"bytes"
+	"strings"
 	"testing"
+	"testing/iotest"
 )
 
-func TestChannelFromReader(t *testing.T) {
-	var testCases = []struct {
-		ln       bool
-		expected string
-	}{
-		{true, "test\n"},
-		{false, "test"},
+func TestLineGeneratorOK(t *testing.T) {
+	r := strings.NewReader("test")
+	ch, _ := LineGenerator(r)
+
+	if s := <-ch; s != "test" {
+		t.Errorf("got %s; want test", s)
 	}
+}
 
-	for _, tc := range testCases {
-		buf := bytes.NewBufferString(tc.expected)
-		ch := ChannelFromReader(buf, tc.ln)
+func TestLineGeneratorError(t *testing.T) {
+	r := iotest.TimeoutReader(strings.NewReader("test"))
+	ch, errCh := LineGenerator(r)
+	<-ch
 
-		s := <-ch
-		if s != tc.expected {
-			t.Errorf("expected %s, got %s", tc.expected, s)
-		}
+	if err := <-errCh; err != iotest.ErrTimeout {
+		t.Errorf("got %v; want %v", err, iotest.ErrTimeout)
 	}
 }

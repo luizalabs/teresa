@@ -52,13 +52,15 @@ func (s *Service) Make(stream bpb.Build_MakeServer) error {
 	}
 	defer rc.Close()
 
-	buildMsgs := goutil.ChannelFromReader(rc, true)
+	buildMsgs, buildErrCh := goutil.LineGenerator(rc)
 	var msg string
 	for {
 		select {
 		case <-time.After(s.keepAliveTimeout):
 			msg = KeepAliveMessage
 		case err := <-errChan:
+			return err
+		case err := <-buildErrCh:
 			return err
 		case <-ctx.Done():
 			return ctx.Err()
@@ -69,7 +71,7 @@ func (s *Service) Make(stream bpb.Build_MakeServer) error {
 			msg = m
 		}
 
-		if err := stream.Send(&bpb.BuildResponse{Text: msg}); err != nil {
+		if err := stream.Send(&bpb.BuildResponse{Text: msg + "\n"}); err != nil {
 			return err
 		}
 	}

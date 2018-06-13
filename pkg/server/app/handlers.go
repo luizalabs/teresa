@@ -48,13 +48,15 @@ func (s *Service) Logs(req *appb.LogsRequest, stream appb.App_LogsServer) error 
 	}
 	defer rc.Close()
 
-	chLogs := goutil.ChannelFromReader(rc, false)
+	chLogs, errCh := goutil.LineGenerator(rc)
 	var line string
 
 	for {
 		select {
 		case <-time.After(logSeparatorInterval):
 			line = logSeparator
+		case err := <-errCh:
+			return err
 		case m, ok := <-chLogs:
 			if !ok {
 				return nil

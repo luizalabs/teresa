@@ -26,13 +26,15 @@ func (s *Service) Command(req *execpb.CommandRequest, stream execpb.Exec_Command
 	}
 	defer rc.Close()
 
-	cmdMsgs := goutil.ChannelFromReader(rc, true)
+	cmdMsgs, cmdErrCh := goutil.LineGenerator(rc)
 	var msg string
 	for {
 		select {
 		case <-time.After(s.keepAliveTimeout):
 			msg = keepAliveMessage
 		case err := <-errChan:
+			return err
+		case err := <-cmdErrCh:
 			return err
 		case m, ok := <-cmdMsgs:
 			if !ok {
@@ -41,7 +43,7 @@ func (s *Service) Command(req *execpb.CommandRequest, stream execpb.Exec_Command
 			msg = m
 		}
 
-		if err := stream.Send(&execpb.CommandResponse{Text: msg}); err != nil {
+		if err := stream.Send(&execpb.CommandResponse{Text: msg + "\n"}); err != nil {
 			return err
 		}
 	}

@@ -16,6 +16,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] Fix cloud provider detection on gce
 - [server] Save last user of deploy
 - [server] Fix long running exec commands
+- [server] Fix lack of error handling when streaming messages from readers
 
 ## [0.22.0] - 2018-06-07
 ### Changed

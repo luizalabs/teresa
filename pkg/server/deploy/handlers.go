@@ -63,7 +63,7 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 	}
 	defer rc.Close()
 
-	deployMsgs := goutil.ChannelFromReader(rc, true)
+	deployMsgs, deployErrCh := goutil.LineGenerator(rc)
 	var msg string
 
 	for {
@@ -72,6 +72,8 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 			msg = build.KeepAliveMessage
 		case err := <-errChan:
 			return err
+		case err := <-deployErrCh:
+			return err
 		case m, ok := <-deployMsgs:
 			if !ok {
 				return nil
@@ -79,7 +81,7 @@ func (s *Service) Make(stream dpb.Deploy_MakeServer) error {
 			msg = m
 		}
 
-		if err := stream.Send(&dpb.DeployResponse{Text: msg}); err != nil {
+		if err := stream.Send(&dpb.DeployResponse{Text: msg + "\n"}); err != nil {
 			return err
 		}
 	}

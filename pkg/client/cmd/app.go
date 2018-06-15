@@ -136,34 +136,17 @@ func createApp(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid protocol parameter")
 	}
 
+	lim := newLimits(cpu, maxCPU, memory, maxMemory)
+	if err := ValidateLimits(lim); err != nil {
+		client.PrintErrorAndExit(err.Error())
+	}
+
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
 		client.PrintErrorAndExit("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
 
-	lim := &appb.CreateRequest_Limits{
-		Default: []*appb.CreateRequest_Limits_LimitRangeQuantity{
-			{
-				Resource: "cpu",
-				Quantity: maxCPU,
-			},
-			{
-				Resource: "memory",
-				Quantity: maxMemory,
-			},
-		},
-		DefaultRequest: []*appb.CreateRequest_Limits_LimitRangeQuantity{
-			{
-				Resource: "cpu",
-				Quantity: cpu,
-			},
-			{
-				Resource: "memory",
-				Quantity: memory,
-			},
-		},
-	}
 	as := &appb.CreateRequest_Autoscale{
 		CpuTargetUtilization: targetCPU,
 		Min:                  scaleMin,
@@ -1041,4 +1024,29 @@ func shortHumanDuration(d time.Duration) string {
 		return fmt.Sprintf("%dd", hours/24)
 	}
 	return fmt.Sprintf("%dy", int(d.Hours()/24/365))
+}
+
+func newLimits(cpu, maxCPU, mem, maxMem string) *appb.CreateRequest_Limits {
+	return &appb.CreateRequest_Limits{
+		Default: []*appb.CreateRequest_Limits_LimitRangeQuantity{
+			{
+				Resource: "cpu",
+				Quantity: maxCPU,
+			},
+			{
+				Resource: "memory",
+				Quantity: maxMem,
+			},
+		},
+		DefaultRequest: []*appb.CreateRequest_Limits_LimitRangeQuantity{
+			{
+				Resource: "cpu",
+				Quantity: cpu,
+			},
+			{
+				Resource: "memory",
+				Quantity: mem,
+			},
+		},
+	}
 }

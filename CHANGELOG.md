@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] Set default backoff limit to 3 on cronjobs
 - [server] Always use service type LoadBalancer on builds
 - [server] Use app.tgz as source code tarball name
+- Switch from godep to govendor
 
 ### Fixed
 - [server] Fix cloud provider detection on gce

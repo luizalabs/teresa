@@ -2,6 +2,7 @@ package storage
 
 import (
 	"io"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -11,6 +12,7 @@ import (
 
 type S3Client interface {
 	PutObject(*s3.PutObjectInput) (*s3.PutObjectOutput, error)
+	ListObjects(*s3.ListObjectsInput) (*s3.ListObjectsOutput, error)
 }
 
 type S3 struct {
@@ -47,6 +49,31 @@ func (s *S3) UploadFile(path string, file io.ReadSeeker) error {
 	return err
 }
 
+func (s *S3) List(path string) ([]*Object, error) {
+	li := &s3.ListObjectsInput{
+		Bucket: &s.Bucket,
+		Prefix: aws.String(path),
+	}
+
+	res, err := s.Client.ListObjects(li)
+	if err != nil {
+		return nil, err
+	}
+
+	out := []*Object{}
+	m := make(map[string]bool)
+	for _, item := range res.Contents {
+		name := strings.TrimPrefix(*item.Key, path)
+		name = strings.Split(name, "/")[0]
+		if _, found := m[name]; !found {
+			m[name] = true
+			out = append(out, &Object{Name: name, LastModified: *item.LastModified})
+		}
+	}
+
+	return out, nil
+}
+
 func (s *S3) Type() string {
 	return string(S3Type)
 }
@@ -55,7 +82,7 @@ func (s *S3) PodEnvVars() map[string]string {
 	return make(map[string]string)
 }
 
-func newS3(conf *Config) Storage {
+func newS3(conf *Config) *S3 {
 	st := &S3{
 		Key:              conf.AwsKey,
 		Region:           conf.AwsRegion,

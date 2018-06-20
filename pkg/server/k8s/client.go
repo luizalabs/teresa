@@ -1199,21 +1199,20 @@ func (c *Client) WatchDeploy(namespace, deployName string) error {
 			return errors.Wrap(err, "watch deploy failed")
 		}
 		ch := watch.Filter(w, filterDeployEvents).ResultChan()
-	inner:
-		for {
-			select {
-			case ev, ok := <-ch:
-				if !ok {
-					break inner
-				}
-				d := ev.Object.(*v1beta2.Deployment)
-				cond := d.Status.Conditions[len(d.Status.Conditions)-1]
-				if cond.LastUpdateTime.After(ts) && isRollingUpdateFinished(cond) {
-					return nil
-				} else if isRollingUpdateStalled(cond) {
-					return errors.New("rolling update stalled, still running the old deploy")
-				}
-			}
+		ev, ok := <-ch
+		if !ok {
+			continue
+		}
+		d := ev.Object.(*v1beta2.Deployment)
+		conds := d.Status.Conditions
+		if len(conds) == 0 {
+			return errors.New("failed to monitor the rolling update")
+		}
+		last := conds[len(conds)-1]
+		if last.LastUpdateTime.After(ts) && isRollingUpdateFinished(last) {
+			return nil
+		} else if isRollingUpdateStalled(last) {
+			return errors.New("rolling update stalled, still running the old deploy")
 		}
 	}
 }

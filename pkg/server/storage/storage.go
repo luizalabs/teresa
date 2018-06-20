@@ -2,6 +2,7 @@ package storage
 
 import (
 	"io"
+	"time"
 )
 
 type storageType string
@@ -23,12 +24,18 @@ type Config struct {
 	AwsS3ForcePathStyle bool        `envconfig:"aws_s3_force_path_style" default:"false"`
 }
 
+type Object struct {
+	Name         string
+	LastModified time.Time
+}
+
 type Storage interface {
 	K8sSecretName() string
 	AccessData() map[string][]byte
 	UploadFile(path string, file io.ReadSeeker) error
 	Type() string
 	PodEnvVars() map[string]string
+	List(path string) ([]*Object, error)
 }
 
 func New(conf *Config) (Storage, error) {

@@ -23,6 +23,11 @@ func (f *fakeS3Client) PutObject(*s3.PutObjectInput) (*s3.PutObjectOutput, error
 	return nil, nil
 }
 
+func (f *fakeS3Client) ListObjects(*s3.ListObjectsInput) (*s3.ListObjectsOutput, error) {
+	out := &s3.ListObjectsOutput{CommonPrefixes: []*s3.CommonPrefix{}}
+	return out, nil
+}
+
 func TestS3K8sSecretName(t *testing.T) {
 	s3 := newS3(&Config{})
 
@@ -70,7 +75,7 @@ func TestS3AccessData(t *testing.T) {
 
 func TestS3UploadFile(t *testing.T) {
 	s3 := newS3(&Config{})
-	s3.(*S3).Client = &fakeS3Client{}
+	s3.Client = &fakeS3Client{}
 
 	if err := s3.UploadFile("/test", &fakeReadSeeker{}); err != nil {
 		t.Errorf("expected no error, got %v", err)
@@ -82,5 +87,13 @@ func TestS3PodEnvVars(t *testing.T) {
 	ev := s3.PodEnvVars()
 	if len(ev) != 0 {
 		t.Errorf("expected 0, got %d", len(ev))
+	}
+}
+
+func TestS3List(t *testing.T) {
+	s3 := newS3(&Config{})
+	s3.Client = &fakeS3Client{}
+	if _, err := s3.List("some/path"); err != nil {
+		t.Errorf("expected no error, got %v", err)
 	}
 }

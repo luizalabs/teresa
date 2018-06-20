@@ -55,3 +55,15 @@ func TestFakePodEnvVars(t *testing.T) {
 		t.Errorf("expected 0, got %d", len(ev))
 	}
 }
+
+func TestFakeList(t *testing.T) {
+	fake := NewFake()
+	items, err := fake.List("foo/bar")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if items[0].Name != "fake" || items[1].Name != "file" { // check fake.go
+		t.Errorf("expected [fake file], got [%s %s]", items[0].Name, items[1].Name)
+	}
+}

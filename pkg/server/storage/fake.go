@@ -2,6 +2,7 @@ package storage
 
 import (
 	"io"
+	"time"
 )
 
 type fake struct {
@@ -26,6 +27,13 @@ func (f *fake) AccessData() map[string][]byte {
 
 func (f *fake) UploadFile(path string, file io.ReadSeeker) error {
 	return nil
+}
+
+func (f *fake) List(path string) ([]*Object, error) {
+	return []*Object{
+		&Object{Name: "fake", LastModified: time.Now()},
+		&Object{Name: "file", LastModified: time.Now()},
+	}, nil
 }
 
 func (f *fake) Type() string {

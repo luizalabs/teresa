@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - Command `build list`
 
+### Fixed
+- [server] Fix panic when monitoring the rolling update
+
 ## [0.23.0] - 2018-06-21
 ### Added
 - [client] Support to remove remote cluster from configuration file

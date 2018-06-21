@@ -201,3 +201,49 @@ func TestCreateWithRunAppRunError(t *testing.T) {
 		t.Errorf("expected ErrBuildFail, got %v", err)
 	}
 }
+
+func TestList(t *testing.T) {
+	ops := NewBuildOperations(
+		storage.NewFake(),
+		app.NewFakeOperations(),
+		exec.NewFakeOperations(),
+		&fakeK8sOperations{},
+		&Options{},
+	)
+
+	_, err := ops.List("teresa", &database.User{})
+	if err != nil {
+		t.Errorf("Expected no errors, got %v", err)
+	}
+}
+
+func TestListPermissionDenied(t *testing.T) {
+	ops := NewBuildOperations(
+		storage.NewFake(),
+		app.NewFakeOperations(),
+		exec.NewFakeOperations(),
+		&fakeK8sOperations{},
+		&Options{},
+	)
+
+	u := &database.User{Email: "bad-user@luizalabs.com"}
+	_, err := ops.List("teresa", u)
+	if err != auth.ErrPermissionDenied {
+		t.Errorf("Expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestListAppNotFound(t *testing.T) {
+	ops := NewBuildOperations(
+		storage.NewFake(),
+		app.NewFakeOperations(),
+		exec.NewFakeOperations(),
+		&fakeK8sOperations{},
+		&Options{},
+	)
+
+	_, err := ops.List("bad-app", &database.User{})
+	if err != app.ErrNotFound {
+		t.Errorf("Expected ErrNotFound, got %v", err)
+	}
+}

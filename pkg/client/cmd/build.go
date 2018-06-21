@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	context "golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
@@ -39,6 +40,14 @@ to promote a build to a new deploy.
 	`,
 	Example: "  $ teresa build create . --app myapp --name v1-0-0-rc1",
 	Run:     buildApp,
+}
+
+var buildListCmd = &cobra.Command{
+	Use:   "list <app-name>",
+	Short: "List app builds",
+	Long:  "Return all builds from a given app.",
+	Example: "	$ teresa build list myapp",
+	Run: buildList,
 }
 
 func buildApp(cmd *cobra.Command, args []string) {
@@ -180,9 +189,48 @@ func sendBuildTarball(tarPath string, stream bpb.Build_MakeClient) error {
 	return nil
 }
 
+func buildList(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		cmd.Usage()
+		return
+	}
+
+	appName := args[0]
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
+
+	cli := bpb.NewBuildClient(conn)
+	resp, err := cli.List(context.Background(), &bpb.ListRequest{AppName: appName})
+	if err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+
+	if len(resp.Builds) == 0 {
+		fmt.Println("App doesn't have any builds")
+		return
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"BUILD", "LAST MODIFIED"})
+	table.SetRowLine(true)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetRowSeparator("-")
+	table.SetAutoWrapText(false)
+
+	for _, b := range resp.Builds {
+		table.Append([]string{b.Name, b.LastModified})
+	}
+	table.Render()
+}
+
 func init() {
 	RootCmd.AddCommand(buildCmd)
+
 	buildCmd.AddCommand(buildCreateCmd)
+	buildCmd.AddCommand(buildListCmd)
 
 	buildCreateCmd.Flags().String("app", "", "app name (required)")
 	buildCreateCmd.Flags().String("name", "", "build name (required)")

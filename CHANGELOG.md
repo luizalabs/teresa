@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Added
+- Command `build list`
+
 ## [0.23.0] - 2018-06-21
 ### Added
 - [client] Support to remove remote cluster from configuration file

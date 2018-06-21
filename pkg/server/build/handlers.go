@@ -8,6 +8,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/goutil"
 	bpb "github.com/luizalabs/teresa/pkg/protobuf/build"
 	"github.com/luizalabs/teresa/pkg/server/database"
+	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -75,6 +76,25 @@ func (s *Service) Make(stream bpb.Build_MakeServer) error {
 			return err
 		}
 	}
+}
+
+func (s *Service) List(ctx context.Context, req *bpb.ListRequest) (*bpb.ListResponse, error) {
+	u := ctx.Value("user").(*database.User)
+
+	items, err := s.ops.List(req.AppName, u)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &bpb.ListResponse{Builds: make([]*bpb.ListResponse_Build, len(items))}
+	for i := range items {
+		res.Builds[i] = &bpb.ListResponse_Build{
+			Name:         items[i].Name,
+			LastModified: items[i].LastModified.String(),
+		}
+	}
+
+	return res, nil
 }
 
 func (s *Service) RegisterService(grpcServer *grpc.Server) {

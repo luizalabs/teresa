@@ -2,6 +2,7 @@ package build
 
 import (
 	"io"
+	"time"
 
 	context "golang.org/x/net/context"
 
@@ -17,6 +18,13 @@ func (f *FakeOperations) Create(ctx context.Context, appName string, buildName s
 
 func (f *FakeOperations) CreateByOpts(ctx context.Context, opt *CreateOptions) error {
 	return nil
+}
+
+func (f *FakeOperations) List(appName string, u *database.User) ([]*Build, error) {
+	return []*Build{
+		&Build{Name: "v1.0.0", LastModified: time.Now()},
+		&Build{Name: "v1.1.0-rc1", LastModified: time.Now()},
+	}, nil
 }
 
 func NewFakeOperations() *FakeOperations {

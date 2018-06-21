@@ -16,6 +16,7 @@ import (
 type Operations interface {
 	CreateByOpts(ctx context.Context, opts *CreateOptions) error
 	Create(ctx context.Context, appName, buildName string, u *database.User, tarBall io.ReadSeeker, runApp bool) (io.ReadCloser, <-chan error)
+	List(appName string, u *database.User) ([]*Build, error)
 }
 
 type K8sOperations interface {
@@ -124,6 +125,27 @@ func (ops *BuildOperations) CreateByOpts(ctx context.Context, opts *CreateOption
 	}
 
 	return nil
+}
+
+func (ops *BuildOperations) List(appName string, u *database.User) ([]*Build, error) {
+	if _, err := ops.appOps.CheckPermAndGet(u, appName); err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("builds/%s/", appName)
+	items, err := ops.fileStorage.List(path)
+	if err != nil {
+		return nil, err
+	}
+
+	builds := make([]*Build, len(items))
+	for i := range items {
+		builds[i] = &Build{
+			Name:         items[i].Name,
+			LastModified: items[i].LastModified,
+		}
+	}
+	return builds, nil
 }
 
 func (ops *BuildOperations) runInternal(ctx context.Context, a *app.App, buildName string, w io.Writer) error {

@@ -11,11 +11,13 @@ import (
 )
 
 const (
-	nginxConfTmplDir = "/etc/nginx/template/"
-	nginxConfDir     = "/etc/nginx/"
-	nginxConfFile    = "nginx.conf"
-	nginxArgTmpl     = "envsubst '%s' < %s%s > %s%s && nginx -g 'daemon off;'"
-	nginxBackendTmpl = "http://localhost:%d"
+	nginxConfTmplDir        = "/etc/nginx/template/"
+	nginxConfDir            = "/etc/nginx/"
+	nginxConfFile           = "nginx.conf"
+	nginxArgTmpl            = "envsubst '%s' < %s%s > %s%s && nginx -g 'daemon off;'"
+	nginxBackendTmpl        = "http://localhost:%d"
+	nginxDefaultCPULimit    = "100m"
+	nginxDefaultMemoryLimit = "256Mi"
 )
 
 type ContainerLimits struct {
@@ -115,6 +117,10 @@ func newNginxContainer(image string) *Container {
 		}},
 		Env:          env,
 		VolumeMounts: newNginxVolumeMounts(),
+		ContainerLimits: &ContainerLimits{
+			CPU:    nginxDefaultCPULimit,
+			Memory: nginxDefaultMemoryLimit,
+		},
 	}
 }
 

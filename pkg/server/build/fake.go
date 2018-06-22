@@ -27,6 +27,10 @@ func (f *FakeOperations) List(appName string, u *database.User) ([]*Build, error
 	}, nil
 }
 
+func (f *FakeOperations) Run(ctx context.Context, appName, buildName string, u *database.User) (io.ReadCloser, <-chan error) {
+	return nil, make(chan error)
+}
+
 func NewFakeOperations() *FakeOperations {
 	return new(FakeOperations)
 }

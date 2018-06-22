@@ -69,7 +69,7 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 	}
 	a.Team = teamName
 
-	confFiles, err := getDeployConfigFilesFromTarBall(tarBall, a.ProcessType)
+	confFiles, err := getDeployConfigFilesFromTarBall(tarBall, a.Name, a.ProcessType)
 	if err != nil {
 		errChan <- teresa_errors.New(ErrInvalidTeresaYamlFile, err)
 		return nil, errChan

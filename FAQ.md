@@ -189,6 +189,26 @@ Take a look at [here](https://github.com/luizalabs/hello-teresa#teresayaml).
 If a file named `teresa-processtype.yaml` is found it is used instead of
 `teresa.yaml`.
 
+**Q: Can I use one teresa.yaml for all my apps?**
+
+Yes, from version 0.24 we support a new format `v2` where each app has its own
+section, e.g.:
+
+```yaml
+version: v2
+applications:
+  app1:
+    lifecycle:
+      preStop:
+        drainTimeoutSeconds: 15
+  app2:
+    lifecycle:
+      preStop:
+        drainTimeoutSeconds: 20
+```
+
+The file `teresa-processtype.yaml` is still processed.
+
 **Q: How to drain connections on shutdown?**
 
 You can make the pods wait a fixed amount of seconds (maximum 30) before

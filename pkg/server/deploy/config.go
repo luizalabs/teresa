@@ -26,10 +26,23 @@ type DeployConfigFiles struct {
 	NginxConf  string
 }
 
-func (d *DeployConfigFiles) fillTeresaYaml(r io.Reader) error {
-	d.TeresaYaml = new(spec.TeresaYaml)
-	if err := readYAMLFromTarBall(r, d.TeresaYaml); err != nil {
+func (d *DeployConfigFiles) fillTeresaYaml(r io.Reader, appName string) error {
+	type T struct {
+		Version           string `yaml:"version"`
+		spec.TeresaYaml   `yaml:",inline"`
+		spec.TeresaYamlV2 `yaml:",inline"`
+	}
+	tmp := new(T)
+	if err := readYAMLFromTarBall(r, tmp); err != nil {
 		return err
+	}
+	switch tmp.Version {
+	case "v2":
+		if d.TeresaYaml = tmp.TeresaYamlV2.Applications[appName]; d.TeresaYaml == nil {
+			d.TeresaYaml = &spec.TeresaYaml{}
+		}
+	default:
+		d.TeresaYaml = &tmp.TeresaYaml
 	}
 	return validateTeresaYaml(d.TeresaYaml)
 }
@@ -59,7 +72,7 @@ func isConfigFile(name string, confFiles ...string) bool {
 	return false
 }
 
-func getDeployConfigFilesFromTarBall(tarBall io.ReadSeeker, processType string) (*DeployConfigFiles, error) {
+func getDeployConfigFilesFromTarBall(tarBall io.ReadSeeker, appName, processType string) (*DeployConfigFiles, error) {
 	gReader, err := gzip.NewReader(tarBall)
 	if err != nil {
 		return nil, err
@@ -83,15 +96,9 @@ func getDeployConfigFilesFromTarBall(tarBall io.ReadSeeker, processType string) 
 			continue
 		}
 
-		if hdr.Name == tYamlFilename || hdr.Name == tYamlProcessTypeFileName {
-			if hdr.Name == tYamlProcessTypeFileName {
-				if err := deployFiles.fillTeresaYaml(tarReader); err != nil {
-					return nil, err
-				}
-			} else if deployFiles.TeresaYaml == nil {
-				if err := deployFiles.fillTeresaYaml(tarReader); err != nil {
-					return nil, err
-				}
+		if hdr.Name == tYamlProcessTypeFileName || (hdr.Name == tYamlFilename && deployFiles.TeresaYaml == nil) {
+			if err := deployFiles.fillTeresaYaml(tarReader, appName); err != nil {
+				return nil, err
 			}
 		} else if hdr.Name == nginxConfFileName {
 			deployFiles.NginxConf, err = readFileFromTarBall(tarReader)

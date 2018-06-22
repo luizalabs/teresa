@@ -13,7 +13,7 @@ func TestGetTeresaYamlFromDeployTarBall(t *testing.T) {
 	}
 	defer tarBall.Close()
 
-	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test")
+	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test", "test")
 	if err != nil {
 		t.Fatal("error getting deploy config file from tarball:", err)
 	}
@@ -35,7 +35,7 @@ func TestGetTeresaYamlFromDeployTarBallConfigFiles(t *testing.T) {
 	}
 	defer tarBall.Close()
 
-	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test")
+	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test", "test")
 	if err != nil {
 		t.Fatal("error getting deploy config file from tarball:", err)
 	}
@@ -54,7 +54,7 @@ func TestGetTeresaYamlFromDeployTarBallInvalidYaml(t *testing.T) {
 	}
 	defer tarBall.Close()
 
-	if _, err := getDeployConfigFilesFromTarBall(tarBall, "test"); err == nil {
+	if _, err := getDeployConfigFilesFromTarBall(tarBall, "test", "test"); err == nil {
 		t.Error("expected error, got nil")
 	}
 }
@@ -66,7 +66,7 @@ func TestGetProcfileFromDeployTarBall(t *testing.T) {
 	}
 	defer tarBall.Close()
 
-	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test")
+	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test", "test")
 	if err != nil {
 		t.Fatal("error getting deploy config file from tarball:", err)
 	}
@@ -88,7 +88,7 @@ func TestGetDeployConfigFromTarBall(t *testing.T) {
 	}
 	defer tarBall.Close()
 
-	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test")
+	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test", "test")
 	if err != nil {
 		t.Fatal("error getting deploy config file from tarball:", err)
 	}
@@ -119,7 +119,7 @@ func TestGetTeresaYamlForProcessTypeFromDeployTarBall(t *testing.T) {
 	}
 	defer tarBall.Close()
 
-	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test")
+	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test", "test")
 	if err != nil {
 		t.Fatal("error getting deploy config file from tarball:", err)
 	}
@@ -132,5 +132,68 @@ func TestGetTeresaYamlForProcessTypeFromDeployTarBall(t *testing.T) {
 	actual := deployConfig.TeresaYaml.HealthCheck.Liveness.Path
 	if actual != expectedText {
 		t.Errorf("expected %s, got %s", expectedText, actual)
+	}
+}
+
+func TestGetTeresaYamlV2OK(t *testing.T) {
+	tarBall, err := os.Open(filepath.Join("testdata", "teresaYamlV2.tgz"))
+	if err != nil {
+		t.Fatal("failed to open the tarball:", err)
+	}
+	defer tarBall.Close()
+	var testCases = []struct {
+		appName      string
+		livenessPath string
+		drainTimeout int
+	}{
+		{"test1", "/healthcheck1/", 1},
+		{"test2", "/healthcheck2/", 2},
+	}
+
+	for _, tc := range testCases {
+		tarBall.Seek(0, 0)
+		deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, tc.appName, "test")
+		if err != nil {
+			t.Fatal("error getting deploy config file from tarball:", err)
+		}
+		if deployConfig.TeresaYaml == nil {
+			t.Fatal("want a valid TeresaYaml struct; got nil")
+		}
+		path := deployConfig.TeresaYaml.HealthCheck.Liveness.Path
+		if path != tc.livenessPath {
+			t.Errorf("got %s; want %s", path, tc.livenessPath)
+		}
+		timeout := deployConfig.TeresaYaml.Lifecycle.PreStop.DrainTimeoutSeconds
+		if timeout != tc.drainTimeout {
+			t.Errorf("got %d; want %d", timeout, tc.drainTimeout)
+		}
+	}
+}
+
+func TestGetTeresaYamlV2MissingApp(t *testing.T) {
+	tarBall, err := os.Open(filepath.Join("testdata", "teresaYamlV2.tgz"))
+	if err != nil {
+		t.Fatal("failed to open the tarball:", err)
+	}
+	defer tarBall.Close()
+	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "missing", "test")
+	if err != nil {
+		t.Fatal("error getting deploy config file from tarball:", err)
+	}
+	if deployConfig.TeresaYaml == nil {
+		t.Fatal("want a valid TeresaYaml struct; got nil")
+	}
+
+	hc := deployConfig.TeresaYaml.HealthCheck
+	if hc != nil {
+		t.Errorf("got %v; want nil", hc)
+	}
+	lc := deployConfig.TeresaYaml.Lifecycle
+	if lc != nil {
+		t.Errorf("got %v; want nil", lc)
+	}
+	ru := deployConfig.TeresaYaml.RollingUpdate
+	if ru != nil {
+		t.Errorf("got %v; want nil", ru)
 	}
 }

@@ -53,6 +53,10 @@ type TeresaYaml struct {
 	Cron          *CronArgs      `yaml:"cron,omitempty"`
 }
 
+type TeresaYamlV2 struct {
+	Applications map[string]*TeresaYaml `yaml:"applications,omitempty"`
+}
+
 type Deploy struct {
 	Pod
 	TeresaYaml

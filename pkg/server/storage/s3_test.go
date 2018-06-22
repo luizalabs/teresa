@@ -28,6 +28,10 @@ func (f *fakeS3Client) ListObjects(*s3.ListObjectsInput) (*s3.ListObjectsOutput,
 	return out, nil
 }
 
+func (f *fakeS3Client) DeleteObject(*s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error) {
+	return nil, nil
+}
+
 func TestS3K8sSecretName(t *testing.T) {
 	s3 := newS3(&Config{})
 
@@ -79,6 +83,15 @@ func TestS3UploadFile(t *testing.T) {
 
 	if err := s3.UploadFile("/test", &fakeReadSeeker{}); err != nil {
 		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func TestS3Delete(t *testing.T) {
+	s3 := newS3(&Config{})
+	s3.Client = &fakeS3Client{}
+
+	if err := s3.Delete("/test"); err != nil {
+		t.Errorf("expected no error, got %s", err)
 	}
 }
 

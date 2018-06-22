@@ -36,6 +36,7 @@ type Storage interface {
 	Type() string
 	PodEnvVars() map[string]string
 	List(path string) ([]*Object, error)
+	Delete(path string) error
 }
 
 func New(conf *Config) (Storage, error) {

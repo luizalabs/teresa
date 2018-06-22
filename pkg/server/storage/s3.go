@@ -13,6 +13,7 @@ import (
 type S3Client interface {
 	PutObject(*s3.PutObjectInput) (*s3.PutObjectOutput, error)
 	ListObjects(*s3.ListObjectsInput) (*s3.ListObjectsOutput, error)
+	DeleteObject(*s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error)
 }
 
 type S3 struct {
@@ -50,12 +51,7 @@ func (s *S3) UploadFile(path string, file io.ReadSeeker) error {
 }
 
 func (s *S3) List(path string) ([]*Object, error) {
-	li := &s3.ListObjectsInput{
-		Bucket: &s.Bucket,
-		Prefix: aws.String(path),
-	}
-
-	res, err := s.Client.ListObjects(li)
+	res, err := s.s3List(path)
 	if err != nil {
 		return nil, err
 	}
@@ -72,6 +68,34 @@ func (s *S3) List(path string) ([]*Object, error) {
 	}
 
 	return out, nil
+}
+
+func (s *S3) Delete(path string) error {
+	objs, err := s.s3List(path)
+	if err != nil {
+		return err
+	}
+
+	for _, obj := range objs.Contents {
+		di := &s3.DeleteObjectInput{
+			Bucket: &s.Bucket,
+			Key:    obj.Key,
+		}
+		if _, err := s.Client.DeleteObject(di); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *S3) s3List(path string) (*s3.ListObjectsOutput, error) {
+	li := &s3.ListObjectsInput{
+		Bucket: &s.Bucket,
+		Prefix: aws.String(path),
+	}
+
+	return s.Client.ListObjects(li)
 }
 
 func (s *S3) Type() string {

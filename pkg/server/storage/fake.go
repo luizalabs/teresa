@@ -36,6 +36,10 @@ func (f *fake) List(path string) ([]*Object, error) {
 	}, nil
 }
 
+func (f *fake) Delete(path string) error {
+	return nil
+}
+
 func (f *fake) Type() string {
 	return string(FakeType)
 }
@@ -44,7 +48,7 @@ func (f *fake) PodEnvVars() map[string]string {
 	return make(map[string]string)
 }
 
-func NewFake() Storage {
+func NewFake() *fake {
 	return &fake{
 		Key:    "key",
 		Region: "region",

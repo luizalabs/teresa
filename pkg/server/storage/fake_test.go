@@ -67,3 +67,11 @@ func TestFakeList(t *testing.T) {
 		t.Errorf("expected [fake file], got [%s %s]", items[0].Name, items[1].Name)
 	}
 }
+
+func TestFakeDelete(t *testing.T) {
+	fake := NewFake()
+
+	if err := fake.Delete("/test"); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+}

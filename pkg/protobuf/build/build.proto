@@ -5,6 +5,7 @@ package build;
 service Build {
     rpc Make(stream BuildRequest) returns (stream BuildResponse);
     rpc List(ListRequest) returns (ListResponse);
+    rpc Run(RunRequest) returns (stream RunResponse);
 }
 
 message BuildRequest {
@@ -38,4 +39,13 @@ message ListResponse {
         string last_modified = 2;
     }
     repeated Build builds = 1;
+}
+
+message RunRequest {
+    string app_name = 1;
+    string name = 2;
+}
+
+message RunResponse {
+    string text = 1;
 }

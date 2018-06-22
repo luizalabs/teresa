@@ -2,6 +2,7 @@ package build
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"time"
 
@@ -54,28 +55,9 @@ func (s *Service) Make(stream bpb.Build_MakeServer) error {
 	defer rc.Close()
 
 	buildMsgs, buildErrCh := goutil.LineGenerator(rc)
-	var msg string
-	for {
-		select {
-		case <-time.After(s.keepAliveTimeout):
-			msg = KeepAliveMessage
-		case err := <-errChan:
-			return err
-		case err := <-buildErrCh:
-			return err
-		case <-ctx.Done():
-			return ctx.Err()
-		case m, ok := <-buildMsgs:
-			if !ok {
-				return nil
-			}
-			msg = m
-		}
-
-		if err := stream.Send(&bpb.BuildResponse{Text: msg + "\n"}); err != nil {
-			return err
-		}
-	}
+	return s.streamMsg(ctx, buildMsgs, errChan, buildErrCh, func(msg string) error {
+		return stream.Send(&bpb.BuildResponse{Text: msg})
+	})
 }
 
 func (s *Service) List(ctx context.Context, req *bpb.ListRequest) (*bpb.ListResponse, error) {
@@ -95,6 +77,46 @@ func (s *Service) List(ctx context.Context, req *bpb.ListRequest) (*bpb.ListResp
 	}
 
 	return res, nil
+}
+
+func (s *Service) Run(req *bpb.RunRequest, stream bpb.Build_RunServer) error {
+	ctx := stream.Context()
+	u := ctx.Value("user").(*database.User)
+
+	rc, errChan := s.ops.Run(ctx, req.AppName, req.Name, u)
+	if rc == nil {
+		return <-errChan
+	}
+	defer rc.Close()
+
+	runMsgs, runErrChan := goutil.LineGenerator(rc)
+	return s.streamMsg(ctx, runMsgs, errChan, runErrChan, func(msg string) error {
+		return stream.Send(&bpb.RunResponse{Text: msg})
+	})
+}
+
+func (s *Service) streamMsg(ctx context.Context, msgsChan <-chan string, errChan, msgsErrChan <-chan error, sendFn func(string) error) error {
+	var msg string
+	for {
+		select {
+		case <-time.After(s.keepAliveTimeout):
+			msg = KeepAliveMessage
+		case err := <-errChan:
+			return err
+		case err := <-msgsErrChan:
+			return err
+		case <-ctx.Done():
+			return ctx.Err()
+		case m, ok := <-msgsChan:
+			if !ok {
+				return nil
+			}
+			msg = fmt.Sprintf("%s\n", m)
+		}
+		if err := sendFn(msg); err != nil {
+			return err
+		}
+	}
 }
 
 func (s *Service) RegisterService(grpcServer *grpc.Server) {

@@ -50,6 +50,14 @@ var buildListCmd = &cobra.Command{
 	Run: buildList,
 }
 
+var buildRunCmd = &cobra.Command{
+	Use:   "run <app-name> <build-name>",
+	Short: "Run a build",
+	Long:  "Run a previously created build in a single isolate pod",
+	Example: "	$ teresa build run myapp v1-0-0-rc1",
+	Run: buildRun,
+}
+
 func buildApp(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
 		cmd.Usage()
@@ -226,11 +234,61 @@ func buildList(cmd *cobra.Command, args []string) {
 	table.Render()
 }
 
+func buildRun(cmd *cobra.Command, args []string) {
+	if len(args) != 2 {
+		cmd.Usage()
+		return
+	}
+	appName, buildName := args[0], args[1]
+
+	var err error
+	currentClusterName := cfgCluster
+	if currentClusterName == "" {
+		currentClusterName, err = getCurrentClusterName()
+		if err != nil {
+			client.PrintErrorAndExit("error reading config file: %v", err)
+		}
+	}
+
+	fmt.Printf(
+		"Running build %s of app %s in the cluster %s...\n",
+		color.CyanString(`"%s"`, buildName),
+		color.CyanString(`"%s"`, appName),
+		color.YellowString(`"%s"`, currentClusterName),
+	)
+
+	conn, err := connection.New(cfgFile, currentClusterName)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
+
+	ctx := context.Background()
+
+	cli := bpb.NewBuildClient(conn)
+	stream, err := cli.Run(ctx, &bpb.RunRequest{AppName: appName, Name: buildName})
+	if err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+
+	for {
+		msg, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			client.PrintErrorAndExit(client.GetErrorMsg(err))
+		}
+		fmt.Print(msg.Text)
+	}
+}
+
 func init() {
 	RootCmd.AddCommand(buildCmd)
 
 	buildCmd.AddCommand(buildCreateCmd)
 	buildCmd.AddCommand(buildListCmd)
+	buildCmd.AddCommand(buildRunCmd)
 
 	buildCreateCmd.Flags().String("app", "", "app name (required)")
 	buildCreateCmd.Flags().String("name", "", "build name (required)")

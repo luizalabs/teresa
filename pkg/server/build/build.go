@@ -17,6 +17,7 @@ type Operations interface {
 	CreateByOpts(ctx context.Context, opts *CreateOptions) error
 	Create(ctx context.Context, appName, buildName string, u *database.User, tarBall io.ReadSeeker, runApp bool) (io.ReadCloser, <-chan error)
 	List(appName string, u *database.User) ([]*Build, error)
+	Run(ctx context.Context, appName, buildName string, u *database.User) (io.ReadCloser, <-chan error)
 }
 
 type K8sOperations interface {
@@ -146,6 +147,32 @@ func (ops *BuildOperations) List(appName string, u *database.User) ([]*Build, er
 		}
 	}
 	return builds, nil
+}
+
+func (ops *BuildOperations) Run(ctx context.Context, appName, buildName string, u *database.User) (io.ReadCloser, <-chan error) {
+	errChan := make(chan error, 1)
+
+	a, err := ops.appOps.CheckPermAndGet(u, appName)
+	if err != nil {
+		errChan <- err
+		return nil, errChan
+	}
+
+	path := fmt.Sprintf("builds/%s/%s/", appName, buildName)
+	items, err := ops.fileStorage.List(path)
+	if len(items) == 0 {
+		errChan <- ErrInvalidBuildName
+		return nil, errChan
+	}
+
+	r, w := io.Pipe()
+	go func() {
+		defer w.Close()
+		if err := ops.runInternal(ctx, a, buildName, w); err != nil {
+			errChan <- err
+		}
+	}()
+	return r, errChan
 }
 
 func (ops *BuildOperations) runInternal(ctx context.Context, a *app.App, buildName string, w io.Writer) error {

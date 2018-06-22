@@ -211,8 +211,7 @@ func TestList(t *testing.T) {
 		&Options{},
 	)
 
-	_, err := ops.List("teresa", &database.User{})
-	if err != nil {
+	if _, err := ops.List("teresa", &database.User{}); err != nil {
 		t.Errorf("Expected no errors, got %v", err)
 	}
 }
@@ -245,5 +244,65 @@ func TestListAppNotFound(t *testing.T) {
 	_, err := ops.List("bad-app", &database.User{})
 	if err != app.ErrNotFound {
 		t.Errorf("Expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestRun(t *testing.T) {
+	fakeExec := exec.NewFakeOperations()
+	fakeExec.ExpectedErr = nil
+	fakeK8s := &fakeK8sOperations{}
+
+	ops := NewBuildOperations(
+		storage.NewFake(),
+		app.NewFakeOperations(),
+		fakeExec,
+		fakeK8s,
+		&Options{},
+	)
+	u := &database.User{}
+	rc, errChan := ops.Run(context.Background(), "teresa", "test", u)
+
+	consumeReader(rc)
+
+	var err error
+	select {
+	case err = <-errChan:
+	default:
+	}
+
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+
+	if !fakeK8s.createServiceWasCalled {
+		t.Error("expected `CreateService` was called, but doesn't")
+	}
+}
+
+func TestRunAppWithRunError(t *testing.T) {
+	fakeExec := exec.NewFakeOperations()
+	fakeExec.ExpectedErr = fmt.Errorf("some error")
+	fakeK8s := &fakeK8sOperations{}
+
+	ops := NewBuildOperations(
+		storage.NewFake(),
+		app.NewFakeOperations(),
+		fakeExec,
+		fakeK8s,
+		&Options{},
+	)
+	u := &database.User{}
+	rc, errChan := ops.Run(context.Background(), "teresa", "test", u)
+
+	consumeReader(rc)
+
+	var err error
+	select {
+	case err = <-errChan:
+	default:
+	}
+
+	if err != ErrBuildFail {
+		t.Errorf("expected ErrBuildFail, got %v", err)
 	}
 }

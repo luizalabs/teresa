@@ -5,7 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Added
 - Limits to the nginx container
-- Commands `build list` and `build run`
+- Commands `build list`, `build delete` and `build run`
 
 ### Fixed
 - [server] Fix panic when monitoring the rolling update

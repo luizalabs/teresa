@@ -31,6 +31,10 @@ func (f *FakeOperations) Run(ctx context.Context, appName, buildName string, u *
 	return nil, make(chan error)
 }
 
+func (f *FakeOperations) Delete(appName, buildName string, u *database.User) error {
+	return nil
+}
+
 func NewFakeOperations() *FakeOperations {
 	return new(FakeOperations)
 }

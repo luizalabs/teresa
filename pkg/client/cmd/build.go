@@ -58,6 +58,14 @@ var buildRunCmd = &cobra.Command{
 	Run: buildRun,
 }
 
+var buildDeleteCmd = &cobra.Command{
+	Use:   "delete <app-name> <build-name>",
+	Short: "Delete a build",
+	Long:  "Delete a previously created build",
+	Example: "	$ teresa build delete myapp v1-0-0-rc1",
+	Run: buildDelete,
+}
+
 func buildApp(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
 		cmd.Usage()
@@ -283,12 +291,56 @@ func buildRun(cmd *cobra.Command, args []string) {
 	}
 }
 
+func buildDelete(cmd *cobra.Command, args []string) {
+	if len(args) != 2 {
+		cmd.Usage()
+		return
+	}
+
+	appName, buildName := args[0], args[1]
+
+	var err error
+	currentClusterName := cfgCluster
+	if currentClusterName == "" {
+		currentClusterName, err = getCurrentClusterName()
+		if err != nil {
+			client.PrintErrorAndExit("error reading config file: %v", err)
+		}
+	}
+
+	inputMsg := fmt.Sprintf(
+		"Are you sure you want to delete the build %s of %s on %s? (yes/NO) ",
+		color.CyanString(`"%s"`, buildName),
+		color.CyanString(`"%s"`, appName),
+		color.YellowString(`"%s"`, currentClusterName),
+	)
+	s, _ := client.GetInput(inputMsg)
+	if s != "yes" {
+		fmt.Println("Delete process aborted!")
+		return
+	}
+
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %v", err)
+	}
+	defer conn.Close()
+
+	cli := bpb.NewBuildClient(conn)
+	req := &bpb.DeleteRequest{AppName: appName, Name: buildName}
+	if _, err := cli.Delete(context.Background(), req); err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+	fmt.Printf("Build %s deleted!\n", buildName)
+}
+
 func init() {
 	RootCmd.AddCommand(buildCmd)
 
 	buildCmd.AddCommand(buildCreateCmd)
 	buildCmd.AddCommand(buildListCmd)
 	buildCmd.AddCommand(buildRunCmd)
+	buildCmd.AddCommand(buildDeleteCmd)
 
 	buildCreateCmd.Flags().String("app", "", "app name (required)")
 	buildCreateCmd.Flags().String("name", "", "build name (required)")

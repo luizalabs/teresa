@@ -95,6 +95,15 @@ func (s *Service) Run(req *bpb.RunRequest, stream bpb.Build_RunServer) error {
 	})
 }
 
+func (s *Service) Delete(ctx context.Context, req *bpb.DeleteRequest) (*bpb.Empty, error) {
+	u := ctx.Value("user").(*database.User)
+
+	if err := s.ops.Delete(req.AppName, req.Name, u); err != nil {
+		return nil, err
+	}
+	return &bpb.Empty{}, nil
+}
+
 func (s *Service) streamMsg(ctx context.Context, msgsChan <-chan string, errChan, msgsErrChan <-chan error, sendFn func(string) error) error {
 	var msg string
 	for {

@@ -31,3 +31,16 @@ func TestListSuccess(t *testing.T) {
 	}
 
 }
+
+func TestDeleteSucess(t *testing.T) {
+	fake := NewFakeOperations()
+
+	srv := NewService(fake, time.Second*1)
+	req := &bpb.DeleteRequest{AppName: "teresa", Name: "fake"}
+	u := &database.User{Email: "gopher@luizalabs.com"}
+
+	ctx := context.WithValue(context.Background(), "user", u)
+	if _, err := srv.Delete(ctx, req); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+}

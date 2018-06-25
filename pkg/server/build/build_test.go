@@ -306,3 +306,46 @@ func TestRunAppWithRunError(t *testing.T) {
 		t.Errorf("expected ErrBuildFail, got %v", err)
 	}
 }
+
+func TestDelete(t *testing.T) {
+	ops := NewBuildOperations(
+		storage.NewFake(),
+		app.NewFakeOperations(),
+		exec.NewFakeOperations(),
+		&fakeK8sOperations{},
+		&Options{},
+	)
+
+	if err := ops.Delete("teresa", "fakeBuild", &database.User{}); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func TestDeleteAppNotFound(t *testing.T) {
+	ops := NewBuildOperations(
+		storage.NewFake(),
+		app.NewFakeOperations(),
+		exec.NewFakeOperations(),
+		&fakeK8sOperations{},
+		&Options{},
+	)
+
+	if err := ops.Delete("fake", "fakeBuild", &database.User{}); err != app.ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestDeletePermissionDenied(t *testing.T) {
+	ops := NewBuildOperations(
+		storage.NewFake(),
+		app.NewFakeOperations(),
+		exec.NewFakeOperations(),
+		&fakeK8sOperations{},
+		&Options{},
+	)
+
+	u := &database.User{Email: "bad-user@luizalabs.com"}
+	if err := ops.Delete("teresa", "fakeBuild", u); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}

@@ -3,6 +3,7 @@ package build
 import (
 	"testing"
 
+	"github.com/luizalabs/teresa/pkg/server/database"
 	context "golang.org/x/net/context"
 )
 
@@ -25,5 +26,12 @@ func TestFakeOpertionsList(t *testing.T) {
 			items[0].Name,
 			items[1].Name,
 		)
+	}
+}
+
+func TestFakeOpertionsDelete(t *testing.T) {
+	f := NewFakeOperations()
+	if err := f.Delete("fakeApp", "fakeBuild", &database.User{}); err != nil {
+		t.Errorf("expected no error, got %v", err)
 	}
 }

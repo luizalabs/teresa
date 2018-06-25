@@ -18,6 +18,7 @@ type Operations interface {
 	Create(ctx context.Context, appName, buildName string, u *database.User, tarBall io.ReadSeeker, runApp bool) (io.ReadCloser, <-chan error)
 	List(appName string, u *database.User) ([]*Build, error)
 	Run(ctx context.Context, appName, buildName string, u *database.User) (io.ReadCloser, <-chan error)
+	Delete(appName, buildName string, u *database.User) error
 }
 
 type K8sOperations interface {
@@ -173,6 +174,14 @@ func (ops *BuildOperations) Run(ctx context.Context, appName, buildName string, 
 		}
 	}()
 	return r, errChan
+}
+
+func (ops *BuildOperations) Delete(appName, buildName string, u *database.User) error {
+	if _, err := ops.appOps.CheckPermAndGet(u, appName); err != nil {
+		return err
+	}
+
+	return ops.fileStorage.Delete(fmt.Sprintf("builds/%s/%s/", appName, buildName))
 }
 
 func (ops *BuildOperations) runInternal(ctx context.Context, a *app.App, buildName string, w io.Writer) error {

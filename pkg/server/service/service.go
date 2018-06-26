@@ -22,6 +22,7 @@ type K8sOperations interface {
 	UpdateServicePorts(namespace, svcName string, ports []spec.ServicePort) error
 	IsNotFound(err error) bool
 	ServicePorts(namespace, svcName string) ([]*spec.ServicePort, error)
+	SetLoadBalancerSourceRanges(namespace, svcName string, sourceRanges []string) error
 }
 
 type AppOperations interface {
@@ -32,6 +33,7 @@ type AppOperations interface {
 type Operations interface {
 	EnableSSL(user *database.User, appName, cert string, only bool) error
 	Info(user *database.User, appName string) (*Info, error)
+	WhitelistSourceRanges(user *database.User, appName string, sourceRanges []string) error
 }
 
 type ServiceOperations struct {
@@ -84,6 +86,19 @@ func (ops *ServiceOperations) Info(user *database.User, appName string) (*Info, 
 		ServicePorts: ports,
 	}
 	return info, nil
+}
+
+func (ops *ServiceOperations) WhitelistSourceRanges(user *database.User, appName string, sourceRanges []string) error {
+	if _, err := ops.aops.CheckPermAndGet(user, appName); err != nil {
+		return err
+	}
+	if err := ops.k8s.SetLoadBalancerSourceRanges(appName, appName, sourceRanges); err != nil {
+		if ops.k8s.IsNotFound(err) {
+			return ErrNotFound
+		}
+		return teresa_errors.NewInternalServerError(err)
+	}
+	return nil
 }
 
 func NewOperations(aops AppOperations, cops CloudProviderOperations, k8s K8sOperations) *ServiceOperations {

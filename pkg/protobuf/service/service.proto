@@ -5,6 +5,7 @@ package service;
 service Service {
     rpc EnableSSL(EnableSSLRequest) returns (Empty);
     rpc Info(InfoRequest) returns (InfoResponse);
+    rpc WhitelistSourceRanges(WhitelistSourceRangesRequest) returns (Empty);
 }
 
 message EnableSSLRequest {
@@ -30,4 +31,9 @@ message InfoResponse {
         string cert = 2;
     }
     SSL ssl = 2;
+}
+
+message WhitelistSourceRangesRequest {
+    string app_name = 1;
+    repeated string source_ranges = 2;
 }

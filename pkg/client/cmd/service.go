@@ -40,6 +40,21 @@ var serviceInfoCmd = &cobra.Command{
 	Run:   serviceInfo,
 }
 
+var serviceWhitelistSourceRangesCmd = &cobra.Command{
+	Use:   "whitelist-source-ranges <name> [source-range, ...]",
+	Short: "Configure the cloud provider firewall whitelist",
+	Long: `Configure the cloud provider firewall whitelist.
+
+  To only let the ranges 200.234.1.0/24 and 200.234.2.0/24 access the app:
+
+  $ teresa service whitelist-source-ranges myapp 200.234.1.0/24 200.234.2.0/24
+
+  To remove the whitelist (no firewall):
+
+  $ teresa service whitelist-source-ranges myapp`,
+	Run: serviceWhitelistSourceRanges,
+}
+
 func serviceEnableSSL(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
 		cmd.Usage()
@@ -124,10 +139,33 @@ func serviceInfo(cmd *cobra.Command, args []string) {
 	}
 }
 
+func serviceWhitelistSourceRanges(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		cmd.Usage()
+		return
+	}
+	appName, ranges := args[0], args[1:]
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintErrorAndExit("Error connecting to server: %s", err)
+	}
+	defer conn.Close()
+	cli := svcpb.NewServiceClient(conn)
+	req := &svcpb.WhitelistSourceRangesRequest{
+		AppName:      appName,
+		SourceRanges: ranges,
+	}
+	if _, err := cli.WhitelistSourceRanges(context.Background(), req); err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+	fmt.Println("Firewall whitelist configured with success")
+}
+
 func init() {
 	RootCmd.AddCommand(serviceCmd)
 	serviceCmd.AddCommand(serviceEnableSSLCmd)
 	serviceCmd.AddCommand(serviceInfoCmd)
+	serviceCmd.AddCommand(serviceWhitelistSourceRangesCmd)
 
 	serviceEnableSSLCmd.Flags().String("app", "", "app name")
 	serviceEnableSSLCmd.Flags().String("cert", "", "certificate identifier")

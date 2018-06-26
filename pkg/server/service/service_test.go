@@ -123,3 +123,82 @@ func TestOpsInfoCloudProviderFail(t *testing.T) {
 		t.Errorf("got %v; want %v", err, wantErr)
 	}
 }
+
+func TestOpsWhitelistSourceRangesSuccess(t *testing.T) {
+	ops := setupTestOps()
+	user := &database.User{}
+	ranges := []string{"range1", "range2"}
+
+	if err := ops.WhitelistSourceRanges(user, "teresa", ranges); err != nil {
+		t.Error("got unexpected error:", err)
+	}
+}
+
+func TestOpsWhitelistSourceRangesAppNotFound(t *testing.T) {
+	ops := setupTestOps()
+	ops.aops.(*FakeAppOperations).CheckPermAndGetErr = app.ErrNotFound
+	user := &database.User{}
+	ranges := []string{"range1", "range2"}
+
+	if err := ops.WhitelistSourceRanges(user, "test", ranges); err != app.ErrNotFound {
+		t.Errorf("got %v; want %v", err, app.ErrNotFound)
+	}
+}
+
+func TestOpsWhitelistSourceRangesPermissionDenied(t *testing.T) {
+	ops := setupTestOps()
+	ops.aops.(*FakeAppOperations).NegateHasPermission = true
+	user := &database.User{}
+	ranges := []string{"range1", "range2"}
+
+	if err := ops.WhitelistSourceRanges(user, "teresa", ranges); err != auth.ErrPermissionDenied {
+		t.Errorf("got %v; want %v", err, auth.ErrPermissionDenied)
+	}
+}
+
+func TestOpsWhitelistSourceRangesServiceNotFound(t *testing.T) {
+	ops := setupTestOps()
+	ops.k8s.(*FakeK8sOperations).SetLoadBalancerSourceRangesErr = errors.New("test")
+	ops.k8s.(*FakeK8sOperations).IsNotFoundErr = true
+	user := &database.User{}
+	ranges := []string{"range1", "range2"}
+
+	if err := ops.WhitelistSourceRanges(user, "teresa", ranges); err != ErrNotFound {
+		t.Errorf("got %v; want %v", err, ErrNotFound)
+	}
+}
+
+func TestOpsWhitelistSourceRangesInvalid(t *testing.T) {
+	ops := setupTestOps()
+	ops.k8s.(*FakeK8sOperations).SetLoadBalancerSourceRangesErr = errors.New("test")
+	ops.k8s.(*FakeK8sOperations).IsInvalidErr = true
+	user := &database.User{}
+	ranges := []string{"range1", "range2"}
+
+	if err := ops.WhitelistSourceRanges(user, "teresa", ranges); err != ErrInvalidSourceRanges {
+		t.Errorf("got %v; want %v", err, ErrInvalidSourceRanges)
+	}
+}
+
+func TestOpsWhitelistSourceRangesNotImplemented(t *testing.T) {
+	ops := setupTestOps()
+	ops.aops.(*FakeAppOperations).App.Internal = true
+	user := &database.User{}
+	ranges := []string{"range1", "range2"}
+
+	if err := ops.WhitelistSourceRanges(user, "teresa", ranges); err != ErrWhitelistUnimplemented {
+		t.Errorf("got %v; want %v", err, ErrWhitelistUnimplemented)
+	}
+}
+
+func TestOpsWhitelistSourceRangesInternalServerError(t *testing.T) {
+	ops := setupTestOps()
+	ops.k8s.(*FakeK8sOperations).SetLoadBalancerSourceRangesErr = errors.New("test")
+	user := &database.User{}
+	ranges := []string{"range1", "range2"}
+
+	e := teresa_errors.ErrInternalServerError
+	if err := ops.WhitelistSourceRanges(user, "teresa", ranges); teresa_errors.Get(err) != e {
+		t.Errorf("got %v; want %v", teresa_errors.Get(err), e)
+	}
+}

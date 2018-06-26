@@ -8,9 +8,10 @@ import (
 )
 
 type FakeOperations struct {
-	EnableSSLErr error
-	InfoErr      error
-	InfoValue    *Info
+	EnableSSLErr             error
+	InfoErr                  error
+	InfoValue                *Info
+	WhitelistSourceRangesErr error
 }
 
 type FakeCloudProviderOperations struct {
@@ -22,13 +23,16 @@ type FakeCloudProviderOperations struct {
 type FakeAppOperations struct {
 	NegateHasPermission bool
 	App                 *app.App
+	CheckPermAndGetErr  error
 }
 
 type FakeK8sOperations struct {
-	UpdateServicePortsErr error
-	IsNotFoundErr         bool
-	ServicePortsErr       error
-	ServicePortsValue     []*spec.ServicePort
+	UpdateServicePortsErr          error
+	IsNotFoundErr                  bool
+	ServicePortsErr                error
+	ServicePortsValue              []*spec.ServicePort
+	SetLoadBalancerSourceRangesErr error
+	IsInvalidErr                   bool
 }
 
 func (f *FakeOperations) EnableSSL(user *database.User, appName, cert string, only bool) error {
@@ -37,6 +41,10 @@ func (f *FakeOperations) EnableSSL(user *database.User, appName, cert string, on
 
 func (f *FakeOperations) Info(user *database.User, appName string) (*Info, error) {
 	return f.InfoValue, f.InfoErr
+}
+
+func (f *FakeOperations) WhitelistSourceRanges(user *database.User, appName string, sourceRanges []string) error {
+	return f.WhitelistSourceRangesErr
 }
 
 func (f *FakeCloudProviderOperations) CreateOrUpdateSSL(appName, cert string, port int) error {
@@ -52,7 +60,7 @@ func (f *FakeAppOperations) HasPermission(user *database.User, appName string) b
 }
 
 func (f *FakeAppOperations) CheckPermAndGet(user *database.User, appName string) (*app.App, error) {
-	var err error
+	err := f.CheckPermAndGetErr
 	if f.NegateHasPermission {
 		err = auth.ErrPermissionDenied
 	}
@@ -69,4 +77,12 @@ func (f *FakeK8sOperations) IsNotFound(err error) bool {
 
 func (f *FakeK8sOperations) ServicePorts(namespace, svcName string) ([]*spec.ServicePort, error) {
 	return f.ServicePortsValue, f.ServicePortsErr
+}
+
+func (f *FakeK8sOperations) SetLoadBalancerSourceRanges(namespace, svcName string, sourceRanges []string) error {
+	return f.SetLoadBalancerSourceRangesErr
+}
+
+func (f *FakeK8sOperations) IsInvalid(err error) bool {
+	return f.IsInvalidErr
 }

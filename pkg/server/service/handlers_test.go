@@ -57,3 +57,27 @@ func TestInfoFail(t *testing.T) {
 		t.Error("got nil; want error")
 	}
 }
+
+func TestWhitelistSourceRangesSuccess(t *testing.T) {
+	fake := &FakeOperations{}
+	user := &database.User{}
+	svc := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", user)
+	req := &svcpb.WhitelistSourceRangesRequest{}
+
+	if _, err := svc.WhitelistSourceRanges(ctx, req); err != nil {
+		t.Error("got unexpected error:", err)
+	}
+}
+
+func TestWhitelistSourceRangesFail(t *testing.T) {
+	fake := &FakeOperations{WhitelistSourceRangesErr: errors.New("test")}
+	user := &database.User{}
+	svc := NewService(fake)
+	ctx := context.WithValue(context.Background(), "user", user)
+	req := &svcpb.WhitelistSourceRangesRequest{}
+
+	if _, err := svc.WhitelistSourceRanges(ctx, req); err == nil {
+		t.Error("got nil; want error")
+	}
+}

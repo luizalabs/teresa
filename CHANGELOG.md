@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Limits to the nginx container
 - Commands `build list`, `build delete` and `build run`
 - [server] Support for teresa.yaml v2 format
+- Command `service whitelist-source-ranges`
 
 ### Fixed
 - [server] Fix panic when monitoring the rolling update

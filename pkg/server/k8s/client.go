@@ -1117,6 +1117,10 @@ func (c *Client) patchServiceAnnotations(namespace, svcName string, annotations 
 	if err != nil {
 		return err
 	}
+	return c.patchService(namespace, svcName, data)
+}
+
+func (c *Client) patchService(namespace, svcName string, data []byte) error {
 	kc, err := c.buildClient()
 	if err != nil {
 		return err
@@ -1126,7 +1130,7 @@ func (c *Client) patchServiceAnnotations(namespace, svcName string, annotations 
 		types.StrategicMergePatchType,
 		data,
 	)
-	return errors.Wrap(err, "patch namespace failed")
+	return errors.Wrap(err, "patch service failed")
 }
 
 func (c *Client) ServiceAnnotations(namespace, svcName string) (map[string]string, error) {
@@ -1219,6 +1223,15 @@ func (c *Client) WatchDeploy(namespace, deployName string) error {
 
 func (c *Client) IngressEnabled() bool {
 	return c.ingress
+}
+
+func (c *Client) SetLoadBalancerSourceRanges(namespace, svcName string, sourceRanges []string) error {
+	b, err := json.Marshal(sourceRanges)
+	if err != nil {
+		return errors.Wrap(err, "failed to json encode source ranges")
+	}
+	data := fmt.Sprintf(`{"spec":{"loadBalancerSourceRanges": %s}}`, string(b))
+	return c.patchService(namespace, svcName, []byte(data))
 }
 
 func prepareServiceAnnotations(tmpl string, annotations map[string]string) ([]byte, error) {

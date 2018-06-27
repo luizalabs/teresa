@@ -178,6 +178,33 @@ with the `web` process type (the default).
 
 Check out some examples [here](https://github.com/luizalabs/hello-teresa). 
 
+**Q: How to run an app locally?**
+
+You can perform the build and run your application locally with [Docker](https://docker.com),
+to do that create a `Dockerfile` in the root directory of your application, like this:
+
+```
+FROM luizalabs/slugbuilder:v3.4.0 AS builder
+COPY . /tmp/app
+RUN /builder/build.sh
+
+FROM luizalabs/slugrunner:v3.3.0
+COPY --from=builder /tmp/slug.tgz /slug/slug.tgz
+ENV SLUG_DIR /slug
+EXPOSE 5000
+ENTRYPOINT ["/runner/init"]
+```
+
+Use the command `docker build` to create a Docker image:
+
+    $ docker build . -t runlocal --no-cache
+
+And then use the command `docker run` to start your application:
+
+    $ docker run -p 5000:5000 -e PORT=5000 runlocal start web
+
+> The last argument is relative of the Procfile key of your application.
+
 ## Advanced Topics
 
 **Q: How to set up Kubernetes health checks?**

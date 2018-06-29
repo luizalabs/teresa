@@ -6,6 +6,7 @@ import (
 
 	k8sv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
@@ -546,5 +547,73 @@ func TestK8sExplicitEnvToAppEnv(t *testing.T) {
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v; want %v", got, want)
+	}
+}
+
+func TestK8sServiceToService(t *testing.T) {
+	name := "test"
+	namespace := "namespace"
+	svcType := "LoadBalancer"
+	labels := map[string]string{"key": "value"}
+	ports := []spec.ServicePort{{}}
+	k8sSvc := &k8sv1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels:    labels,
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: k8sv1.ServiceSpec{
+			Type: k8sv1.ServiceType(svcType),
+			Ports: []k8sv1.ServicePort{{}},
+		},
+	}
+	svc := k8sServiceToService(k8sSvc)
+
+	if svc.Name != name {
+		t.Errorf("want %s; got %s", name, svc.Name)
+	}
+	if svc.Namespace != namespace {
+		t.Errorf("want %s; got %s", namespace, svc.Namespace)
+	}
+	if svc.Type != svcType {
+		t.Errorf("want %s; got %s", svcType, svc.Type)
+	}
+	if !reflect.DeepEqual(svc.Labels, labels) {
+		t.Errorf("want %v; got %v", labels, svc.Labels)
+	}
+	if !reflect.DeepEqual(svc.Ports, ports) {
+		t.Errorf("want %v; got %v", ports, svc.Ports)
+	}
+}
+
+func TestK8sServicePortsToServicePorts(t *testing.T) {
+	want := []spec.ServicePort{
+		{
+			Name:       "port1",
+			Port:       1,
+			TargetPort: 5000,
+		},
+		{
+			Name:       "port2",
+			Port:       2,
+			TargetPort: 6000,
+		},
+	}
+	k8sPorts := []k8sv1.ServicePort{
+		{
+			Name:       want[0].Name,
+			Port:       int32(want[0].Port),
+			TargetPort: intstr.FromInt(want[0].TargetPort),
+		},
+		{
+			Name:       want[1].Name,
+			Port:       int32(want[1].Port),
+			TargetPort: intstr.FromInt(want[1].TargetPort),
+		},
+	}
+	ports := k8sServicePortsToServicePorts(k8sPorts)
+
+	if !reflect.DeepEqual(ports, want) {
+		t.Errorf("want %v; got %v", want, ports)
 	}
 }

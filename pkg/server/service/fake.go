@@ -29,8 +29,8 @@ type FakeAppOperations struct {
 type FakeK8sOperations struct {
 	UpdateServicePortsErr          error
 	IsNotFoundErr                  bool
-	ServicePortsErr                error
-	ServicePortsValue              []*spec.ServicePort
+	ServiceErr                     error
+	ServiceValue                   *spec.Service
 	SetLoadBalancerSourceRangesErr error
 	IsInvalidErr                   bool
 }
@@ -75,8 +75,8 @@ func (f *FakeK8sOperations) IsNotFound(err error) bool {
 	return f.IsNotFoundErr
 }
 
-func (f *FakeK8sOperations) ServicePorts(namespace, svcName string) ([]*spec.ServicePort, error) {
-	return f.ServicePortsValue, f.ServicePortsErr
+func (f *FakeK8sOperations) Service(namespace, svcName string) (*spec.Service, error) {
+	return f.ServiceValue, f.ServiceErr
 }
 
 func (f *FakeK8sOperations) SetLoadBalancerSourceRanges(namespace, svcName string, sourceRanges []string) error {

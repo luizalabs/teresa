@@ -22,7 +22,7 @@ type K8sOperations interface {
 	UpdateServicePorts(namespace, svcName string, ports []spec.ServicePort) error
 	IsNotFound(err error) bool
 	IsInvalid(err error) bool
-	ServicePorts(namespace, svcName string) ([]*spec.ServicePort, error)
+	Service(namespace, svcName string) (*spec.Service, error)
 	SetLoadBalancerSourceRanges(namespace, svcName string, sourceRanges []string) error
 }
 
@@ -75,7 +75,7 @@ func (ops *ServiceOperations) Info(user *database.User, appName string) (*Info, 
 	if err != nil {
 		return nil, err
 	}
-	ports, err := ops.k8s.ServicePorts(appName, appName)
+	svc, err := ops.k8s.Service(appName, appName)
 	if err != nil {
 		if ops.k8s.IsNotFound(err) {
 			return nil, ErrNotFound
@@ -84,7 +84,7 @@ func (ops *ServiceOperations) Info(user *database.User, appName string) (*Info, 
 	}
 	info := &Info{
 		SSLInfo:      ssl,
-		ServicePorts: ports,
+		ServicePorts: svc.Ports,
 	}
 	return info, nil
 }

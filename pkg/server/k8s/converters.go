@@ -430,3 +430,25 @@ func k8sExplicitEnvToAppEnv(env []k8sv1.EnvVar) []*app.EnvVar {
 	}
 	return evs
 }
+
+func k8sServiceToService(svc *k8sv1.Service) *spec.Service {
+	return &spec.Service{
+		Name:      svc.ObjectMeta.Name,
+		Namespace: svc.ObjectMeta.Namespace,
+		Type:      string(svc.Spec.Type),
+		Labels:    svc.ObjectMeta.Labels,
+		Ports:     k8sServicePortsToServicePorts(svc.Spec.Ports),
+	}
+}
+
+func k8sServicePortsToServicePorts(ports []k8sv1.ServicePort) []spec.ServicePort {
+	sp := make([]spec.ServicePort, len(ports))
+	for i := range sp {
+		sp[i] = spec.ServicePort{
+			Port:       int(ports[i].Port),
+			Name:       ports[i].Name,
+			TargetPort: int(ports[i].TargetPort.IntVal),
+		}
+	}
+	return sp
+}

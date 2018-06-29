@@ -1145,24 +1145,16 @@ func (c *Client) ServiceAnnotations(namespace, svcName string) (map[string]strin
 	return svc.Annotations, nil
 }
 
-func (c *Client) ServicePorts(namespace, svcName string) ([]*spec.ServicePort, error) {
-	kc, err := c.buildClient()
+func (c *Client) Service(namespace, svcName string) (*spec.Service, error) {
+	cs, err := c.buildClient()
 	if err != nil {
 		return nil, err
 	}
-	svc, err := kc.CoreV1().Services(namespace).Get(svcName, metav1.GetOptions{})
+	svc, err := cs.CoreV1().Services(namespace).Get(svcName, metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get service failed")
 	}
-	ports := make([]*spec.ServicePort, len(svc.Spec.Ports))
-	for i := range svc.Spec.Ports {
-		ports[i] = &spec.ServicePort{
-			Port:       int(svc.Spec.Ports[i].Port),
-			Name:       svc.Spec.Ports[i].Name,
-			TargetPort: int(svc.Spec.Ports[i].TargetPort.IntVal),
-		}
-	}
-	return ports, nil
+	return k8sServiceToService(svc), nil
 }
 
 func (c *Client) ContainerExplicitEnvVars(namespace, deployName, containerName string) ([]*app.EnvVar, error) {

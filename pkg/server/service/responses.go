@@ -11,7 +11,7 @@ type SSLInfo struct {
 }
 
 type Info struct {
-	ServicePorts []*spec.ServicePort
+	ServicePorts []spec.ServicePort
 	SSLInfo      *SSLInfo
 }
 

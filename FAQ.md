@@ -363,6 +363,18 @@ cron:
 
 Make sure to have the related (i.e. same value of the process-type) key with the cronjob command on the `Procfile`.
 
+**Q: How to configure the cloud provider firewall?**
+
+If your app uses the cloud provider load balancer (this is the default) you can
+set up a whitelist:
+
+   $ teresa service whitelist-source-ranges myapp x.x.x.0/24 y.y.y.0/24
+
+Only these ranges can access the service. To remove the whitelist just pass no
+ranges. You can view the current whitelist with:
+
+   $ teresa service info myapp
+
 ## Administration
 
 **Q: How does access control work?**

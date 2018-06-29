@@ -8,7 +8,7 @@ import (
 
 func TestNewInfoResponse(t *testing.T) {
 	info := &Info{
-		ServicePorts: []*spec.ServicePort{{Port: 1}, {Port: 2}},
+		ServicePorts: []spec.ServicePort{{Port: 1}, {Port: 2}},
 		SSLInfo: &SSLInfo{
 			Cert:        "cert",
 			ServicePort: &spec.ServicePort{Port: 2},

@@ -7,13 +7,14 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
+	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 )
 
 func setupTestOps() *ServiceOperations {
 	fakeAppOps := &FakeAppOperations{App: &app.App{}}
 	fakeCloudProviderOps := &FakeCloudProviderOperations{}
-	fakeK8sOps := &FakeK8sOperations{}
+	fakeK8sOps := &FakeK8sOperations{ServiceValue: &spec.Service{}}
 	return NewOperations(fakeAppOps, fakeCloudProviderOps, fakeK8sOps)
 }
 
@@ -93,7 +94,7 @@ func TestOpsInfoPermissionDenied(t *testing.T) {
 
 func TestOpsInfoServiceNotFound(t *testing.T) {
 	ops := setupTestOps()
-	ops.k8s.(*FakeK8sOperations).ServicePortsErr = errors.New("test")
+	ops.k8s.(*FakeK8sOperations).ServiceErr = errors.New("test")
 	ops.k8s.(*FakeK8sOperations).IsNotFoundErr = true
 	user := &database.User{}
 
@@ -104,7 +105,7 @@ func TestOpsInfoServiceNotFound(t *testing.T) {
 
 func TestOpsInfoServicePortsFail(t *testing.T) {
 	ops := setupTestOps()
-	ops.k8s.(*FakeK8sOperations).ServicePortsErr = errors.New("test")
+	ops.k8s.(*FakeK8sOperations).ServiceErr = errors.New("test")
 	user := &database.User{}
 
 	e := teresa_errors.ErrInternalServerError

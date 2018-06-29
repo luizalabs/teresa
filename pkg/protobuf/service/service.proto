@@ -31,6 +31,8 @@ message InfoResponse {
         string cert = 2;
     }
     SSL ssl = 2;
+
+    repeated string source_ranges = 3;
 }
 
 message WhitelistSourceRangesRequest {

@@ -11,11 +11,12 @@ type ServicePort struct {
 }
 
 type Service struct {
-	Name      string
-	Namespace string
-	Type      string
-	Labels    map[string]string
-	Ports     []ServicePort
+	Name         string
+	Namespace    string
+	Type         string
+	Labels       map[string]string
+	Ports        []ServicePort
+	SourceRanges []string
 }
 
 func NewService(namespace, name, sType string, ports []ServicePort, labels map[string]string) *Service {

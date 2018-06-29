@@ -85,6 +85,7 @@ func (ops *ServiceOperations) Info(user *database.User, appName string) (*Info, 
 	info := &Info{
 		SSLInfo:      ssl,
 		ServicePorts: svc.Ports,
+		SourceRanges: svc.SourceRanges,
 	}
 	return info, nil
 }

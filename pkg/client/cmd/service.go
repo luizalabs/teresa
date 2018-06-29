@@ -137,6 +137,12 @@ func serviceInfo(cmd *cobra.Command, args []string) {
 			fmt.Printf("  port: %s\n", port)
 		}
 	}
+	if len(info.SourceRanges) > 0 {
+		fmt.Println(bold("whitelist:"))
+		for _, item := range info.SourceRanges {
+			fmt.Printf("  %s\n", item)
+		}
+	}
 }
 
 func serviceWhitelistSourceRanges(cmd *cobra.Command, args []string) {

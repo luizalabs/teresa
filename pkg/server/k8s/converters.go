@@ -433,11 +433,12 @@ func k8sExplicitEnvToAppEnv(env []k8sv1.EnvVar) []*app.EnvVar {
 
 func k8sServiceToService(svc *k8sv1.Service) *spec.Service {
 	return &spec.Service{
-		Name:      svc.ObjectMeta.Name,
-		Namespace: svc.ObjectMeta.Namespace,
-		Type:      string(svc.Spec.Type),
-		Labels:    svc.ObjectMeta.Labels,
-		Ports:     k8sServicePortsToServicePorts(svc.Spec.Ports),
+		Name:         svc.ObjectMeta.Name,
+		Namespace:    svc.ObjectMeta.Namespace,
+		Type:         string(svc.Spec.Type),
+		Labels:       svc.ObjectMeta.Labels,
+		Ports:        k8sServicePortsToServicePorts(svc.Spec.Ports),
+		SourceRanges: svc.Spec.LoadBalancerSourceRanges,
 	}
 }
 

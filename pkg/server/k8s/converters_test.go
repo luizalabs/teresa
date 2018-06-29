@@ -555,6 +555,7 @@ func TestK8sServiceToService(t *testing.T) {
 	namespace := "namespace"
 	svcType := "LoadBalancer"
 	labels := map[string]string{"key": "value"}
+	ranges := []string{"range1", "range2"}
 	ports := []spec.ServicePort{{}}
 	k8sSvc := &k8sv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -564,6 +565,7 @@ func TestK8sServiceToService(t *testing.T) {
 		},
 		Spec: k8sv1.ServiceSpec{
 			Type: k8sv1.ServiceType(svcType),
+			LoadBalancerSourceRanges: ranges,
 			Ports: []k8sv1.ServicePort{{}},
 		},
 	}
@@ -580,6 +582,9 @@ func TestK8sServiceToService(t *testing.T) {
 	}
 	if !reflect.DeepEqual(svc.Labels, labels) {
 		t.Errorf("want %v; got %v", labels, svc.Labels)
+	}
+	if !reflect.DeepEqual(svc.SourceRanges, ranges) {
+		t.Errorf("want %v; got %v", ranges, svc.SourceRanges)
 	}
 	if !reflect.DeepEqual(svc.Ports, ports) {
 		t.Errorf("want %v; got %v", ports, svc.Ports)

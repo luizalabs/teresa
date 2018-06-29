@@ -13,6 +13,7 @@ type SSLInfo struct {
 type Info struct {
 	ServicePorts []spec.ServicePort
 	SSLInfo      *SSLInfo
+	SourceRanges []string
 }
 
 func newInfoResponse(info *Info) *svcpb.InfoResponse {
@@ -29,5 +30,9 @@ func newInfoResponse(info *Info) *svcpb.InfoResponse {
 			int32(info.SSLInfo.ServicePort.Port),
 		},
 	}
-	return &svcpb.InfoResponse{Ssl: ssl, ServicePorts: ports}
+	return &svcpb.InfoResponse{
+		Ssl:          ssl,
+		ServicePorts: ports,
+		SourceRanges: info.SourceRanges,
+	}
 }

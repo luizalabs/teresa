@@ -14,6 +14,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] Fix panic when monitoring the rolling update
 - [server] `app info` command output
 
+### Changed
+- [client] Print more friendly error message when connection fails
+
 ## [0.23.0] - 2018-06-21
 ### Added
 - [client] Support to remove remote cluster from configuration file

@@ -21,3 +21,11 @@ func PrintErrorAndExit(format string, args ...interface{}) {
 	fmt.Fprintln(os.Stderr, color.RedString(format, args...))
 	os.Exit(1)
 }
+
+func PrintConnectionErrorAndExit(err error) {
+	PrintErrorAndExit(
+		"A connection error occoured.\n" +
+		"Please, try again.\n\n" +
+		"Server details: %s", GetErrorMsg(err),
+	)
+}

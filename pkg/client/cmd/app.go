@@ -300,7 +300,7 @@ func appInfo(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
-		client.PrintErrorAndExit("Error connecting to server: %v", err)
+		client.PrintConnectionErrorAndExit(err)
 	}
 	defer conn.Close()
 
@@ -444,7 +444,7 @@ func appEnvSet(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, currentClusterName)
 	if err != nil {
-		client.PrintErrorAndExit("Error connecting to server: %s", err)
+		client.PrintConnectionErrorAndExit(err)
 	}
 	defer conn.Close()
 
@@ -519,7 +519,7 @@ func appEnvUnset(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, currentClusterName)
 	if err != nil {
-		client.PrintErrorAndExit("Error connecting to server: %s", err)
+		client.PrintConnectionErrorAndExit(err)
 	}
 	defer conn.Close()
 
@@ -565,7 +565,7 @@ func appSecretSet(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, currentClusterName)
 	if err != nil {
-		client.PrintErrorAndExit("Error connecting to server: %s", err)
+		client.PrintConnectionErrorAndExit(err)
 	}
 	defer conn.Close()
 
@@ -611,7 +611,7 @@ func appSecretUnset(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, currentClusterName)
 	if err != nil {
-		client.PrintErrorAndExit("Error connecting to server: %s", err)
+		client.PrintConnectionErrorAndExit(err)
 	}
 	defer conn.Close()
 
@@ -693,7 +693,7 @@ func appAutoscaleSet(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
-		client.PrintErrorAndExit("Error connecting to server: %s", err)
+		client.PrintConnectionErrorAndExit(err)
 	}
 	defer conn.Close()
 
@@ -755,7 +755,7 @@ func appStart(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
-		client.PrintErrorAndExit("Error connecting to server: %s", err)
+		client.PrintConnectionErrorAndExit(err)
 	}
 	defer conn.Close()
 
@@ -790,7 +790,7 @@ func appStop(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
-		client.PrintErrorAndExit("Error connecting to server: %s", err)
+		client.PrintConnectionErrorAndExit(err)
 	}
 	defer conn.Close()
 

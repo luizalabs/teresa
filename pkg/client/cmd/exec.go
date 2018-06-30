@@ -32,7 +32,7 @@ func execCommand(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
-		client.PrintErrorAndExit("Error connecting to server: %s", err)
+		client.PrintConnectionErrorAndExit(err)
 	}
 	defer conn.Close()
 

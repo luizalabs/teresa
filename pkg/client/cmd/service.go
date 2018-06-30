@@ -78,7 +78,7 @@ func serviceEnableSSL(cmd *cobra.Command, args []string) {
 
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
-		client.PrintErrorAndExit("Error connecting to server: %s", err)
+		client.PrintConnectionErrorAndExit(err)
 	}
 	defer conn.Close()
 
@@ -153,7 +153,7 @@ func serviceWhitelistSourceRanges(cmd *cobra.Command, args []string) {
 	appName, ranges := args[0], args[1:]
 	conn, err := connection.New(cfgFile, cfgCluster)
 	if err != nil {
-		client.PrintErrorAndExit("Error connecting to server: %s", err)
+		client.PrintConnectionErrorAndExit(err)
 	}
 	defer conn.Close()
 	cli := svcpb.NewServiceClient(conn)

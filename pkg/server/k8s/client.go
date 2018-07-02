@@ -117,29 +117,9 @@ func (k *Client) PodList(namespace string, opts *app.PodListOptions) ([]*app.Pod
 		return nil, err
 	}
 
-	pods := make([]*app.Pod, 0)
-	for _, pod := range podList.Items {
-		p := &app.Pod{Name: pod.Name}
-
-		if pod.Status.StartTime != nil {
-			p.Age = int64(time.Since(pod.Status.StartTime.Time))
-		}
-
-		for _, status := range pod.Status.ContainerStatuses {
-			if status.State.Waiting != nil {
-				p.State = status.State.Waiting.Reason
-			} else if status.State.Terminated != nil {
-				p.State = status.State.Terminated.Reason
-			} else if status.State.Running != nil {
-				p.State = string(k8sv1.PodRunning)
-			}
-			p.Restarts = status.RestartCount
-			p.Ready = status.Ready
-			if p.State != "" {
-				break
-			}
-		}
-		pods = append(pods, p)
+	pods := make([]*app.Pod, len(podList.Items))
+	for i, pod := range podList.Items {
+		pods[i] = k8sPodToAppPod(&pod)
 	}
 	return pods, nil
 }

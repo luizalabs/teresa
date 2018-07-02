@@ -622,3 +622,73 @@ func TestK8sServicePortsToServicePorts(t *testing.T) {
 		t.Errorf("want %v; got %v", want, ports)
 	}
 }
+
+func TestK8sPodToAppPodRunningAndReady(t *testing.T) {
+	k8sPod := &k8sv1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "pod",
+		},
+		Status: k8sv1.PodStatus{
+			Phase: k8sv1.PodRunning,
+			ContainerStatuses: []k8sv1.ContainerStatus{
+				{
+					Ready:        true,
+					RestartCount: 1,
+					State: k8sv1.ContainerState{
+						Running: &k8sv1.ContainerStateRunning{},
+					},
+				},
+				{
+					Ready:        true,
+					RestartCount: 1,
+					State: k8sv1.ContainerState{
+						Running: &k8sv1.ContainerStateRunning{},
+					},
+				},
+			},
+		},
+	}
+	want := &app.Pod{
+		Name:     "pod",
+		Restarts: 2,
+		Ready:    true,
+		State:    "Running",
+	}
+	pod := k8sPodToAppPod(k8sPod)
+
+	if !reflect.DeepEqual(pod, want) {
+		t.Errorf("want %v; got %v", want, pod)
+	}
+}
+
+func TestK8sPodToAppPodTerminating(t *testing.T) {
+	k8sPod := &k8sv1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "pod",
+			DeletionTimestamp: &metav1.Time{},
+		},
+		Status: k8sv1.PodStatus{
+			Phase: k8sv1.PodRunning,
+			ContainerStatuses: []k8sv1.ContainerStatus{
+				{
+					Ready:        true,
+					RestartCount: 1,
+					State: k8sv1.ContainerState{
+						Running: &k8sv1.ContainerStateRunning{},
+					},
+				},
+			},
+		},
+	}
+	want := &app.Pod{
+		Name:     "pod",
+		Restarts: 1,
+		Ready:    true,
+		State:    "Terminating",
+	}
+	pod := k8sPodToAppPod(k8sPod)
+
+	if !reflect.DeepEqual(pod, want) {
+		t.Errorf("want %v; got %v", want, pod)
+	}
+}

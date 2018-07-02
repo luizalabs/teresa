@@ -3,6 +3,7 @@ package k8s
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/spec"
@@ -452,4 +453,37 @@ func k8sServicePortsToServicePorts(ports []k8sv1.ServicePort) []spec.ServicePort
 		}
 	}
 	return sp
+}
+
+// Shamelessly adapted from Kubernetes
+func k8sPodToAppPod(pod *k8sv1.Pod) *app.Pod {
+	p := &app.Pod{Name: pod.Name}
+	if pod.Status.StartTime != nil {
+		p.Age = int64(time.Since(pod.Status.StartTime.Time))
+	}
+	p.State = string(pod.Status.Phase)
+	for _, status := range pod.Status.InitContainerStatuses {
+		if status.State.Terminated == nil || status.State.Terminated.ExitCode != 0 {
+			p.State = "Initializing"
+			return p
+		}
+	}
+	nready := 0
+	for _, status := range pod.Status.ContainerStatuses {
+		if status.State.Waiting != nil {
+			p.State = status.State.Waiting.Reason
+		} else if status.State.Terminated != nil {
+			p.State = status.State.Terminated.Reason
+		} else if status.State.Running != nil && status.Ready {
+			nready++
+		}
+		p.Restarts += status.RestartCount
+	}
+	if len(pod.Status.ContainerStatuses) == nready && nready != 0 {
+		p.Ready = true
+	}
+	if pod.DeletionTimestamp != nil {
+		p.State = "Terminating"
+	}
+	return p
 }

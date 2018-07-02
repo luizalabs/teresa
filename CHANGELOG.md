@@ -12,6 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - [server] Fix panic when monitoring the rolling update
+- [server] `app info` command output
 
 ## [0.23.0] - 2018-06-21
 ### Added

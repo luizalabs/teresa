@@ -26,9 +26,9 @@ The recommended installation method uses the [helm](https://github.com/kubernete
 for instance to install using S3 and MySQL (recommended):
 
     $ openssl genrsa -out teresa.rsa
-    $ export TERESA_RSA_PRIVATE=`base64 teresa.rsa`  # use base64 -w0 on Linux
+    $ export TERESA_RSA_PRIVATE=`base64 -w0 teresa.rsa`
     $ openssl rsa -in teresa.rsa -pubout > teresa.rsa.pub
-    $ export TERESA_RSA_PUBLIC=`base64 teresa.rsa.pub`
+    $ export TERESA_RSA_PUBLIC=`base64 -w0 teresa.rsa.pub`
     $ helm repo add luizalabs http://helm.k8s.magazineluiza.com
     $ helm install luizalabs/teresa \
         --namespace teresa \
@@ -41,14 +41,16 @@ for instance to install using S3 and MySQL (recommended):
         --set db.name=teresa \
         --set db.hostname=dbhostname \
         --set db.username=teresa \
-        --set db.password=xxxxxxxx
+        --set db.password=xxxxxxxx \
+        --set rbac.enabled=true
+
 
 Look [here](./helm/README.md) for more information about helm options.
 
 You need to create an admin user to perform [user and team management](./FAQ.md#administration):
 
-    $ export POD_NAME=$(kubectl get pods --namespace teresa -l "app=teresa" -o jsonpath="{.items[0].metadata.name}")
-    $ kubectl exec $POD_NAME -it teresa-server create-super-user --email admin_email --password xxxxxxxx --namespace teresa
+    $ export POD_NAME=$(kubectl get pods -n teresa -l "app=teresa" -o jsonpath="{.items[0].metadata.name}")
+    $ kubectl exec $POD_NAME -it -n teresa -- ./teresa-server create-super-user --email admin@email.com --password xxxxxxxx
 
 ## QuickStart
 

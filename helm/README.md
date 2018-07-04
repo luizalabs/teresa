@@ -6,16 +6,17 @@
 
 ```console
 $ openssl genrsa -out teresa.rsa
-$ export TERESA_RSA_PRIVATE=`base64 teresa.rsa`  # use base64 -w0 on Linux
+$ export TERESA_RSA_PRIVATE=`base64 -w0 teresa.rsa`
 $ openssl rsa -in teresa.rsa -pubout > teresa.rsa.pub
-$ export TERESA_RSA_PUBLIC=`base64 teresa.rsa.pub`
+$ export TERESA_RSA_PUBLIC=`base64 -w0 teresa.rsa.pub`
 $ helm repo add luizalabs http://helm.k8s.magazineluiza.com
 $ helm install luizalabs/teresa \
   --set rsa.private=$TERESA_RSA_PRIVATE \
   --set rsa.public=$TERESA_RSA_PUBLIC \
   --set aws.key.access=XXXXXXXXXXXX \
   --set aws.key.secret=XXXXXXXXXXXX \
-  --set aws.s3.bucket=teresa
+  --set aws.s3.bucket=teresa \
+  --set rbac.enabled=true
 ```
 
 ## Introduction
@@ -26,11 +27,10 @@ This chart bootstraps a [Teresa](https://github.com/luizalabs/teresa) deployment
 ## Installing the Chart
 To install the chart with the release name `my-release` in namespace `my-teresa`:
 
-
 ```console
 $ openssl genrsa -out teresa.rsa
 $ openssl rsa -in teresa.rsa -pubout > teresa.rsa.pub
-$ export TERESA_RSA_PRIVATE=`base64 teresa.rsa`
+$ export TERESA_RSA_PRIVATE=`base64 -w0 teresa.rsa`
 $ export TERESA_RSA_PUBLIC=`base64 teresa.rsa.pub`
 
 ```
@@ -45,7 +45,8 @@ $ helm install luizalabs/teresa \
   --set rsa.public=$TERESA_RSA_PUBLIC \
   --set aws.key.access=XXXXXXXXXXXX \
   --set aws.key.secret=XXXXXXXXXXXX \
-  --set aws.s3.bucket=teresa
+  --set aws.s3.bucket=teresa \
+  --set rbac.enabled=true
 ```
 This deploy teresa to cluster with default configuration.
 The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -61,6 +62,7 @@ $ helm install luizalabs/teresa \
   --namespace my-teresa \
   --set rsa.private=$TERESA_RSA_PRIVATE \
   --set rsa.public=$TERESA_RSA_PUBLIC \
+  --set rbac.enabled=true \
   --set useMinio=true
 ```
 This will deploy [minio](https://www.minio.io/) using the minio [chart](https://github.com/kubernetes/charts/tree/master/stable/minio) and use it as storage backend to teresa.
@@ -70,7 +72,7 @@ This will deploy [minio](https://www.minio.io/) using the minio [chart](https://
 To uninstall/delete the `my-release` deployment:
 
 ```console
-$ helm delete my-release
+$ helm delete my-release --purge
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.

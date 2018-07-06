@@ -2,10 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [NEXT_RELEASE]
+## [0.24.0] - 2018-07-06
 ### Added
 - Limits to the nginx container
-- Commands `build list`, `build delete` and `build run`
+- Experimental Commands `build list`, `build delete` and `build run`
 - [server] Support for teresa.yaml v2 format
 - Command `service whitelist-source-ranges`
 - Firewall whitelist to the `service info` command

@@ -16,6 +16,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - [client] Print more friendly error message when connection fails
+- Bump the default slugrunner version to v3.3.0
 
 ## [0.23.0] - 2018-06-21
 ### Added

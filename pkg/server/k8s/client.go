@@ -707,26 +707,22 @@ func (c *Client) WatchServiceURL(namespace, name string) ([]string, error) {
 			return nil, errors.Wrap(err, "watch service failed")
 		}
 		ch := watch.Filter(w, filterServiceEvents).ResultChan()
-
-		ev, ok := <-ch
-		if !ok {
-			continue
-		}
-
-		srv, ok := ev.Object.(*k8sv1.Service)
-		if !ok {
-			continue
-		}
-
-		urls := make([]string, len(srv.Status.LoadBalancer.Ingress))
-		for i, v := range srv.Status.LoadBalancer.Ingress {
-			url := v.Hostname
-			if url == "" {
-				url = v.IP
+		for ev := range ch {
+			srv, ok := ev.Object.(*k8sv1.Service)
+			if !ok {
+				continue
 			}
-			urls[i] = url
+
+			urls := make([]string, len(srv.Status.LoadBalancer.Ingress))
+			for i, v := range srv.Status.LoadBalancer.Ingress {
+				url := v.Hostname
+				if url == "" {
+					url = v.IP
+				}
+				urls[i] = url
+			}
+			return urls, nil
 		}
-		return urls, nil
 	}
 }
 
@@ -1175,20 +1171,18 @@ func (c *Client) WatchDeploy(namespace, deployName string) error {
 			return errors.Wrap(err, "watch deploy failed")
 		}
 		ch := watch.Filter(w, filterDeployEvents).ResultChan()
-		ev, ok := <-ch
-		if !ok {
-			continue
-		}
-		d := ev.Object.(*v1beta2.Deployment)
-		conds := d.Status.Conditions
-		if len(conds) == 0 {
-			return errors.New("failed to monitor the rolling update")
-		}
-		last := conds[len(conds)-1]
-		if last.LastUpdateTime.After(ts) && isRollingUpdateFinished(last) {
-			return nil
-		} else if isRollingUpdateStalled(last) {
-			return errors.New("rolling update stalled, still running the old deploy")
+		for ev := range ch {
+			d := ev.Object.(*v1beta2.Deployment)
+			conds := d.Status.Conditions
+			if len(conds) == 0 {
+				return errors.New("failed to monitor the rolling update")
+			}
+			last := conds[len(conds)-1]
+			if last.LastUpdateTime.After(ts) && isRollingUpdateFinished(last) {
+				return nil
+			} else if isRollingUpdateStalled(last) {
+				return errors.New("rolling update stalled, still running the old deploy")
+			}
 		}
 	}
 }

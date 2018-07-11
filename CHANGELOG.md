@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Fixed
+- [server] Channel leak on watch deploy rolling update and service creation
+
 ## [0.24.0] - 2018-07-06
 ### Added
 - Limits to the nginx container

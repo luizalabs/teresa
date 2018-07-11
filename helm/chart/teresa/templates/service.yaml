@@ -15,7 +15,7 @@ spec:
     component: "server"
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-  type: LoadBalancer
+  type: {{ .Values.service_type }}
   ports:
     - protocol: TCP
       port: 50051

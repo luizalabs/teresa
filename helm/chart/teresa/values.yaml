@@ -1,4 +1,5 @@
 name: teresa
+service_type: LoadBalancer
 db:
   name: teresa.sqlite
   hostname:

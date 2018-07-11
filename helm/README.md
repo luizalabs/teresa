@@ -84,6 +84,7 @@ The following tables lists the configurable parameters of the Teresa chart and t
 Parameter | Description | Default
 --------- | ----------- | -------
 `name` | Deploy name | `teresa`
+`service_type` | Teresa service type | `LoadBalancer`
 `db.name` | Database name | `teresa.sqlite`
 `db.hostname`| (Optional) Database hostname, if defined use mysql instead of sqlite| `""`
 `db.username` | (Optional) Database username | `""`

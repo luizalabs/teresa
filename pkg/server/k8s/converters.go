@@ -18,8 +18,9 @@ import (
 )
 
 const (
-	changeCauseAnnotation = "kubernetes.io/change-cause"
-	appTypeAnnotation     = "teresa.io/app-type"
+	changeCauseAnnotation       = "kubernetes.io/change-cause"
+	appTypeAnnotation           = "teresa.io/app-type"
+	clusterAutoscalerAnnotation = "cluster-autoscaler.kubernetes.io/safe-to-evict"
 )
 
 var defaultCronjobBackofflimit = int32(3)
@@ -217,6 +218,9 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta2.De
 			Template: k8sv1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: deploySpec.Labels,
+					Annotations: map[string]string{
+						clusterAutoscalerAnnotation: "true",
+					},
 				},
 				Spec: ps,
 			},

@@ -692,3 +692,20 @@ func TestK8sPodToAppPodTerminating(t *testing.T) {
 		t.Errorf("want %v; got %v", want, pod)
 	}
 }
+
+func TestDeploySpecPodTemplateAnnotations(t *testing.T) {
+	ds := &spec.Deploy{}
+	want := map[string]string{
+		clusterAutoscalerAnnotation: "true",
+	}
+
+	k8sDeploy, err := deploySpecToK8sDeploy(ds, 1)
+	if err != nil {
+		t.Fatal("got unexpected error:", err)
+	}
+	got := k8sDeploy.Spec.Template.ObjectMeta.Annotations
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v; want %v", got, want)
+	}
+}

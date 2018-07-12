@@ -9,9 +9,9 @@ import (
 
 // BaseModel declares base fields that are to be used on all models
 type BaseModel struct {
-	ID        uint      `gorm:"primary_key;"`
-	CreatedAt time.Time `gorm:"not null;"`
-	UpdatedAt time.Time `gorm:"not null;"`
+	ID        uint `gorm:"primary_key;"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // Team represents a team of developers

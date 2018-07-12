@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - [server] Cluster autocaler support
 
+### Fixed
+- [server] Database initial migration on mysql 5.7
+
 ## [0.24.1] - 2018-07-11
 ### Fixed
 - [server] Channel leak on watch deploy rolling update and service creation

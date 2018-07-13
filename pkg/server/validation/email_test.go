@@ -1,8 +1,8 @@
-package validations
+package validation
 
 import "testing"
 
-func TestValidateEmail(t *testing.T) {
+func TestIsValidEmail(t *testing.T) {
 	var testCases = []struct {
 		email          string
 		expectedResult bool
@@ -20,8 +20,8 @@ func TestValidateEmail(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		if b := ValidateEmail(tc.email); b != tc.expectedResult {
-			t.Errorf("expected %v, got %v (email: %s)", tc.expectedResult, b, tc.email)
+		if b := IsValidEmail(tc.email); b != tc.expectedResult {
+			t.Errorf("expected %v; got %v (email: %s)", tc.expectedResult, b, tc.email)
 		}
 	}
 }

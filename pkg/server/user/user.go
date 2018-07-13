@@ -11,7 +11,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
-	"github.com/luizalabs/teresa/pkg/server/validations"
+	"github.com/luizalabs/teresa/pkg/server/validation"
 )
 
 const (
@@ -107,7 +107,7 @@ func (dbu *DatabaseOperations) Delete(email string) error {
 }
 
 func (dbu *DatabaseOperations) Create(name, email, pass string, admin bool) error {
-	if !validations.ValidateEmail(email) {
+	if !validation.IsValidEmail(email) {
 		return ErrInvalidEmail
 	}
 	if len(pass) < minPassLength {

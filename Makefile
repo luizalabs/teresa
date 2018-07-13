@@ -61,6 +61,9 @@ help:
 	@echo "build-server"
 	@echo " build the teresa server 'teresa-server'"
 	@echo
+	@echo "build-all"
+	@echo " build the teresa server 'teresa-server' and the client 'teresa'"
+	@echo
 	@echo "gen-grpc-stubs"
 	@echo " generate grpc code, only used for development"
 	@echo
@@ -114,6 +117,8 @@ build-server:
 
 build-client:
 	@go build -ldflags "-X $(BUILD_HOME)/pkg/version.Version=$(BUILD_VERSION)" -o teresa $(BUILD_HOME)/cmd/client
+
+build-all: build-server build-client
 
 gen-grpc-stubs:
 	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/user/*.proto

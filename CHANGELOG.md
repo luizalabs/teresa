@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - [server] Database initial migration on mysql 5.7
+- [server] Doesn't log request content on error middleware if the route is `User/Create`
 
 ## [0.24.1] - 2018-07-11
 ### Fixed

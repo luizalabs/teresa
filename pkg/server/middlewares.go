@@ -85,11 +85,15 @@ func buildRecFunc(dbg bool) func(p interface{}) error {
 	}
 }
 
+func isLoginOrUserCreate(method string) bool {
+	return strings.HasSuffix(method, "Login") || strings.HasSuffix(method, "User/Create")
+}
+
 func logUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	resp, err := handler(ctx, req)
 	if err != nil {
 		logger := log.WithField("route", info.FullMethod)
-		if !strings.HasSuffix(info.FullMethod, "Login") {
+		if !isLoginOrUserCreate(info.FullMethod) {
 			logger = logger.WithField("request", req).WithError(err)
 		}
 		if u, ok := ctx.Value("user").(*database.User); ok {

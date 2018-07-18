@@ -7,217 +7,51 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/storage"
 )
 
-func TestNewPodSpec(t *testing.T) {
-	expectedAppName := "app-test"
-	a := &app.App{
-		Name:    expectedAppName,
-		Secrets: []string{"APP-SECRET-1", "APP-SECRET-2"},
-		EnvVars: []*app.EnvVar{
-			{Key: "APP-ENV-KEY", Value: "APP-ENV-VALUE"},
-		},
-	}
-	ev := map[string]string{"ENV-KEY": "ENV-VALUE"}
+func TestPodBuilder(t *testing.T) {
+	cn := NewContainerBuilder("container", "image:v1").
+		ExposePort("http", DefaultPort).
+		Build()
+
 	expectedName := "test"
-	expectedImage := "docker/teresa-test:0.0.1"
+	expectedNamespace := "ns"
 
-	ps := NewPod(expectedName, "nginx", expectedImage, a, ev, storage.NewFake())
-	if ps.Name != expectedName {
-		t.Errorf("expected %s, got %s", expectedName, ps.Name)
-	}
-	if ps.Namespace != a.Name {
-		t.Errorf("expected %s, got %s", a.Name, ps.Namespace)
-	}
-	if ps.Containers[0].Image != expectedImage {
-		t.Errorf("expected %s, got %s", expectedImage, ps.Containers[0].Image)
-	}
+	init := NewInitContainer("image:v3", "slug.tgz", storage.NewFake())
+	mso := MountSecretInInitContainer("vl", "/s", "s")
+	svio := ShareVolumeBetweenAppAndInitContainer("vol", "/app")
 
-	if len(ps.Containers) != 2 {
-		t.Fatalf("expected 2 containers (app + nginx), got %d", len(ps.Containers))
-	}
-	for _, env := range a.EnvVars {
-		for i := range ps.Containers {
-			if ps.Containers[i].Env[env.Key] != env.Value {
-				t.Errorf(
-					"expected %s, got %s for key %s",
-					env.Value,
-					ps.Containers[i].Env[env.Key], env.Key,
-				)
-			}
-		}
-	}
+	ng := NewNginxContainer("image:v2", &app.App{})
+	svo := ShareVolumeBetweenAppAndSideCar("vol", "/app")
+	mcm := MountConfigMapInSideCar("cm", "/cm", "cm")
 
-	for k, v := range ev {
-		if ps.Containers[0].Env[k] != v {
-			t.Errorf("expected %s, got %s for key %s", v, ps.Containers[0].Env[k], k)
-		}
-	}
-
-	if len(a.Secrets) != len(ps.Containers[0].Secrets) {
-		t.Fatalf("expected %d, got %d", len(a.Secrets), len(ps.Containers[0].Secrets))
-	}
-	for i := range a.Secrets {
-		if ps.Containers[0].Secrets[i] != a.Secrets[i] {
-			t.Errorf("expected %s, got %s", a.Secrets[i], ps.Containers[0].Secrets[i])
-		}
-	}
-
-	if len(ps.Volumes) != 4 {
-		t.Errorf("expected %d, got %d", 2, len(ps.Volumes))
-	}
-	if len(ps.Containers[0].VolumeMounts) != 1 {
-		t.Errorf("expected %d, got %d", 1, len(ps.Containers[0].VolumeMounts))
-	}
-	if ps.Volumes[0].Name != "storage-keys" {
-		t.Errorf("expected %s, got %s", "storage-keys", ps.Volumes[0].Name)
-	}
-	if ps.Volumes[1].Name != slugVolumeName {
-		t.Errorf("expected %s, got %s", slugVolumeName, ps.Volumes[1].Name)
-	}
-	if ps.Volumes[2].Name != "nginx-conf" {
-		t.Errorf("expected nginx-conf, got %s", ps.Volumes[2].Name)
-	}
-	if ps.Volumes[3].Name != sharedVolumeName {
-		t.Errorf("expected %s, got %s", sharedVolumeName, ps.Volumes[3].Name)
-	}
-}
-
-func TestNewBuilder(t *testing.T) {
-	expectedName := "builder"
-	expectedTarBallLocation := "narnia"
-	expectedBuildDest := "nowhere"
-	expectedImage := "image"
-	expectedContainerLimits := &ContainerLimits{
-		CPU:    "800m",
-		Memory: "1Gi",
-	}
-
-	ps := NewBuilder(
-		expectedName,
-		expectedTarBallLocation,
-		expectedBuildDest,
-		expectedImage,
-		&app.App{},
-		storage.NewFake(),
-		expectedContainerLimits,
-	)
+	ps := NewPodBuilder(expectedName, expectedNamespace).
+		WithAppContainer(cn).
+		WithInitContainer(init, mso, svio).
+		WithSideCar(ng, svo, mcm, SwitchPortWithAppContainer).
+		Build()
 
 	if ps.Name != expectedName {
 		t.Errorf("expected %s, got %s", expectedName, ps.Name)
 	}
-	if ps.Containers[0].Image != expectedImage {
-		t.Errorf("expected %s, got %s", expectedImage, ps.Containers[0].Image)
+	if ps.Namespace != expectedNamespace {
+		t.Errorf("expected %s, got %s", expectedNamespace, ps.Namespace)
 	}
-
-	ev := map[string]string{
-		"TAR_PATH": expectedTarBallLocation,
-		"PUT_PATH": expectedBuildDest,
+	if actual := len(ps.Containers); actual != 2 {
+		t.Fatalf("expected 2 containers, got %d", actual)
 	}
-	for k, v := range ev {
-		if ps.Containers[0].Env[k] != v {
-			t.Errorf("expected %s, got %s for key %s", v, ps.Containers[0].Env[k], k)
-		}
+	if actual := ps.Containers[0].Ports[0].ContainerPort; actual != secondaryPort {
+		t.Errorf("expected %d, got %d", secondaryPort, actual)
 	}
-
-	if ps.Containers[0].ContainerLimits.CPU != expectedContainerLimits.CPU {
-		t.Errorf("expected %s, got %s", expectedContainerLimits.CPU, ps.Containers[0].ContainerLimits.CPU)
+	if actual := ps.Containers[1].Ports[0].ContainerPort; actual != DefaultPort {
+		t.Errorf("expected %d, got %d", DefaultPort, actual)
 	}
-	if ps.Containers[0].ContainerLimits.Memory != expectedContainerLimits.Memory {
-		t.Errorf("expected %s, got %s", expectedContainerLimits.Memory, ps.Containers[0].ContainerLimits.Memory)
+	if actual := len(ps.InitContainers); actual != 1 {
+		t.Errorf("expected 1, got %d", actual)
 	}
-
-	if len(ps.Containers[0].VolumeMounts) != 1 {
-		t.Errorf("expected 1, got %d", len(ps.Containers[0].VolumeMounts))
+	// init secret, init shared with app, nginx config map, nginx shared with app
+	if actual := len(ps.Volumes); actual != 4 {
+		t.Errorf("expected 4, got %d", actual)
 	}
-	if ps.Containers[0].VolumeMounts[0].Name != "storage-keys" {
-		t.Errorf("expected %s, got %s", "storage-keys", ps.Containers[0].VolumeMounts[0].Name)
-	}
-}
-
-func TestNewRunner(t *testing.T) {
-	expectedPodName := "1234"
-	expectedSlugURL := "http://teresa.io/slug.tgz"
-	expectedImage := "image"
-	expectedCommand := []string{"python", "manage.py", "migrate"}
-	a := &app.App{}
-	s := storage.NewFake()
-	expectedContainerLimits := &ContainerLimits{
-		CPU:    "800m",
-		Memory: "1Gi",
-	}
-	imgs := &Images{SlugRunner: expectedImage}
-
-	ps := NewRunner(
-		expectedPodName,
-		expectedSlugURL,
-		imgs,
-		a,
-		s,
-		expectedContainerLimits,
-		expectedCommand...,
-	)
-	if ps.Name != expectedPodName {
-		t.Errorf("expected %s, got %s", expectedPodName, ps.Name)
-	}
-
-	if ps.Containers[0].Image != expectedImage {
-		t.Errorf("expected %s, got %s", expectedImage, ps.Containers[0].Image)
-	}
-
-	ev := map[string]string{
-		"SLUG_URL": expectedSlugURL,
-	}
-	for k, v := range ev {
-		if ps.Containers[0].Env[k] != v {
-			t.Errorf("expected %s, got %s for key %s", v, ps.Containers[0].Env[k], k)
-		}
-	}
-
-	if ps.Containers[0].ContainerLimits.CPU != expectedContainerLimits.CPU {
-		t.Errorf("expected %s, got %s", expectedContainerLimits.CPU, ps.Containers[0].ContainerLimits.CPU)
-	}
-	if ps.Containers[0].ContainerLimits.Memory != expectedContainerLimits.Memory {
-		t.Errorf("expected %s, got %s", expectedContainerLimits.Memory, ps.Containers[0].ContainerLimits.Memory)
-	}
-
-	for i, v := range expectedCommand {
-		if ps.Containers[0].Args[i] != expectedCommand[i] {
-			t.Errorf("expected %s, got %s", v, ps.Containers[0].Args[i])
-		}
-	}
-}
-
-func TestNewRunnerInitContainers(t *testing.T) {
-	expectedImage := "image"
-	cmd := []string{}
-	a := &app.App{}
-	s := storage.NewFake()
-	cl := &ContainerLimits{}
-	imgs := &Images{SlugStore: expectedImage}
-
-	ps := NewRunner("", "", imgs, a, s, cl, cmd...)
-
-	if len(ps.InitContainers) != 1 {
-		t.Errorf("expected %d, got %d", 1, len(ps.InitContainers))
-	}
-	if ps.InitContainers[0].Image != expectedImage {
-		t.Errorf("expected %s, got %s", expectedImage, ps.InitContainers[0].Image)
-	}
-}
-
-func TestNewRunnerVolumeMounts(t *testing.T) {
-	expectedImage := "image"
-	cmd := []string{}
-	a := &app.App{}
-	s := storage.NewFake()
-	cl := &ContainerLimits{}
-	imgs := &Images{SlugStore: expectedImage}
-
-	ps := NewRunner("", "", imgs, a, s, cl, cmd...)
-
-	if len(ps.Containers[0].VolumeMounts) != 1 {
-		t.Errorf("expected %d, got %d", 1, len(ps.Containers[0].VolumeMounts))
-	}
-	if ps.Containers[0].VolumeMounts[0].Name != slugVolumeName {
-		t.Errorf("expected %s, got %s", slugVolumeName, ps.Containers[0].VolumeMounts[0].Name)
+	if actual := len(ps.Containers[0].VolumeMounts); actual != 2 {
+		t.Errorf("expected 2, got %d", actual)
 	}
 }

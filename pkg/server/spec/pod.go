@@ -1,13 +1,10 @@
 package spec
 
 import (
-	"github.com/luizalabs/teresa/pkg/server/app"
-	"github.com/luizalabs/teresa/pkg/server/storage"
+	"strconv"
 )
 
 const (
-	slugVolumeName        = "slug"
-	slugVolumeMountPath   = "/slug"
 	sharedVolumeName      = "shared-data"
 	sharedVolumeMountPath = "/app"
 )
@@ -30,102 +27,134 @@ type Pod struct {
 	Labels         Labels
 }
 
-func newPodVolumes(appName string, fs storage.Storage, hasNginx bool) []*Volume {
-	volumes := []*Volume{
-		{
-			Name:       "storage-keys",
-			SecretName: fs.K8sSecretName(),
-		},
-		{
-			Name:     slugVolumeName,
-			EmptyDir: true,
-		},
-	}
-	if hasNginx {
-		volumes = append(volumes,
-			&Volume{Name: "nginx-conf", ConfigMapName: appName},
-			&Volume{Name: sharedVolumeName, EmptyDir: true},
+type PodBuilder struct {
+	p             *Pod
+	initContainer *Container
+	appContainer  *Container
+	sideCars      []*Container
+}
+
+func SwitchPortWithAppContainer(b *PodBuilder) {
+	sideCarIdx := len(b.sideCars) - 1
+
+	appPort, sideCarPort := b.appContainer.Ports[0].ContainerPort, b.sideCars[sideCarIdx].Ports[0].ContainerPort
+	b.appContainer.Ports[0].ContainerPort, b.sideCars[sideCarIdx].Ports[0].ContainerPort = sideCarPort, appPort
+
+	b.appContainer.Env["PORT"] = strconv.Itoa(int(b.appContainer.Ports[0].ContainerPort))
+}
+
+func shareVolumeWithAppContainer(name, path string, cn *Container, b *PodBuilder) {
+	for _, c := range []*Container{b.appContainer, cn} {
+		c.VolumeMounts = append(
+			c.VolumeMounts,
+			&VolumeMounts{Name: name, MountPath: path},
 		)
 	}
-	return volumes
-}
-
-func newPodContainers(name, nginxImage, appImage string, envVars map[string]string, secrets []string) []*Container {
-	appPort := DefaultPort
-	if nginxImage != "" {
-		appPort = secondaryPort
-	}
-
-	c := []*Container{
-		newAppContainer(name, appImage, envVars, appPort, secrets),
-	}
-	if nginxImage != "" {
-		c[0].VolumeMounts = []*VolumeMounts{
-			&VolumeMounts{
-				Name:      sharedVolumeName,
-				MountPath: sharedVolumeMountPath,
-			},
-		}
-		c = append(c, newNginxContainer(nginxImage))
-	}
-	return c
-}
-
-func NewPod(name, nginxImage, image string, a *app.App, envVars map[string]string, fs storage.Storage) *Pod {
-	hasNginx := nginxImage != ""
-	ps := &Pod{
-		Name:       name,
-		Namespace:  a.Name,
-		Containers: newPodContainers(name, nginxImage, image, envVars, a.Secrets),
-		Volumes:    newPodVolumes(a.Name, fs, hasNginx),
-		Labels:     make(map[string]string),
-	}
-
-	for _, e := range a.EnvVars {
-		for i := range ps.Containers {
-			ps.Containers[i].Env[e.Key] = e.Value
-		}
-	}
-	for k, v := range fs.PodEnvVars() {
-		ps.Containers[0].Env[k] = v
-	}
-	return ps
-}
-
-func NewBuilder(name, tarBallLocation, buildDest, image string, a *app.App, fs storage.Storage, cl *ContainerLimits) *Pod {
-	ps := NewPod(
-		name,
-		"",
-		image,
-		a,
-		map[string]string{
-			"TAR_PATH":        tarBallLocation,
-			"PUT_PATH":        buildDest,
-			"BUILDER_STORAGE": fs.Type(),
-		},
-		fs,
+	b.p.Volumes = append(
+		b.p.Volumes,
+		&Volume{Name: name, EmptyDir: true},
 	)
-	ps.Containers[0].VolumeMounts = []*VolumeMounts{newStorageKeyVolumeMount()}
-	ps.Containers[0].ContainerLimits = cl
-	return ps
 }
 
-func NewRunner(name, slugURL string, imgs *Images, a *app.App, fs storage.Storage, cl *ContainerLimits, command ...string) *Pod {
-	ps := NewPod(
-		name,
-		"",
-		imgs.SlugRunner,
-		a,
-		map[string]string{
-			"APP":      a.Name,
-			"SLUG_URL": slugURL,
-			"SLUG_DIR": slugVolumeMountPath,
-		},
-		fs,
+func ShareVolumeBetweenAppAndSideCar(name, path string) func(*PodBuilder) {
+	return func(b *PodBuilder) {
+		shareVolumeWithAppContainer(name, path, b.sideCars[len(b.sideCars)-1], b)
+	}
+}
+
+func ShareVolumeBetweenAppAndInitContainer(name, path string) func(*PodBuilder) {
+	return func(b *PodBuilder) {
+		shareVolumeWithAppContainer(name, path, b.initContainer, b)
+	}
+}
+
+func mountConfigMapInContainer(name, path, configMapName string, c *Container, b *PodBuilder) {
+	c.VolumeMounts = append(
+		c.VolumeMounts,
+		&VolumeMounts{Name: name, MountPath: path, ReadOnly: true},
 	)
-	ps.Containers[0].Args = command
-	ps.Containers[0].ContainerLimits = cl
-	ps.Containers[0].VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}
-	ps.InitContainers = newInitContainers(slugURL, imgs.SlugStore, a, fs)
-	return ps
+	b.p.Volumes = append(
+		b.p.Volumes,
+		&Volume{Name: name, ConfigMapName: configMapName},
+	)
+}
+
+func MountConfigMapInSideCar(name, path, configMapName string) func(*PodBuilder) {
+	return func(b *PodBuilder) {
+		mountConfigMapInContainer(name, path, configMapName, b.sideCars[len(b.sideCars)-1], b)
+	}
+}
+
+func mountSecretInContainer(name, path, secretName string, c *Container, b *PodBuilder) {
+	c.VolumeMounts = append(
+		c.VolumeMounts,
+		&VolumeMounts{Name: name, MountPath: path, ReadOnly: true},
+	)
+	b.p.Volumes = append(
+		b.p.Volumes,
+		&Volume{Name: name, SecretName: secretName},
+	)
+}
+
+func MountSecretInInitContainer(name, path, secretName string) func(*PodBuilder) {
+	return func(b *PodBuilder) {
+		mountSecretInContainer(name, path, secretName, b.initContainer, b)
+	}
+}
+
+func MountSecretInAppContainer(name, path, secretName string) func(*PodBuilder) {
+	return func(b *PodBuilder) {
+		mountSecretInContainer(name, path, secretName, b.appContainer, b)
+	}
+}
+
+func (b *PodBuilder) WithInitContainer(cn *Container, options ...func(*PodBuilder)) *PodBuilder {
+	b.initContainer = cn
+	for _, opt := range options {
+		opt(b)
+	}
+	return b
+}
+
+func (b *PodBuilder) WithAppContainer(cn *Container, options ...func(*PodBuilder)) *PodBuilder {
+	b.appContainer = cn
+	for _, opt := range options {
+		opt(b)
+	}
+	return b
+}
+
+func (b *PodBuilder) WithSideCar(cn *Container, options ...func(*PodBuilder)) *PodBuilder {
+	b.sideCars = append(b.sideCars, cn)
+	for _, opt := range options {
+		opt(b)
+	}
+	return b
+}
+
+func (b *PodBuilder) WithLabels(lb Labels) *PodBuilder {
+	for k, v := range lb {
+		b.p.Labels[k] = v
+	}
+	return b
+}
+
+func (b *PodBuilder) Build() *Pod {
+	b.p.Containers = make([]*Container, len(b.sideCars)+1)
+	b.p.Containers[0] = b.appContainer
+	for i := 0; i < len(b.sideCars); i++ {
+		b.p.Containers[i+1] = b.sideCars[i]
+	}
+	if b.initContainer != nil {
+		b.p.InitContainers = []*Container{b.initContainer}
+	}
+	return b.p
+}
+
+func NewPodBuilder(name, namespace string) *PodBuilder {
+	p := &Pod{Name: name, Namespace: namespace, Labels: make(map[string]string)}
+	return &PodBuilder{
+		p:        p,
+		sideCars: make([]*Container, 0),
+	}
 }

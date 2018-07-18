@@ -1,25 +1,5 @@
 package spec
 
-import (
-	"fmt"
-	"sort"
-	"strconv"
-	"strings"
-
-	"github.com/luizalabs/teresa/pkg/server/app"
-	"github.com/luizalabs/teresa/pkg/server/storage"
-)
-
-const (
-	nginxConfTmplDir        = "/etc/nginx/template/"
-	nginxConfDir            = "/etc/nginx/"
-	nginxConfFile           = "nginx.conf"
-	nginxArgTmpl            = "envsubst '%s' < %s%s > %s%s && nginx -g 'daemon off;'"
-	nginxBackendTmpl        = "http://localhost:%d"
-	nginxDefaultCPULimit    = "100m"
-	nginxDefaultMemoryLimit = "256Mi"
-)
-
 type ContainerLimits struct {
 	CPU    string
 	Memory string
@@ -48,111 +28,58 @@ type Container struct {
 	Secrets         []string
 }
 
-func newSlugVolumeMount() *VolumeMounts {
-	return &VolumeMounts{
-		Name:      slugVolumeName,
-		MountPath: slugVolumeMountPath,
-	}
+type ContainerBuilder struct {
+	c *Container
 }
 
-func newStorageKeyVolumeMount() *VolumeMounts {
-	return &VolumeMounts{
-		Name:      "storage-keys",
-		MountPath: "/var/run/secrets/deis/objectstore/creds",
-		ReadOnly:  true,
-	}
+func (b *ContainerBuilder) WithCommand(cmd []string) *ContainerBuilder {
+	b.c.Command = cmd
+	return b
 }
 
-func newInitContainers(slugURL, image string, a *app.App, fs storage.Storage) []*Container {
-	ic := &Container{
-		Name:  "slugstore",
-		Image: image,
-		Env: map[string]string{
-			"BUILDER_STORAGE": fs.Type(),
-			"SLUG_URL":        slugURL,
-			"SLUG_DIR":        slugVolumeMountPath,
+func (b *ContainerBuilder) WithArgs(args []string) *ContainerBuilder {
+	b.c.Args = args
+	return b
+}
+
+func (b *ContainerBuilder) WithEnv(ev map[string]string) *ContainerBuilder {
+	for k, v := range ev {
+		b.c.Env[k] = v
+	}
+	return b
+}
+
+func (b *ContainerBuilder) WithSecrets(s []string) *ContainerBuilder {
+	b.c.Secrets = append(b.c.Secrets, s...)
+	return b
+}
+
+func (b *ContainerBuilder) WithLimits(cpu, memory string) *ContainerBuilder {
+	b.c.ContainerLimits = &ContainerLimits{
+		CPU:    cpu,
+		Memory: memory,
+	}
+	return b
+}
+
+func (b *ContainerBuilder) ExposePort(name string, port int) *ContainerBuilder {
+	b.c.Ports = append(b.c.Ports, Port{Name: name, ContainerPort: int32(port)})
+	return b
+}
+
+func (b *ContainerBuilder) Build() *Container {
+	return b.c
+}
+
+func NewContainerBuilder(name, image string) *ContainerBuilder {
+	return &ContainerBuilder{
+		c: &Container{
+			Name:         name,
+			Image:        image,
+			Env:          make(map[string]string),
+			Secrets:      make([]string, 0),
+			Ports:        make([]Port, 0),
+			VolumeMounts: make([]*VolumeMounts, 0),
 		},
-		VolumeMounts: []*VolumeMounts{
-			newStorageKeyVolumeMount(),
-			newSlugVolumeMount(),
-		},
-	}
-	for k, v := range fs.PodEnvVars() {
-		ic.Env[k] = v
-	}
-	return []*Container{ic}
-}
-
-func newNginxVolumeMounts() []*VolumeMounts {
-	return []*VolumeMounts{
-		&VolumeMounts{
-			Name:      "nginx-conf",
-			MountPath: nginxConfTmplDir,
-			ReadOnly:  true,
-		},
-		&VolumeMounts{
-			Name:      sharedVolumeName,
-			MountPath: sharedVolumeMountPath,
-		},
-	}
-}
-
-func newNginxContainer(image string) *Container {
-	port := strconv.Itoa(DefaultPort)
-	backend := fmt.Sprintf(nginxBackendTmpl, secondaryPort)
-	env := map[string]string{
-		"NGINX_PORT":    port,
-		"NGINX_BACKEND": backend,
-	}
-	args := newNginxContainerArgs(env)
-
-	return &Container{
-		Name:    "nginx",
-		Image:   image,
-		Command: []string{"/bin/sh"},
-		Args:    []string{"-c", args},
-		Ports: []Port{{
-			Name:          "nginx",
-			ContainerPort: int32(DefaultPort),
-		}},
-		Env:          env,
-		VolumeMounts: newNginxVolumeMounts(),
-		ContainerLimits: &ContainerLimits{
-			CPU:    nginxDefaultCPULimit,
-			Memory: nginxDefaultMemoryLimit,
-		},
-	}
-}
-
-func newNginxContainerArgs(env map[string]string) string {
-	tmp := make([]string, len(env))
-	var i int
-	for key, _ := range env {
-		tmp[i] = fmt.Sprintf("$%s", key)
-		i++
-	}
-	sort.Strings(tmp)
-
-	args := fmt.Sprintf(
-		nginxArgTmpl,
-		strings.Join(tmp, " "),
-		nginxConfTmplDir,
-		nginxConfFile,
-		nginxConfDir,
-		nginxConfFile,
-	)
-	return args
-}
-
-func newAppContainer(name, image string, envVars map[string]string, port int, secrets []string) *Container {
-	return &Container{
-		Name:    name,
-		Image:   image,
-		Env:     envVars,
-		Secrets: secrets,
-		Ports: []Port{{
-			Name:          "app",
-			ContainerPort: int32(port),
-		}},
 	}
 }

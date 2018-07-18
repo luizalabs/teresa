@@ -7,44 +7,46 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/storage"
 )
 
-func TestNewDeploySpec(t *testing.T) {
-	expectedImage := "image"
-	expectedDescription := "test"
-	expectedSlugURL := "http://teresa.io/slug.tgz"
+func TestDeployBuilder(t *testing.T) {
+	expectedPodName := "test"
+	expectedNamespace := "ns"
+	pod := NewRunnerPodBuilder(expectedPodName, "runner", "store").
+		ForApp(&app.App{Name: expectedNamespace}).
+		WithStorage(storage.NewFake()).
+		Build()
+
+	expectedSlugURL := "some/slug.tgz"
+	expectedDescription := "teste"
 	expectedRevisionHistoryLimit := 5
-	a := &app.App{Name: "deploy-test", ProcessType: "worker"}
-	imgs := &Images{SlugRunner: expectedImage}
+	expectedMatchLabels := map[string]string{"expected": "label"}
+	ds := NewDeployBuilder(expectedSlugURL).
+		WithPod(pod).
+		WithDescription(expectedDescription).
+		WithRevisionHistoryLimit(expectedRevisionHistoryLimit).
+		WithTeresaYaml(&TeresaYaml{}).
+		WithMatchLabels(expectedMatchLabels).
+		Build()
 
-	ds := NewDeploy(
-		imgs,
-		expectedDescription,
-		expectedSlugURL,
-		expectedRevisionHistoryLimit,
-		a,
-		&TeresaYaml{},
-		storage.NewFake(),
-	)
-
-	if len(ds.Containers[0].Args) != 2 || ds.Containers[0].Args[1] != a.ProcessType {
-		t.Errorf("expected [start %s], got %v", a.ProcessType, ds.Containers[0].Args)
+	if ds.Pod.Name != expectedPodName {
+		t.Errorf("expected %s, got %s", expectedPodName, ds.Pod.Name)
 	}
-
+	if ds.Pod.Namespace != expectedNamespace {
+		t.Errorf("expected %s, got %s", expectedNamespace, ds.Pod.Namespace)
+	}
 	if ds.SlugURL != expectedSlugURL {
 		t.Errorf("expected %s, got %s", expectedSlugURL, ds.SlugURL)
 	}
-
 	if ds.Description != expectedDescription {
 		t.Errorf("expected %s, got %s", expectedDescription, ds.Description)
 	}
-
-	if ds.Pod.Name != a.Name {
-		t.Errorf("expected %s, got %s", a.Name, ds.Pod.Name)
-	}
-
 	if ds.RevisionHistoryLimit != expectedRevisionHistoryLimit {
 		t.Errorf("expected %d, got %d", expectedRevisionHistoryLimit, ds.RevisionHistoryLimit)
 	}
-
+	for k, v := range expectedMatchLabels {
+		if actual := ds.MatchLabels[k]; actual != v {
+			t.Errorf("expected %s for key %s, got %s", v, k, actual)
+		}
+	}
 	if ds.Lifecycle == nil {
 		t.Fatal("expected lifecycle; got nil")
 	}
@@ -55,20 +57,5 @@ func TestNewDeploySpec(t *testing.T) {
 
 	if ds.Lifecycle.PreStop.DrainTimeoutSeconds != defaultDrainTimeoutSeconds {
 		t.Errorf("got %d; want %d", ds.Lifecycle.PreStop.DrainTimeoutSeconds, defaultDrainTimeoutSeconds)
-	}
-}
-
-func TestNewDeploySpecInitContainers(t *testing.T) {
-	expectedImage := "image"
-	a := &app.App{}
-	imgs := &Images{SlugStore: expectedImage}
-
-	ds := NewDeploy(imgs, "", "", 0, a, &TeresaYaml{}, storage.NewFake())
-
-	if len(ds.InitContainers) != 1 {
-		t.Errorf("got %d; want %d", len(ds.InitContainers), 1)
-	}
-	if ds.InitContainers[0].Image != expectedImage {
-		t.Errorf("got %s; want %s", ds.InitContainers[0].Image, expectedImage)
 	}
 }

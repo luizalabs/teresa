@@ -62,22 +62,14 @@ func (ops *ExecOperations) RunCommand(ctx context.Context, user *database.User, 
 		return nil, errChan
 	}
 
-	imgs := &spec.Images{
-		SlugRunner: ops.defaults.RunnerImage,
-		SlugStore:  ops.defaults.StoreImage,
-	}
-	podSpec := spec.NewRunner(
-		fmt.Sprintf("exec-command-%s-%s", appName, uid.New()),
-		currentSlug,
-		imgs,
-		a,
-		ops.fs,
-		&spec.ContainerLimits{
-			CPU:    ops.defaults.LimitsCPU,
-			Memory: ops.defaults.LimitsMemory,
-		},
-		command...,
-	)
+	podName := fmt.Sprintf("exec-command-%s-%s", appName, uid.New())
+	podSpec := spec.NewRunnerPodBuilder(podName, ops.defaults.RunnerImage, ops.defaults.StoreImage).
+		ForApp(a).
+		WithSlug(currentSlug).
+		WithStorage(ops.fs).
+		WithLimits(ops.defaults.LimitsCPU, ops.defaults.LimitsMemory).
+		WithArgs(command).
+		Build()
 
 	return ops.RunCommandBySpec(ctx, podSpec)
 }

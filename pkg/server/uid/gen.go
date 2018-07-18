@@ -1,7 +1,14 @@
 package uid
 
-import "github.com/pborman/uuid"
+import (
+	"crypto/rand"
+	"fmt"
+)
 
 func New() string {
-	return uuid.New()[:8]
+	b := make([]byte, 4)
+	if _, err := rand.Read(b); err != nil {
+		panic(err.Error()) // rand should never fail
+	}
+	return fmt.Sprintf("%x", b)
 }

@@ -1,12 +1,5 @@
 package spec
 
-import (
-	"strconv"
-
-	"github.com/luizalabs/teresa/pkg/server/app"
-	"github.com/luizalabs/teresa/pkg/server/storage"
-)
-
 const (
 	DefaultPort                = 5000
 	secondaryPort              = 6000
@@ -66,55 +59,52 @@ type Deploy struct {
 	MatchLabels          Labels
 }
 
-type Images struct {
-	SlugRunner  string
-	SlugBuilder string
-	SlugStore   string
-	Nginx       string
+type DeployBuilder struct {
+	d *Deploy
 }
 
-func NewDeploy(imgs *Images, description, slugURL string, rhl int, a *app.App, tYaml *TeresaYaml, fs storage.Storage) *Deploy {
-	port := DefaultPort
-	if imgs.Nginx != "" {
-		port = secondaryPort
+func (b *DeployBuilder) WithMatchLabels(lb Labels) *DeployBuilder {
+	for k, v := range lb {
+		b.d.MatchLabels[k] = v
 	}
+	return b
+}
 
-	ps := NewPod(
-		a.Name,
-		imgs.Nginx,
-		imgs.SlugRunner,
-		a,
-		map[string]string{
-			"APP":      a.Name,
-			"PORT":     strconv.Itoa(port),
-			"SLUG_URL": slugURL,
-			"SLUG_DIR": slugVolumeMountPath,
-		},
-		fs,
-	)
-	ps.Labels["run"] = a.Name
-	ps.Containers[0].Args = []string{"start", a.ProcessType}
-	ps.Containers[0].VolumeMounts = append(ps.Containers[0].VolumeMounts, newSlugVolumeMount())
-
-	ps.InitContainers = newInitContainers(slugURL, imgs.SlugStore, a, fs)
-
-	ds := &Deploy{
-		Description:          description,
-		SlugURL:              slugURL,
-		Pod:                  *ps,
-		RevisionHistoryLimit: rhl,
-		MatchLabels:          Labels{"run": a.Name},
+func (b *DeployBuilder) WithTeresaYaml(ty *TeresaYaml) *DeployBuilder {
+	if ty != nil {
+		b.d.TeresaYaml = *ty
 	}
+	return b
+}
 
-	if tYaml != nil {
-		ds.TeresaYaml = *tYaml
-	}
+func (b *DeployBuilder) WithRevisionHistoryLimit(rhl int) *DeployBuilder {
+	b.d.RevisionHistoryLimit = rhl
+	return b
+}
 
-	if ds.Lifecycle == nil {
-		ds.Lifecycle = &Lifecycle{
+func (b *DeployBuilder) WithDescription(desc string) *DeployBuilder {
+	b.d.Description = desc
+	return b
+}
+
+func (b *DeployBuilder) WithPod(p *Pod) *DeployBuilder {
+	b.d.Pod = *p
+	return b
+}
+
+func (b *DeployBuilder) Build() *Deploy {
+	if b.d.Lifecycle == nil {
+		b.d.Lifecycle = &Lifecycle{
 			PreStop: &PreStop{DrainTimeoutSeconds: defaultDrainTimeoutSeconds},
 		}
 	}
+	return b.d
+}
 
-	return ds
+func NewDeployBuilder(slugURL string) *DeployBuilder {
+	d := &Deploy{
+		SlugURL:     slugURL,
+		MatchLabels: make(Labels),
+	}
+	return &DeployBuilder{d: d}
 }

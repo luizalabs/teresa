@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - [server] Cluster autocaler support
 
+### Changed
+- [server] Remove external uuid package dependency to generate deploy uid's
+
 ### Fixed
 - [server] Database initial migration on mysql 5.7
 - [server] Doesn't log request content on error middleware if the route is `User/Create`

@@ -118,20 +118,14 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 }
 
 func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugURL string, stream io.Writer) error {
-	imgs := &spec.Images{
-		SlugRunner: ops.opts.SlugRunnerImage,
-		SlugStore:  ops.opts.SlugStoreImage,
-	}
-	podSpec := spec.NewRunner(
-		fmt.Sprintf("release-%s-%s", a.Name, deployId),
-		slugURL,
-		imgs,
-		a,
-		ops.fileStorage,
-		ops.buildLimits(),
-		"start",
-		ProcfileReleaseCmd,
-	)
+	podName := fmt.Sprintf("release-%s-%s", a.Name, deployId)
+	podSpec := spec.NewRunnerPodBuilder(podName, ops.opts.SlugRunnerImage, ops.opts.SlugStoreImage).
+		ForApp(a).
+		WithSlug(slugURL).
+		WithLimits(ops.opts.BuildLimitCPU, ops.opts.BuildLimitMemory).
+		WithStorage(ops.fileStorage).
+		WithArgs([]string{"start", ProcfileReleaseCmd}).
+		Build()
 
 	fmt.Fprintln(stream, "Running release command")
 	if err := ops.podRun(context.Background(), podSpec, stream); err != nil {
@@ -143,13 +137,6 @@ func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugURL string,
 	return nil
 }
 
-func (ops *DeployOperations) buildLimits() *spec.ContainerLimits {
-	return &spec.ContainerLimits{
-		CPU:    ops.opts.BuildLimitCPU,
-		Memory: ops.opts.BuildLimitMemory,
-	}
-}
-
 func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployConfigFiles, w io.Writer, slugURL, description, deployId string) error {
 	if releaseCmd := confFiles.Procfile[ProcfileReleaseCmd]; releaseCmd != "" {
 		if err := ops.runReleaseCmd(a, deployId, slugURL, w); err != nil {
@@ -157,18 +144,21 @@ func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployC
 			return err
 		}
 	}
+	labels := map[string]string{"run": a.Name}
+	podBuilder := spec.NewRunnerPodBuilder(a.Name, ops.opts.SlugRunnerImage, ops.opts.SlugStoreImage).
+		ForApp(a).
+		WithSlug(slugURL).
+		WithLabels(labels).
+		WithStorage(ops.fileStorage).
+		WithArgs([]string{"start", a.ProcessType})
 
-	imgs := &spec.Images{
-		SlugRunner: ops.opts.SlugRunnerImage,
-		SlugStore:  ops.opts.SlugStoreImage,
-	}
 	if confFiles.NginxConf != "" {
-		imgs.Nginx = ops.opts.NginxImage
-		data := map[string]string{"nginx.conf": confFiles.NginxConf}
+		data := map[string]string{spec.NginxConfFile: confFiles.NginxConf}
 		if err := ops.k8s.CreateOrUpdateConfigMap(a.Name, a.Name, data); err != nil {
 			log.WithError(err).Errorf("Creating config to nginx of app %s", a.Name)
 			return err
 		}
+		podBuilder = podBuilder.WithNginxSideCar(ops.opts.NginxImage)
 	} else {
 		err := ops.k8s.DeleteConfigMap(a.Name, a.Name)
 		if err != nil && !ops.k8s.IsNotFound(err) {
@@ -176,15 +166,13 @@ func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployC
 		}
 	}
 
-	deploySpec := spec.NewDeploy(
-		imgs,
-		description,
-		slugURL,
-		ops.opts.RevisionHistoryLimit,
-		a,
-		confFiles.TeresaYaml,
-		ops.fileStorage,
-	)
+	deploySpec := spec.NewDeployBuilder(slugURL).
+		WithPod(podBuilder.Build()).
+		WithDescription(description).
+		WithRevisionHistoryLimit(ops.opts.RevisionHistoryLimit).
+		WithTeresaYaml(confFiles.TeresaYaml).
+		WithMatchLabels(labels).
+		Build()
 
 	if err := ops.k8s.CreateOrUpdateDeploy(deploySpec); err != nil {
 		log.WithError(err).Errorf("Creating deploy app %s", a.Name)
@@ -200,22 +188,22 @@ func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployC
 }
 
 func (ops *DeployOperations) createOrUpdateCronJob(a *app.App, confFiles *DeployConfigFiles, w io.Writer, slugURL, description string) error {
-	imgs := &spec.Images{
-		SlugRunner: ops.opts.SlugRunnerImage,
-		SlugStore:  ops.opts.SlugStoreImage,
-	}
 	if confFiles.TeresaYaml == nil || confFiles.TeresaYaml.Cron == nil {
 		return ErrCronScheduleNotFound
 	}
-	cronSpec := spec.NewCronJob(
-		description,
-		slugURL,
-		confFiles.TeresaYaml.Cron.Schedule,
-		imgs,
-		a,
-		ops.fileStorage,
-		strings.Split(confFiles.Procfile[a.ProcessType], " ")...,
-	)
+
+	podSpec := spec.NewRunnerPodBuilder(a.Name, ops.opts.SlugRunnerImage, ops.opts.SlugStoreImage).
+		ForApp(a).
+		WithSlug(slugURL).
+		WithStorage(ops.fileStorage).
+		WithArgs(strings.Split(confFiles.Procfile[a.ProcessType], " ")).
+		Build()
+
+	cronSpec := spec.NewCronJobBuilder(slugURL).
+		WithPod(podSpec).
+		WithDescription(description).
+		WithSchedule(confFiles.TeresaYaml.Cron.Schedule).
+		Build()
 
 	if err := ops.k8s.CreateOrUpdateCronJob(cronSpec); err != nil {
 		log.WithError(err).Errorf("Creating CronJob %s", a.Name)

@@ -43,6 +43,7 @@ type BuildOperations struct {
 	appOps      app.Operations
 	opts        *Options
 	k8s         K8sOperations
+	buildLimits *spec.ContainerLimits
 }
 
 // CreateOptions define arguments of method `CreateByOpts`
@@ -101,18 +102,14 @@ func (ops *BuildOperations) CreateByOpts(ctx context.Context, opts *CreateOption
 		return err
 	}
 
-	podSpec := spec.NewBuilder(
-		fmt.Sprintf("build-%s", opts.BuildName),
-		opts.SlugIn,
-		opts.SlugDest,
-		ops.opts.SlugBuilderImage,
-		opts.App,
-		ops.fileStorage,
-		&spec.ContainerLimits{
-			CPU:    ops.opts.BuildLimitCPU,
-			Memory: ops.opts.BuildLimitMemory,
-		},
-	)
+	podName := fmt.Sprintf("build-%s", opts.BuildName)
+	podSpec := spec.NewBuildPodBuilder(podName, ops.opts.SlugBuilderImage).
+		ForApp(opts.App).
+		WithTarBallPath(opts.SlugIn).
+		SendSlugTo(opts.SlugDest).
+		WithStorage(ops.fileStorage).
+		WithLimits(ops.buildLimits.CPU, ops.buildLimits.Memory).
+		Build()
 
 	podStream, runErrChan := ops.execOps.RunCommandBySpec(ctx, podSpec)
 	go io.Copy(opts.Stream, podStream)
@@ -186,21 +183,14 @@ func (ops *BuildOperations) Delete(appName, buildName string, u *database.User) 
 
 func (ops *BuildOperations) runInternal(ctx context.Context, a *app.App, buildName string, w io.Writer) error {
 	slugURL := fmt.Sprintf("builds/%s/%s/out/slug.tgz", a.Name, buildName)
-	imgs := &spec.Images{
-		SlugRunner: ops.opts.SlugRunnerImage,
-		SlugStore:  ops.opts.SlugStoreImage,
-	}
-	podSpec := spec.NewRunner(
-		formatPodName(a.Name, buildName),
-		slugURL,
-		imgs,
-		a,
-		ops.fileStorage,
-		nil,
-		"start",
-		a.ProcessType,
-	)
-	podSpec.Labels["build"] = buildName
+	podName := formatPodName(a.Name, buildName)
+	podSpec := spec.NewRunnerPodBuilder(podName, ops.opts.SlugRunnerImage, ops.opts.SlugStoreImage).
+		ForApp(a).
+		WithSlug(slugURL).
+		WithStorage(ops.fileStorage).
+		WithLabels(map[string]string{"build": buildName}).
+		WithArgs([]string{"start", a.ProcessType}).
+		Build()
 
 	if a.ProcessType == app.ProcessTypeWeb {
 		fmt.Fprintln(w, "\nExposing temporary service")
@@ -247,5 +237,13 @@ func (ops *BuildOperations) createService(appName, buildName string, labels map[
 }
 
 func NewBuildOperations(s storage.Storage, a app.Operations, e exec.Operations, k K8sOperations, o *Options) *BuildOperations {
-	return &BuildOperations{appOps: a, fileStorage: s, execOps: e, k8s: k, opts: o}
+	bl := &spec.ContainerLimits{CPU: o.BuildLimitCPU, Memory: o.BuildLimitMemory}
+	return &BuildOperations{
+		appOps:      a,
+		fileStorage: s,
+		execOps:     e,
+		k8s:         k,
+		buildLimits: bl,
+		opts:        o,
+	}
 }

@@ -9,51 +9,44 @@ import (
 )
 
 func TestNewCronJobSpec(t *testing.T) {
-	expectedImage := "image"
-	expectedInitImage := "init-image"
-	expectedDescription := "test"
-	expectedSlugURL := "http://teresa.io/slug.tgz"
-	a := &app.App{Name: "cron-test"}
+	expectedPodName := "test"
+	expectedNamespace := "ns"
 	expectedCommand := "happy cron job"
+	pod := NewRunnerPodBuilder(expectedPodName, "runner", "store").
+		ForApp(&app.App{Name: expectedNamespace}).
+		WithStorage(storage.NewFake()).
+		WithArgs(strings.Split(expectedCommand, " ")).
+		Build()
+
+	expectedDescription := "test"
 	expectedSchedule := "*/1 * * * *"
+	expectedSlugURL := "some/slug.tgz"
+	cs := NewCronJobBuilder(expectedSlugURL).
+		WithPod(pod).
+		WithDescription(expectedDescription).
+		WithSchedule(expectedSchedule).
+		Build()
 
-	imgs := &Images{SlugRunner: expectedImage, SlugStore: expectedInitImage}
-
-	cs := NewCronJob(
-		expectedDescription,
-		expectedSlugURL,
-		expectedSchedule,
-		imgs,
-		a,
-		storage.NewFake(),
-		strings.Split(expectedCommand, " ")...,
-	)
+	if cs.Pod.Name != expectedPodName {
+		t.Errorf("expected %s, got %s", expectedPodName, cs.Pod.Name)
+	}
+	if cs.Pod.Namespace != expectedNamespace {
+		t.Errorf("expected %s, got %s", expectedNamespace, cs.Pod.Namespace)
+	}
+	if cs.SlugURL != expectedSlugURL {
+		t.Errorf("expected %s, got %s", expectedSlugURL, cs.SlugURL)
+	}
+	if cs.Description != expectedDescription {
+		t.Errorf("expected %s, got %s", expectedDescription, cs.Description)
+	}
 
 	csArgs := cs.Containers[0].Args
 	if len(csArgs) != 3 || strings.Join(csArgs, " ") != expectedCommand {
 		t.Errorf("expected [%s], got %v", expectedCommand, csArgs)
 	}
 
-	if cs.SlugURL != expectedSlugURL {
-		t.Errorf("expected %s, got %s", expectedSlugURL, cs.SlugURL)
-	}
-
-	if cs.Description != expectedDescription {
-		t.Errorf("expected %s, got %s", expectedDescription, cs.Description)
-	}
-
-	if cs.Pod.Name != a.Name {
-		t.Errorf("expected %s, got %s", a.Name, cs.Pod.Name)
-	}
-
 	if cs.Schedule != expectedSchedule {
 		t.Errorf("expected %s, got %s", expectedSchedule, cs.Schedule)
 	}
 
-	if len(cs.InitContainers) != 1 {
-		t.Errorf("expected %d, got %d", 1, len(cs.InitContainers))
-	}
-	if cs.InitContainers[0].Image != expectedInitImage {
-		t.Errorf("expected %s, got %s", expectedImage, cs.InitContainers[0].Image)
-	}
 }

@@ -1,13 +1,6 @@
 package spec
 
-import (
-	"github.com/luizalabs/teresa/pkg/server/app"
-	"github.com/luizalabs/teresa/pkg/server/storage"
-)
-
-const (
-	defaultJobHistoryLimit = 3
-)
+const defaultJobHistoryLimit = 3
 
 type CronJob struct {
 	Deploy
@@ -16,35 +9,39 @@ type CronJob struct {
 	FailedJobsHistoryLimit     int32
 }
 
-func NewCronJob(description, slugURL, schedule string, imgs *Images, a *app.App, fs storage.Storage, args ...string) *CronJob {
-	ps := NewPod(
-		a.Name,
-		"",
-		imgs.SlugRunner,
-		a,
-		map[string]string{
-			"APP":      a.Name,
-			"SLUG_URL": slugURL,
-			"SLUG_DIR": slugVolumeMountPath,
-		},
-		fs,
-	)
-	ps.Containers[0].Args = args
-	ps.Containers[0].VolumeMounts = []*VolumeMounts{newSlugVolumeMount()}
-	ps.InitContainers = newInitContainers(slugURL, imgs.SlugStore, a, fs)
+type CronJobBuilder struct {
+	d        Deploy
+	schedule string
+}
 
-	ds := Deploy{
-		Description: description,
-		SlugURL:     slugURL,
-		Pod:         *ps,
-	}
+func (b *CronJobBuilder) WithDescription(description string) *CronJobBuilder {
+	b.d.Description = description
+	return b
+}
 
-	cs := &CronJob{
-		Deploy:                     ds,
-		Schedule:                   schedule,
+func (b *CronJobBuilder) WithPod(p *Pod) *CronJobBuilder {
+	b.d.Pod = *p
+	return b
+}
+
+func (b *CronJobBuilder) WithSchedule(s string) *CronJobBuilder {
+	b.schedule = s
+	return b
+}
+
+func (b *CronJobBuilder) Build() *CronJob {
+	return &CronJob{
+		Deploy:                     b.d,
+		Schedule:                   b.schedule,
 		SuccessfulJobsHistoryLimit: defaultJobHistoryLimit,
 		FailedJobsHistoryLimit:     defaultJobHistoryLimit,
 	}
+}
 
-	return cs
+func NewCronJobBuilder(slugURL string) *CronJobBuilder {
+	d := Deploy{
+		SlugURL:     slugURL,
+		MatchLabels: make(Labels),
+	}
+	return &CronJobBuilder{d: d}
 }

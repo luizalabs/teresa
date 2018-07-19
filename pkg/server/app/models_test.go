@@ -5,29 +5,7 @@ import (
 	"testing"
 
 	appb "github.com/luizalabs/teresa/pkg/protobuf/app"
-	"github.com/luizalabs/teresa/pkg/server/test"
 )
-
-// We need to skip EnvVars
-func cmpAppWithCreateRequest(app *App, req *appb.CreateRequest) bool {
-	var tmp = struct {
-		A string
-		B string
-		C string
-		D *Limits
-		E *Autoscale
-		F string
-	}{
-		app.Name,
-		app.Team,
-		app.ProcessType,
-		app.Limits,
-		app.Autoscale,
-		app.VirtualHost,
-	}
-
-	return test.DeepEqual(&tmp, req)
-}
 
 func newCreateRequest(processType, protocol string) *appb.CreateRequest {
 	lrq1 := &appb.CreateRequest_Limits_LimitRangeQuantity{
@@ -75,9 +53,32 @@ func newCreateRequest(processType, protocol string) *appb.CreateRequest {
 func TestNewApp(t *testing.T) {
 	req := newCreateRequest("test", "test")
 	app := newApp(req)
+	want := &App{
+		Name:        "name",
+		Team:        "team",
+		ProcessType: "test",
+		VirtualHost: "test.teresa-apps.io",
+		Protocol:    "test",
+		Autoscale: &Autoscale{
+			CPUTargetUtilization: 42,
+			Max:                  666,
+			Min:                  1,
+		},
+		Limits: &Limits{
+			Default: []*LimitRangeQuantity{
+				{Resource: "resource1", Quantity: "1"},
+				{Resource: "resource2", Quantity: "2"},
+			},
+			DefaultRequest: []*LimitRangeQuantity{
+				{Resource: "resource3", Quantity: "3"},
+				{Resource: "resource4", Quantity: "4"},
+			},
+		},
+		EnvVars: []*EnvVar{},
+	}
 
-	if !cmpAppWithCreateRequest(app, req) {
-		t.Errorf("expected %v, got %v", req, app)
+	if !reflect.DeepEqual(app, want) {
+		t.Errorf("got %v; want %v", app, want)
 	}
 }
 
@@ -135,10 +136,37 @@ func TestNewInfoResponse(t *testing.T) {
 			DefaultRequest: []*LimitRangeQuantity{lrq2},
 		},
 	}
+	want := &appb.InfoResponse{
+		Team:      info.Team,
+		Addresses: []*appb.InfoResponse_Address{{Hostname: "host1"}},
+		EnvVars: []*appb.InfoResponse_EnvVar{
+			{Key: "key1", Value: "value1"},
+			{Key: "key2", Value: "value2"},
+		},
+		Status: &appb.InfoResponse_Status{
+			Cpu: info.Status.CPU,
+			Pods: []*appb.InfoResponse_Status_Pod{
+				{Name: "pod 1", State: "Running", Age: 1000, Restarts: 42, Ready: true},
+			},
+		},
+		Autoscale: &appb.InfoResponse_Autoscale{
+			CpuTargetUtilization: info.Autoscale.CPUTargetUtilization,
+			Max:                  info.Autoscale.Max,
+			Min:                  info.Autoscale.Min,
+		},
+		Limits: &appb.InfoResponse_Limits{
+			Default: []*appb.InfoResponse_Limits_LimitRangeQuantity{
+				{Quantity: "1", Resource: "resource1"},
+			},
+			DefaultRequest: []*appb.InfoResponse_Limits_LimitRangeQuantity{
+				{Quantity: "2", Resource: "resource2"},
+			},
+		},
+	}
 
 	resp := newInfoResponse(info)
-	if !test.DeepEqual(info, resp) {
-		t.Errorf("expected %v, got %v", info, resp)
+	if !reflect.DeepEqual(resp, want) {
+		t.Errorf("got %v; want %v", resp, want)
 	}
 }
 
@@ -232,23 +260,16 @@ func TestUnsetEnvVars(t *testing.T) {
 	}
 }
 
-func cmpAutoscaleWithSetAutoscaleRequest(as *Autoscale, req *appb.SetAutoscaleRequest) bool {
-	var tmp = struct {
-		A string
-		B *Autoscale
-	}{
-		"teresa",
-		as,
-	}
-
-	return test.DeepEqual(&tmp, req)
-}
-
 func TestNewAutoscale(t *testing.T) {
 	req := newAutoscaleRequest("teresa")
 	as := newAutoscale(req)
+	want := &Autoscale{
+		CPUTargetUtilization: 10,
+		Min:                  1,
+		Max:                  2,
+	}
 
-	if !cmpAutoscaleWithSetAutoscaleRequest(as, req) {
-		t.Errorf("expected %v, got %v", req, as)
+	if !reflect.DeepEqual(as, want) {
+		t.Errorf("got %v; want %v", as, want)
 	}
 }

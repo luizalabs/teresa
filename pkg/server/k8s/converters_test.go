@@ -223,8 +223,7 @@ func TestHealthCheckProbeToK8sProbe(t *testing.T) {
 		TimeoutSeconds:      3,
 		Path:                "/hc/",
 	}
-	var expectedPort int32 = 6000
-	k8sHC := healthCheckProbeToK8sProbe(hc, expectedPort)
+	k8sHC := healthCheckProbeToK8sProbe(hc)
 
 	if k8sHC.InitialDelaySeconds != hc.InitialDelaySeconds {
 		t.Errorf("expected %d, got %d", hc.InitialDelaySeconds, k8sHC.InitialDelaySeconds)
@@ -243,9 +242,6 @@ func TestHealthCheckProbeToK8sProbe(t *testing.T) {
 	}
 	if k8sHC.Handler.HTTPGet.Path != hc.Path {
 		t.Errorf("expected %s, got %s", hc.Path, k8sHC.Handler.HTTPGet.Path)
-	}
-	if k8sHC.Handler.HTTPGet.Port != intstr.FromInt(int(expectedPort)) {
-		t.Errorf("expected %d, got %v", expectedPort, k8sHC.Handler.HTTPGet.Port)
 	}
 }
 

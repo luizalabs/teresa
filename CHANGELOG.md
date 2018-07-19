@@ -8,13 +8,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - [server] Remove external uuid package dependency to generate deploy uid's
+- [server] Big refactor on spec pkg
+- [server] Change healthcheck port back to the nginx one
 
 ### Fixed
 - [server] Database initial migration on mysql 5.7
 - [server] Doesn't log request content on error middleware if the route is `User/Create`
-
-### Changed
-- [server] Big refactor on spec pkg
 
 ## [0.24.1] - 2018-07-11
 ### Fixed

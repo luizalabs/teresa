@@ -10,6 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] Remove external uuid package dependency to generate deploy uid's
 - [server] Big refactor on spec pkg
 - [server] Change healthcheck port back to the nginx one
+- [server] Remove the function test.DeepEqual
 
 ### Fixed
 - [server] Database initial migration on mysql 5.7

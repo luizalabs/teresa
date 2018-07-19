@@ -1,11 +1,11 @@
 package deploy
 
 import (
+	"reflect"
 	"sort"
 	"testing"
 
 	dpb "github.com/luizalabs/teresa/pkg/protobuf/deploy"
-	"github.com/luizalabs/teresa/pkg/server/test"
 )
 
 func TestNewListResponse(t *testing.T) {
@@ -23,11 +23,25 @@ func TestNewListResponse(t *testing.T) {
 			Current:     true,
 		},
 	}
+	want := []*dpb.ListResponse_Deploy{
+		{
+			Revision:    "1",
+			Description: "Test 1",
+			CreatedAt:   "1",
+			Current:     false,
+		},
+		{
+			Revision:    "2",
+			Description: "Test 2",
+			CreatedAt:   "2",
+			Current:     true,
+		},
+	}
 
 	resp := newListResponse(items)
 
-	if !test.DeepEqual(resp.Deploys, items) {
-		t.Fatalf("expected %v items, got %v", resp.Deploys, items)
+	if !reflect.DeepEqual(resp.Deploys, want) {
+		t.Fatalf("expected %v items, got %v", want, resp.Deploys)
 	}
 }
 

@@ -8,6 +8,7 @@ type ContainerLimits struct {
 type VolumeMounts struct {
 	Name      string
 	MountPath string
+	SubPath   string
 	ReadOnly  bool
 }
 
@@ -64,6 +65,12 @@ func (b *ContainerBuilder) WithLimits(cpu, memory string) *ContainerBuilder {
 
 func (b *ContainerBuilder) ExposePort(name string, port int) *ContainerBuilder {
 	b.c.Ports = append(b.c.Ports, Port{Name: name, ContainerPort: int32(port)})
+	return b
+}
+
+func (b *ContainerBuilder) WithVolumeMount(name, mountPath, subPath string) *ContainerBuilder {
+	vm := &VolumeMounts{Name: name, MountPath: mountPath, SubPath: subPath, ReadOnly: true}
+	b.c.VolumeMounts = append(b.c.VolumeMounts, vm)
 	return b
 }
 

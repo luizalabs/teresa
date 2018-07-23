@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 	context "golang.org/x/net/context"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
@@ -165,6 +166,12 @@ func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployC
 			return err
 		}
 	}
+
+	csp, err := spec.NewCloudSQLProxy(ops.opts.CloudSQLProxyImage, confFiles.TeresaYaml)
+	if err != nil {
+		return errors.Wrap(err, "failed to create the deploy")
+	}
+	podBuilder = podBuilder.WithCloudSQLProxySideCar(csp)
 
 	deploySpec := spec.NewDeployBuilder(slugURL).
 		WithPod(podBuilder.Build()).

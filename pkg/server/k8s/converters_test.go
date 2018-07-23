@@ -22,7 +22,7 @@ func TestPodSpecToK8sContainers(t *testing.T) {
 			Args:    []string{"start", "release"},
 			Secrets: []string{"SECRET-1", "SECRET-2"},
 			VolumeMounts: []*spec.VolumeMounts{
-				{Name: "Vol1", MountPath: "/tmp", ReadOnly: true},
+				{Name: "Vol1", MountPath: "/tmp", SubPath: "/sub", ReadOnly: true},
 			},
 			ContainerLimits: &spec.ContainerLimits{
 				CPU:    "800m",
@@ -77,6 +77,9 @@ func TestPodSpecToK8sContainers(t *testing.T) {
 		}
 		if c.VolumeMounts[idx].ReadOnly != vm.ReadOnly {
 			t.Errorf("expected %v, got %v", vm.ReadOnly, c.VolumeMounts[idx].ReadOnly)
+		}
+		if c.VolumeMounts[idx].SubPath != vm.SubPath {
+			t.Errorf("expected %v, got %v", vm.SubPath, c.VolumeMounts[idx].SubPath)
 		}
 	}
 

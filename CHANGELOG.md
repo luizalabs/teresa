@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] Cluster autocaler support
 - Support for secrets as files
 - [server] Support for .yml extension
+- Support for cloudsql-proxy sidecar
 
 ### Changed
 - [server] Remove external uuid package dependency to generate deploy uid's

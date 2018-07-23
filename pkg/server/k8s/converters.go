@@ -81,6 +81,7 @@ func containerSpecsToK8sContainers(containerSpecs []*spec.Container) ([]k8sv1.Co
 				Name:      vm.Name,
 				MountPath: vm.MountPath,
 				ReadOnly:  vm.ReadOnly,
+				SubPath:   vm.SubPath,
 			})
 		}
 		for _, p := range cs.Ports {

@@ -25,6 +25,7 @@ type Options struct {
 	BuildLimitCPU        string        `split_words:"true" default:"800m"`
 	BuildLimitMemory     string        `split_words:"true" default:"1Gi"`
 	DefaultServiceType   string        `split_words:"true" default:"LoadBalancer"`
+	CloudSQLProxyImage   string        `split_words:"true" default:"gcr.io/cloudsql-docker/gce-proxy:1.11"`
 }
 
 type Service struct {

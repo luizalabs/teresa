@@ -40,10 +40,11 @@ type CronArgs struct {
 }
 
 type TeresaYaml struct {
-	HealthCheck   *HealthCheck   `yaml:"healthCheck,omitempty"`
-	RollingUpdate *RollingUpdate `yaml:"rollingUpdate,omitempty"`
-	Lifecycle     *Lifecycle     `yaml:"lifecycle,omitempty"`
-	Cron          *CronArgs      `yaml:"cron,omitempty"`
+	HealthCheck   *HealthCheck       `yaml:"healthCheck,omitempty"`
+	RollingUpdate *RollingUpdate     `yaml:"rollingUpdate,omitempty"`
+	Lifecycle     *Lifecycle         `yaml:"lifecycle,omitempty"`
+	Cron          *CronArgs          `yaml:"cron,omitempty"`
+	SideCars      map[string]RawData `yaml:"sidecars,omitempty"`
 }
 
 type TeresaYamlV2 struct {
@@ -61,6 +62,19 @@ type Deploy struct {
 
 type DeployBuilder struct {
 	d *Deploy
+}
+
+type RawData struct {
+	Fn func(interface{}) error
+}
+
+func (r *RawData) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	r.Fn = unmarshal
+	return nil
+}
+
+func (r *RawData) Unmarshal(v interface{}) error {
+	return r.Fn(v)
 }
 
 func (b *DeployBuilder) WithMatchLabels(lb Labels) *DeployBuilder {

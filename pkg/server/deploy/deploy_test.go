@@ -257,6 +257,72 @@ func TestCreateDeployDeleteNginxConfigMap(t *testing.T) {
 
 }
 
+func TestCreateDeployCloudSQLProxySideCar(t *testing.T) {
+	cfg := &DeployConfigFiles{
+		TeresaYaml: &spec.TeresaYaml{
+			SideCars: map[string]spec.RawData{
+				"cloudsql-proxy": {
+					func(v interface{}) error { return nil },
+				},
+			},
+		},
+	}
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		new(fakeK8sOperations),
+		storage.NewFake(),
+		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
+		&Options{},
+	)
+
+	err := ops.(*DeployOperations).createOrUpdateDeploy(
+		&app.App{},
+		cfg,
+		new(bytes.Buffer),
+		"test-slug",
+		"test-description",
+		"123",
+	)
+
+	if err != nil {
+		t.Fatal("got unexpected error:", err)
+	}
+}
+
+func TestCreateDeployCloudSQLProxySideCarError(t *testing.T) {
+	cfg := &DeployConfigFiles{
+		TeresaYaml: &spec.TeresaYaml{
+			SideCars: map[string]spec.RawData{
+				"cloudsql-proxy": {
+					func(v interface{}) error { return errors.New("test") },
+				},
+			},
+		},
+	}
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		new(fakeK8sOperations),
+		storage.NewFake(),
+		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
+		&Options{},
+	)
+
+	err := ops.(*DeployOperations).createOrUpdateDeploy(
+		&app.App{},
+		cfg,
+		new(bytes.Buffer),
+		"test-slug",
+		"test-description",
+		"123",
+	)
+
+	if err == nil {
+		t.Fatal("got nil; want error")
+	}
+}
+
 func TestCreateDeployReturnError(t *testing.T) {
 	expectedErr := errors.New("Some k8s error")
 	fakeK8s := &fakeK8sOperations{createDeployReturn: expectedErr}

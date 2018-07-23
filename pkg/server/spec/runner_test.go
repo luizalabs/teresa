@@ -87,3 +87,26 @@ func TestRunnerPodBuilder(t *testing.T) {
 		t.Errorf("expected %s, got %s", slugVolumeName, actual)
 	}
 }
+
+func TestRunnerPodBuilderWithCloudSQLProxySideCar(t *testing.T) {
+	name := "cloudsql-proxy"
+	a := &app.App{
+		Name:        "test",
+		ProcessType: app.ProcessTypeWeb,
+		EnvVars:     []*app.EnvVar{&app.EnvVar{"ENV", "VAR"}},
+	}
+	csp := &CloudSQLProxy{}
+
+	ps := NewRunnerPodBuilder("test", "test", "test").
+		ForApp(a).
+		WithStorage(storage.NewFake()).
+		WithCloudSQLProxySideCar(csp).
+		Build()
+
+	if len(ps.Containers) != 2 {
+		t.Errorf("got %d; want 2", len(ps.Containers))
+	}
+	if got := ps.Containers[1].Name; got != name {
+		t.Errorf("got %s; want %s", got, name)
+	}
+}

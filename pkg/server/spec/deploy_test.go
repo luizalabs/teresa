@@ -5,6 +5,8 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/storage"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
 func TestDeployBuilder(t *testing.T) {
@@ -57,5 +59,29 @@ func TestDeployBuilder(t *testing.T) {
 
 	if ds.Lifecycle.PreStop.DrainTimeoutSeconds != defaultDrainTimeoutSeconds {
 		t.Errorf("got %d; want %d", ds.Lifecycle.PreStop.DrainTimeoutSeconds, defaultDrainTimeoutSeconds)
+	}
+}
+
+func TestRawData(t *testing.T) {
+	b := []byte("field1: value1\nfield2: value2")
+	raw := new(RawData)
+	type T struct {
+		Field1 string
+		Field2 string
+	}
+	v := new(T)
+
+	if err := yaml.Unmarshal(b, raw); err != nil {
+		t.Fatal("got unexpected error:", err)
+	}
+	if err := raw.Unmarshal(v); err != nil {
+		t.Fatal("got unexpected error:", err)
+	}
+
+	if v.Field1 != "value1" {
+		t.Errorf("got %s; want %s", v.Field1, "value1")
+	}
+	if v.Field2 != "value2" {
+		t.Errorf("got %s; want %s", v.Field2, "value2")
 	}
 }

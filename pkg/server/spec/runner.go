@@ -7,6 +7,8 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/storage"
 )
 
+const AppSecretName = "secrets"
+
 type RunnerPodBuilder struct {
 	name       string
 	image      string
@@ -50,8 +52,15 @@ func (b *RunnerPodBuilder) newAppRunnerPod(appContainer *Container) *Pod {
 	mountSecretOpt := MountSecretInInitContainer(vlName, vlPath, b.fs.K8sSecretName())
 	shareVolOpt := ShareVolumeBetweenAppAndInitContainer(slugVolumeName, slugVolumeMountPath)
 
+	msc := MountSecretItemsInAppContainer(
+		AppSecretName,
+		app.SecretPath,
+		app.TeresaAppSecrets,
+		b.app.SecretFiles,
+	)
+
 	builder := NewPodBuilder(b.name, b.app.Name).
-		WithAppContainer(appContainer).
+		WithAppContainer(appContainer, msc).
 		WithLabels(b.labels).
 		WithInitContainer(init, mountSecretOpt, shareVolOpt)
 

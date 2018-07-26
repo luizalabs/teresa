@@ -39,6 +39,7 @@ type App struct {
 	EnvVars     []*EnvVar  `json:"envVars"`
 	Internal    bool       `json:"internal"`
 	Secrets     []string   `json:"secrets"`
+	SecretFiles []string   `json:"secret_files"`
 	Protocol    string     `json:"protocol"`
 }
 

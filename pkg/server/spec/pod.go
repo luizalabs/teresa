@@ -11,11 +11,17 @@ const (
 
 type Labels map[string]string
 
+type VolumeItem struct {
+	Key  string
+	Path string
+}
+
 type Volume struct {
 	Name          string
 	SecretName    string
 	ConfigMapName string
 	EmptyDir      bool
+	Items         []VolumeItem
 }
 
 type Pod struct {
@@ -105,6 +111,26 @@ func MountSecretInInitContainer(name, path, secretName string) func(*PodBuilder)
 func MountSecretInAppContainer(name, path, secretName string) func(*PodBuilder) {
 	return func(b *PodBuilder) {
 		mountSecretInContainer(name, path, secretName, b.appContainer, b)
+	}
+}
+
+func MountSecretItemsInAppContainer(name, path, secretName string, items []string) func(*PodBuilder) {
+	return func(b *PodBuilder) {
+		if len(items) == 0 {
+			return
+		}
+		b.appContainer.VolumeMounts = append(
+			b.appContainer.VolumeMounts,
+			&VolumeMounts{Name: name, MountPath: path, ReadOnly: true},
+		)
+		volItems := make([]VolumeItem, len(items))
+		for i, item := range items {
+			volItems[i].Key, volItems[i].Path = item, item
+		}
+		b.p.Volumes = append(
+			b.p.Volumes,
+			&Volume{Name: name, SecretName: secretName, Items: volItems},
+		)
 	}
 }
 

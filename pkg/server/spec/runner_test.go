@@ -22,6 +22,7 @@ func TestRunnerPodBuilder(t *testing.T) {
 		Name:        "test",
 		ProcessType: app.ProcessTypeWeb,
 		EnvVars:     []*app.EnvVar{&app.EnvVar{"ENV", "VAR"}},
+		SecretFiles: []string{"secret", "file"},
 	}
 
 	ps := NewRunnerPodBuilder(expectedName, expectedImage, expectedInitImage).
@@ -76,10 +77,13 @@ func TestRunnerPodBuilder(t *testing.T) {
 	if actual := ps.Containers[1].Image; actual != expectedNginxImage {
 		t.Errorf("expected %s, got %s", expectedNginxImage, actual)
 	}
-	if actual := len(ps.Containers[0].VolumeMounts); actual != 2 {
-		t.Errorf("expected volumes of init and nginx, got %d", actual)
+	if actual := len(ps.Containers[0].VolumeMounts); actual != 3 {
+		t.Errorf("expected volumes of init, nginx and secrets, got %d", actual)
 	}
-	if actual := ps.Containers[0].VolumeMounts[0].Name; actual != slugVolumeName {
+	if actual := ps.Containers[0].VolumeMounts[0].Name; actual != AppSecretName {
+		t.Errorf("expected %s, got %s", AppSecretName, actual)
+	}
+	if actual := ps.Containers[0].VolumeMounts[1].Name; actual != slugVolumeName {
 		t.Errorf("expected %s, got %s", slugVolumeName, actual)
 	}
 }

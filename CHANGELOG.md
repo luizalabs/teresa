@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - [server] Cluster autocaler support
 - Support for secrets as files
+- [server] Support for .yml extension
 
 ### Changed
 - [server] Remove external uuid package dependency to generate deploy uid's

@@ -111,17 +111,28 @@ func TestPodSpecToK8sContainers(t *testing.T) {
 }
 
 func TestPodSpecSecretVolumesToK8s(t *testing.T) {
-	vols := []*spec.Volume{
-		{Name: "Vol-Test", SecretName: "Bond"},
+	var testCases = []struct {
+		vols []*spec.Volume
+	}{
+		{vols: []*spec.Volume{{Name: "vTest", SecretName: "sn"}}},
+		{vols: []*spec.Volume{{Name: "vTest2", SecretName: "sn2", Items: []spec.VolumeItem{{Key: "k", Path: "p"}}}}},
 	}
-	k8sVols := podSpecVolumesToK8sVolumes(vols)
 
-	for idx, vol := range vols {
-		if k8sVols[idx].Name != vol.Name {
-			t.Errorf("expected %s, got %s", vol.Name, k8sVols[idx].Name)
-		}
-		if k8sVols[idx].Secret.SecretName != vol.SecretName {
-			t.Errorf("expected %s, got %s", vol.SecretName, k8sVols[idx].Secret.SecretName)
+	for _, tc := range testCases {
+		k8sVols := podSpecVolumesToK8sVolumes(tc.vols)
+
+		for idx, vol := range tc.vols {
+			if k8sVols[idx].Name != vol.Name {
+				t.Errorf("expected %s, got %s", vol.Name, k8sVols[idx].Name)
+			}
+			if k8sVols[idx].Secret.SecretName != vol.SecretName {
+				t.Errorf("expected %s, got %s", vol.SecretName, k8sVols[idx].Secret.SecretName)
+			}
+			for i := range vol.Items {
+				if actual := k8sVols[idx].Secret.Items[i].Key; actual != vol.Items[i].Key {
+					t.Errorf("expected %s, got %s", vol.Items[i].Key, actual)
+				}
+			}
 		}
 	}
 }

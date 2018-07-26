@@ -101,8 +101,14 @@ func podSpecVolumesToK8sVolumes(vols []*spec.Volume) []k8sv1.Volume {
 		if v.EmptyDir {
 			vol.EmptyDir = &k8sv1.EmptyDirVolumeSource{}
 		} else if v.SecretName != "" {
+			items := make([]k8sv1.KeyToPath, len(v.Items))
+			for i := range v.Items {
+				items[i].Key = v.Items[i].Key
+				items[i].Path = v.Items[i].Path
+			}
 			vol.Secret = &k8sv1.SecretVolumeSource{
 				SecretName: v.SecretName,
+				Items:      items,
 			}
 		} else if v.ConfigMapName != "" {
 			vol.ConfigMap = &k8sv1.ConfigMapVolumeSource{}

@@ -197,3 +197,26 @@ func TestGetTeresaYamlV2MissingApp(t *testing.T) {
 		t.Errorf("got %v; want nil", ru)
 	}
 }
+
+func TestGetTeresaYAMLAlternativeExtension(t *testing.T) {
+	tarBall, err := os.Open(filepath.Join("testdata", "teresaYAMLAlternativeExtension.tgz"))
+	if err != nil {
+		t.Fatal("error getting tarBall:", err)
+	}
+	defer tarBall.Close()
+
+	deployConfig, err := getDeployConfigFilesFromTarBall(tarBall, "test", "test")
+	if err != nil {
+		t.Fatal("error getting deploy config file from tarball:", err)
+	}
+
+	if deployConfig.TeresaYaml == nil {
+		t.Fatal("expected a valid TeresaYaml struct, got nil")
+	}
+
+	want := "/healthcheck/"
+	got := deployConfig.TeresaYaml.HealthCheck.Liveness.Path
+	if got != want {
+		t.Errorf("got %s; want %s", got, want)
+	}
+}

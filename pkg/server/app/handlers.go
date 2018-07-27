@@ -83,7 +83,7 @@ func (s *Service) Info(ctx context.Context, req *appb.InfoRequest) (*appb.InfoRe
 
 func (s *Service) SetEnv(ctx context.Context, req *appb.SetEnvRequest) (*appb.Empty, error) {
 	user := ctx.Value("user").(*database.User)
-	evs := newEnvVars(req)
+	evs := newEnvVars(req.EnvVars)
 
 	if err := s.ops.SetEnv(user, req.Name, evs); err != nil {
 		return nil, err
@@ -102,14 +102,19 @@ func (s *Service) UnsetEnv(ctx context.Context, req *appb.UnsetEnvRequest) (*app
 	return &appb.Empty{}, nil
 }
 
-func (s *Service) SetSecret(ctx context.Context, req *appb.SetEnvRequest) (*appb.Empty, error) {
+func (s *Service) SetSecret(ctx context.Context, req *appb.SetSecretRequest) (*appb.Empty, error) {
 	user := ctx.Value("user").(*database.User)
-	evs := newEnvVars(req)
 
-	if err := s.ops.SetSecret(user, req.Name, evs); err != nil {
-		return nil, err
+	var err error
+	if sf := req.GetSecretFile(); sf != nil {
+		err = s.ops.SetSecretFile(user, req.Name, sf.Key, sf.Content)
+	} else {
+		err = s.ops.SetSecret(user, req.Name, newEnvVars(req.SecretEnvs))
 	}
 
+	if err != nil {
+		return nil, err
+	}
 	return &appb.Empty{}, nil
 }
 

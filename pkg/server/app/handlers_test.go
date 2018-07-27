@@ -62,7 +62,7 @@ func TestCreateErrAppAlreadyExists(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	ctx := context.WithValue(context.Background(), "user", user)
 
@@ -80,7 +80,7 @@ func TestLogsSuccess(t *testing.T) {
 	user := &database.User{Email: "gopher@luizalabs.com"}
 
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -112,7 +112,7 @@ func TestLogsPermissionDenied(t *testing.T) {
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -127,7 +127,7 @@ func TestLogsPermissionDenied(t *testing.T) {
 func TestInfoSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -150,7 +150,7 @@ func TestInfoAppNotFound(t *testing.T) {
 func TestInfoPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -163,7 +163,7 @@ func TestInfoPermissionDenied(t *testing.T) {
 func TestListSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -176,7 +176,7 @@ func TestListSuccess(t *testing.T) {
 func TestSetEnvSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -199,7 +199,7 @@ func TestSetEnvAppNotFound(t *testing.T) {
 func TestSetEnvPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -212,13 +212,41 @@ func TestSetEnvPermissionDenied(t *testing.T) {
 func TestSetSecretSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	if _, err := s.SetSecret(ctx, &appb.SetEnvRequest{Name: name}); err != nil {
-		t.Error("Got error on set env: ", err)
+	req := &appb.SetSecretRequest{
+		Name: name,
+		SecretEnvs: []*appb.SetEnvRequest_EnvVar{
+			{Key: "test", Value: "secret"},
+		},
+	}
+
+	if _, err := s.SetSecret(ctx, req); err != nil {
+		t.Error("Got error on set secret: ", err)
+	}
+}
+
+func TestSetSecretFileSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	req := &appb.SetSecretRequest{
+		Name: name,
+		SecretFile: &appb.SetSecretRequest_SecretFile{
+			Key:     "s",
+			Content: nil,
+		},
+	}
+
+	if _, err := s.SetSecret(ctx, req); err != nil {
+		t.Error("Got error on set secret: ", err)
 	}
 }
 
@@ -227,7 +255,7 @@ func TestSetSecretAppNotFound(t *testing.T) {
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	if _, err := s.SetSecret(ctx, &appb.SetEnvRequest{Name: "teresa"}); err != ErrNotFound {
+	if _, err := s.SetSecret(ctx, &appb.SetSecretRequest{Name: "teresa"}); err != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
@@ -235,12 +263,12 @@ func TestSetSecretAppNotFound(t *testing.T) {
 func TestSetSecretPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
 
-	if _, err := s.SetSecret(ctx, &appb.SetEnvRequest{Name: name}); err != auth.ErrPermissionDenied {
+	if _, err := s.SetSecret(ctx, &appb.SetSecretRequest{Name: name}); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }
@@ -248,7 +276,7 @@ func TestSetSecretPermissionDenied(t *testing.T) {
 func TestUnsetEnvSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -271,7 +299,7 @@ func TestUnsetEnvAppNotFound(t *testing.T) {
 func TestUnsetEnvPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -284,7 +312,7 @@ func TestUnsetEnvPermissionDenied(t *testing.T) {
 func TestUnsetSecretSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -307,7 +335,7 @@ func TestUnsetSecretAppNotFound(t *testing.T) {
 func TestUnsetSecretPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -333,7 +361,7 @@ func newAutoscaleRequest(name string) *appb.SetAutoscaleRequest {
 func TestSetAutoscaleSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -359,7 +387,7 @@ func TestSetAutoscaleAppNotFound(t *testing.T) {
 func TestSetAutoscalePermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -374,7 +402,7 @@ func TestSetAutoscalePermissionDenied(t *testing.T) {
 func TestDeleteSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -400,7 +428,7 @@ func TestDeleteAppNotFound(t *testing.T) {
 func TestDeletePermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -415,7 +443,7 @@ func TestDeletePermissionDenied(t *testing.T) {
 func TestSetReplicasSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -441,7 +469,7 @@ func TestSetReplicasAppNotFound(t *testing.T) {
 func TestSetReplicasPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -456,7 +484,7 @@ func TestSetReplicasPermissionDenied(t *testing.T) {
 func TestDeletePodsSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -481,7 +509,7 @@ func TestDeletePodsErrNotFound(t *testing.T) {
 func TestDeletePodsErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name}
+	fake.Storage[name] = &App{Name: name}
 	s := NewService(fake)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -495,7 +523,7 @@ func TestDeletePodsErrPermissionDenied(t *testing.T) {
 func TestChangeTeamSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name, Team: "test"}
+	fake.Storage[name] = &App{Name: name, Team: "test"}
 	s := NewService(fake)
 	user := &database.User{Email: "gopher@luizalabs.com", IsAdmin: true}
 	ctx := context.WithValue(context.Background(), "user", user)
@@ -509,7 +537,7 @@ func TestChangeTeamSuccess(t *testing.T) {
 func TestChangeTeamErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	name := "teresa"
-	fake.(*FakeOperations).Storage[name] = &App{Name: name, Team: "test"}
+	fake.Storage[name] = &App{Name: name, Team: "test"}
 	s := NewService(fake)
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	ctx := context.WithValue(context.Background(), "user", user)

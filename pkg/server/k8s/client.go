@@ -15,6 +15,7 @@ import (
 
 	"k8s.io/api/apps/v1beta2"
 	asv1 "k8s.io/api/autoscaling/v1"
+	"k8s.io/api/batch/v1beta1"
 	k8sv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1198,6 +1199,306 @@ func (c *Client) SetLoadBalancerSourceRanges(namespace, svcName string, sourceRa
 	}
 	data := fmt.Sprintf(`{"spec":{"loadBalancerSourceRanges": %s}}`, string(b))
 	return c.patchService(namespace, svcName, []byte(data))
+}
+
+func (c *Client) CreateOrUpdateDeploySecretFile(namespace, deploy, fileName string) error {
+	kc, err := c.buildClient()
+	if err != nil {
+		return err
+	}
+
+	d, err := kc.AppsV1beta2().
+		Deployments(namespace).
+		Get(deploy, metav1.GetOptions{})
+
+	if err != nil {
+		return err
+	}
+
+	d.Spec.Template.Spec.Volumes = addVolumeOfSecretFile(
+		d.Spec.Template.Spec.Volumes,
+		spec.AppSecretName,
+		app.TeresaAppSecrets,
+		fileName,
+	)
+
+	for i, cn := range d.Spec.Template.Spec.Containers {
+		if cn.Name != deploy { //app container name is the same of deploy name
+			continue
+		}
+		d.Spec.Template.Spec.Containers[i].VolumeMounts = addVolumeMountOfSecrets(
+			d.Spec.Template.Spec.Containers[i].VolumeMounts,
+			spec.AppSecretName,
+			app.SecretPath,
+		)
+		break
+	}
+
+	d.Annotations["kubernetes.io/change-cause"] = "add secret volume"
+	_, err = kc.AppsV1beta2().
+		Deployments(namespace).
+		Update(d)
+
+	return err
+}
+
+func addVolumeMountOfSecrets(vols []k8sv1.VolumeMount, volName, path string) []k8sv1.VolumeMount {
+	for _, vol := range vols {
+		if vol.Name == volName {
+			return vols
+		}
+	}
+	return append(
+		vols,
+		k8sv1.VolumeMount{
+			Name:      volName,
+			ReadOnly:  false,
+			MountPath: path,
+		},
+	)
+}
+
+func addVolumeOfSecretFile(vols []k8sv1.Volume, volName, secretName, fileName string) []k8sv1.Volume {
+	for i := range vols {
+		if vols[i].Name != volName {
+			continue
+		}
+		if vols[i].Secret == nil {
+			vols[i].Secret = &k8sv1.SecretVolumeSource{
+				SecretName: secretName,
+				Items:      make([]k8sv1.KeyToPath, 0),
+			}
+		}
+		vols[i].Secret.Items = append(
+			vols[i].Secret.Items,
+			k8sv1.KeyToPath{Key: fileName, Path: fileName},
+		)
+		return vols
+	}
+	return append(
+		vols,
+		k8sv1.Volume{
+			Name: volName,
+			VolumeSource: k8sv1.VolumeSource{
+				Secret: &k8sv1.SecretVolumeSource{
+					SecretName: secretName,
+					Items: []k8sv1.KeyToPath{
+						k8sv1.KeyToPath{Key: fileName, Path: fileName},
+					},
+				},
+			},
+		},
+	)
+}
+
+func (c *Client) DeleteDeploySecrets(namespace, deploy string, envVars, volKeys []string) error {
+	kc, err := c.buildClient()
+	if err != nil {
+		return err
+	}
+
+	d, err := kc.AppsV1beta2().
+		Deployments(namespace).
+		Get(deploy, metav1.GetOptions{})
+
+	if err != nil {
+		return err
+	}
+
+	if len(volKeys) > 0 {
+		d = removeVolumesWithSecretsFromDeploy(d, volKeys)
+	}
+	if len(envVars) > 0 {
+		d = removeEnvVarsWithSecretsFromDeploy(d, envVars)
+	}
+
+	d.Annotations["kubernetes.io/change-cause"] = "remove secret volume"
+	_, err = kc.AppsV1beta2().
+		Deployments(namespace).
+		Update(d)
+
+	return err
+}
+
+func (c *Client) CreateOrUpdateCronJobSecretFile(namespace, cronjob, fileName string) error {
+	kc, err := c.buildClient()
+	if err != nil {
+		return err
+	}
+
+	cj, err := kc.BatchV1beta1().
+		CronJobs(namespace).
+		Get(cronjob, metav1.GetOptions{})
+
+	if err != nil {
+		return err
+	}
+
+	cj.Spec.JobTemplate.Spec.Template.Spec.Volumes = addVolumeOfSecretFile(
+		cj.Spec.JobTemplate.Spec.Template.Spec.Volumes,
+		spec.AppSecretName,
+		app.TeresaAppSecrets,
+		fileName,
+	)
+
+	for i, cn := range cj.Spec.JobTemplate.Spec.Template.Spec.Containers {
+		if cn.Name != cronjob { //app container name is the same of cronjob name
+			continue
+		}
+		cj.Spec.JobTemplate.Spec.Template.Spec.Containers[i].VolumeMounts = addVolumeMountOfSecrets(
+			cj.Spec.JobTemplate.Spec.Template.Spec.Containers[i].VolumeMounts,
+			spec.AppSecretName,
+			app.SecretPath,
+		)
+		break
+	}
+
+	cj.Annotations["kubernetes.io/change-cause"] = "add secret volume"
+	_, err = kc.BatchV1beta1().
+		CronJobs(namespace).
+		Update(cj)
+
+	return err
+
+}
+
+func (c *Client) DeleteCronJobSecrets(namespace, cronjob string, envVars, volKeys []string) error {
+	kc, err := c.buildClient()
+	if err != nil {
+		return err
+	}
+
+	cj, err := kc.BatchV1beta1().
+		CronJobs(namespace).
+		Get(cronjob, metav1.GetOptions{})
+
+	if err != nil {
+		return err
+	}
+
+	if len(volKeys) > 0 {
+		cj = removeVolumesWithSecretsFromCronJob(cj, volKeys)
+	}
+	if len(envVars) > 0 {
+		cj = removeEnvVarsWithSecretsFromCronJob(cj, envVars)
+	}
+
+	cj.Annotations["kubernetes.io/change-cause"] = "remove secret volume"
+	_, err = kc.BatchV1beta1().
+		CronJobs(namespace).
+		Update(cj)
+
+	return err
+}
+
+func removeEnvVarsWithSecretsFromCronJob(cj *v1beta1.CronJob, envVars []string) *v1beta1.CronJob {
+	for i, cn := range cj.Spec.JobTemplate.Spec.Template.Spec.Containers {
+		if cn.Name == cj.Name {
+			cj.Spec.JobTemplate.Spec.Template.Spec.Containers[i].Env = removeEnvVars(cn.Env, envVars)
+			return cj
+
+		}
+	}
+	return cj
+}
+
+func removeEnvVarsWithSecretsFromDeploy(d *v1beta2.Deployment, envVars []string) *v1beta2.Deployment {
+	for i, cn := range d.Spec.Template.Spec.Containers {
+		if cn.Name == d.Name {
+			d.Spec.Template.Spec.Containers[i].Env = removeEnvVars(cn.Env, envVars)
+			return d
+		}
+	}
+	return d
+}
+
+func removeEnvVars(evs []k8sv1.EnvVar, toRemove []string) []k8sv1.EnvVar {
+	for _, tr := range toRemove {
+		for i, ev := range evs {
+			if ev.Name == tr {
+				evs = append(evs[:i], evs[i+1:]...)
+				break
+			}
+		}
+	}
+	return evs
+}
+
+func removeVolumesWithSecretsFromDeploy(d *v1beta2.Deployment, keys []string) *v1beta2.Deployment {
+	for i, vol := range d.Spec.Template.Spec.Volumes {
+		if vol.Name != spec.AppSecretName {
+			continue
+		}
+		cleanKeys := removeVolumeSecretsItems(vol.Secret.Items, keys)
+		if len(cleanKeys) > 0 {
+			d.Spec.Template.Spec.Volumes[i].Secret.Items = cleanKeys
+			return d
+		}
+		d.Spec.Template.Spec.Volumes = append(
+			d.Spec.Template.Spec.Volumes[:i],
+			d.Spec.Template.Spec.Volumes[i+1:]...,
+		)
+		break
+	}
+
+	for i, cn := range d.Spec.Template.Spec.Containers {
+		if cn.Name != d.Name { //app container name is the same of deploy name
+			continue
+		}
+		cleanVolMounts := removeVolumeMounts(cn.VolumeMounts, spec.AppSecretName)
+		d.Spec.Template.Spec.Containers[i].VolumeMounts = cleanVolMounts
+		break
+	}
+	return d
+}
+
+func removeVolumesWithSecretsFromCronJob(cj *v1beta1.CronJob, keys []string) *v1beta1.CronJob {
+	for i, vol := range cj.Spec.JobTemplate.Spec.Template.Spec.Volumes {
+		if vol.Name != spec.AppSecretName {
+			continue
+		}
+		cleanKeys := removeVolumeSecretsItems(vol.Secret.Items, keys)
+		if len(cleanKeys) > 0 {
+			cj.Spec.JobTemplate.Spec.Template.Spec.Volumes[i].Secret.Items = cleanKeys
+			return cj
+		}
+		cj.Spec.JobTemplate.Spec.Template.Spec.Volumes = append(
+			cj.Spec.JobTemplate.Spec.Template.Spec.Volumes[:i],
+			cj.Spec.JobTemplate.Spec.Template.Spec.Volumes[i+1:]...,
+		)
+		break
+	}
+
+	for i, cn := range cj.Spec.JobTemplate.Spec.Template.Spec.Containers {
+		if cn.Name != cj.Name { //app container name is the same of deploy name
+			continue
+		}
+		cleanVolMounts := removeVolumeMounts(cn.VolumeMounts, spec.AppSecretName)
+		cj.Spec.JobTemplate.Spec.Template.Spec.Containers[i].VolumeMounts = cleanVolMounts
+		break
+	}
+	return cj
+}
+
+func removeVolumeMounts(items []k8sv1.VolumeMount, volName string) []k8sv1.VolumeMount {
+	for i, item := range items {
+		if item.Name == volName {
+			return append(items[:i], items[i+1:]...)
+		}
+	}
+	return items
+}
+
+func removeVolumeSecretsItems(items []k8sv1.KeyToPath, toRemove []string) []k8sv1.KeyToPath {
+	for _, tr := range toRemove {
+		for i, keyPath := range items {
+			if keyPath.Key == tr {
+				items = append(items[:i], items[i+1:]...)
+				break
+			}
+		}
+	}
+	return items
 }
 
 func prepareServiceAnnotations(tmpl string, annotations map[string]string) ([]byte, error) {

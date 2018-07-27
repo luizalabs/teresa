@@ -135,6 +135,7 @@ func TestNewInfoResponse(t *testing.T) {
 			Default:        []*LimitRangeQuantity{lrq1},
 			DefaultRequest: []*LimitRangeQuantity{lrq2},
 		},
+		Volumes: []string{"/teresa/secret/foo.txt"},
 	}
 	want := &appb.InfoResponse{
 		Team:      info.Team,
@@ -162,6 +163,7 @@ func TestNewInfoResponse(t *testing.T) {
 				{Quantity: "2", Resource: "resource2"},
 			},
 		},
+		Volumes: []string{"/teresa/secret/foo.txt"},
 	}
 
 	resp := newInfoResponse(info)

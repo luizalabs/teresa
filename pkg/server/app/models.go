@@ -68,6 +68,7 @@ type Info struct {
 	Autoscale *Autoscale
 	Limits    *Limits
 	Protocol  string
+	Volumes   []string
 }
 
 type AppListItem struct {
@@ -170,6 +171,8 @@ func newInfoResponse(info *Info) *appb.InfoResponse {
 		}
 		evs = append(evs, ev)
 	}
+	vols := make([]string, len(info.Volumes))
+	copy(vols, info.Volumes)
 
 	var stat *appb.InfoResponse_Status
 	if info.Status != nil {

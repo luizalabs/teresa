@@ -249,6 +249,10 @@ func (ops *AppOperations) Info(user *database.User, appName string) (*Info, erro
 			Key: s, Value: "*****",
 		}
 	}
+	vols := make([]string, len(appMeta.SecretFiles))
+	for i := range appMeta.SecretFiles {
+		vols[i] = fmt.Sprintf("%s/%s", SecretPath, appMeta.SecretFiles[i])
+	}
 
 	info := &Info{
 		Team:      teamName,
@@ -258,6 +262,7 @@ func (ops *AppOperations) Info(user *database.User, appName string) (*Info, erro
 		Limits:    lim,
 		EnvVars:   envVars,
 		Protocol:  appMeta.Protocol,
+		Volumes:   vols,
 	}
 	return info, nil
 }

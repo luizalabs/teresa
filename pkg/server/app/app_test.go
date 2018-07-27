@@ -88,6 +88,7 @@ func (f *fakeK8sOperations) NamespaceAnnotation(namespace, annotation string) (s
 		"virtualHost": "%s",
 		"envVars": [{"key": "ENV-KEY", "value": "ENV-VALUE"}],
 		"secrets": ["SECRET-1", "SECRET-2"],
+		"secret_files": ["SECRET-3"],
 		"protocol": "%s"
 	}`
 	return fmt.Sprintf(
@@ -698,10 +699,11 @@ func TestAppOperationsInfo(t *testing.T) {
 	teamName := "luizalabs"
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{
-		Name:    "teresa",
-		Team:    teamName,
-		EnvVars: []*EnvVar{&EnvVar{Key: "ENV-KEY", Value: "ENV-VALUE"}},
-		Secrets: []string{"SECRET-1", "SECRET-2"},
+		Name:        "teresa",
+		Team:        teamName,
+		EnvVars:     []*EnvVar{&EnvVar{Key: "ENV-KEY", Value: "ENV-VALUE"}},
+		Secrets:     []string{"SECRET-1", "SECRET-2"},
+		SecretFiles: []string{"SECRET-3"},
 	}
 	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
 		Name:  teamName,
@@ -758,6 +760,13 @@ func TestAppOperationsInfo(t *testing.T) {
 		expected := "*****"
 		if info.EnvVars[idx].Value != expected {
 			t.Errorf("expected %s, got %s", expected, info.EnvVars[idx].Value)
+		}
+	}
+
+	for i, s := range app.SecretFiles {
+		expected := fmt.Sprintf("%s/%s", SecretPath, s)
+		if actual := info.Volumes[i]; actual != expected {
+			t.Errorf("expected %s, got %s", expected, actual)
 		}
 	}
 

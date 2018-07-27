@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/client"
 	"github.com/luizalabs/teresa/pkg/client/connection"
 	appb "github.com/luizalabs/teresa/pkg/protobuf/app"
+	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
@@ -330,6 +333,12 @@ func appInfo(cmd *cobra.Command, args []string) {
 			fmt.Printf("  %s=%s\n", ev.Key, ev.Value)
 		}
 	}
+	if len(info.Volumes) > 0 {
+		fmt.Println(bold("volumes:"))
+		for _, vol := range info.Volumes {
+			fmt.Println("  ", vol)
+		}
+	}
 	if info.Status != nil {
 		pods := make([]*appb.InfoResponse_Status_Pod, 0)
 		for _, pod := range info.Status.Pods {
@@ -368,6 +377,44 @@ func appInfo(cmd *cobra.Command, args []string) {
 			fmt.Printf("    %s %s\n", bold(item.Resource), item.Quantity)
 		}
 	}
+}
+
+func prepareSecretFileSet(filename, currentClusterName string, cmd *cobra.Command) (*appb.SetSecretRequest, error) {
+	content, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("error processing file %s: %v", filename, err)
+	}
+	appName, err := cmd.Flags().GetString("app")
+	if err != nil || appName == "" {
+		return nil, fmt.Errorf("Invalid app parameter")
+	}
+	_, filename = filepath.Split(filename)
+
+	fmt.Printf(
+		"Setting Secret file %s and %s %s on %s...\n",
+		color.CyanString(filename),
+		color.YellowString("restarting"),
+		color.CyanString(`"%s"`, appName),
+		color.YellowString(`"%s"`, currentClusterName),
+	)
+	noinput, err := cmd.Flags().GetBool("no-input")
+	if err != nil {
+		return nil, fmt.Errorf("Invalid no-input parameter")
+	}
+	if !noinput {
+		s, _ := client.GetInput("Are you sure? (yes/NO)? ")
+		if s != "yes" {
+			return nil, nil
+		}
+	}
+	req := &appb.SetSecretRequest{
+		Name: appName,
+		SecretFile: &appb.SetSecretRequest_SecretFile{
+			Key:     filename,
+			Content: content,
+		},
+	}
+	return req, nil
 }
 
 func prepareEnvAndSecretSet(label, currentClusterName string, cmd *cobra.Command, args []string) (*appb.SetEnvRequest, error) {
@@ -533,20 +580,29 @@ func appEnvUnset(cmd *cobra.Command, args []string) {
 var appSecretSetCmd = &cobra.Command{
 	Use:   "secret-set [KEY=value, ...]",
 	Short: "Set secert (as env vars) for the app",
-	Long: `Create or update a secret for the app.
+	Long: fmt.Sprintf(`Create or update a secret for the app.
 
 You can add a new secret for the app, or update if it already exists.
 
+If you need to create a file secret (monted as a file in the app container file system)
+use the flag '-f' pointing to a file in your current file system.
+When you create a secret based on a file the name of secret will be the name of file
+and Teresa will mount that secret in the default directory %s.
+
 WARNING:
   If you need to set more than one secret to the application, provide all at once.
-  Every time this command is called, the application needs to be restared.`,
+  Every time this command is called, the application needs to be restared.`, app.SecretPath),
 	Example: `  To add an new secret called "FOO":
 
   $ teresa app secret-set FOO=bar --app myapp
 
   You can also provide more than one env var at a time:
 
-  $ teresa app secret-set FOO=bar BAR=foo --app myapp`,
+  $ teresa app secret-set FOO=bar BAR=foo --app myapp
+
+  For file bases secrets use '-f' flag:
+
+  $ tersa app secret-set -f my-secret-file.txt`,
 	Run: appSecretSet,
 }
 
@@ -556,11 +612,27 @@ func appSecretSet(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("error reading config file: %v", err)
 	}
 
-	req, err := prepareEnvAndSecretSet("Secrets", currentClusterName, cmd, args)
+	filename, err := cmd.Flags().GetString("filename")
 	if err != nil {
-		client.PrintErrorAndExit("%s", err)
-	} else if req == nil {
-		return
+		client.PrintErrorAndExit("Invalid filename parameter")
+	}
+
+	var req *appb.SetSecretRequest
+	if filename != "" {
+		req, err = prepareSecretFileSet(filename, currentClusterName, cmd)
+		if err != nil {
+			client.PrintErrorAndExit("%s", err)
+		} else if req == nil {
+			return
+		}
+	} else {
+		evs, err := prepareEnvAndSecretSet("Secrets", currentClusterName, cmd, args)
+		if err != nil {
+			client.PrintErrorAndExit("%s", err)
+		} else if evs == nil {
+			return
+		}
+		req = &appb.SetSecretRequest{Name: evs.Name, SecretEnvs: evs.EnvVars}
 	}
 
 	conn, err := connection.New(cfgFile, currentClusterName)
@@ -845,6 +917,7 @@ func init() {
 
 	appSecretSetCmd.Flags().String("app", "", "app name")
 	appSecretSetCmd.Flags().Bool("no-input", false, "set env vars without warning")
+	appSecretSetCmd.Flags().StringP("filename", "f", "", "Filename with secret content")
 
 	appSecretUnSetCmd.Flags().String("app", "", "app name")
 	appSecretUnSetCmd.Flags().Bool("no-input", false, "unset env vars without warning")

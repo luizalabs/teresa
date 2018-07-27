@@ -20,7 +20,7 @@ func TestFakeOperationsCreate(t *testing.T) {
 		t.Fatal("Error creating app in FakeOperations: ", err)
 	}
 
-	fakeApp := fake.(*FakeOperations).Storage[name]
+	fakeApp := fake.Storage[name]
 	if fakeApp == nil {
 		t.Fatal("expected a valid app, got nil")
 	}
@@ -33,7 +33,7 @@ func TestFakeOperationsCreateErrAppAlreadyExists(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Email: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage["teresa"] = app
+	fake.Storage["teresa"] = app
 
 	if err := fake.Create(user, app); err != ErrAlreadyExists {
 		t.Errorf("expected ErrAlreadyExists, got %v", err)
@@ -55,7 +55,7 @@ func TestFakeOperationsLogs(t *testing.T) {
 	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
 
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	expectedLines := 10
 	opts := &LogOptions{Lines: int64(expectedLines), Follow: false}
@@ -84,7 +84,7 @@ func TestFakeOperationsLogsFollow(t *testing.T) {
 	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
 
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	minimumLines := 1
 	opts := &LogOptions{Lines: int64(minimumLines), Follow: true}
@@ -111,7 +111,7 @@ func TestFakeOperationsLogsErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 	opts := &LogOptions{Lines: 1, Follow: false}
 
 	if _, err := fake.Logs(user, app.Name, opts); err != auth.ErrPermissionDenied {
@@ -134,7 +134,7 @@ func TestFakeOperationsInfo(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	info, err := fake.Info(user, app.Name)
 	if err != nil {
@@ -150,7 +150,7 @@ func TestFakeOperationsInfoErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	if _, err := fake.Info(user, app.Name); teresa_errors.Get(err) != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", teresa_errors.Get(err))
@@ -170,7 +170,7 @@ func TestFakeOperationsList(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	apps, err := fake.List(user)
 	if err != nil {
@@ -199,7 +199,7 @@ func TestFakeOperationsListByTeam(t *testing.T) {
 	fake := NewFakeOperations()
 
 	for _, tc := range testCases {
-		fake.(*FakeOperations).Storage[tc.app.Name] = tc.app
+		fake.Storage[tc.app.Name] = tc.app
 		apps, err := fake.ListByTeam(tc.teamName)
 		if err != nil {
 			t.Fatal("error getting app list by team:", err)
@@ -254,7 +254,7 @@ func TestFakeOperationsSetEnv(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	if err := fake.SetEnv(user, app.Name, nil); err != nil {
 		t.Fatal("error setting app env: ", err)
@@ -265,7 +265,7 @@ func TestFakeOperationsSetEnvErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	if err := fake.SetEnv(user, app.Name, nil); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
@@ -285,7 +285,7 @@ func TestFakeOperationsUnsetEnv(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	if err := fake.UnsetEnv(user, app.Name, nil); err != nil {
 		t.Fatal("error unsetting app env: ", err)
@@ -296,7 +296,7 @@ func TestFakeOperationsUnsetEnvErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	if err := fake.UnsetEnv(user, app.Name, nil); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
@@ -312,11 +312,104 @@ func TestFakeOperationsUnsetEnvErrNotFound(t *testing.T) {
 	}
 }
 
+func TestFakeOperationsSetSecret(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.Storage[app.Name] = app
+
+	if err := fake.SetSecret(user, app.Name, nil); err != nil {
+		t.Fatal("error setting app secret: ", err)
+	}
+}
+
+func TestFakeOperationsSetSecretErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.Storage[app.Name] = app
+
+	if err := fake.SetSecret(user, app.Name, nil); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestFakeOperationsSetSecretErrNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+
+	if err := fake.SetSecret(user, "teresa", nil); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestFakeOperationsUnsetSecret(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.Storage[app.Name] = app
+
+	if err := fake.UnsetSecret(user, app.Name, nil); err != nil {
+		t.Fatal("error unsetting app secret: ", err)
+	}
+}
+
+func TestFakeOperationsUnsetSecretErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.Storage[app.Name] = app
+
+	if err := fake.UnsetSecret(user, app.Name, nil); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestFakeOperationsUnsetSecretErrNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+
+	if err := fake.UnsetSecret(user, "teresa", nil); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestFakeOperationsSetSecretFile(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.Storage[app.Name] = app
+
+	if err := fake.SetSecretFile(user, app.Name, "test", nil); err != nil {
+		t.Fatal("error setting app secret file:", err)
+	}
+}
+
+func TestFakeOperationsSetSecretFileErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.Storage[app.Name] = app
+
+	if err := fake.SetSecretFile(user, app.Name, "test", nil); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestFakeOperationsSetSecretFileErrNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+
+	if err := fake.SetSecretFile(user, "teresa", "test", nil); err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
 func TestFakeOperationsSetAutoscale(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	req := newAutoscaleRequest("teresa")
 	as := newAutoscale(req)
@@ -330,7 +423,7 @@ func TestFakeOperationsSetAutoscalePermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	if err := fake.SetAutoscale(user, app.Name, nil); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
@@ -350,7 +443,7 @@ func TestFakeOperationsCheckPermAndGet(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	if _, err := fake.CheckPermAndGet(user, app.Name); err != nil {
 		t.Error("error on CheckPermAndGet: ", err)
@@ -361,7 +454,7 @@ func TestFakeOperationsCheckPermAndGetPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	if _, err := fake.CheckPermAndGet(user, app.Name); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
@@ -399,12 +492,12 @@ func TestFakeOperationsDelete(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	if err := fake.Delete(user, app.Name); err != nil {
 		t.Error("error on Delete: ", err)
 	}
-	if _, found := fake.(*FakeOperations).Storage[app.Name]; found {
+	if _, found := fake.Storage[app.Name]; found {
 		t.Error("expected not found app, but founded")
 	}
 }
@@ -413,7 +506,7 @@ func TestFakeOperationsDeletePermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	if err := fake.Delete(user, app.Name); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
@@ -432,7 +525,7 @@ func TestFakeOperationsDeleteErrNotFound(t *testing.T) {
 func TestFakeOperationsChangeTeam(t *testing.T) {
 	fake := NewFakeOperations()
 	appName := "teresa"
-	fake.(*FakeOperations).Storage[appName] = &App{Name: appName}
+	fake.Storage[appName] = &App{Name: appName}
 
 	if err := fake.ChangeTeam(appName, "gophers"); err != nil {
 		t.Errorf("error changing app team: %v", err)
@@ -443,7 +536,7 @@ func TestFakeOperationsSetReplicas(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	if err := fake.SetReplicas(user, app.Name, 1); err != nil {
 		t.Error("error on setReplicas: ", err)
@@ -454,7 +547,7 @@ func TestFakeOperationsSetReplicasPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 
 	if err := fake.SetReplicas(user, app.Name, 1); err != auth.ErrPermissionDenied {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
@@ -474,7 +567,7 @@ func TestFakeOpsDeletePodsSuccess(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Name: "gopher@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 	pods := []string{"pod1", "pod2"}
 
 	if err := fake.DeletePods(user, app.Name, pods); err != nil {
@@ -486,7 +579,7 @@ func TestFakeOpsDeletePodsErrPermissionDenied(t *testing.T) {
 	fake := NewFakeOperations()
 	user := &database.User{Email: "bad-user@luizalabs.com"}
 	app := &App{Name: "teresa"}
-	fake.(*FakeOperations).Storage[app.Name] = app
+	fake.Storage[app.Name] = app
 	pods := []string{"pod1", "pod2"}
 
 	if err := fake.DeletePods(user, app.Name, pods); teresa_errors.Get(err) != auth.ErrPermissionDenied {

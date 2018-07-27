@@ -260,6 +260,87 @@ func TestUnsetEnvVars(t *testing.T) {
 	}
 }
 
+func TestSetSecretsOnApp(t *testing.T) {
+	a := &App{Name: "teresa", Team: "luizalabs"}
+	var testCases = []struct {
+		actual  []string
+		secrets []string
+		want    []string
+	}{
+		{[]string{}, []string{"S1"}, []string{"S1"}},
+		{[]string{"S1"}, []string{"S2"}, []string{"S1", "S2"}},
+	}
+
+	for _, tc := range testCases {
+		a.Secrets = tc.actual
+		setSecretsOnApp(a, tc.secrets)
+		if !reflect.DeepEqual(a.Secrets, tc.want) {
+			t.Errorf("expected %v, got %v", tc.want, a.Secrets)
+		}
+	}
+}
+
+func TestUnSetSecretsOnApp(t *testing.T) {
+	a := &App{Name: "teresa", Team: "luizalabs"}
+	var testCases = []struct {
+		actual  []string
+		secrets []string
+		want    []string
+	}{
+		{[]string{"S1"}, []string{"S1"}, []string{}},
+		{[]string{"S1", "S2"}, []string{"S2"}, []string{"S1"}},
+	}
+
+	for _, tc := range testCases {
+		a.Secrets = tc.actual
+		unsetSecretsOnApp(a, tc.secrets)
+		if !reflect.DeepEqual(a.Secrets, tc.want) {
+			t.Errorf("expected %v, got %v", tc.want, a.Secrets)
+		}
+	}
+}
+
+func TestSetSecretFileOnApp(t *testing.T) {
+	a := &App{Name: "teresa", Team: "luizalabs"}
+	var testCases = []struct {
+		actual []string
+		secret string
+		want   []string
+	}{
+		{[]string{}, "S1", []string{"S1"}},
+		{[]string{"S1"}, "S2", []string{"S1", "S2"}},
+	}
+
+	for _, tc := range testCases {
+		a.SecretFiles = tc.actual
+		setSecretFileOnApp(a, tc.secret)
+		if !reflect.DeepEqual(a.SecretFiles, tc.want) {
+			t.Errorf("expected %v, got %v", tc.want, a.SecretFiles)
+		}
+	}
+}
+
+func TestUnSetSecretFilesOnApp(t *testing.T) {
+	a := &App{Name: "teresa", Team: "luizalabs"}
+	var testCases = []struct {
+		actual  []string
+		secrets []string
+		want    []string
+	}{
+		{[]string{"S1"}, []string{"S1"}, []string{}},
+		{[]string{"S1", "S2"}, []string{"S2"}, []string{"S1"}},
+		{[]string{"S1", "S2"}, []string{"S2", "S1"}, []string{}},
+	}
+
+	for _, tc := range testCases {
+		a.SecretFiles = tc.actual
+		unsetSecretFilesOnApp(a, tc.secrets)
+		if !reflect.DeepEqual(a.SecretFiles, tc.want) {
+			t.Errorf("expected %v, got %v", tc.want, a.SecretFiles)
+		}
+	}
+}
+
 func TestNewAutoscale(t *testing.T) {
 	req := newAutoscaleRequest("teresa")
 	as := newAutoscale(req)

@@ -221,6 +221,22 @@ func (f *fakeK8sOperations) IngressEnabled() bool {
 	return f.IngressEnabledValue
 }
 
+func (f *fakeK8sOperations) CreateOrUpdateDeploySecretFile(namespace, deploy, fileName string) error {
+	return nil
+}
+
+func (f *fakeK8sOperations) CreateOrUpdateCronJobSecretFile(namespace, cronjob, fileName string) error {
+	return nil
+}
+
+func (f *fakeK8sOperations) DeleteDeploySecrets(namespace, deploy string, envVars, volKeys []string) error {
+	return nil
+}
+
+func (f *fakeK8sOperations) DeleteCronJobSecrets(namespace, cronjob string, envVars, volKeys []string) error {
+	return nil
+}
+
 func (e *errK8sOperations) CreateNamespace(app *App, user string) error {
 	return e.NamespaceErr
 }
@@ -340,6 +356,22 @@ func (e *errK8sOperations) HasIngress(namespace, name string) (bool, error) {
 
 func (e *errK8sOperations) IngressEnabled() bool {
 	return false
+}
+
+func (e *errK8sOperations) CreateOrUpdateDeploySecretFile(namespace, deploy, fileName string) error {
+	return nil
+}
+
+func (e *errK8sOperations) CreateOrUpdateCronJobSecretFile(namespace, cronjob, fileName string) error {
+	return nil
+}
+
+func (e *errK8sOperations) DeleteDeploySecrets(namespace, deploy string, envVars, volKeys []string) error {
+	return nil
+}
+
+func (e *errK8sOperations) DeleteCronJobSecrets(namespace, cronjob string, envVars, volKeys []string) error {
+	return nil
 }
 
 func TestAppOperationsCreate(t *testing.T) {
@@ -1135,11 +1167,66 @@ func TestAppOpsSetSecretErrInvalidEnvVarName(t *testing.T) {
 	}
 }
 
-func TestAppOperationsUnsetSecret(t *testing.T) {
+func TestAppOperationsSetSecretFile(t *testing.T) {
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.SetSecretFile(user, app.Name, "test", nil); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func TestAppOperationsSetSecretFileErrPermissionDenied(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+
+	if err := ops.SetSecretFile(user, "teresa", "test", nil); err != auth.ErrPermissionDenied {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestAppOperationsSetSecretFileErrNotFound(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &errK8sOperations{Err: ErrNotFound}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+
+	if err := ops.SetSecretFile(user, "teresa", "test", nil); teresa_errors.Get(err) != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestAppOperationsSetSecretFileErrInternalServerErrorOnSaveApp(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &errK8sOperations{SetNamespaceAnnotationsErr: errors.New("test")}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.SetSecretFile(user, app.Name, "test", nil); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
+		t.Errorf("expected ErrInternalServerError, got %v", err)
+	}
+}
+
+func TestAppOperationsUnsetSecret(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{
+		Name:        "teresa",
+		Team:        "luizalabs",
+		Secrets:     []string{"key1"},
+		SecretFiles: []string{"key2"},
+	}
 	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
 		Name:  app.Team,
 		Users: []database.User{*user},

@@ -17,6 +17,8 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 )
 
+const SecretPath = "/teresa/secrets"
+
 type Operations interface {
 	Create(user *database.User, app *App) error
 	Logs(user *database.User, appName string, opts *LogOptions) (io.ReadCloser, error)
@@ -28,6 +30,7 @@ type Operations interface {
 	UnsetEnv(user *database.User, appName string, evs []string) error
 	SetSecret(user *database.User, appName string, secrets []*EnvVar) error
 	UnsetSecret(user *database.User, appName string, secrets []string) error
+	SetSecretFile(user *database.User, appName, name string, content []byte) error
 	List(user *database.User) ([]*AppListItem, error)
 	ListByTeam(teamName string) ([]string, error)
 	SetAutoscale(user *database.User, appName string, as *Autoscale) error
@@ -70,6 +73,10 @@ type K8sOperations interface {
 	DeletePod(namespace, podName string) error
 	HasIngress(namespace, name string) (bool, error)
 	IngressEnabled() bool
+	CreateOrUpdateDeploySecretFile(namespace, deploy, fileName string) error
+	CreateOrUpdateCronJobSecretFile(namespace, cronjob, fileName string) error
+	DeleteDeploySecrets(namespace, deploy string, envVars, volKeys []string) error
+	DeleteCronJobSecrets(namespace, cronjob string, envVars, volKeys []string) error
 }
 
 type AppOperations struct {
@@ -396,6 +403,50 @@ func (ops *AppOperations) addresses(app *App) ([]*Address, error) {
 	}
 	return nil, nil
 }
+
+func (ops *AppOperations) SetSecretFile(user *database.User, appName, name string, content []byte) error {
+	app, err := ops.CheckPermAndGet(user, appName)
+	if err != nil {
+		return err
+	}
+
+	s, err := ops.kops.GetSecret(appName, TeresaAppSecrets)
+	if err != nil {
+		if !ops.kops.IsNotFound(err) {
+			return teresa_errors.NewInternalServerError(err)
+		}
+	}
+	if s == nil {
+		s = make(map[string][]byte)
+	}
+	s[name] = content
+
+	if err := ops.kops.CreateOrUpdateSecret(appName, TeresaAppSecrets, s); err != nil {
+		if ops.kops.IsInvalid(err) {
+			return ErrInvalidSecretName
+		}
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	if IsCronJob(app.ProcessType) {
+		err = ops.kops.CreateOrUpdateCronJobSecretFile(appName, appName, name)
+	} else {
+		err = ops.kops.CreateOrUpdateDeploySecretFile(appName, appName, name)
+	}
+
+	if err != nil && !ops.kops.IsNotFound(err) {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	setSecretFileOnApp(app, name)
+
+	if err := ops.SaveApp(app, user.Email); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	return nil
+}
+
 func (ops *AppOperations) SetSecret(user *database.User, appName string, secrets []*EnvVar) error {
 	names := make([]string, len(secrets))
 	for i := range secrets {
@@ -455,13 +506,32 @@ func (ops *AppOperations) SetSecret(user *database.User, appName string, secrets
 }
 
 func (ops *AppOperations) UnsetSecret(user *database.User, appName string, secrets []string) error {
-	if err := checkForProtectedEnvVars(secrets); err != nil {
-		return err
-	}
-
 	app, err := ops.CheckPermAndGet(user, appName)
 	if err != nil {
 		return err
+	}
+	envSecrets, fileSecrets := make([]string, 0), make([]string, 0)
+
+Loop:
+	for _, s := range secrets {
+		for _, ev := range app.Secrets {
+			if ev == s {
+				envSecrets = append(envSecrets, ev)
+				continue Loop
+			}
+		}
+		for _, sf := range app.SecretFiles {
+			if sf == s {
+				fileSecrets = append(fileSecrets, sf)
+				break
+			}
+		}
+	}
+
+	if len(envSecrets) > 0 {
+		if err := checkForProtectedEnvVars(envSecrets); err != nil {
+			return err
+		}
 	}
 
 	s, err := ops.kops.GetSecret(appName, TeresaAppSecrets)
@@ -486,9 +556,9 @@ func (ops *AppOperations) UnsetSecret(user *database.User, appName string, secre
 	}
 
 	if IsCronJob(app.ProcessType) {
-		err = ops.kops.DeleteCronJobEnvVars(appName, appName, secrets)
+		err = ops.kops.DeleteCronJobSecrets(appName, appName, envSecrets, fileSecrets)
 	} else {
-		err = ops.kops.DeleteDeployEnvVars(appName, appName, secrets)
+		err = ops.kops.DeleteDeploySecrets(appName, appName, envSecrets, fileSecrets)
 	}
 
 	if err != nil {
@@ -497,7 +567,12 @@ func (ops *AppOperations) UnsetSecret(user *database.User, appName string, secre
 		}
 	}
 
-	unsetSecretsOnApp(app, secrets)
+	if len(envSecrets) > 0 {
+		unsetSecretsOnApp(app, envSecrets)
+	}
+	if len(fileSecrets) > 0 {
+		unsetSecretFilesOnApp(app, fileSecrets)
+	}
 
 	if err := ops.SaveApp(app, user.Email); err != nil {
 		return teresa_errors.NewInternalServerError(err)

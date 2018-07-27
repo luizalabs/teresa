@@ -220,16 +220,14 @@ func newInfoResponse(info *Info) *appb.InfoResponse {
 		Autoscale: as,
 		Limits:    lim,
 		Protocol:  info.Protocol,
+		Volumes:   vols,
 	}
 }
 
-func newEnvVars(req *appb.SetEnvRequest) []*EnvVar {
-	tmp := []*EnvVar{}
-	for _, ev := range req.EnvVars {
-		if ev == nil {
-			continue
-		}
-		tmp = append(tmp, &EnvVar{Key: ev.Key, Value: ev.Value})
+func newEnvVars(evs []*appb.SetEnvRequest_EnvVar) []*EnvVar {
+	tmp := make([]*EnvVar, len(evs))
+	for i, ev := range evs {
+		tmp[i] = &EnvVar{Key: ev.Key, Value: ev.Value}
 	}
 	return tmp
 }
@@ -284,6 +282,26 @@ func unsetSecretsOnApp(app *App, secrets []string) {
 		for i := range app.Secrets {
 			if app.Secrets[i] == secret {
 				app.Secrets = append(app.Secrets[:i], app.Secrets[i+1:]...)
+				break
+			}
+		}
+	}
+}
+
+func setSecretFileOnApp(app *App, name string) {
+	for _, s := range app.SecretFiles {
+		if s == name {
+			return
+		}
+	}
+	app.SecretFiles = append(app.SecretFiles, name)
+}
+
+func unsetSecretFilesOnApp(app *App, secrets []string) {
+	for _, secret := range secrets {
+		for i := range app.SecretFiles {
+			if app.SecretFiles[i] == secret {
+				app.SecretFiles = append(app.SecretFiles[:i], app.SecretFiles[i+1:]...)
 				break
 			}
 		}

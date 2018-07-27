@@ -203,6 +203,10 @@ func (f *FakeOperations) UnsetSecret(user *database.User, appName string, secret
 	return nil
 }
 
+func (f *FakeOperations) SetSecretFile(user *database.User, appName, name string, content []byte) error {
+	return f.SetSecret(user, appName, nil)
+}
+
 func (f *FakeOperations) SetAutoscale(user *database.User, appName string, as *Autoscale) error {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
@@ -283,7 +287,7 @@ func (f *FakeOperations) DeletePods(user *database.User, appName string, podsNam
 	return nil
 }
 
-func NewFakeOperations() Operations {
+func NewFakeOperations() *FakeOperations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},
 		Storage: make(map[string]*App),

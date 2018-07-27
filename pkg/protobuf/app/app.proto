@@ -13,7 +13,7 @@ service App {
     rpc Delete (DeleteRequest) returns (Empty);
     rpc SetReplicas (SetReplicasRequest) returns (Empty);
     rpc DeletePods (DeletePodsRequest) returns (Empty);
-    rpc SetSecret(SetEnvRequest) returns (Empty);
+    rpc SetSecret(SetSecretRequest) returns (Empty);
     rpc UnsetSecret(UnsetEnvRequest) returns (Empty);
     rpc ChangeTeam(ChangeTeamRequest) returns (Empty);
 }
@@ -120,6 +120,7 @@ message InfoResponse {
     }
     Limits limits = 6;
     string protocol = 7;
+    repeated string volumes = 8;
 }
 
 message SetEnvRequest {
@@ -135,6 +136,18 @@ message SetEnvRequest {
 message UnsetEnvRequest {
     string name = 1;
     repeated string env_vars = 2;
+}
+
+message SetSecretRequest {
+    string name = 1;
+
+    message SecretFile {
+        string key = 1;
+        bytes content = 2;
+    }
+
+    repeated SetEnvRequest.EnvVar secret_envs = 2;
+    SecretFile secret_file = 3;
 }
 
 message SetAutoscaleRequest {

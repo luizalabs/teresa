@@ -600,7 +600,7 @@ WARNING:
 
   $ teresa app secret-set FOO=bar BAR=foo --app myapp
 
-  For file bases secrets use '-f' flag:
+  For file based secrets use '-f' flag:
 
   $ tersa app secret-set -f my-secret-file.txt`,
 	Run: appSecretSet,

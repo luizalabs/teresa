@@ -74,7 +74,7 @@ type K8sOperations interface {
 	HasIngress(namespace, name string) (bool, error)
 	IngressEnabled() bool
 	CreateOrUpdateDeploySecretFile(namespace, deploy, fileName string) error
-	CreateOrUpdateCronJobSecretFile(namespace, cronjob, fileName string) error
+	CreateOrUpdateCronJobSecretFile(namespace, cronjob, filename string) error
 	DeleteDeploySecrets(namespace, deploy string, envVars, volKeys []string) error
 	DeleteCronJobSecrets(namespace, cronjob string, envVars, volKeys []string) error
 }

@@ -1201,7 +1201,7 @@ func (c *Client) SetLoadBalancerSourceRanges(namespace, svcName string, sourceRa
 	return c.patchService(namespace, svcName, []byte(data))
 }
 
-func (c *Client) CreateOrUpdateDeploySecretFile(namespace, deploy, fileName string) error {
+func (c *Client) CreateOrUpdateDeploySecretFile(namespace, deploy, filename string) error {
 	kc, err := c.buildClient()
 	if err != nil {
 		return err
@@ -1219,7 +1219,7 @@ func (c *Client) CreateOrUpdateDeploySecretFile(namespace, deploy, fileName stri
 		d.Spec.Template.Spec.Volumes,
 		spec.AppSecretName,
 		app.TeresaAppSecrets,
-		fileName,
+		filename,
 	)
 
 	for i, cn := range d.Spec.Template.Spec.Containers {
@@ -1252,7 +1252,7 @@ func addVolumeMountOfSecrets(vols []k8sv1.VolumeMount, volName, path string) []k
 		vols,
 		k8sv1.VolumeMount{
 			Name:      volName,
-			ReadOnly:  false,
+			ReadOnly:  true,
 			MountPath: path,
 		},
 	)

@@ -5,7 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Added
 - [server] Cluster autocaler support
-- Support a secret as a file
+- Support for secrets as files
 
 ### Changed
 - [server] Remove external uuid package dependency to generate deploy uid's

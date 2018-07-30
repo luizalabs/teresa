@@ -553,13 +553,6 @@ Loop:
 		delete(s, secret)
 	}
 
-	if err := ops.kops.CreateOrUpdateSecret(appName, TeresaAppSecrets, s); err != nil {
-		if ops.kops.IsInvalid(err) {
-			return ErrInvalidSecretName
-		}
-		return teresa_errors.NewInternalServerError(err)
-	}
-
 	if IsCronJob(app.ProcessType) {
 		err = ops.kops.DeleteCronJobSecrets(appName, appName, envSecrets, fileSecrets)
 	} else {
@@ -580,6 +573,14 @@ Loop:
 	}
 
 	if err := ops.SaveApp(app, user.Email); err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	// We remove secrets as last step to prevent errors on deploy/cron update
+	if err := ops.kops.CreateOrUpdateSecret(appName, TeresaAppSecrets, s); err != nil {
+		if ops.kops.IsInvalid(err) {
+			return ErrInvalidSecretName
+		}
 		return teresa_errors.NewInternalServerError(err)
 	}
 

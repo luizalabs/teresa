@@ -14,6 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] Big refactor on spec pkg
 - [server] Change healthcheck port back to the nginx one
 - [server] Remove the function test.DeepEqual
+- [server] Remove secrets from k8s after remove from deploy
 
 ### Fixed
 - [server] Database initial migration on mysql 5.7

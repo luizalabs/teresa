@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] Change healthcheck port back to the nginx one
 - [server] Remove the function test.DeepEqual
 - [server] Remove secrets from k8s after remove from deploy
+- [server] Bump slugrunner version to v3.4.0
 
 ### Fixed
 - [server] Database initial migration on mysql 5.7

@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] Support for .yml extension
 - Support for cloudsql-proxy sidecar
 - FAQ entry about the cloudsql-proxy
+- FAQ entry about the unix socket between nginx and app
 
 ### Changed
 - [server] Remove external uuid package dependency to generate deploy uid's

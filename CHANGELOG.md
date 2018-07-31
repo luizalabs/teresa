@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Support for secrets as files
 - [server] Support for .yml extension
 - Support for cloudsql-proxy sidecar
+- FAQ entry about the cloudsql-proxy
 
 ### Changed
 - [server] Remove external uuid package dependency to generate deploy uid's

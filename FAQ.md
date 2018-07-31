@@ -304,6 +304,29 @@ with nginx container, so you can use a simple _location_ rule on your nginx.conf
     }
 ```
 
+**Q: How to use unix socket in communication between nginx and app**
+
+Just create an _upstream_ pointing to an _unix socket_ on the shared directory (`/app`) and
+set the `proxy_pass` to previous created upstream, for instance:
+```
+events {
+  worker_connections  1024;
+}
+
+http{
+  upstream myapp {
+      server unix:/app/myapp.sock;
+  }
+  server {
+    listen $NGINX_PORT;
+    location / {
+        proxy_set_header HOST $host;
+        proxy_pass http://myapp;
+    }
+  }
+}
+```
+
 **Q: How to get nginx logs?**
 
 Filter the logs by container name:

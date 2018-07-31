@@ -375,6 +375,31 @@ ranges. You can view the current whitelist with:
 
    $ teresa service info myapp
 
+**Q: How to use Cloud SQL on GCP?**
+
+You have to use the [Cloud SQL Proxy](https://cloud.google.com/sql/docs/mysql/sql-proxy).
+First, you need to create a [service account](https://cloud.google.com/video-intelligence/docs/common/auth#set_up_a_service_account)
+with Cloud SQL permissions and generate a credentials file. After that, create
+a secret with the contents of this file:
+
+   $ teresa app secret-set --app myapp -f credentials.json
+
+Migrate to the teresa yaml configuration format v2 and add a section
+describing the proxy configuration:
+
+```yaml
+version: v2
+applications:
+  myapp:
+    sidecars:
+      cloudsql-proxy:
+        instances: project:zone:name=tcp:3306
+        credentialFile: credentials.json
+```
+
+After deploying the app the instance will be available on `localhost` using port
+`3306`. The Cloud SQL Proxy supports both MySQL and PostgreSQL.
+
 ## Administration
 
 **Q: How does access control work?**

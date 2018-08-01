@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Fixed
+- [server] Ingress setting for out of cluster configs
+
 ## [0.25.0] - 2018-08-01
 ### Added
 - [server] Cluster autocaler support

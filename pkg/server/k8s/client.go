@@ -1553,5 +1553,6 @@ func newOutOfClusterK8sClient(conf *Config) (*Client, error) {
 	return &Client{
 		conf:          k8sConf,
 		podRunTimeout: conf.PodRunTimeout,
+		ingress:       conf.Ingress,
 	}, nil
 }

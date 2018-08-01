@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Fixed
 - [server] Ingress setting for out of cluster configs
+- [server] `enable-ssl` command resetting the protocol to tcp
 
 ## [0.25.0] - 2018-08-01
 ### Added

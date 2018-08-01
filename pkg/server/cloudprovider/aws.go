@@ -9,10 +9,8 @@ import (
 )
 
 const (
-	awsSSLCertAnnotation         = "service.beta.kubernetes.io/aws-load-balancer-ssl-cert"
-	awsSSLPortsAnnotation        = "service.beta.kubernetes.io/aws-load-balancer-ssl-ports"
-	awsBackendProtocolAnnotation = "service.beta.kubernetes.io/aws-load-balancer-backend-protocol"
-	tcpProto                     = "tcp"
+	awsSSLCertAnnotation  = "service.beta.kubernetes.io/aws-load-balancer-ssl-cert"
+	awsSSLPortsAnnotation = "service.beta.kubernetes.io/aws-load-balancer-ssl-ports"
 )
 
 type awsOperations struct {
@@ -24,9 +22,8 @@ func (ops *awsOperations) CreateOrUpdateSSL(appName, cert string, port int) erro
 		return ErrNotImplemented
 	}
 	anMap := map[string]string{
-		awsSSLCertAnnotation:         cert,
-		awsSSLPortsAnnotation:        strconv.Itoa(port),
-		awsBackendProtocolAnnotation: tcpProto,
+		awsSSLCertAnnotation:  cert,
+		awsSSLPortsAnnotation: strconv.Itoa(port),
 	}
 	if err := ops.k8s.SetServiceAnnotations(appName, appName, anMap); err != nil {
 		return teresa_errors.NewInternalServerError(err)

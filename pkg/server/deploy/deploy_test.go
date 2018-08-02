@@ -207,7 +207,7 @@ func TestCreateDeployCreateNginxConfigMap(t *testing.T) {
 	)
 
 	err := ops.(*DeployOperations).createOrUpdateDeploy(
-		&app.App{},
+		&app.App{ProcessType: app.ProcessTypeWeb},
 		conf,
 		new(bytes.Buffer),
 		"test-slug",
@@ -220,9 +220,37 @@ func TestCreateDeployCreateNginxConfigMap(t *testing.T) {
 	}
 
 	if !fakeK8s.createConfigMapWasCalled {
-		t.Error("expected create config map was called, but don't")
+		t.Error("expected create config map to be called, but wasn't")
 	}
+}
 
+func TestCreateDeploySkipCreatingNginxConfigMap(t *testing.T) {
+	conf := &DeployConfigFiles{NginxConf: "nginx conf"}
+	fakeK8s := new(fakeK8sOperations)
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		fakeK8s,
+		storage.NewFake(),
+		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
+		&Options{},
+	)
+
+	err := ops.(*DeployOperations).createOrUpdateDeploy(
+		&app.App{},
+		conf,
+		new(bytes.Buffer),
+		"test-slug",
+		"test-description",
+		"123",
+	)
+
+	if err != nil {
+		t.Fatal("got unexpected error:", err)
+	}
+	if fakeK8s.createConfigMapWasCalled {
+		t.Error("create config map was called for non-web process type")
+	}
 }
 
 func TestCreateDeployDeleteNginxConfigMap(t *testing.T) {

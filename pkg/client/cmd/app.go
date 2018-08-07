@@ -283,7 +283,7 @@ func appDel(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit(client.GetErrorMsg(err))
 		return
 	}
-	fmt.Printf("App %s deleted!\n", name)
+	fmt.Printf("The app %s will be deleted in a few minutes\n", name)
 }
 
 var appInfoCmd = &cobra.Command{

@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Changed
+- [client] Improve app delete message
+
 ## [0.25.2]
 ### Fixed
 - [server] Only use the nginx sidecar for services

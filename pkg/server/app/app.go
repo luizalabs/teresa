@@ -77,6 +77,8 @@ type K8sOperations interface {
 	CreateOrUpdateCronJobSecretFile(namespace, cronjob, filename string) error
 	DeleteDeploySecrets(namespace, deploy string, envVars, volKeys []string) error
 	DeleteCronJobSecrets(namespace, cronjob string, envVars, volKeys []string) error
+	SuspendCronJob(namespace, name string) error
+	ResumeCronJob(namespace, name string) error
 }
 
 type AppOperations struct {
@@ -675,10 +677,15 @@ func (ops *AppOperations) SetReplicas(user *database.User, appName string, repli
 	}
 
 	if IsCronJob(app.ProcessType) {
-		return ErrInvalidActionForCronJob
-	}
-
-	if err := ops.kops.DeploySetReplicas(app.Name, app.Name, replicas); err != nil {
+		if replicas == 0 {
+			err = ops.kops.SuspendCronJob(appName, appName)
+		} else {
+			err = ops.kops.ResumeCronJob(appName, appName)
+		}
+		if err != nil {
+			return teresa_errors.NewInternalServerError(err)
+		}
+	} else if err := ops.kops.DeploySetReplicas(app.Name, app.Name, replicas); err != nil {
 		return teresa_errors.NewInternalServerError(err)
 	}
 

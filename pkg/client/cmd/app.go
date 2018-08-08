@@ -809,7 +809,10 @@ var appStartCmd = &cobra.Command{
 
 	Example:   To set the number of replicas to 2:
 
-  $ teresa app start myapp --replicas 2`,
+  $ teresa app start myapp --replicas 2
+
+	For CronJobs this command will reactivate cronjob schedule
+`,
 	Run: appStart,
 }
 
@@ -849,7 +852,10 @@ var appStopCmd = &cobra.Command{
 
 	Example:
 
-  $ teresa app stop myapp`,
+  $ teresa app stop myapp
+
+	For CronJobs this command will deactivate cronjob schedule
+`,
 	Run: appStop,
 }
 

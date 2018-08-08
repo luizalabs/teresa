@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Changed
 - [client] Improve app delete message
+- [server] Command `app stop` and `app start` now stop/start cronjobs
 
 ### Fixed
 - [server] Error message when enabling ssl with ingress

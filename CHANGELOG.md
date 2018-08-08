@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - [client] Improve app delete message
 
+### Fixed
+- [server] Error message when enabling ssl with ingress
+
 ## [0.25.2]
 ### Fixed
 - [server] Only use the nginx sidecar for services

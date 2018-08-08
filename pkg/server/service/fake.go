@@ -33,6 +33,8 @@ type FakeK8sOperations struct {
 	ServiceValue                   *spec.Service
 	SetLoadBalancerSourceRangesErr error
 	IsInvalidErr                   bool
+	HasIngressValue                bool
+	HasIngressErr                  error
 }
 
 func (f *FakeOperations) EnableSSL(user *database.User, appName, cert string, only bool) error {
@@ -85,4 +87,8 @@ func (f *FakeK8sOperations) SetLoadBalancerSourceRanges(namespace, svcName strin
 
 func (f *FakeK8sOperations) IsInvalid(err error) bool {
 	return f.IsInvalidErr
+}
+
+func (f *FakeK8sOperations) HasIngress(namespace, name string) (bool, error) {
+	return f.HasIngressValue, f.HasIngressErr
 }

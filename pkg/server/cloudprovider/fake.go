@@ -7,7 +7,8 @@ type FakeK8sOperations struct {
 	ServiceAnnotationsErr    error
 	ServiceAnnotationsValue  map[string]string
 	IsNotFoundErr            bool
-	IngressEnabledValue      bool
+	HasIngressValue          bool
+	HasIngressErr            error
 }
 
 func (f *FakeK8sOperations) CloudProviderName() (string, error) {
@@ -26,6 +27,6 @@ func (f *FakeK8sOperations) IsNotFound(err error) bool {
 	return f.IsNotFoundErr
 }
 
-func (f *FakeK8sOperations) IngressEnabled() bool {
-	return f.IngressEnabledValue
+func (f *FakeK8sOperations) HasIngress(namespace, name string) (bool, error) {
+	return f.HasIngressValue, f.HasIngressErr
 }

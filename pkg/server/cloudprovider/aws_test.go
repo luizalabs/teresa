@@ -46,7 +46,7 @@ func TestSSLInfoFail(t *testing.T) {
 func TestCreateOrUpdateSSLErrNotImplemented(t *testing.T) {
 	ops := &awsOperations{&FakeK8sOperations{IngressEnabledValue: true}}
 
-	if err := ops.CreateOrUpdateSSL("teresa", "cert", 443); err != ErrNotImplemented {
-		t.Errorf("got %v; want %v", err, ErrNotImplemented)
+	if err := ops.CreateOrUpdateSSL("teresa", "cert", 443); err != ErrNotImplementedOnIngress {
+		t.Errorf("got %v; want %v", err, ErrNotImplementedOnIngress)
 	}
 }

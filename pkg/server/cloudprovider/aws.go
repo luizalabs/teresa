@@ -19,7 +19,7 @@ type awsOperations struct {
 
 func (ops *awsOperations) CreateOrUpdateSSL(appName, cert string, port int) error {
 	if ops.k8s.IngressEnabled() {
-		return ErrNotImplemented
+		return ErrNotImplementedOnIngress
 	}
 	anMap := map[string]string{
 		awsSSLCertAnnotation:  cert,

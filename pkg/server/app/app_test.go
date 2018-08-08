@@ -238,6 +238,14 @@ func (f *fakeK8sOperations) DeleteCronJobSecrets(namespace, cronjob string, envV
 	return nil
 }
 
+func (f *fakeK8sOperations) SuspendCronJob(namespace, name string) error {
+	return nil
+}
+
+func (f *fakeK8sOperations) ResumeCronJob(namespace, name string) error {
+	return nil
+}
+
 func (e *errK8sOperations) CreateNamespace(app *App, user string) error {
 	return e.NamespaceErr
 }
@@ -373,6 +381,14 @@ func (e *errK8sOperations) DeleteDeploySecrets(namespace, deploy string, envVars
 
 func (e *errK8sOperations) DeleteCronJobSecrets(namespace, cronjob string, envVars, volKeys []string) error {
 	return nil
+}
+
+func (e *errK8sOperations) SuspendCronJob(namespace, name string) error {
+	return e.Err
+}
+
+func (e *errK8sOperations) ResumeCronJob(namespace, name string) error {
+	return e.Err
 }
 
 func TestAppOperationsCreate(t *testing.T) {
@@ -1422,7 +1438,7 @@ func TestAppOperationsSetReplicas(t *testing.T) {
 	}
 }
 
-func TestAppOperationsSetReplicasInvalidForCronJob(t *testing.T) {
+func TestAppOperationsSetReplicasToStopCronJob(t *testing.T) {
 	validCronPt := fmt.Sprintf("%s-test", ProcessTypeCronPrefix)
 	tops := team.NewFakeOperations()
 	ops := NewOperations(tops, &fakeK8sOperations{DefaultProcessType: validCronPt}, nil)
@@ -1433,8 +1449,24 @@ func TestAppOperationsSetReplicasInvalidForCronJob(t *testing.T) {
 		Users: []database.User{*user},
 	}
 
-	if err := ops.SetReplicas(user, app.Name, 1); err != ErrInvalidActionForCronJob {
-		t.Errorf("expected ErrInvalidActionForCronJob, got %v", err)
+	if err := ops.SetReplicas(user, app.Name, 0); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func TestAppOperationsSetReplicasToStartCronJob(t *testing.T) {
+	validCronPt := fmt.Sprintf("%s-test", ProcessTypeCronPrefix)
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{DefaultProcessType: validCronPt}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.SetReplicas(user, app.Name, 1); err != nil {
+		t.Errorf("expected no error, got %v", err)
 	}
 }
 

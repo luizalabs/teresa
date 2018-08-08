@@ -1050,6 +1050,29 @@ func (k *Client) DeploySetReplicas(namespace, name string, replicas int32) error
 	return errors.Wrap(err, "patch deploy failed")
 }
 
+func (k *Client) changeCronJobState(namespace, name string, suspend bool) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+
+	_, err = kc.BatchV1beta1().CronJobs(namespace).Patch(
+		name,
+		types.StrategicMergePatchType,
+		[]byte(fmt.Sprintf(`{"spec":{"suspend": %v}}`, suspend)),
+	)
+
+	return errors.Wrap(err, "patch cronjob failed")
+}
+
+func (k *Client) ResumeCronJob(namespace, name string) error {
+	return k.changeCronJobState(namespace, name, false)
+}
+
+func (k *Client) SuspendCronJob(namespace, name string) error {
+	return k.changeCronJobState(namespace, name, true)
+}
+
 func (c *Client) CloudProviderName() (string, error) {
 	kc, err := c.buildClient()
 	if err != nil {

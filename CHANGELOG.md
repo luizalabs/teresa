@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - [server] Error message when enabling ssl with ingress
+- [server] App ingress detection
 
 ## [0.25.2]
 ### Fixed

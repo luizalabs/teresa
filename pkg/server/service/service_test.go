@@ -181,7 +181,7 @@ func TestOpsWhitelistSourceRangesInvalid(t *testing.T) {
 	}
 }
 
-func TestOpsWhitelistSourceRangesNotImplemented(t *testing.T) {
+func TestOpsWhitelistSourceRangesInternalApp(t *testing.T) {
 	ops := setupTestOps()
 	ops.aops.(*FakeAppOperations).App.Internal = true
 	user := &database.User{}
@@ -189,6 +189,29 @@ func TestOpsWhitelistSourceRangesNotImplemented(t *testing.T) {
 
 	if err := ops.WhitelistSourceRanges(user, "teresa", ranges); err != ErrWhitelistUnimplemented {
 		t.Errorf("got %v; want %v", err, ErrWhitelistUnimplemented)
+	}
+}
+
+func TestOpsWhitelistSourceRangesWithIngress(t *testing.T) {
+	ops := setupTestOps()
+	ops.k8s.(*FakeK8sOperations).HasIngressValue = true
+	user := &database.User{}
+	ranges := []string{"range1", "range2"}
+
+	if err := ops.WhitelistSourceRanges(user, "teresa", ranges); err != ErrWhitelistUnimplemented {
+		t.Errorf("got %v; want %v", err, ErrWhitelistUnimplemented)
+	}
+}
+
+func TestOpsWhitelistSourceRangesIngressErr(t *testing.T) {
+	ops := setupTestOps()
+	want := errors.New("test")
+	ops.k8s.(*FakeK8sOperations).HasIngressErr = want
+	user := &database.User{}
+	ranges := []string{"range1", "range2"}
+
+	if err := ops.WhitelistSourceRanges(user, "teresa", ranges); err != want {
+		t.Errorf("got %v; want %v", err, want)
 	}
 }
 

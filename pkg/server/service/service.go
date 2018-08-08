@@ -24,6 +24,7 @@ type K8sOperations interface {
 	IsInvalid(err error) bool
 	Service(namespace, svcName string) (*spec.Service, error)
 	SetLoadBalancerSourceRanges(namespace, svcName string, sourceRanges []string) error
+	HasIngress(namespace, name string) (bool, error)
 }
 
 type AppOperations interface {
@@ -95,7 +96,11 @@ func (ops *ServiceOperations) WhitelistSourceRanges(user *database.User, appName
 	if err != nil {
 		return err
 	}
-	if a.VirtualHost != "" || a.Internal {
+	hasIngress, err := ops.k8s.HasIngress(a.Name, a.Name)
+	if err != nil {
+		return err
+	}
+	if hasIngress || a.Internal {
 		return ErrWhitelistUnimplemented
 	}
 	if err := ops.k8s.SetLoadBalancerSourceRanges(appName, appName, sourceRanges); err != nil {

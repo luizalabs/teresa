@@ -15,7 +15,7 @@ type K8sOperations interface {
 	SetServiceAnnotations(namespace, service string, annotations map[string]string) error
 	ServiceAnnotations(namespace, service string) (map[string]string, error)
 	IsNotFound(err error) bool
-	IngressEnabled() bool
+	HasIngress(namespace, name string) (bool, error)
 }
 
 func NewOperations(k8s K8sOperations) Operations {

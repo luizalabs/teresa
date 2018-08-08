@@ -395,10 +395,6 @@ func (ops *AppOperations) addresses(app *App) ([]*Address, error) {
 	if app.Internal {
 		return []*Address{{fmt.Sprintf("%s.%s", app.Name, app.Name)}}, nil
 	}
-	// Optimize for common case
-	if app.VirtualHost == "" {
-		return ops.kops.AddressList(app.Name)
-	}
 	hasIngress, err := ops.kops.HasIngress(app.Name, app.Name)
 	if err != nil {
 		return nil, err
@@ -406,7 +402,7 @@ func (ops *AppOperations) addresses(app *App) ([]*Address, error) {
 	if hasIngress {
 		return []*Address{{app.VirtualHost}}, nil
 	}
-	return nil, nil
+	return ops.kops.AddressList(app.Name)
 }
 
 func (ops *AppOperations) SetSecretFile(user *database.User, appName, name string, content []byte) error {

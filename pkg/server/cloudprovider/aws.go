@@ -18,7 +18,11 @@ type awsOperations struct {
 }
 
 func (ops *awsOperations) CreateOrUpdateSSL(appName, cert string, port int) error {
-	if ops.k8s.IngressEnabled() {
+	hasIngress, err := ops.k8s.HasIngress(appName, appName)
+	if err != nil {
+		return err
+	}
+	if hasIngress {
 		return ErrNotImplementedOnIngress
 	}
 	anMap := map[string]string{

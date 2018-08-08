@@ -8,5 +8,5 @@ import (
 var (
 	ErrNotImplemented          = status.Errorf(codes.Unimplemented, "Operation not implemented for this cloud provider")
 	ErrServiceNotFound         = status.Errorf(codes.NotFound, "Service not found")
-	ErrNotImplementedOnIngress = status.Errorf(codes.Unimplemented, "Operation not implemented for clusters using ingress")
+	ErrNotImplementedOnIngress = status.Errorf(codes.Unimplemented, "Operation not implemented for apps using ingress")
 )

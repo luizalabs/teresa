@@ -27,3 +27,8 @@ func (k *Client) IsAlreadyExists(err error) bool {
 func (k *Client) IsInvalid(err error) bool {
 	return k8serrors.IsInvalid(errors.Cause(err))
 }
+
+func (k *Client) IsUnknown(err error) bool {
+	_, ok := err.(k8serrors.APIStatus)
+	return !ok
+}

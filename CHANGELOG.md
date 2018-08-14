@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - [server] Error message when enabling ssl with ingress
 - [server] App ingress detection
+- [server] Don't return internal server error for invalid app names
 
 ## [0.25.2]
 ### Fixed

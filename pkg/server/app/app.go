@@ -59,6 +59,7 @@ type K8sOperations interface {
 	IsNotFound(err error) bool
 	IsAlreadyExists(err error) bool
 	IsInvalid(err error) bool
+	IsUnknown(err error) bool
 	SetNamespaceAnnotations(namespace string, annotations map[string]string) error
 	SetNamespaceLabels(namespace string, labels map[string]string) error
 	DeleteDeployEnvVars(namespace, name string, evNames []string) error
@@ -118,12 +119,7 @@ func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 	}
 
 	if err := ops.kops.CreateNamespace(app, user.Email); err != nil {
-		if ops.kops.IsAlreadyExists(err) {
-			return ErrAlreadyExists
-		} else if ops.kops.IsInvalid(err) {
-			return ErrInvalidName
-		}
-		return teresa_errors.NewInternalServerError(err)
+		return ops.translateError(err)
 	}
 
 	defer func() {
@@ -156,10 +152,7 @@ func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 func (ops *AppOperations) Logs(user *database.User, appName string, opts *LogOptions) (io.ReadCloser, error) {
 	teamName, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
 	if err != nil {
-		if ops.kops.IsNotFound(err) {
-			return nil, ErrNotFound
-		}
-		return nil, teresa_errors.NewInternalServerError(err)
+		return nil, ops.translateError(err)
 	}
 
 	hasPerm, err := ops.tops.HasUser(teamName, user.Email)
@@ -272,10 +265,7 @@ func (ops *AppOperations) Info(user *database.User, appName string) (*Info, erro
 func (ops *AppOperations) TeamName(appName string) (string, error) {
 	teamName, err := ops.kops.NamespaceLabel(appName, TeresaTeamLabel)
 	if err != nil {
-		if ops.kops.IsNotFound(err) {
-			return "", ErrNotFound
-		}
-		return "", teresa_errors.NewInternalServerError(err)
+		return "", ops.translateError(err)
 	}
 	return teamName, nil
 }
@@ -283,10 +273,7 @@ func (ops *AppOperations) TeamName(appName string) (string, error) {
 func (ops *AppOperations) Get(appName string) (*App, error) {
 	an, err := ops.kops.NamespaceAnnotation(appName, TeresaAnnotation)
 	if err != nil {
-		if ops.kops.IsNotFound(err) {
-			return nil, teresa_errors.New(ErrNotFound, err)
-		}
-		return nil, teresa_errors.NewInternalServerError(err)
+		return nil, ops.translateError(err)
 	}
 	a := new(App)
 	if err := json.Unmarshal([]byte(an), a); err != nil {
@@ -696,10 +683,7 @@ func (ops *AppOperations) SetReplicas(user *database.User, appName string, repli
 func (ops *AppOperations) ChangeTeam(appName, teamName string) error {
 	label := map[string]string{TeresaTeamLabel: teamName}
 	if err := ops.kops.SetNamespaceLabels(appName, label); err != nil {
-		if ops.kops.IsNotFound(err) {
-			return ErrNotFound
-		}
-		return teresa_errors.NewInternalServerError(err)
+		return ops.translateError(err)
 	}
 	return nil
 }
@@ -719,6 +703,19 @@ func (ops *AppOperations) DeletePods(user *database.User, appName string, podsNa
 	}
 
 	return nil
+}
+
+func (ops *AppOperations) translateError(err error) error {
+	switch {
+	case ops.kops.IsUnknown(err) || ops.kops.IsInvalid(err):
+		return ErrInvalidName
+	case ops.kops.IsNotFound(err):
+		return ErrNotFound
+	case ops.kops.IsAlreadyExists(err):
+		return ErrAlreadyExists
+	default:
+		return teresa_errors.NewInternalServerError(err)
+	}
 }
 
 func NewOperations(tops team.Operations, kops K8sOperations, st st.Storage) Operations {

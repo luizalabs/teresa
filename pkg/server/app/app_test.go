@@ -56,6 +56,7 @@ type fakeK8sOperations struct {
 	IsAlreadyExistsErr                    bool
 	IsNotFoundErr                         bool
 	IsInvalidErr                          bool
+	IsUnknownErr                          bool
 	CreateOrUpdateAutoscaleWasCalled      bool
 	CreateOrUpdateCronJobEnvVarsWasCalled bool
 	DeleteCronJobEnvVarsWasCalled         bool
@@ -263,6 +264,10 @@ func (f *fakeK8sOperations) ResumeCronJob(namespace, name string) error {
 	return f.ResumeCronJobErr
 }
 
+func (f *fakeK8sOperations) IsUnknown(err error) bool {
+	return f.IsUnknownErr
+}
+
 func TestAppOperationsCreate(t *testing.T) {
 	tops := team.NewFakeOperations()
 	fakeSt := st.NewFake()
@@ -337,7 +342,6 @@ func TestAppCreateErrPermissionDeniedShouldNotTouchNamespace(t *testing.T) {
 func TestAppOperationsCreateErrInvalidName(t *testing.T) {
 	tops := team.NewFakeOperations()
 	fakeSt := st.NewFake()
-	ops := NewOperations(tops, &fakeK8sOperations{}, fakeSt)
 	name := "luizalabs"
 	user := &database.User{Email: "teresa@luizalabs.com"}
 	app := &App{Name: "teresa", Team: name}
@@ -345,13 +349,29 @@ func TestAppOperationsCreateErrInvalidName(t *testing.T) {
 		Name:  name,
 		Users: []database.User{*user},
 	}
-	ops.(*AppOperations).kops = &fakeK8sOperations{
-		CreateNamespaceErr: errors.New("test"),
-		IsInvalidErr:       true,
+	var testCases = []Operations{
+		NewOperations(
+			tops,
+			&fakeK8sOperations{
+				CreateNamespaceErr: errors.New("test"),
+				IsInvalidErr:       true,
+			},
+			fakeSt,
+		),
+		NewOperations(
+			tops,
+			&fakeK8sOperations{
+				CreateNamespaceErr: errors.New("test"),
+				IsUnknownErr:       true,
+			},
+			fakeSt,
+		),
 	}
 
-	if err := ops.Create(user, app); err != ErrInvalidName {
-		t.Errorf("expected %v got %v", ErrInvalidName, err)
+	for _, ops := range testCases {
+		if err := ops.Create(user, app); err != ErrInvalidName {
+			t.Errorf("expected %v got %v", ErrInvalidName, err)
+		}
 	}
 }
 

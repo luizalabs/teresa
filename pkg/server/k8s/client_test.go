@@ -3,6 +3,7 @@ package k8s
 import (
 	"testing"
 
+	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"k8s.io/api/apps/v1beta2"
 	batchv1 "k8s.io/api/batch/v1"
@@ -338,4 +339,22 @@ func testRemoveVolumesWithSecrets(fromDeploy bool) func(*testing.T) {
 func TestRemoveSecretVols(t *testing.T) {
 	t.Run("TestRemoveVolumesWithSecretsFromDeploy", testRemoveVolumesWithSecrets(true))
 	t.Run("TestRemoveVolumesWithSecretsFromCronJob", testRemoveVolumesWithSecrets(false))
+}
+
+func TestClientCreateNamespace(t *testing.T) {
+	a := &app.App{Name: "test"}
+	cli := &Client{testing: true}
+
+	if err := cli.CreateNamespace(a, "test"); err != nil {
+		t.Fatal("got unexpected error:", err)
+	}
+
+	ns, err := cli.fake.CoreV1().Namespaces().Get("test", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal("got unexpected error:", err)
+	}
+	an := ns.Annotations[app.TeresaLastUser]
+	if an != "test" {
+		t.Errorf("got %s; want test", an)
+	}
 }

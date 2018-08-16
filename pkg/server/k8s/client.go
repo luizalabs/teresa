@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -41,9 +42,15 @@ type Client struct {
 	conf          *restclient.Config
 	podRunTimeout time.Duration
 	ingress       bool
+	fake          kubernetes.Interface
+	testing       bool
 }
 
-func (k *Client) buildClient() (*kubernetes.Clientset, error) {
+func (k *Client) buildClient() (kubernetes.Interface, error) {
+	if k.testing {
+		k.fake = fake.NewSimpleClientset()
+		return k.fake, nil
+	}
 	c, err := kubernetes.NewForConfig(k.conf)
 	if err != nil {
 		return nil, errors.Wrap(err, "create k8s client failed")

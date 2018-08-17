@@ -287,6 +287,21 @@ func (f *FakeOperations) DeletePods(user *database.User, appName string, podsNam
 	return nil
 }
 
+func (f *FakeOperations) SetVHosts(user *database.User, appName string, vHosts []string) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if !hasPerm(user.Email) {
+		return auth.ErrPermissionDenied
+	}
+
+	if _, found := f.Storage[appName]; !found {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
 func NewFakeOperations() *FakeOperations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

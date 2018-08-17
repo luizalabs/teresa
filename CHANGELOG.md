@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Added
 - Support for creating apps with multiple virtual hosts
+- `app set-vhosts` command
 
 ### Changed
 - [client] Improve app delete message

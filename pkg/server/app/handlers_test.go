@@ -547,3 +547,45 @@ func TestChangeTeamErrPermissionDenied(t *testing.T) {
 		t.Errorf("got %v; want %v", teresa_errors.Get(err), auth.ErrPermissionDenied)
 	}
 }
+
+func TestSetVHostsSuccess(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+	vHosts := []string{"teresa.luizalabs.com"}
+
+	req := &appb.SetVHostsRequest{AppName: name, Vhosts: vHosts}
+	if _, err := s.SetVHosts(ctx, req); err != nil {
+		t.Error("got unexpected error:", err)
+	}
+}
+
+func TestSetVHostsAppNotFound(t *testing.T) {
+	s := NewService(NewFakeOperations())
+	user := &database.User{Email: "gopher@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+	vHosts := []string{"teresa.luizalabs.com"}
+
+	req := &appb.SetVHostsRequest{AppName: "teresa", Vhosts: vHosts}
+	if _, err := s.SetVHosts(ctx, req); err != ErrNotFound {
+		t.Errorf("got %v; want %v", err, ErrNotFound)
+	}
+}
+
+func TestSetVHostsPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	name := "teresa"
+	fake.Storage[name] = &App{Name: name}
+	s := NewService(fake)
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+	ctx := context.WithValue(context.Background(), "user", user)
+	vHosts := []string{"teresa.luizalabs.com"}
+
+	req := &appb.SetVHostsRequest{AppName: name, Vhosts: vHosts}
+	if _, err := s.SetVHosts(ctx, req); err != auth.ErrPermissionDenied {
+		t.Errorf("got %v; want %v", err, auth.ErrPermissionDenied)
+	}
+}

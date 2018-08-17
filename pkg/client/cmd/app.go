@@ -907,6 +907,7 @@ func init() {
 	appCmd.AddCommand(appStopCmd)
 	appCmd.AddCommand(appDeletePodsCmd)
 	appCmd.AddCommand(appChangeTeamCmd)
+	appCmd.AddCommand(appSetVHostsCmd)
 
 	appCreateCmd.Flags().String("team", "", "team owner of the app")
 	appCreateCmd.Flags().Int32("scale-min", 1, "minimum number of replicas")
@@ -1089,6 +1090,38 @@ func appChangeTeam(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 	fmt.Println("Team changed successfully")
+}
+
+var appSetVHostsCmd = &cobra.Command{
+	Use:   "set-vhosts <name> [vhost, ...]",
+	Short: "Set vhosts for the app",
+	Long: `Set vhosts for the app on clusters with ingress integration.
+
+  $ teresa app set-vhosts myapp myapp.mydomain
+
+  You can also provide more than one vhost at a time:
+
+  $ teresa app set-vhosts myapp myapp.mydomain myapp.anotherdomain`,
+	Run: appSetVHosts,
+}
+
+func appSetVHosts(cmd *cobra.Command, args []string) {
+	if len(args) < 2 {
+		cmd.Usage()
+		return
+	}
+	appName, vHosts := args[0], args[1:]
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintConnectionErrorAndExit(err)
+	}
+	defer conn.Close()
+	req := &appb.SetVHostsRequest{AppName: appName, Vhosts: vHosts}
+	cli := appb.NewAppClient(conn)
+	if _, err := cli.SetVHosts(context.Background(), req); err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+	fmt.Println("Virtual hosts updated with success")
 }
 
 // Shamelessly copied from Kubernetes

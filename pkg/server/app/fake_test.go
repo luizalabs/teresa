@@ -596,3 +596,37 @@ func TestFakeOpsDeletePodsErrNotFound(t *testing.T) {
 		t.Errorf("expected %v, got %v", ErrNotFound, teresa_errors.Get(err))
 	}
 }
+
+func TestFakeOpsSetVHosts(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.Storage[app.Name] = app
+	vHosts := []string{"teresa.luizalabs.com"}
+
+	if err := fake.SetVHosts(user, app.Name, vHosts); err != nil {
+		t.Error("error setting vHosts:", err)
+	}
+}
+
+func TestFakeOpsSetVHostsErrPermissionDenied(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Email: "bad-user@luizalabs.com"}
+	app := &App{Name: "teresa"}
+	fake.Storage[app.Name] = app
+	vHosts := []string{"teresa.luizalabs.com"}
+
+	if err := fake.SetVHosts(user, app.Name, vHosts); teresa_errors.Get(err) != auth.ErrPermissionDenied {
+		t.Errorf("expected %v, got %v", auth.ErrPermissionDenied, teresa_errors.Get(err))
+	}
+}
+
+func TestFakeOpsSetVHostsErrNotFound(t *testing.T) {
+	fake := NewFakeOperations()
+	user := &database.User{Name: "gopher@luizalabs.com"}
+	vHosts := []string{"teresa.luizalabs.com"}
+
+	if err := fake.SetVHosts(user, "teresa", vHosts); teresa_errors.Get(err) != ErrNotFound {
+		t.Errorf("expected %v, got %v", ErrNotFound, teresa_errors.Get(err))
+	}
+}

@@ -16,6 +16,7 @@ service App {
     rpc SetSecret(SetSecretRequest) returns (Empty);
     rpc UnsetSecret(UnsetEnvRequest) returns (Empty);
     rpc ChangeTeam(ChangeTeamRequest) returns (Empty);
+    rpc SetVHosts(SetVHostsRequest) returns (Empty);
 }
 
 message CreateRequest {
@@ -178,6 +179,11 @@ message DeletePodsRequest {
 message ChangeTeamRequest {
     string app_name = 1;
     string team_name = 2;
+}
+
+message SetVHostsRequest {
+   string app_name = 1;
+   repeated string vhosts = 2;
 }
 
 message Empty {}

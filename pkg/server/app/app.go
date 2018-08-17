@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
@@ -40,6 +41,7 @@ type Operations interface {
 	ChangeTeam(appName, teamName string) error
 	SetReplicas(user *database.User, appName string, replicas int32) error
 	DeletePods(user *database.User, appName string, podsNames []string) error
+	SetVHosts(user *database.User, appName string, vHosts []string) error
 }
 
 type K8sOperations interface {
@@ -74,6 +76,7 @@ type K8sOperations interface {
 	DeletePod(namespace, podName string) error
 	HasIngress(namespace, name string) (bool, error)
 	IngressEnabled() bool
+	UpdateIngress(namespace, name string, vHosts []string) error
 	CreateOrUpdateDeploySecretFile(namespace, deploy, fileName string) error
 	CreateOrUpdateCronJobSecretFile(namespace, cronjob, filename string) error
 	DeleteDeploySecrets(namespace, deploy string, envVars, volKeys []string) error
@@ -700,6 +703,35 @@ func (ops *AppOperations) DeletePods(user *database.User, appName string, podsNa
 			}
 			return teresa_errors.NewInternalServerError(err)
 		}
+	}
+
+	return nil
+}
+
+func (ops *AppOperations) SetVHosts(user *database.User, appName string, vHosts []string) error {
+	a, err := ops.CheckPermAndGet(user, appName)
+	if err != nil {
+		return err
+	}
+
+	if len(vHosts) == 0 && ops.kops.IngressEnabled() {
+		return ErrInvalidBlankVHost
+	}
+
+	hasIngress, err := ops.kops.HasIngress(appName, appName)
+	if err != nil {
+		return teresa_errors.NewInternalServerError(err)
+	}
+
+	if hasIngress {
+		if err := ops.kops.UpdateIngress(appName, appName, vHosts); err != nil {
+			return teresa_errors.NewInternalServerError(err)
+		}
+	}
+
+	a.VirtualHost = strings.Join(vHosts, ",")
+	if err := ops.SaveApp(a, user.Email); err != nil {
+		return teresa_errors.NewInternalServerError(err)
 	}
 
 	return nil

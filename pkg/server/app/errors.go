@@ -19,4 +19,8 @@ var (
 		codes.InvalidArgument,
 		"Missing --vhost argument with the application domain",
 	)
+	ErrInvalidBlankVHost = status.Errorf(
+		codes.InvalidArgument,
+		"Blank vhosts not allowed for cluster with ingress integration",
+	)
 )

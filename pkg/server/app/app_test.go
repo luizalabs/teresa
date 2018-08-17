@@ -67,6 +67,7 @@ type fakeK8sOperations struct {
 	AppIngress                            bool
 	AppProtocol                           string
 	IngressEnabledValue                   bool
+	UpdateIngressErr                      error
 }
 
 func (f *fakeK8sOperations) CreateNamespace(app *App, user string) error {
@@ -262,6 +263,10 @@ func (f *fakeK8sOperations) SuspendCronJob(namespace, name string) error {
 
 func (f *fakeK8sOperations) ResumeCronJob(namespace, name string) error {
 	return f.ResumeCronJobErr
+}
+
+func (f *fakeK8sOperations) UpdateIngress(namespace, name string, vHosts []string) error {
+	return f.UpdateIngressErr
 }
 
 func (f *fakeK8sOperations) IsUnknown(err error) bool {
@@ -1486,5 +1491,72 @@ func TestAppOpsDeletePodsInternalServerError(t *testing.T) {
 
 	if err := ops.DeletePods(user, app.Name, pods); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
 		t.Errorf("expected %v, got %v", teresa_errors.ErrInternalServerError, teresa_errors.Get(err))
+	}
+}
+
+func TestAppOpsSetVHosts(t *testing.T) {
+	tops := team.NewFakeOperations()
+	ops := NewOperations(tops, &fakeK8sOperations{}, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+	vHosts := []string{"teresa.luizalabs.com"}
+
+	if err := ops.SetVHosts(user, app.Name, vHosts); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func TestAppOpsSetVHostsErrInvalidBlankVHost(t *testing.T) {
+	tops := team.NewFakeOperations()
+	k8s := &fakeK8sOperations{IngressEnabledValue: true}
+	ops := NewOperations(tops, k8s, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+	vHosts := []string{}
+
+	if err := ops.SetVHosts(user, app.Name, vHosts); err != ErrInvalidBlankVHost {
+		t.Errorf("got %v; want %v", err, ErrInvalidBlankVHost)
+	}
+}
+
+func TestAppOpsSetVHostsHasIngressErr(t *testing.T) {
+	tops := team.NewFakeOperations()
+	k8s := &fakeK8sOperations{HasIngressErr: errors.New("test")}
+	ops := NewOperations(tops, k8s, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+	vHosts := []string{"teresa.luizalabs.com"}
+
+	if err := ops.SetVHosts(user, app.Name, vHosts); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
+		t.Errorf("got %v; want %v", teresa_errors.Get(err), teresa_errors.ErrInternalServerError)
+	}
+}
+
+func TestAppOpsSetVHostsUpdateIngressErr(t *testing.T) {
+	tops := team.NewFakeOperations()
+	k8s := &fakeK8sOperations{UpdateIngressErr: errors.New("test"), AppIngress: true}
+	ops := NewOperations(tops, k8s, nil)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: "luizalabs"}
+	tops.(*team.FakeOperations).Storage[app.Team] = &database.Team{
+		Name:  app.Team,
+		Users: []database.User{*user},
+	}
+	vHosts := []string{"teresa.luizalabs.com"}
+
+	if err := ops.SetVHosts(user, app.Name, vHosts); teresa_errors.Get(err) != teresa_errors.ErrInternalServerError {
+		t.Errorf("got %v; want %v", teresa_errors.Get(err), teresa_errors.ErrInternalServerError)
 	}
 }

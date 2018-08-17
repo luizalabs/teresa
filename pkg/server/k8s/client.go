@@ -625,6 +625,23 @@ func (k *Client) createIngress(namespace, appName string, vHosts []string) error
 	return errors.Wrap(err, "create ingress failed")
 }
 
+func (k *Client) UpdateIngress(namespace, name string, vHosts []string) error {
+	kc, err := k.buildClient()
+	if err != nil {
+		return err
+	}
+	old, err := kc.ExtensionsV1beta1().
+		Ingresses(namespace).
+		Get(name, metav1.GetOptions{})
+	if err != nil {
+		return errors.Wrap(err, "get ingress failed")
+	}
+	newSpec := ingressSpec(namespace, name, vHosts)
+	old.Spec.Rules = newSpec.Spec.Rules
+	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Update(old)
+	return errors.Wrap(err, "update ingress failed")
+}
+
 // ExposeDeploy creates a service and/or a ingress if needed
 func (k *Client) ExposeDeploy(namespace, appName, svcType, portName string, vHosts []string, w io.Writer) error {
 	hasSrv, err := k.hasService(namespace, appName)

@@ -191,6 +191,14 @@ func (s *Service) ChangeTeam(ctx context.Context, req *appb.ChangeTeamRequest) (
 	return &appb.Empty{}, nil
 }
 
+func (s *Service) SetVHosts(ctx context.Context, req *appb.SetVHostsRequest) (*appb.Empty, error) {
+	user := ctx.Value("user").(*database.User)
+	if err := s.ops.SetVHosts(user, req.AppName, req.Vhosts); err != nil {
+		return nil, err
+	}
+	return &appb.Empty{}, nil
+}
+
 func (s *Service) RegisterService(grpcServer *grpc.Server) {
 	appb.RegisterAppServer(grpcServer, s)
 }

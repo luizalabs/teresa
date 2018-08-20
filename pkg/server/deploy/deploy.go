@@ -36,7 +36,7 @@ type Operations interface {
 type K8sOperations interface {
 	CreateOrUpdateDeploy(deploySpec *spec.Deploy) error
 	CreateOrUpdateCronJob(cronJobSpec *spec.CronJob) error
-	ExposeDeploy(namespace, name, vHost, svcType, portName string, w io.Writer) error
+	ExposeDeploy(namespace, name, svcType, portName string, vHosts []string, w io.Writer) error
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
 	DeployRollbackToRevision(namespace, name, revision string) error
 	CreateOrUpdateConfigMap(namespace, name string, data map[string]string) error
@@ -225,7 +225,8 @@ func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {
 		return nil
 	}
 	svcType := ops.serviceType(a)
-	if err := ops.k8s.ExposeDeploy(a.Name, a.Name, a.VirtualHost, svcType, a.Protocol, w); err != nil {
+	vHosts := strings.Split(a.VirtualHost, ",")
+	if err := ops.k8s.ExposeDeploy(a.Name, a.Name, svcType, a.Protocol, vHosts, w); err != nil {
 		return err
 	}
 	return nil // already exposed

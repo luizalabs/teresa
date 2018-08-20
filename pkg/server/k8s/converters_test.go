@@ -344,17 +344,22 @@ func TestServiceSpec(t *testing.T) {
 func TestIngressSpec(t *testing.T) {
 	name := "teresa"
 	namespace := "teresa"
-	vHost := "test.teresa-apps.io"
+	vHosts := []string{"test1.teresa-apps.io", "test2.teresa-apps.io"}
 
-	i := ingressSpec(namespace, name, vHost)
+	i := ingressSpec(namespace, name, vHosts)
 	if i.ObjectMeta.Name != name {
 		t.Errorf("expected %s, got %s", name, i.ObjectMeta.Name)
 	}
 	if i.ObjectMeta.Namespace != namespace {
 		t.Errorf("expected %s, got %s", namespace, i.ObjectMeta.Namespace)
 	}
-	if i.Spec.Rules[0].Host != vHost {
-		t.Errorf("expected %s, got %s", vHost, i.Spec.Rules[0].Host)
+	if len(i.Spec.Rules) != 2 {
+		t.Errorf("expected 2, got %d", len(i.Spec.Rules))
+	}
+	for idx, rule := range i.Spec.Rules {
+		if rule.Host != vHosts[idx] {
+			t.Errorf("expected %s, got %s", vHosts[idx], rule.Host)
+		}
 	}
 }
 

@@ -354,7 +354,26 @@ func serviceSpecToK8s(svcSpec *spec.Service) *k8sv1.Service {
 	}
 }
 
-func ingressSpec(namespace, name, vHost string) *k8s_extensions.Ingress {
+func ingressSpec(namespace, name string, vHosts []string) *k8s_extensions.Ingress {
+	rules := make([]k8s_extensions.IngressRule, len(vHosts))
+	for i, vHost := range vHosts {
+		rules[i] = k8s_extensions.IngressRule{
+			Host: vHost,
+			IngressRuleValue: k8s_extensions.IngressRuleValue{
+				HTTP: &k8s_extensions.HTTPIngressRuleValue{
+					Paths: []k8s_extensions.HTTPIngressPath{
+						{
+							Path: "/",
+							Backend: k8s_extensions.IngressBackend{
+								ServiceName: name,
+								ServicePort: intstr.FromInt(spec.DefaultExternalPort),
+							},
+						},
+					},
+				},
+			},
+		}
+	}
 	return &k8s_extensions.Ingress{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "extensions/v1beta1",
@@ -365,24 +384,7 @@ func ingressSpec(namespace, name, vHost string) *k8s_extensions.Ingress {
 			Namespace: namespace,
 		},
 		Spec: k8s_extensions.IngressSpec{
-			Rules: []k8s_extensions.IngressRule{
-				{
-					Host: vHost,
-					IngressRuleValue: k8s_extensions.IngressRuleValue{
-						HTTP: &k8s_extensions.HTTPIngressRuleValue{
-							Paths: []k8s_extensions.HTTPIngressPath{
-								{
-									Path: "/",
-									Backend: k8s_extensions.IngressBackend{
-										ServiceName: name,
-										ServicePort: intstr.FromInt(spec.DefaultExternalPort),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			Rules: rules,
 		},
 	}
 }

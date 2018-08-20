@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] Command `app stop` and `app start` now stop/start cronjobs
 - [server] Refactor the tests of the app package
 - [server] Add first test using the fake client-go
+- [server] Better logs on build errors
 
 ### Fixed
 - [server] Error message when enabling ssl with ingress

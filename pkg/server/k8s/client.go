@@ -615,18 +615,18 @@ func (k *Client) HasIngress(namespace, appName string) (bool, error) {
 	return true, nil
 }
 
-func (k *Client) createIngress(namespace, appName, vHost string) error {
+func (k *Client) createIngress(namespace, appName string, vHosts []string) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
 	}
-	igsSpec := ingressSpec(namespace, appName, vHost)
+	igsSpec := ingressSpec(namespace, appName, vHosts)
 	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Create(igsSpec)
 	return errors.Wrap(err, "create ingress failed")
 }
 
 // ExposeDeploy creates a service and/or a ingress if needed
-func (k *Client) ExposeDeploy(namespace, appName, vHost, svcType, portName string, w io.Writer) error {
+func (k *Client) ExposeDeploy(namespace, appName, svcType, portName string, vHosts []string, w io.Writer) error {
 	hasSrv, err := k.hasService(namespace, appName)
 	if err != nil {
 		return err
@@ -648,7 +648,7 @@ func (k *Client) ExposeDeploy(namespace, appName, vHost, svcType, portName strin
 	}
 	if !hasIgs {
 		fmt.Fprintln(w, "Creating ingress")
-		if err := k.createIngress(namespace, appName, vHost); err != nil {
+		if err := k.createIngress(namespace, appName, vHosts); err != nil {
 			return err
 		}
 	}

@@ -57,6 +57,9 @@ The app name must follow this rules:
   With virtual host
   $ teresa create foo --team bar --vhost foo.teresa.io
 
+  With multiple virtual hosts
+  $ teresa create foo --team bar --vhost foo1.teresa.io,foo2.teresa.io
+
   An internal app (without external endpoint)
   $ teresa create foo --team bar --internal
 
@@ -320,7 +323,10 @@ func appInfo(cmd *cobra.Command, args []string) {
 	if len(info.Addresses) > 0 {
 		fmt.Println(bold("addresses:"))
 		for _, addr := range info.Addresses {
-			fmt.Printf("  %s\n", addr.Hostname)
+			vHosts := strings.Split(addr.Hostname, ",")
+			for _, vHost := range vHosts {
+				fmt.Printf("  %s\n", vHost)
+			}
 		}
 	}
 	if info.Protocol != "" {
@@ -911,7 +917,7 @@ func init() {
 	appCreateCmd.Flags().String("max-cpu", "400m", "when set, allows the pod to burst cpu usage up to 'max-cpu'")
 	appCreateCmd.Flags().String("max-memory", "512Mi", "when set, allows the pod to burst memory usage up to 'max-memory'")
 	appCreateCmd.Flags().String("process-type", "", "app process type")
-	appCreateCmd.Flags().String("vhost", "", "virtual host of the app")
+	appCreateCmd.Flags().String("vhost", "", "comma separated list of the app's virtual hosts")
 	appCreateCmd.Flags().Bool("internal", false, "create an internal app (without external endpoint)")
 	appCreateCmd.Flags().String("protocol", "", "app protocol: http, http2, grpc, etc.")
 

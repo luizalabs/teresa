@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [NEXT_RELEASE]
+### Added
+- Support for creating apps with multiple virtual hosts
+
 ### Changed
 - [client] Improve app delete message
 - [server] Command `app stop` and `app start` now stop/start cronjobs

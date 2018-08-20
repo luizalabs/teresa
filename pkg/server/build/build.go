@@ -6,6 +6,7 @@ import (
 
 	context "golang.org/x/net/context"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/exec"
@@ -115,6 +116,7 @@ func (ops *BuildOperations) CreateByOpts(ctx context.Context, opts *CreateOption
 	go io.Copy(opts.Stream, podStream)
 
 	if err := <-runErrChan; err != nil {
+		log.WithError(err).Errorf("failed to build app %s", opts.App.Name)
 		if err == exec.ErrTimeout {
 			return err
 		} else if ops.k8s.IsInvalid(err) {
@@ -209,6 +211,7 @@ func (ops *BuildOperations) runInternal(ctx context.Context, a *app.App, buildNa
 	defer ops.k8s.DeletePod(a.Name, formatPodName(a.Name, buildName))
 
 	if err := <-runErrChan; err != nil {
+		log.WithError(err).Errorf("failed to run app %s", a.Name)
 		if err == exec.ErrTimeout {
 			return err
 		}

@@ -64,3 +64,6 @@ Run the following in your command-line:
 $ brew tap luizalabs/teresa-cli
 $ brew install teresa
 ```
+
+## Installing Teresa Client:
+ - UBUNTU: execute [this script](./install/install-ubuntu.sh) in the local machine.

@@ -29,6 +29,6 @@ func (k *Client) IsInvalid(err error) bool {
 }
 
 func (k *Client) IsUnknown(err error) bool {
-	_, ok := err.(k8serrors.APIStatus)
+	_, ok := errors.Cause(err).(k8serrors.APIStatus)
 	return !ok
 }

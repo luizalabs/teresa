@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] Refactor the tests of the app package
 - [server] Add first test using the fake client-go
 - [server] Better logs on build errors
+- [server] Bump the slugbuilder version to v3.5.0
 
 ### Fixed
 - [server] Error message when enabling ssl with ingress

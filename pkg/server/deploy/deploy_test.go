@@ -20,6 +20,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 	"github.com/luizalabs/teresa/pkg/server/test"
+	"github.com/luizalabs/teresa/pkg/server/validation"
 )
 
 type fakeK8sOperations struct {
@@ -721,7 +722,7 @@ func TestIsProtectedEnvVar(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		got := isProtectedEnvVar(tc.name)
+		got := validation.IsProtectedEnvVar(tc.name)
 		if got != tc.want {
 			t.Errorf("got %v; want %v", got, tc.want)
 		}

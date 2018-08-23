@@ -14,10 +14,10 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
-	"github.com/luizalabs/teresa/pkg/server/slug"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/team"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	"github.com/luizalabs/teresa/pkg/server/validation"
 )
 
 type fakeK8sOperations struct {
@@ -973,9 +973,11 @@ func TestAppOperationsSetEnvProtectedVar(t *testing.T) {
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
-	evs := make([]*EnvVar, len(slug.ProtectedEnvVars))
-	for i := range evs {
-		evs[i] = &EnvVar{Key: slug.ProtectedEnvVars[i], Value: "test"}
+	evs := make([]*EnvVar, len(validation.ProtectedEnvVars))
+	i := 0
+	for k := range validation.ProtectedEnvVars {
+		evs[i] = &EnvVar{Key: k}
+		i++
 	}
 
 	if err := ops.SetEnv(user, app.Name, evs); err == nil {
@@ -992,8 +994,14 @@ func TestAppOperationsUnSetEnvProtectedVar(t *testing.T) {
 		Name:  app.Team,
 		Users: []database.User{*user},
 	}
+	names := make([]string, len(validation.ProtectedEnvVars))
+	i := 0
+	for k := range validation.ProtectedEnvVars {
+		names[i] = k
+		i++
+	}
 
-	if err := ops.UnsetEnv(user, app.Name, slug.ProtectedEnvVars[:]); err == nil {
+	if err := ops.UnsetEnv(user, app.Name, names); err == nil {
 		t.Errorf("expected error, got nil")
 	}
 }

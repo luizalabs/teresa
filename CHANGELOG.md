@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Added
+- Validation for env var and secret names
+
 ## [0.26.0]
 ### Added
 - Support for creating apps with multiple virtual hosts

@@ -14,11 +14,11 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/build"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/exec"
-	"github.com/luizalabs/teresa/pkg/server/slug"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 	"github.com/luizalabs/teresa/pkg/server/uid"
+	"github.com/luizalabs/teresa/pkg/server/validation"
 )
 
 const (
@@ -277,7 +277,7 @@ func (ops *DeployOperations) Rollback(user *database.User, appName, revision str
 	}
 	appEnv := []*app.EnvVar{}
 	for _, ev := range env {
-		if isProtectedEnvVar(ev.Key) {
+		if validation.IsProtectedEnvVar(ev.Key) {
 			continue
 		}
 		appEnv = append(appEnv, ev)
@@ -294,15 +294,6 @@ func (ops *DeployOperations) serviceType(a *app.App) string {
 		return internalSvcType
 	}
 	return ops.opts.DefaultServiceType
-}
-
-func isProtectedEnvVar(key string) bool {
-	for _, name := range slug.ProtectedEnvVars {
-		if name == key {
-			return true
-		}
-	}
-	return false
 }
 
 func (ops *DeployOperations) watchDeploy(appName, deployId string, w io.Writer, errChan chan<- error) {

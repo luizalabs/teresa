@@ -12,10 +12,10 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/database"
-	"github.com/luizalabs/teresa/pkg/server/slug"
 	st "github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/team"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
+	"github.com/luizalabs/teresa/pkg/server/validation"
 )
 
 const SecretPath = "/teresa/secrets"
@@ -320,7 +320,7 @@ func (ops *AppOperations) SetEnv(user *database.User, appName string, evs []*Env
 	for i := range evs {
 		evNames[i] = evs[i].Key
 	}
-	if err := checkForProtectedEnvVars(evNames); err != nil {
+	if err := checkForInvalidEnvVars(evNames); err != nil {
 		return err
 	}
 
@@ -353,7 +353,7 @@ func (ops *AppOperations) SetEnv(user *database.User, appName string, evs []*Env
 }
 
 func (ops *AppOperations) UnsetEnv(user *database.User, appName string, evNames []string) error {
-	if err := checkForProtectedEnvVars(evNames); err != nil {
+	if err := checkForInvalidEnvVars(evNames); err != nil {
 		return err
 	}
 
@@ -445,7 +445,7 @@ func (ops *AppOperations) SetSecret(user *database.User, appName string, secrets
 	for i := range secrets {
 		names[i] = secrets[i].Key
 	}
-	if err := checkForProtectedEnvVars(names); err != nil {
+	if err := checkForInvalidEnvVars(names); err != nil {
 		return err
 	}
 
@@ -522,7 +522,7 @@ Loop:
 	}
 
 	if len(envSecrets) > 0 {
-		if err := checkForProtectedEnvVars(envSecrets); err != nil {
+		if err := checkForInvalidEnvVars(envSecrets); err != nil {
 			return err
 		}
 	}
@@ -575,12 +575,13 @@ Loop:
 	return nil
 }
 
-func checkForProtectedEnvVars(evsNames []string) error {
-	for _, name := range slug.ProtectedEnvVars {
-		for _, item := range evsNames {
-			if name == item {
-				return ErrProtectedEnvVar
-			}
+func checkForInvalidEnvVars(evsNames []string) error {
+	for _, name := range evsNames {
+		if !validation.IsEnvVarName(name) {
+			return ErrInvalidEnvVarName
+		}
+		if validation.IsProtectedEnvVar(name) {
+			return ErrProtectedEnvVar
 		}
 	}
 	return nil

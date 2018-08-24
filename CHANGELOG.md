@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [NEXT_RELEASE]
 ### Added
 - Validation for env var and secret names
+- Support to create more than one web app per code base
 
 ## [0.26.0]
 ### Added

@@ -153,7 +153,7 @@ func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployC
 		WithStorage(ops.fileStorage).
 		WithArgs([]string{"start", a.ProcessType})
 
-	if confFiles.NginxConf != "" && a.ProcessType == app.ProcessTypeWeb {
+	if confFiles.NginxConf != "" && app.IsWebApp(a.ProcessType) {
 		data := map[string]string{spec.NginxConfFile: confFiles.NginxConf}
 		if err := ops.k8s.CreateOrUpdateConfigMap(a.Name, a.Name, data); err != nil {
 			log.WithError(err).Errorf("Creating config to nginx of app %s", a.Name)
@@ -221,7 +221,7 @@ func (ops *DeployOperations) createOrUpdateCronJob(a *app.App, confFiles *Deploy
 }
 
 func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {
-	if a.ProcessType != app.ProcessTypeWeb {
+	if !app.IsWebApp(a.ProcessType) {
 		return nil
 	}
 	svcType := ops.serviceType(a)

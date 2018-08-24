@@ -492,6 +492,8 @@ func TestExposeApp(t *testing.T) {
 		{app.ProcessTypeWeb, nil, true},
 		{app.ProcessTypeWeb, nil, true},
 		{app.ProcessTypeWeb, errors.New("some sad error"), true},
+		{app.ProcessTypeWeb + "test", nil, true},
+		{app.ProcessTypeWeb + "-test", nil, true},
 		{"worker", nil, false},
 	}
 

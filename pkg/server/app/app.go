@@ -117,7 +117,7 @@ func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 		return auth.ErrPermissionDenied
 	}
 
-	if ops.kops.IngressEnabled() && app.VirtualHost == "" && app.ProcessType == ProcessTypeWeb {
+	if ops.kops.IngressEnabled() && app.VirtualHost == "" && IsWebApp(app.ProcessType) {
 		return ErrMissingVirtualHost
 	}
 
@@ -749,6 +749,10 @@ func (ops *AppOperations) translateError(err error) error {
 	default:
 		return teresa_errors.NewInternalServerError(err)
 	}
+}
+
+func IsWebApp(processType string) bool {
+	return strings.HasPrefix(processType, ProcessTypeWeb)
 }
 
 func NewOperations(tops team.Operations, kops K8sOperations, st st.Storage) Operations {

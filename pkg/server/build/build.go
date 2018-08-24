@@ -194,7 +194,7 @@ func (ops *BuildOperations) runInternal(ctx context.Context, a *app.App, buildNa
 		WithArgs([]string{"start", a.ProcessType}).
 		Build()
 
-	if a.ProcessType == app.ProcessTypeWeb {
+	if app.IsWebApp(a.ProcessType) {
 		fmt.Fprintln(w, "\nExposing temporary service")
 		url, err := ops.createService(a.Name, buildName, podSpec.Labels)
 		if err != nil {

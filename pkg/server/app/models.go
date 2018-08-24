@@ -125,7 +125,7 @@ func newApp(req *appb.CreateRequest) *App {
 		processType = ProcessTypeWeb
 	}
 	protocol := req.Protocol
-	if processType == ProcessTypeWeb && protocol == "" {
+	if IsWebApp(processType) && protocol == "" {
 		protocol = defaultAppProtocol
 	}
 

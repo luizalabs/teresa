@@ -37,7 +37,7 @@ func (b *RunnerPodBuilder) newAppRunnerContainer() *Container {
 		WithSecrets(b.app.Secrets).
 		WithArgs(b.args)
 
-	if b.app.ProcessType == app.ProcessTypeWeb {
+	if app.IsWebApp(b.app.ProcessType) {
 		builder = builder.
 			WithEnv(map[string]string{"PORT": strconv.Itoa(DefaultPort)}).
 			ExposePort("http", DefaultPort)

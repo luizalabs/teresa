@@ -113,8 +113,8 @@ No, it's one process per app.
 For each app add a Procfile entry respecting the restrictions:
 
 * process types can't be repeated
-* `web`, `release` and `cron*` process types are special: `web` is the only
-  process type that creates an external endpoint, `cron*` is used for cronjobs
+* `web*`, `release` and `cron*` process types are special: `web*` are the only
+  process types that create an external endpoint, `cron*` is used for cronjobs
   and `release` for one off tasks after deploys.
 
 When creating the apps use the flag `process-type` to select the appropriate
@@ -129,7 +129,7 @@ Apps creation:
     $ teresa app create app2 --process-type worker --team <team-name>
 
 There's nothing special with the name `worker`, it can be anything different
-from `web` with a matching `Procfile` line. The two apps are deployed
+from `web*` with a matching `Procfile` line. The two apps are deployed
 separately (assuming you are at the shared repo root directory):
 
     $ teresa deploy create . --app app1 --description 'v1.0.0'
@@ -161,7 +161,7 @@ Note: it will implicitly create a new deploy.
 
 **Q: How to create an app without an endpoint (a worker for example)?**
 
-Use any name different from `web` as the process type:
+Use any name different from `web*` as the process type:
 
     $ teresa app create <app-name> --team <team-name> --process-type worker
 
@@ -172,7 +172,7 @@ You also have to adjust the `Procfile` to have a corresponding `worker` key.
     $ teresa app create <app-name> --team <team-name> --internal
 
 The app is only visible inside the cluster. The flag `--internal` only works
-with the `web` process type (the default).
+with the `web*` process types (`web` is the default).
 
 **Q: Where can I get some hello world examples?**
 

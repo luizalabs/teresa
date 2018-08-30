@@ -118,7 +118,7 @@ func (ops *DeployOperations) Deploy(ctx context.Context, user *database.User, ap
 	return r, errChan
 }
 
-func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugURL string, stream io.Writer) error {
+func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugURL string, csp *spec.CloudSQLProxy, stream io.Writer) error {
 	podName := fmt.Sprintf("release-%s-%s", a.Name, deployId)
 	podSpec := spec.NewRunnerPodBuilder(podName, ops.opts.SlugRunnerImage, ops.opts.SlugStoreImage).
 		ForApp(a).
@@ -126,6 +126,7 @@ func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugURL string,
 		WithLimits(ops.opts.BuildLimitCPU, ops.opts.BuildLimitMemory).
 		WithStorage(ops.fileStorage).
 		WithArgs([]string{"start", ProcfileReleaseCmd}).
+		WithCloudSQLProxySideCar(csp).
 		Build()
 
 	fmt.Fprintln(stream, "Running release command")
@@ -139,8 +140,12 @@ func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugURL string,
 }
 
 func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployConfigFiles, w io.Writer, slugURL, description, deployId string) error {
+	csp, err := spec.NewCloudSQLProxy(ops.opts.CloudSQLProxyImage, confFiles.TeresaYaml)
+	if err != nil {
+		return errors.Wrap(err, "failed to create the deploy")
+	}
 	if releaseCmd := confFiles.Procfile[ProcfileReleaseCmd]; releaseCmd != "" {
-		if err := ops.runReleaseCmd(a, deployId, slugURL, w); err != nil {
+		if err := ops.runReleaseCmd(a, deployId, slugURL, csp, w); err != nil {
 			log.WithError(err).WithField("id", deployId).Errorf("Running release command %s in app %s", releaseCmd, a.Name)
 			return err
 		}
@@ -165,11 +170,6 @@ func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployC
 		if err != nil && !ops.k8s.IsNotFound(err) {
 			return err
 		}
-	}
-
-	csp, err := spec.NewCloudSQLProxy(ops.opts.CloudSQLProxyImage, confFiles.TeresaYaml)
-	if err != nil {
-		return errors.Wrap(err, "failed to create the deploy")
 	}
 	podBuilder = podBuilder.WithCloudSQLProxySideCar(csp)
 

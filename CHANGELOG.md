@@ -7,6 +7,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Validation for env var and secret names
 - Support to create more than one web app per code base
 
+### Fixed
+- [server] Missing clousql-proxy sidecar in the release pod
+
 ## [0.26.0]
 ### Added
 - Support for creating apps with multiple virtual hosts

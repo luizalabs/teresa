@@ -548,6 +548,7 @@ func TestRunReleaseCmd(t *testing.T) {
 			&app.App{Name: "Test"},
 			"123456",
 			"/slug.tgz",
+			nil,
 			new(bytes.Buffer),
 		)
 

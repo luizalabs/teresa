@@ -509,6 +509,10 @@ func (k *Client) PodRun(podSpec *spec.Pod) (io.ReadCloser, <-chan int, error) {
 		return nil, nil, err
 	}
 
+	if len(podSpec.Containers) < 1 {
+		return nil, nil, fmt.Errorf("Invalid PodSpec, expected at least 1 container")
+	}
+
 	podYaml, err := podSpecToK8sPod(podSpec)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "define build pod spec failed")
@@ -535,7 +539,11 @@ func (k *Client) PodRun(podSpec *spec.Pod) (io.ReadCloser, <-chan int, error) {
 			return
 		}
 
-		opts := &app.LogOptions{Lines: 10, Follow: true}
+		opts := &app.LogOptions{
+			Lines:     10,
+			Follow:    true,
+			Container: podSpec.Containers[0].Name,
+		}
 		stream, err := k.PodLogs(podSpec.Namespace, podSpec.Name, opts)
 		if err != nil {
 			exitCodeChan <- exec.ExitCodeError
@@ -712,8 +720,13 @@ func (k *Client) waitPodEnd(pod *k8sv1.Pod, checkInterval, timeout time.Duration
 		if err != nil {
 			return false, err
 		}
-		result := p.Status.Phase == k8sv1.PodSucceeded || p.Status.Phase == k8sv1.PodFailed
-		return result, nil
+		mainContainer := pod.Spec.Containers[0].Name
+		for _, containerStatus := range p.Status.ContainerStatuses {
+			if containerStatus.Name == mainContainer {
+				return containerStatus.State.Terminated != nil, nil
+			}
+		}
+		return false, nil
 	})
 }
 
@@ -761,7 +774,11 @@ func (k *Client) podExitCode(pod *k8sv1.Pod) (int, error) {
 	if err != nil {
 		return 1, err
 	}
+	mainContainer := pod.Spec.Containers[0].Name
 	for _, containerStatus := range p.Status.ContainerStatuses {
+		if containerStatus.Name != mainContainer {
+			continue
+		}
 		state := containerStatus.State.Terminated
 		if state == nil {
 			continue

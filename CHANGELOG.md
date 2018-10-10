@@ -2,7 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.27.0]
+## [NEXT_RELEASE]
+#### Fixed
+- [server] Hanging release phase process with cloudsql-proxy sidecar
+
+## [0.27.0] - 2018-09-05
 ### Added
 - Validation for env var and secret names
 - Support to create more than one web app per code base
@@ -10,7 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - [server] Missing clousql-proxy sidecar in the release pod
 
-## [0.26.0]
+## [0.26.0] - 2018-08-27
 ### Added
 - Support for creating apps with multiple virtual hosts
 - `app set-vhosts` command
@@ -28,7 +32,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [server] App ingress detection
 - [server] Don't return internal server error for invalid app names
 
-## [0.25.2]
+## [0.25.2] - 2018-08-06
 ### Fixed
 - [server] Only use the nginx sidecar for services
 

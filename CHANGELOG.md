@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.27.2] - 2018-10-25
+#### Added
+- Support for either an instance name or env vars for the cloudsql-proxy sidecar
+
+#### Fixed
+- [server] Teresa was not sending env vars to the cloudsql-proxy sidecar
+
 ## [0.27.1] - 2018-10-15
 #### Fixed
 - [server] Hanging release phase process with cloudsql-proxy sidecar

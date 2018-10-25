@@ -19,7 +19,7 @@ type CloudSQLProxy struct {
 	Image          string `yaml:"-"`
 }
 
-func NewCloudSQLProxy(img string, t *TeresaYaml) (*CloudSQLProxy, error) {
+func NewCloudSQLProxy(img string, t *TeresaYaml, a *app.App) (*CloudSQLProxy, error) {
 	if t == nil {
 		return nil, nil
 	}
@@ -32,6 +32,7 @@ func NewCloudSQLProxy(img string, t *TeresaYaml) (*CloudSQLProxy, error) {
 		return nil, errors.Wrap(err, "failed to build cloudsql proxy")
 	}
 	csp.Image = img
+	csp.Instances = newCloudSQLProxyContainerInstanceString(csp, a)
 	return csp, nil
 }
 
@@ -60,4 +61,27 @@ func newCloudSQLProxyContainerArgs(csp *CloudSQLProxy) []string {
 
 func newCloudSQLProxyContainerMountPath(csp *CloudSQLProxy) string {
 	return path.Join("/secrets/cloudsql", path.Base(csp.CredentialFile))
+}
+
+func newCloudSQLProxyContainerInstanceString(csp *CloudSQLProxy, a *app.App) string {
+	instanceName := "%s:%s:%s=tcp:3306"
+	if csp.Instances == "" {
+		dbProject := ""
+		dbZone := ""
+		dbName := ""
+		for _, envVar := range a.EnvVars {
+			switch envVar.Key {
+			case "DB_PROJECT":
+				dbProject = envVar.Value
+			case "DB_ZONE":
+				dbZone = envVar.Value
+			case "DB_NAME":
+				dbName = envVar.Value
+			}
+		}
+		instanceName = fmt.Sprintf("%s:%s:%s=tcp:3306", dbProject, dbZone, dbName)
+	} else {
+		instanceName = csp.Instances
+	}
+	return instanceName
 }

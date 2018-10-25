@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/pkg/errors"
 )
 
@@ -34,12 +35,17 @@ func NewCloudSQLProxy(img string, t *TeresaYaml) (*CloudSQLProxy, error) {
 	return csp, nil
 }
 
-func NewCloudSQLProxyContainer(csp *CloudSQLProxy) *Container {
+func NewCloudSQLProxyContainer(csp *CloudSQLProxy, a *app.App) *Container {
 	args := newCloudSQLProxyContainerArgs(csp)
 	mpath := newCloudSQLProxyContainerMountPath(csp)
+	env := map[string]string{}
+	for _, e := range a.EnvVars {
+		env[e.Key] = e.Value
+	}
 	return NewContainerBuilder("cloudsql-proxy", csp.Image).
 		WithCommand([]string{"/cloud_sql_proxy"}).
 		WithArgs(args).
+		WithEnv(env).
 		WithLimits(cloudSQLProxyDefaultCPULimit, cloudSQLProxyDefaultMemoryLimit).
 		WithVolumeMount(AppSecretName, mpath, path.Base(mpath)).
 		Build()

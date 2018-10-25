@@ -74,7 +74,7 @@ func (b *RunnerPodBuilder) newAppRunnerPod(appContainer *Container) *Pod {
 	}
 
 	if b.csp != nil {
-		cn := NewCloudSQLProxyContainer(b.csp)
+		cn := NewCloudSQLProxyContainer(b.csp, b.app)
 		builder = builder.WithSideCar(cn)
 	}
 

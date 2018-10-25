@@ -109,4 +109,7 @@ func TestRunnerPodBuilderWithCloudSQLProxySideCar(t *testing.T) {
 	if got := ps.Containers[1].Name; got != name {
 		t.Errorf("got %s; want %s", got, name)
 	}
+	if got := len(ps.Containers[1].Env); got != 1 {
+		t.Errorf("expected at least 1 env var, got %d", got)
+	}
 }

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+
+	"github.com/luizalabs/teresa/pkg/server/app"
 )
 
 func TestNewCloudSQLProxy(t *testing.T) {
@@ -65,6 +67,9 @@ func TestNewCloudSQLProxyNil(t *testing.T) {
 }
 
 func TestNewCloudSQLProxyContainer(t *testing.T) {
+	a := &app.App{
+		EnvVars: []*app.EnvVar{&app.EnvVar{Key: "key1", Value: "value1"}},
+	}
 	csp := &CloudSQLProxy{
 		Instances:      "instances",
 		CredentialFile: "file",
@@ -90,12 +95,14 @@ func TestNewCloudSQLProxyContainer(t *testing.T) {
 				ReadOnly:  true,
 			},
 		},
-		Env:     map[string]string{},
+		Env: map[string]string{
+			"key1": "value1",
+		},
 		Ports:   []Port{},
 		Secrets: []string{},
 	}
 
-	cn := NewCloudSQLProxyContainer(csp)
+	cn := NewCloudSQLProxyContainer(csp, a)
 	if !reflect.DeepEqual(cn, want) {
 		t.Errorf("got %v; want %v", cn, want)
 	}

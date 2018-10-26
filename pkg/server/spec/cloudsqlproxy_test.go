@@ -44,8 +44,9 @@ func TestNewCloudSQLProxyFromEnvVar(t *testing.T) {
 		},
 	}
 	img := "image"
+
 	want := &CloudSQLProxy{
-		Instances:      "project:zone:name=tcp:3306",
+		Instances:      "$(DB_PROJECT):$(DB_ZONE):$(DB_NAME)=tcp:3306",
 		CredentialFile: "file",
 		Image:          img,
 	}
@@ -74,6 +75,7 @@ func TestNewCloudSQLProxyFromEnvVar(t *testing.T) {
 			&app.EnvVar{Key: "DB_NAME", Value: "a_name"},
 		},
 	}
+	want.Instances = "project:zone:name=tcp:3306"
 	csp, err = NewCloudSQLProxy(img, ty, a)
 	if err != nil {
 		t.Fatal("got unexpected error:", err)
@@ -123,7 +125,7 @@ func TestNewCloudSQLProxyContainerFromEnvVar(t *testing.T) {
 		},
 	}
 	csp := &CloudSQLProxy{
-		Instances:      "project:zone:name=tcp:3306",
+		Instances:      "$(DB_PROJECT):$(DB_ZONE):$(DB_NAME)=tcp:3306",
 		CredentialFile: "file",
 		Image:          "image",
 	}
@@ -136,7 +138,7 @@ func TestNewCloudSQLProxyContainerFromEnvVar(t *testing.T) {
 		Image:   csp.Image,
 		Command: []string{"/cloud_sql_proxy"},
 		Args: []string{
-			"-instances=project:zone:name=tcp:3306",
+			"-instances=$(DB_PROJECT):$(DB_ZONE):$(DB_NAME)=tcp:3306",
 			"-credential_file=/secrets/cloudsql/file",
 		},
 		VolumeMounts: []*VolumeMounts{

@@ -35,6 +35,54 @@ func TestNewCloudSQLProxy(t *testing.T) {
 	}
 }
 
+func TestNewCloudSQLProxyFromEnvVar(t *testing.T) {
+	a := &app.App{
+		EnvVars: []*app.EnvVar{
+			&app.EnvVar{Key: "DB_PROJECT", Value: "project"},
+			&app.EnvVar{Key: "DB_ZONE", Value: "zone"},
+			&app.EnvVar{Key: "DB_NAME", Value: "name"},
+		},
+	}
+	img := "image"
+	want := &CloudSQLProxy{
+		Instances:      "project:zone:name=tcp:3306",
+		CredentialFile: "file",
+		Image:          img,
+	}
+	fn := func(v interface{}) error {
+		v.(*CloudSQLProxy).CredentialFile = want.CredentialFile
+		return nil
+	}
+	ty := &TeresaYaml{
+		SideCars: map[string]RawData{
+			"cloudsql-proxy": {fn},
+		},
+	}
+
+	csp, err := NewCloudSQLProxy(img, ty, a)
+	if err != nil {
+		t.Fatal("got unexpected error:", err)
+	}
+	if !reflect.DeepEqual(csp, want) {
+		t.Errorf("got %v; want %v", csp, want)
+	}
+	a = &app.App{
+		EnvVars: []*app.EnvVar{
+			&app.EnvVar{Key: "GCP_CLOUDSQL_INSTANCE_NAME", Value: "project:zone:name=tcp:3306"},
+			&app.EnvVar{Key: "DB_PROJECT", Value: "a_project"},
+			&app.EnvVar{Key: "DB_ZONE", Value: "a_zone"},
+			&app.EnvVar{Key: "DB_NAME", Value: "a_name"},
+		},
+	}
+	csp, err = NewCloudSQLProxy(img, ty, a)
+	if err != nil {
+		t.Fatal("got unexpected error:", err)
+	}
+	if !reflect.DeepEqual(csp, want) {
+		t.Errorf("got %v; want %v", csp, want)
+	}
+}
+
 func TestNewCloudSQLProxyError(t *testing.T) {
 	fn := func(v interface{}) error {
 		return errors.New("test")

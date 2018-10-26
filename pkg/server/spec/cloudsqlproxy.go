@@ -65,23 +65,14 @@ func newCloudSQLProxyContainerMountPath(csp *CloudSQLProxy) string {
 
 func newCloudSQLProxyContainerInstanceString(csp *CloudSQLProxy, a *app.App) string {
 	if csp.Instances == "" {
-		dbProject := ""
-		dbZone := ""
-		dbName := ""
 		for _, envVar := range a.EnvVars {
 			switch envVar.Key {
 			case "GCP_CLOUDSQL_INSTANCE_NAME":
 				csp.Instances = envVar.Value
 				return csp.Instances
-			case "DB_PROJECT":
-				dbProject = envVar.Value
-			case "DB_ZONE":
-				dbZone = envVar.Value
-			case "DB_NAME":
-				dbName = envVar.Value
 			}
 		}
-		csp.Instances = fmt.Sprintf("%s:%s:%s=tcp:3306", dbProject, dbZone, dbName)
+		csp.Instances = fmt.Sprintf("$(DB_PROJECT):$(DB_ZONE):$(DB_NAME)=tcp:3306")
 	}
 	return csp.Instances
 }

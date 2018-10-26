@@ -140,7 +140,7 @@ func (ops *DeployOperations) runReleaseCmd(a *app.App, deployId, slugURL string,
 }
 
 func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployConfigFiles, w io.Writer, slugURL, description, deployId string) error {
-	csp, err := spec.NewCloudSQLProxy(ops.opts.CloudSQLProxyImage, confFiles.TeresaYaml, a)
+	csp, err := spec.NewCloudSQLProxy(ops.opts.CloudSQLProxyImage, confFiles.TeresaYaml)
 	if err != nil {
 		return errors.Wrap(err, "failed to create the deploy")
 	}

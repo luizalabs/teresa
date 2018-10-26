@@ -420,12 +420,17 @@ applications:
         credentialFile: credentials.json
 ```
 
-You can either provide the instance connection name or provide the following variables to your application. You can provide many connection names by passing a comma-separated list of instances.
+You can provide many connection names by passing a comma-separated list of instances.
 
-    $ teresa app env-set DB_PROJECT=<gcp-project> --app <app-name>
-    $ teresa app env-set DB_ZONE=<gcp-zone> --app <app-name>
-    $ teresa app env-set DB_NAME=<db-name> --app <app-name>
-    # You can also set the whole instance string, which will override the other variables
+You can either provide the instance connection name or provide the format of an environment variable. 
+
+```yaml
+cloudsql-proxy:
+  instances: $(GCP_CLOUDSQL_INSTANCE_NAME)
+```
+
+And create the environment variable.
+
     $ teresa app env-set GCP_CLOUDSQL_INSTANCE_NAME=<instance-name> --app <app-name>
 
 After deploying the app the instance will be available on `localhost` using port

@@ -416,11 +416,11 @@ applications:
   myapp:
     sidecars:
       cloudsql-proxy:
-        instances: project:zone:name=tcp:3306
+        instances: project:zone:name=tcp:3306,project2:zone2:name2=tcp:3307
         credentialFile: credentials.json
 ```
 
-You can either provide the instance connection name or provide the following variables to your application.
+You can either provide the instance connection name or provide the following variables to your application. You can provide many connection names by passing a comma-separated list of instances.
 
     $ teresa app env-set DB_PROJECT=<gcp-project> --app <app-name>
     $ teresa app env-set DB_ZONE=<gcp-zone> --app <app-name>

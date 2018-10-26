@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.27.2] - 2018-10-25
+## [NEXT_RELEASE]
 #### Added
 - Support for either an instance name or env vars for the cloudsql-proxy sidecar
 

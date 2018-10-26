@@ -425,6 +425,8 @@ You can either provide the instance connection name or provide the following var
     $ teresa app env-set DB_PROJECT=<gcp-project> --app <app-name>
     $ teresa app env-set DB_ZONE=<gcp-zone> --app <app-name>
     $ teresa app env-set DB_NAME=<db-name> --app <app-name>
+    # You can also set the whole instance string, which will override the other variables
+    $ teresa app env-set GCP_CLOUDSQL_INSTANCE_NAME=<instance-name> --app <app-name>
 
 After deploying the app the instance will be available on `localhost` using port
 `3306`. The Cloud SQL Proxy supports both MySQL and PostgreSQL.

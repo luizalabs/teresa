@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 #### Fixed
 - [server] Teresa was not sending env vars to the cloudsql-proxy sidecar
 
+#### Changed
+- [server] Bump the slugbuilder version to v3.6.0
+
 ## [0.27.1] - 2018-10-15
 #### Fixed
 - [server] Hanging release phase process with cloudsql-proxy sidecar

@@ -199,15 +199,21 @@ func (ops *DeployOperations) createOrUpdateCronJob(a *app.App, confFiles *Deploy
 		return ErrCronScheduleNotFound
 	}
 
+	csp, err := spec.NewCloudSQLProxy(ops.opts.CloudSQLProxyImage, confFiles.TeresaYaml)
+	if err != nil {
+		return errors.Wrap(err, "failed to create the deploy")
+	}
+
 	podSpec := spec.NewRunnerPodBuilder(a.Name, ops.opts.SlugRunnerImage, ops.opts.SlugStoreImage).
 		ForApp(a).
 		WithSlug(slugURL).
 		WithStorage(ops.fileStorage).
-		WithArgs(strings.Split(confFiles.Procfile[a.ProcessType], " ")).
-		Build()
+		WithArgs(strings.Split(confFiles.Procfile[a.ProcessType], " "))
+
+	podSpec = podSpec.WithCloudSQLProxySideCar(csp)
 
 	cronSpec := spec.NewCronJobBuilder(slugURL).
-		WithPod(podSpec).
+		WithPod(podSpec.Build()).
 		WithDescription(description).
 		WithSchedule(confFiles.TeresaYaml.Cron.Schedule).
 		Build()

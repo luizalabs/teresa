@@ -2,13 +2,13 @@ package deploy
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
+	errors "github.com/pkg/errors"
 	context "golang.org/x/net/context"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
@@ -480,6 +480,97 @@ func TestCreateCronJobScheduleNotFound(t *testing.T) {
 
 	if err != ErrCronScheduleNotFound {
 		t.Errorf("expected %v, got %v", ErrCronScheduleNotFound, err)
+	}
+}
+
+func TestCreateCronJobCloudSQLProxySideCar(t *testing.T) {
+	validCronPt := fmt.Sprintf("%s-hw", app.ProcessTypeCronPrefix)
+	expectedName := "Test cron"
+	a := &app.App{Name: expectedName, ProcessType: validCronPt}
+	expectedDescription := "test-description"
+	expectedSlugURL := "test-slug"
+	conf := &DeployConfigFiles{
+		Procfile: map[string]string{validCronPt: "echo hello world"},
+		TeresaYaml: &spec.TeresaYaml{
+			Cron: &spec.CronArgs{Schedule: "*/1 * * * *"},
+			SideCars: map[string]spec.RawData{
+				"cloudsql-proxy": {
+					func(v interface{}) error { return nil },
+				},
+			},
+		},
+	}
+
+	fakeK8s := new(fakeK8sOperations)
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		fakeK8s,
+		storage.NewFake(),
+		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
+		&Options{},
+	)
+
+	deployOperations := ops.(*DeployOperations)
+	err := deployOperations.createOrUpdateCronJob(a, conf, new(bytes.Buffer), expectedSlugURL, expectedDescription)
+
+	if err != nil {
+		t.Fatal("error create cronJob:", err)
+	}
+
+	if fakeK8s.lastCronJobSpec.Name != expectedName {
+		t.Errorf("expected %s, got %s", expectedName, fakeK8s.lastCronJobSpec.Name)
+	}
+	if fakeK8s.lastCronJobSpec.SlugURL != expectedSlugURL {
+		t.Errorf("expected %s, got %s", expectedSlugURL, fakeK8s.lastCronJobSpec.SlugURL)
+	}
+	if fakeK8s.lastCronJobSpec.Schedule != conf.TeresaYaml.Cron.Schedule {
+		t.Errorf(
+			"expected %s, got %s",
+			conf.TeresaYaml.Cron.Schedule,
+			fakeK8s.lastCronJobSpec.Schedule,
+		)
+	}
+}
+
+func TestCreateCronJobCloudSQLProxySideCarError(t *testing.T) {
+	k8sErr := errors.New("Some k8s error")
+	cloudSQLErr := errors.Wrap(k8sErr, "failed to build cloudsql proxy")
+	expectedErr := errors.Wrap(cloudSQLErr, "failed to create the deploy")
+	fakeK8s := &fakeK8sOperations{createCronJobReturn: expectedErr}
+
+	conf := &DeployConfigFiles{
+		Procfile: map[string]string{"cron": "echo hello world"},
+		TeresaYaml: &spec.TeresaYaml{
+			Cron: &spec.CronArgs{Schedule: "*/1 * * * *"},
+			SideCars: map[string]spec.RawData{
+				"cloudsql-proxy": {
+					func(v interface{}) error { return k8sErr },
+				},
+			},
+		},
+	}
+
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		fakeK8s,
+		storage.NewFake(),
+		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
+		&Options{},
+	)
+
+	deployOperations := ops.(*DeployOperations)
+	err := deployOperations.createOrUpdateCronJob(
+		&app.App{Name: "test"},
+		conf,
+		new(bytes.Buffer),
+		"some slug",
+		"some desc",
+	)
+
+	if err.Error() != expectedErr.Error() {
+		t.Errorf("expected %v, got %v", expectedErr, err)
 	}
 }
 

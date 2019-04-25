@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+### Added
+- One click way to delete app silently with --no-input flag
+
 ## [0.28.0] - 2018-10-29
 #### Fixed
 - [server] Teresa was not sending env vars to the cloudsql-proxy sidecar

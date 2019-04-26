@@ -265,21 +265,30 @@ func appDel(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Print()
-	inputMsg := fmt.Sprintf(
-		"Are you sure you want to delete %s on %s? (yes/NO) ",
-		color.CyanString(name),
-		color.YellowString(currentClusterName),
-	)
-	s, _ := client.GetInput(inputMsg)
-	if s != "yes" {
-		fmt.Println("Delete process aborted!")
-		return
+
+	noinput, err := cmd.Flags().GetBool("no-input")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid no-input parameter")
 	}
 
-	resp, _ := client.GetInput("Please re type the app name: ")
-	if resp != name {
-		fmt.Println("Delete process aborted!")
-		return
+	if !noinput {
+		inputMsg := fmt.Sprintf(
+			"Are you sure you want to delete %s on %s? (yes/NO) ",
+			color.CyanString(name),
+			color.YellowString(currentClusterName),
+		)
+		s, _ := client.GetInput(inputMsg)
+		if s != "yes" {
+			fmt.Println("Delete process aborted!")
+			return
+		}
+
+		resp, _ := client.GetInput("Please re type the app name: ")
+
+		if resp != name {
+			fmt.Println("Delete process aborted!")
+			return
+		}
 	}
 	_, err = cli.Delete(context.Background(), &appb.DeleteRequest{Name: name})
 	if err != nil {
@@ -948,6 +957,8 @@ func init() {
 	appStartCmd.Flags().Int32("replicas", 1, "Number of replicas")
 	// App delete-pods
 	appDeletePodsCmd.Flags().String("app", "", "app name")
+	// App delete
+	appDelCmd.Flags().Bool("no-input", false, "ATENTION: delete app without warning")
 }
 
 func appLogs(cmd *cobra.Command, args []string) {

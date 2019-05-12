@@ -63,7 +63,7 @@ func TestGCECreateOrUpdateSSLIngressErr(t *testing.T) {
 func TestGCECreateOrUpdateStaticIpSuccess(t *testing.T) {
 	ops := &gceOperations{&FakeK8sOperations{HasIngressValue: true}}
 
-	if err := ops.CreateOrUpdateStaticIp("teresa", "address-name", 443); err != nil {
+	if err := ops.CreateOrUpdateStaticIp("teresa", "address-name"); err != nil {
 		t.Errorf("got %v; want no error", err)
 	}
 }
@@ -73,7 +73,7 @@ func TestGCECreateOrUpdateStaticIpFail(t *testing.T) {
 	ops := &gceOperations{k8s}
 
 	e := teresa_errors.ErrInternalServerError
-	if err := ops.CreateOrUpdateStaticIp("teresa", "address-name", 443); teresa_errors.Get(err) != e {
+	if err := ops.CreateOrUpdateStaticIp("teresa", "address-name"); teresa_errors.Get(err) != e {
 		t.Errorf("got %v; want %v", teresa_errors.Get(err), e)
 	}
 }
@@ -81,7 +81,7 @@ func TestGCECreateOrUpdateStaticIpFail(t *testing.T) {
 func TestGCECreateOrUpdateStaticIpErrNotImplemented(t *testing.T) {
 	ops := &gceOperations{&FakeK8sOperations{HasIngressValue: false}}
 
-	if err := ops.CreateOrUpdateStaticIp("teresa", "address-name", 443); err != ErrNotImplementedOnLoadBalancer {
+	if err := ops.CreateOrUpdateStaticIp("teresa", "address-name"); err != ErrNotImplementedOnLoadBalancer {
 		t.Errorf("got %v; want %v", err, ErrNotImplementedOnLoadBalancer)
 	}
 }
@@ -90,7 +90,7 @@ func TestGCECreateOrUpdateStaticIpIngressErr(t *testing.T) {
 	want := errors.New("test")
 	ops := &gceOperations{&FakeK8sOperations{HasIngressErr: want}}
 
-	if err := ops.CreateOrUpdateSSL("teresa", "address-name", 443); err != want {
+	if err := ops.CreateOrUpdateStaticIp("teresa", "address-name"); err != want {
 		t.Errorf("got %v; want %v", err, want)
 	}
 }

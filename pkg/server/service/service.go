@@ -15,6 +15,7 @@ const (
 
 type CloudProviderOperations interface {
 	CreateOrUpdateSSL(appName, cert string, port int) error
+	CreateOrUpdateStaticIp(appName, addressName string) error
 	SSLInfo(appName string) (*SSLInfo, error)
 }
 
@@ -34,6 +35,7 @@ type AppOperations interface {
 
 type Operations interface {
 	EnableSSL(user *database.User, appName, cert string, only bool) error
+	SetStaticIp(user *database.User, appName, addressName string) error
 	Info(user *database.User, appName string) (*Info, error)
 	WhitelistSourceRanges(user *database.User, appName string, sourceRanges []string) error
 }
@@ -52,20 +54,33 @@ func (ops *ServiceOperations) EnableSSL(user *database.User, appName, cert strin
 	if err := ops.cops.CreateOrUpdateSSL(appName, cert, sslPort); err != nil {
 		return err
 	}
-	ports := []spec.ServicePort{
-		*spec.NewDefaultServicePort(app.Protocol),
-		*spec.NewServicePort(defaultSSLPortName, sslPort, spec.DefaultPort),
-	}
-	if only {
-		ports = ports[1:]
-	}
-	if err := ops.k8s.UpdateServicePorts(appName, appName, ports); err != nil {
-		if ops.k8s.IsNotFound(err) {
-			return ErrNotFound
+
+	hasIngress, err := ops.k8s.HasIngress(app.Name, app.Name)
+
+	if !hasIngress {
+		ports := []spec.ServicePort{
+			*spec.NewDefaultServicePort(app.Protocol),
+			*spec.NewServicePort(defaultSSLPortName, sslPort, spec.DefaultPort),
 		}
-		return teresa_errors.NewInternalServerError(err)
+		if only {
+			ports = ports[1:]
+		}
+		if err := ops.k8s.UpdateServicePorts(appName, appName, ports); err != nil {
+			if ops.k8s.IsNotFound(err) {
+				return ErrNotFound
+			}
+			return teresa_errors.NewInternalServerError(err)
+		}
 	}
 	return nil
+}
+
+func (ops *ServiceOperations) SetStaticIp(user *database.User, appName, addressName string) error {
+	_, err := ops.aops.CheckPermAndGet(user, appName)
+	if err != nil {
+		return err
+	}
+	return ops.cops.CreateOrUpdateStaticIp(appName, addressName)
 }
 
 func (ops *ServiceOperations) Info(user *database.User, appName string) (*Info, error) {

@@ -73,6 +73,36 @@ func TestOpsEnableSSLServiceNotFound(t *testing.T) {
 	}
 }
 
+func TestOpsSetStaticIpSuccess(t *testing.T) {
+	ops := setupTestOps()
+	user := &database.User{}
+
+	if err := ops.SetStaticIp(user, "teresa", "address-name"); err != nil {
+		t.Errorf("got %v; want no error", err)
+	}
+}
+
+func TestOpsSetStaticIpPermissionDenied(t *testing.T) {
+	ops := setupTestOps()
+	ops.aops.(*FakeAppOperations).NegateHasPermission = true
+	user := &database.User{}
+
+	if err := ops.SetStaticIp(user, "teresa", "address-name"); err != auth.ErrPermissionDenied {
+		t.Errorf("got %v; want %v", err, auth.ErrPermissionDenied)
+	}
+}
+
+func TestOpsSetStaticIpCloudProviderFail(t *testing.T) {
+	ops := setupTestOps()
+	wantErr := errors.New("test")
+	ops.cops.(*FakeCloudProviderOperations).CreateOrUpdateSSLErr = wantErr
+	user := &database.User{}
+
+	if err := ops.SetStaticIp(user, "teresa", "address-name"); err != wantErr {
+		t.Errorf("got %v; want %v", err, wantErr)
+	}
+}
+
 func TestOpsInfoSuccess(t *testing.T) {
 	ops := setupTestOps()
 	user := &database.User{}

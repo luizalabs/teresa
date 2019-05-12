@@ -31,7 +31,7 @@ func (ops *gceOperations) CreateOrUpdateSSL(appName, cert string, port int) erro
 	return nil
 }
 
-func (ops *gceOperations) CreateOrUpdateStaticIp(appName, addressName string, port int) error {
+func (ops *gceOperations) CreateOrUpdateStaticIp(appName, addressName string) error {
 	hasIngress, err := ops.k8s.HasIngress(appName, appName)
 	if err != nil {
 		return err

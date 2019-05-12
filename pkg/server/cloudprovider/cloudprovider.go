@@ -6,7 +6,7 @@ import (
 
 type Operations interface {
 	CreateOrUpdateSSL(appName, cert string, port int) error
-	CreateOrUpdateStaticIp(appName, addressName string, port int) error
+	CreateOrUpdateStaticIp(appName, addressName string) error
 	SSLInfo(appName string) (*service.SSLInfo, error)
 	Name() string
 }

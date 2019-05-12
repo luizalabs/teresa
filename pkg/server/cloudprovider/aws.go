@@ -35,7 +35,7 @@ func (ops *awsOperations) CreateOrUpdateSSL(appName, cert string, port int) erro
 	return nil
 }
 
-func (ops *awsOperations) CreateOrUpdateStaticIp(appName, addressName string, port int) error {
+func (ops *awsOperations) CreateOrUpdateStaticIp(appName, addressName string) error {
 	return ErrNotImplemented
 }
 

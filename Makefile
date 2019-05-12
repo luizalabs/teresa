@@ -127,6 +127,7 @@ gen-grpc-stubs:
 	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/deploy/*.proto
 	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/exec/*.proto
 	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/build/*.proto
+	@protoc --go_out=plugins=grpc:. ./pkg/protobuf/service/*.proto
 
 helm-lint:
 	@helm lint helm/chart/teresa

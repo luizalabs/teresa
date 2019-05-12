@@ -9,15 +9,17 @@ import (
 
 type FakeOperations struct {
 	EnableSSLErr             error
+	SetStaticIpErr           error
 	InfoErr                  error
 	InfoValue                *Info
 	WhitelistSourceRangesErr error
 }
 
 type FakeCloudProviderOperations struct {
-	CreateOrUpdateSSLErr error
-	SSLInfoErr           error
-	SSLInfoValue         *SSLInfo
+	CreateOrUpdateSSLErr      error
+	CreateOrUpdateStaticIpErr error
+	SSLInfoErr                error
+	SSLInfoValue              *SSLInfo
 }
 
 type FakeAppOperations struct {
@@ -41,6 +43,10 @@ func (f *FakeOperations) EnableSSL(user *database.User, appName, cert string, on
 	return f.EnableSSLErr
 }
 
+func (f *FakeOperations) SetStaticIp(user *database.User, appName, addressName string) error {
+	return f.SetStaticIpErr
+}
+
 func (f *FakeOperations) Info(user *database.User, appName string) (*Info, error) {
 	return f.InfoValue, f.InfoErr
 }
@@ -50,6 +56,10 @@ func (f *FakeOperations) WhitelistSourceRanges(user *database.User, appName stri
 }
 
 func (f *FakeCloudProviderOperations) CreateOrUpdateSSL(appName, cert string, port int) error {
+	return f.CreateOrUpdateSSLErr
+}
+
+func (f *FakeCloudProviderOperations) CreateOrUpdateStaticIp(appName, addressName string) error {
 	return f.CreateOrUpdateSSLErr
 }
 

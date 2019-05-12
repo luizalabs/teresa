@@ -623,17 +623,17 @@ func (k *Client) HasIngress(namespace, appName string) (bool, error) {
 	return true, nil
 }
 
-func (k *Client) createIngress(namespace, appName string, vHosts []string) error {
+func (k *Client) createIngress(namespace, appName string, vHosts []string, reserveStaticIp bool) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
 	}
-	igsSpec := ingressSpec(namespace, appName, vHosts)
+	igsSpec := ingressSpec(namespace, appName, vHosts, reserveStaticIp)
 	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Create(igsSpec)
 	return errors.Wrap(err, "create ingress failed")
 }
 
-func (k *Client) UpdateIngress(namespace, name string, vHosts []string) error {
+func (k *Client) UpdateIngress(namespace, name string, vHosts []string, reserveStaticIp bool) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -644,7 +644,7 @@ func (k *Client) UpdateIngress(namespace, name string, vHosts []string) error {
 	if err != nil {
 		return errors.Wrap(err, "get ingress failed")
 	}
-	newSpec := ingressSpec(namespace, name, vHosts)
+	newSpec := ingressSpec(namespace, name, vHosts, reserveStaticIp)
 	old.Spec.Rules = newSpec.Spec.Rules
 	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Update(old)
 	return errors.Wrap(err, "update ingress failed")
@@ -688,7 +688,7 @@ func (c *Client) IngressAnnotations(namespace, ingName string) (map[string]strin
 }
 
 // ExposeDeploy creates a service and/or a ingress if needed
-func (k *Client) ExposeDeploy(namespace, appName, svcType, portName string, vHosts []string, w io.Writer) error {
+func (k *Client) ExposeDeploy(namespace, appName, svcType, portName string, vHosts []string, reserveStaticIp bool, w io.Writer) error {
 	hasSrv, err := k.hasService(namespace, appName)
 	if err != nil {
 		return err
@@ -710,7 +710,7 @@ func (k *Client) ExposeDeploy(namespace, appName, svcType, portName string, vHos
 	}
 	if !hasIgs {
 		fmt.Fprintln(w, "Creating ingress")
-		if err := k.createIngress(namespace, appName, vHosts); err != nil {
+		if err := k.createIngress(namespace, appName, vHosts, reserveStaticIp); err != nil {
 			return err
 		}
 	}

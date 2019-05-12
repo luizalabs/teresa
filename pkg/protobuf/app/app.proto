@@ -43,8 +43,9 @@ message CreateRequest {
     Autoscale autoscale = 5;
 
     string virtual_host = 6;
-    bool internal = 7;
-    string protocol = 8;
+    bool reserve_static_ip = 7;
+    bool internal = 8;
+    string protocol = 9;
 }
 
 message ListResponse {

@@ -346,7 +346,7 @@ func TestIngressSpec(t *testing.T) {
 	namespace := "teresa"
 	vHosts := []string{"test1.teresa-apps.io", "test2.teresa-apps.io"}
 
-	i := ingressSpec(namespace, name, vHosts)
+	i := ingressSpec(namespace, name, vHosts, false)
 	if i.ObjectMeta.Name != name {
 		t.Errorf("expected %s, got %s", name, i.ObjectMeta.Name)
 	}
@@ -359,6 +359,27 @@ func TestIngressSpec(t *testing.T) {
 	for idx, rule := range i.Spec.Rules {
 		if rule.Host != vHosts[idx] {
 			t.Errorf("expected %s, got %s", vHosts[idx], rule.Host)
+		}
+	}
+}
+
+func TestIngressSpecReserveStaticIp(t *testing.T) {
+	name := "teresa"
+	namespace := "teresa"
+
+	i := ingressSpec(namespace, name, []string{}, true)
+	if i.ObjectMeta.Name != name {
+		t.Errorf("expected %s, got %s", name, i.ObjectMeta.Name)
+	}
+	if i.ObjectMeta.Namespace != namespace {
+		t.Errorf("expected %s, got %s", namespace, i.ObjectMeta.Namespace)
+	}
+	if len(i.Spec.Rules) != 1 {
+		t.Errorf("expected 1, got %d", len(i.Spec.Rules))
+	}
+	for _, rule := range i.Spec.Rules {
+		if rule.Host != "" {
+			t.Errorf("expected nothing, got %s", rule.Host)
 		}
 	}
 }

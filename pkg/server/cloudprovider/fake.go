@@ -41,3 +41,7 @@ func (f *FakeK8sOperations) IsNotFound(err error) bool {
 func (f *FakeK8sOperations) HasIngress(namespace, name string) (bool, error) {
 	return f.HasIngressValue, f.HasIngressErr
 }
+
+func NewFakeOperations() *FakeK8sOperations {
+	return new(FakeK8sOperations)
+}

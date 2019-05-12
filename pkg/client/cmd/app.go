@@ -60,6 +60,9 @@ The app name must follow this rules:
   With multiple virtual hosts
   $ teresa create foo --team bar --vhost foo1.teresa.io,foo2.teresa.io
 
+	An app with static IP (GCP only)
+	$ teresa create foo --team bar --reserve-static-ip
+
   An internal app (without external endpoint)
   $ teresa create foo --team bar --internal
 
@@ -132,6 +135,11 @@ func createApp(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit("Invalid vhost parameter")
 	}
 
+	reserveStaticIp, err := cmd.Flags().GetBool("reserve-static-ip")
+	if err != nil {
+		client.PrintErrorAndExit("Invalid reserve-static-ip parameter")
+	}
+
 	internal, err := cmd.Flags().GetBool("internal")
 	if err != nil {
 		client.PrintErrorAndExit("Invalid internal parameter")
@@ -162,14 +170,15 @@ func createApp(cmd *cobra.Command, args []string) {
 	_, err = cli.Create(
 		context.Background(),
 		&appb.CreateRequest{
-			Name:        name,
-			Team:        team,
-			ProcessType: processType,
-			VirtualHost: vHost,
-			Limits:      lim,
-			Autoscale:   as,
-			Internal:    internal,
-			Protocol:    protocol,
+			Name:            name,
+			Team:            team,
+			ProcessType:     processType,
+			VirtualHost:     vHost,
+			Limits:          lim,
+			Autoscale:       as,
+			Internal:        internal,
+			ReserveStaticIp: reserveStaticIp,
+			Protocol:        protocol,
 		},
 	)
 	if err != nil {
@@ -928,6 +937,7 @@ func init() {
 	appCreateCmd.Flags().String("max-memory", "512Mi", "when set, allows the pod to burst memory usage up to 'max-memory'")
 	appCreateCmd.Flags().String("process-type", "", "app process type")
 	appCreateCmd.Flags().String("vhost", "", "comma separated list of the app's virtual hosts")
+	appCreateCmd.Flags().Bool("reserve-static-ip", false, "create an app with static ip (GCP only)")
 	appCreateCmd.Flags().Bool("internal", false, "create an internal app (without external endpoint)")
 	appCreateCmd.Flags().String("protocol", "", "app protocol: http, http2, grpc, etc.")
 

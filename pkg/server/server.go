@@ -141,12 +141,12 @@ func registerServices(s *grpc.Server, opt Options, uOps user.Operations) error {
 	b := build.NewService(bOps, opt.DeployOpt.KeepAliveTimeout)
 	b.RegisterService(s)
 
-	dOps := deploy.NewDeployOperations(appOps, opt.K8s, opt.Storage, execOps, bOps, opt.DeployOpt)
-	d := deploy.NewService(dOps, opt.DeployOpt)
-	d.RegisterService(s)
-
 	cpOps := cloudprovider.NewOperations(opt.K8s)
 	log.Infoln("cloud provider operations:", cpOps.Name())
+
+	dOps := deploy.NewDeployOperations(appOps, opt.K8s, opt.Storage, execOps, bOps, cpOps, opt.DeployOpt)
+	d := deploy.NewService(dOps, opt.DeployOpt)
+	d.RegisterService(s)
 
 	svcOps := service.NewOperations(appOps, cpOps, opt.K8s)
 	svc := service.NewService(svcOps)

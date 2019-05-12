@@ -21,6 +21,14 @@ func (svc *Service) EnableSSL(ctx context.Context, req *svcpb.EnableSSLRequest) 
 	return &svcpb.Empty{}, nil
 }
 
+func (svc *Service) SetStaticIp(ctx context.Context, req *svcpb.SetStaticIpRequest) (*svcpb.Empty, error) {
+	user := ctx.Value("user").(*database.User)
+	if err := svc.ops.SetStaticIp(user, req.AppName, req.AddressName); err != nil {
+		return nil, err
+	}
+	return &svcpb.Empty{}, nil
+}
+
 func (svc *Service) Info(ctx context.Context, req *svcpb.InfoRequest) (*svcpb.InfoResponse, error) {
 	user := ctx.Value("user").(*database.User)
 	info, err := svc.ops.Info(user, req.AppName)

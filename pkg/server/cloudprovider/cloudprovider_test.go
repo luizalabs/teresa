@@ -13,6 +13,12 @@ func TestNewOperationsSuccess(t *testing.T) {
 	if opsc, ok := ops.(*awsOperations); !ok {
 		t.Errorf("got %v; want aws", opsc)
 	}
+	k8s = &FakeK8sOperations{CloudProviderNameValue: "gce"}
+
+	ops = NewOperations(k8s)
+	if opsc, ok := ops.(*gceOperations); !ok {
+		t.Errorf("got %v; want gce", opsc)
+	}
 }
 
 func TestNewOperationsCloudProviderNameFail(t *testing.T) {

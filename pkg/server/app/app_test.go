@@ -446,6 +446,60 @@ func TestAppCreateErrMissingVirtualHost(t *testing.T) {
 	}
 }
 
+func TestCheckVirtualHostIsMissingErr(t *testing.T) {
+	tops := team.NewFakeOperations()
+	fakeSt := st.NewFake()
+	teamName := "luizalabs"
+	fakeK8s := &fakeK8sOperations{IngressEnabledValue: true}
+	ops := NewOperations(tops, fakeK8s, fakeSt)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: teamName, ProcessType: ProcessTypeWeb}
+	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
+		Name:  teamName,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.CheckVirtualHostIsMissing(app); err != ErrMissingVirtualHost {
+		t.Errorf("want %v; got %v", ErrMissingVirtualHost, err)
+	}
+}
+
+func TestCheckVirtualHostIsMissingReserveStaticIp(t *testing.T) {
+	tops := team.NewFakeOperations()
+	fakeSt := st.NewFake()
+	teamName := "luizalabs"
+	fakeK8s := &fakeK8sOperations{IngressEnabledValue: true}
+	ops := NewOperations(tops, fakeK8s, fakeSt)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: teamName, ProcessType: ProcessTypeWeb, ReserveStaticIp: true}
+	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
+		Name:  teamName,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.CheckVirtualHostIsMissing(app); err != nil {
+		t.Errorf("want %v; got %v", nil, err)
+	}
+}
+
+func TestCheckVirtualHostIsMissingHasVhost(t *testing.T) {
+	tops := team.NewFakeOperations()
+	fakeSt := st.NewFake()
+	teamName := "luizalabs"
+	fakeK8s := &fakeK8sOperations{IngressEnabledValue: true}
+	ops := NewOperations(tops, fakeK8s, fakeSt)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: teamName, ProcessType: ProcessTypeWeb, VirtualHost: "foo.bar.com"}
+	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
+		Name:  teamName,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.CheckVirtualHostIsMissing(app); err != nil {
+		t.Errorf("want %v; got %v", nil, err)
+	}
+}
+
 func TestAppTeamName(t *testing.T) {
 	ops := NewOperations(team.NewFakeOperations(), &fakeK8sOperations{}, st.NewFake())
 	teamName, err := ops.TeamName("teresa")

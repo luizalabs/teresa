@@ -42,6 +42,7 @@ type Operations interface {
 	SetReplicas(user *database.User, appName string, replicas int32) error
 	DeletePods(user *database.User, appName string, podsNames []string) error
 	SetVHosts(user *database.User, appName string, vHosts []string) error
+	CheckVirtualHostIsMissing(app *App) error
 }
 
 type K8sOperations interface {
@@ -117,8 +118,8 @@ func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 		return auth.ErrPermissionDenied
 	}
 
-	if ops.kops.IngressEnabled() && app.VirtualHost == "" && !app.ReserveStaticIp && IsWebApp(app.ProcessType) {
-		return ErrMissingVirtualHost
+	if err := ops.CheckVirtualHostIsMissing(app); err != nil {
+		return err
 	}
 
 	if err := ops.kops.CreateNamespace(app, user.Email); err != nil {
@@ -735,6 +736,13 @@ func (ops *AppOperations) SetVHosts(user *database.User, appName string, vHosts 
 		return teresa_errors.NewInternalServerError(err)
 	}
 
+	return nil
+}
+
+func (ops *AppOperations) CheckVirtualHostIsMissing(app *App) (Err error) {
+	if ops.kops.IngressEnabled() && app.VirtualHost == "" && !app.ReserveStaticIp && IsWebApp(app.ProcessType) {
+		return ErrMissingVirtualHost
+	}
 	return nil
 }
 

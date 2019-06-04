@@ -354,11 +354,16 @@ func serviceSpecToK8s(svcSpec *spec.Service) *k8sv1.Service {
 	}
 }
 
-func ingressSpec(namespace, name string, vHosts []string) *k8s_extensions.Ingress {
-	rules := make([]k8s_extensions.IngressRule, len(vHosts))
-	for i, vHost := range vHosts {
+func ingressSpec(namespace, name string, vHosts []string, reserveStaticIp bool) *k8s_extensions.Ingress {
+	var rules []k8s_extensions.IngressRule
+	if reserveStaticIp && len(vHosts) == 0 {
+		rules = make([]k8s_extensions.IngressRule, 1)
+	} else {
+		rules = make([]k8s_extensions.IngressRule, len(vHosts))
+	}
+
+	for i := 0; i < len(rules); i++ {
 		rules[i] = k8s_extensions.IngressRule{
-			Host: vHost,
 			IngressRuleValue: k8s_extensions.IngressRuleValue{
 				HTTP: &k8s_extensions.HTTPIngressRuleValue{
 					Paths: []k8s_extensions.HTTPIngressPath{
@@ -373,6 +378,10 @@ func ingressSpec(namespace, name string, vHosts []string) *k8s_extensions.Ingres
 				},
 			},
 		}
+	}
+
+	for i, vHost := range vHosts {
+		rules[i].Host = vHost
 	}
 	return &k8s_extensions.Ingress{
 		TypeMeta: metav1.TypeMeta{

@@ -12,6 +12,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/build"
+	"github.com/luizalabs/teresa/pkg/server/cloudprovider"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/exec"
 	"github.com/luizalabs/teresa/pkg/server/spec"
@@ -25,6 +26,7 @@ const (
 	ProcfileReleaseCmd = "release"
 	runLabel           = "run"
 	internalSvcType    = "ClusterIP"
+	ingressSvcType     = "NodePort"
 )
 
 type Operations interface {
@@ -36,7 +38,7 @@ type Operations interface {
 type K8sOperations interface {
 	CreateOrUpdateDeploy(deploySpec *spec.Deploy) error
 	CreateOrUpdateCronJob(cronJobSpec *spec.CronJob) error
-	ExposeDeploy(namespace, name, svcType, portName string, vHosts []string, w io.Writer) error
+	ExposeDeploy(namespace, name, svcType, portName string, vHosts []string, reserveStaticIp bool, w io.Writer) error
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
 	DeployRollbackToRevision(namespace, name, revision string) error
 	CreateOrUpdateConfigMap(namespace, name string, data map[string]string) error
@@ -46,12 +48,18 @@ type K8sOperations interface {
 	WatchDeploy(namespace, deployName string) error
 }
 
+type CloudProviderOperations interface {
+	CreateOrUpdateSSL(appName, cert string, port int) error
+	CreateOrUpdateStaticIp(appName, addressName string) error
+}
+
 type DeployOperations struct {
 	appOps      app.Operations
 	execOps     exec.Operations
 	buildOps    build.Operations
 	fileStorage storage.Storage
 	k8s         K8sOperations
+	cOps        cloudprovider.Operations
 	opts        *Options
 }
 
@@ -226,8 +234,14 @@ func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {
 	}
 	svcType := ops.serviceType(a)
 	vHosts := strings.Split(a.VirtualHost, ",")
-	if err := ops.k8s.ExposeDeploy(a.Name, a.Name, svcType, a.Protocol, vHosts, w); err != nil {
+	if err := ops.k8s.ExposeDeploy(a.Name, a.Name, svcType, a.Protocol, vHosts, a.ReserveStaticIp, w); err != nil {
 		return err
+	}
+	if a.ReserveStaticIp {
+		addressName := fmt.Sprintf("%s-ingress", a.Name)
+		if err := ops.cOps.CreateOrUpdateStaticIp(a.Name, addressName); err != nil {
+			return err
+		}
 	}
 	return nil // already exposed
 }
@@ -293,6 +307,9 @@ func (ops *DeployOperations) serviceType(a *app.App) string {
 	if a.Internal {
 		return internalSvcType
 	}
+	if a.ReserveStaticIp {
+		return ingressSvcType
+	}
 	return ops.opts.DefaultServiceType
 }
 
@@ -305,13 +322,14 @@ func (ops *DeployOperations) watchDeploy(appName, deployId string, w io.Writer, 
 	fmt.Fprintln(w, "Rolling update finished successfully")
 }
 
-func NewDeployOperations(aOps app.Operations, k8s K8sOperations, s storage.Storage, execOps exec.Operations, buildOps build.Operations, opts *Options) Operations {
+func NewDeployOperations(aOps app.Operations, k8s K8sOperations, s storage.Storage, execOps exec.Operations, buildOps build.Operations, cOps cloudprovider.Operations, opts *Options) Operations {
 	return &DeployOperations{
 		appOps:      aOps,
 		k8s:         k8s,
 		fileStorage: s,
 		execOps:     execOps,
 		opts:        opts,
+		cOps:        cOps,
 		buildOps:    buildOps,
 	}
 }

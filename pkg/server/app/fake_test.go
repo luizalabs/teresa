@@ -630,3 +630,13 @@ func TestFakeOpsSetVHostsErrNotFound(t *testing.T) {
 		t.Errorf("expected %v, got %v", ErrNotFound, teresa_errors.Get(err))
 	}
 }
+
+func TestFakeOperationsCheckVirtualHostIsMissing(t *testing.T) {
+	fake := NewFakeOperations()
+	app := &App{Name: "teresa"}
+	fake.Storage[app.Name] = app
+
+	if err := fake.CheckVirtualHostIsMissing(app); err != nil {
+		t.Errorf("expected nil, got %v", err)
+	}
+}

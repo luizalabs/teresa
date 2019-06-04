@@ -302,6 +302,13 @@ func (f *FakeOperations) SetVHosts(user *database.User, appName string, vHosts [
 	return nil
 }
 
+func (f *FakeOperations) CheckVirtualHostIsMissing(app *App) error {
+	if _, found := f.Storage[app.Name]; !found {
+		return ErrNotFound
+	}
+	return nil
+}
+
 func NewFakeOperations() *FakeOperations {
 	return &FakeOperations{
 		mutex:   &sync.RWMutex{},

@@ -45,6 +45,7 @@ message CreateRequest {
     string virtual_host = 6;
     bool internal = 7;
     string protocol = 8;
+    bool reserve_static_ip = 9;
 }
 
 message ListResponse {

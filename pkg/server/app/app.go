@@ -42,6 +42,7 @@ type Operations interface {
 	SetReplicas(user *database.User, appName string, replicas int32) error
 	DeletePods(user *database.User, appName string, podsNames []string) error
 	SetVHosts(user *database.User, appName string, vHosts []string) error
+	CheckVirtualHostIsMissing(app *App) error
 }
 
 type K8sOperations interface {
@@ -76,7 +77,7 @@ type K8sOperations interface {
 	DeletePod(namespace, podName string) error
 	HasIngress(namespace, name string) (bool, error)
 	IngressEnabled() bool
-	UpdateIngress(namespace, name string, vHosts []string) error
+	UpdateIngress(namespace, name string, vHosts []string, reserveStaticIp bool) error
 	CreateOrUpdateDeploySecretFile(namespace, deploy, fileName string) error
 	CreateOrUpdateCronJobSecretFile(namespace, cronjob, filename string) error
 	DeleteDeploySecrets(namespace, deploy string, envVars, volKeys []string) error
@@ -117,8 +118,8 @@ func (ops *AppOperations) Create(user *database.User, app *App) (Err error) {
 		return auth.ErrPermissionDenied
 	}
 
-	if ops.kops.IngressEnabled() && app.VirtualHost == "" && IsWebApp(app.ProcessType) {
-		return ErrMissingVirtualHost
+	if err := ops.CheckVirtualHostIsMissing(app); err != nil {
+		return err
 	}
 
 	if err := ops.kops.CreateNamespace(app, user.Email); err != nil {
@@ -725,7 +726,7 @@ func (ops *AppOperations) SetVHosts(user *database.User, appName string, vHosts 
 	}
 
 	if hasIngress {
-		if err := ops.kops.UpdateIngress(appName, appName, vHosts); err != nil {
+		if err := ops.kops.UpdateIngress(appName, appName, vHosts, false); err != nil {
 			return teresa_errors.NewInternalServerError(err)
 		}
 	}
@@ -735,6 +736,13 @@ func (ops *AppOperations) SetVHosts(user *database.User, appName string, vHosts 
 		return teresa_errors.NewInternalServerError(err)
 	}
 
+	return nil
+}
+
+func (ops *AppOperations) CheckVirtualHostIsMissing(app *App) (Err error) {
+	if ops.kops.IngressEnabled() && app.VirtualHost == "" && !app.ReserveStaticIp && IsWebApp(app.ProcessType) {
+		return ErrMissingVirtualHost
+	}
 	return nil
 }
 

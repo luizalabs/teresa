@@ -35,6 +35,10 @@ func (ops *awsOperations) CreateOrUpdateSSL(appName, cert string, port int) erro
 	return nil
 }
 
+func (ops *awsOperations) CreateOrUpdateStaticIp(appName, addressName string) error {
+	return ErrNotImplemented
+}
+
 func (ops *awsOperations) SSLInfo(appName string) (*service.SSLInfo, error) {
 	var port int
 	an, err := ops.k8s.ServiceAnnotations(appName, appName)

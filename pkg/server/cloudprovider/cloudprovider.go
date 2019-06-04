@@ -6,6 +6,7 @@ import (
 
 type Operations interface {
 	CreateOrUpdateSSL(appName, cert string, port int) error
+	CreateOrUpdateStaticIp(appName, addressName string) error
 	SSLInfo(appName string) (*service.SSLInfo, error)
 	Name() string
 }
@@ -14,6 +15,8 @@ type K8sOperations interface {
 	CloudProviderName() (string, error)
 	SetServiceAnnotations(namespace, service string, annotations map[string]string) error
 	ServiceAnnotations(namespace, service string) (map[string]string, error)
+	SetIngressAnnotations(namespace, ingress string, annotations map[string]string) error
+	IngressAnnotations(namespace, ingress string) (map[string]string, error)
 	IsNotFound(err error) bool
 	HasIngress(namespace, name string) (bool, error)
 }

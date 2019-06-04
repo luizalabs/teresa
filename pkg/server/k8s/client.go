@@ -623,17 +623,17 @@ func (k *Client) HasIngress(namespace, appName string) (bool, error) {
 	return true, nil
 }
 
-func (k *Client) createIngress(namespace, appName string, vHosts []string) error {
+func (k *Client) createIngress(namespace, appName string, vHosts []string, reserveStaticIp bool) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
 	}
-	igsSpec := ingressSpec(namespace, appName, vHosts)
+	igsSpec := ingressSpec(namespace, appName, vHosts, reserveStaticIp)
 	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Create(igsSpec)
 	return errors.Wrap(err, "create ingress failed")
 }
 
-func (k *Client) UpdateIngress(namespace, name string, vHosts []string) error {
+func (k *Client) UpdateIngress(namespace, name string, vHosts []string, reserveStaticIp bool) error {
 	kc, err := k.buildClient()
 	if err != nil {
 		return err
@@ -644,14 +644,51 @@ func (k *Client) UpdateIngress(namespace, name string, vHosts []string) error {
 	if err != nil {
 		return errors.Wrap(err, "get ingress failed")
 	}
-	newSpec := ingressSpec(namespace, name, vHosts)
+	newSpec := ingressSpec(namespace, name, vHosts, reserveStaticIp)
 	old.Spec.Rules = newSpec.Spec.Rules
 	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Update(old)
 	return errors.Wrap(err, "update ingress failed")
 }
 
+func (c *Client) patchIngressAnnotations(namespace, ingName string, annotations map[string]string) error {
+	data, err := prepareAnnotations(patchServiceAnnotationsTmpl, annotations)
+	if err != nil {
+		return err
+	}
+	return c.patchIngress(namespace, ingName, data)
+}
+
+func (c *Client) patchIngress(namespace, ingName string, data []byte) error {
+	kc, err := c.buildClient()
+	if err != nil {
+		return err
+	}
+	kc.ExtensionsV1beta1().Ingresses(namespace).Patch(
+		ingName,
+		types.StrategicMergePatchType,
+		data,
+	)
+	return errors.Wrap(err, "patch ingress failed")
+}
+
+func (c *Client) SetIngressAnnotations(namespace, ingName string, annotations map[string]string) error {
+	return c.patchIngressAnnotations(namespace, ingName, annotations)
+}
+
+func (c *Client) IngressAnnotations(namespace, ingName string) (map[string]string, error) {
+	kc, err := c.buildClient()
+	if err != nil {
+		return nil, err
+	}
+	ing, err := kc.ExtensionsV1beta1().Ingresses(namespace).Get(ingName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return ing.Annotations, nil
+}
+
 // ExposeDeploy creates a service and/or a ingress if needed
-func (k *Client) ExposeDeploy(namespace, appName, svcType, portName string, vHosts []string, w io.Writer) error {
+func (k *Client) ExposeDeploy(namespace, appName, svcType, portName string, vHosts []string, reserveStaticIp bool, w io.Writer) error {
 	hasSrv, err := k.hasService(namespace, appName)
 	if err != nil {
 		return err
@@ -673,7 +710,7 @@ func (k *Client) ExposeDeploy(namespace, appName, svcType, portName string, vHos
 	}
 	if !hasIgs {
 		fmt.Fprintln(w, "Creating ingress")
-		if err := k.createIngress(namespace, appName, vHosts); err != nil {
+		if err := k.createIngress(namespace, appName, vHosts, reserveStaticIp); err != nil {
 			return err
 		}
 	}
@@ -1154,7 +1191,7 @@ func (c *Client) UpdateServicePorts(namespace, svcName string, ports []spec.Serv
 }
 
 func (c *Client) patchServiceAnnotations(namespace, svcName string, annotations map[string]string) error {
-	data, err := prepareServiceAnnotations(patchServiceAnnotationsTmpl, annotations)
+	data, err := prepareAnnotations(patchServiceAnnotationsTmpl, annotations)
 	if err != nil {
 		return err
 	}
@@ -1565,7 +1602,7 @@ func removeVolumeSecretsItems(items []k8sv1.KeyToPath, toRemove []string) []k8sv
 	return items
 }
 
-func prepareServiceAnnotations(tmpl string, annotations map[string]string) ([]byte, error) {
+func prepareAnnotations(tmpl string, annotations map[string]string) ([]byte, error) {
 	b, err := json.Marshal(annotations)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to json encode")

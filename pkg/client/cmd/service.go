@@ -27,10 +27,25 @@ var serviceEnableSSLCmd = &cobra.Command{
 
   $ teresa service enable-ssl --app myapp --cert arn:aws:iam::xxxxx:server-certificate/cert-name
 
+  To enable ssl for the app on gcp (ingress only):
+
+  $ teresa service enable-ssl --app myapp --cert cert-name
+
   To only support ssl:
 
   $ teresa service enable-ssl --app myapp --cert arn:aws:iam::xxxxx:server-certificate/cert-name --only`,
 	Run: serviceEnableSSL,
+}
+
+var serviceSetStaticIpCmd = &cobra.Command{
+	Use:   "set-static-ip",
+	Short: "Set static IP for the app (GCP and ingress only)",
+	Long: `Set static IP for the app (GCP and ingress only)
+
+  To set static IP for the app on aws:
+
+  $ teresa service set-static-ip --app myapp --address-name myapp-address`,
+	Run: serviceSetStaticIp,
 }
 
 var serviceInfoCmd = &cobra.Command{
@@ -92,6 +107,39 @@ func serviceEnableSSL(cmd *cobra.Command, args []string) {
 		client.PrintErrorAndExit(client.GetErrorMsg(err))
 	}
 	fmt.Println("SSL enabled with success")
+}
+
+func serviceSetStaticIp(cmd *cobra.Command, args []string) {
+	if len(args) != 0 {
+		cmd.Usage()
+		return
+	}
+
+	appName, err := cmd.Flags().GetString("app")
+	if err != nil || appName == "" {
+		client.PrintErrorAndExit("Invalid app parameter")
+	}
+
+	addressName, err := cmd.Flags().GetString("address-name")
+	if err != nil || addressName == "" {
+		client.PrintErrorAndExit("Invalid address-name parameter")
+	}
+
+	conn, err := connection.New(cfgFile, cfgCluster)
+	if err != nil {
+		client.PrintConnectionErrorAndExit(err)
+	}
+	defer conn.Close()
+
+	cli := svcpb.NewServiceClient(conn)
+	req := &svcpb.SetStaticIpRequest{
+		AppName:     appName,
+		AddressName: addressName,
+	}
+	if _, err := cli.SetStaticIp(context.Background(), req); err != nil {
+		client.PrintErrorAndExit(client.GetErrorMsg(err))
+	}
+	fmt.Println("Static IP added with success")
 }
 
 func serviceInfo(cmd *cobra.Command, args []string) {
@@ -170,10 +218,14 @@ func serviceWhitelistSourceRanges(cmd *cobra.Command, args []string) {
 func init() {
 	RootCmd.AddCommand(serviceCmd)
 	serviceCmd.AddCommand(serviceEnableSSLCmd)
+	serviceCmd.AddCommand(serviceSetStaticIpCmd)
 	serviceCmd.AddCommand(serviceInfoCmd)
 	serviceCmd.AddCommand(serviceWhitelistSourceRangesCmd)
 
 	serviceEnableSSLCmd.Flags().String("app", "", "app name")
 	serviceEnableSSLCmd.Flags().String("cert", "", "certificate identifier")
 	serviceEnableSSLCmd.Flags().Bool("only", false, "only use SSL")
+
+	serviceSetStaticIpCmd.Flags().String("app", "", "app name")
+	serviceSetStaticIpCmd.Flags().String("address-name", "", "static IP address name")
 }

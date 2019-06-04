@@ -14,6 +14,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/auth"
 	"github.com/luizalabs/teresa/pkg/server/build"
+	"github.com/luizalabs/teresa/pkg/server/cloudprovider"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/exec"
 	"github.com/luizalabs/teresa/pkg/server/spec"
@@ -61,7 +62,7 @@ func (f *fakeK8sOperations) CreateOrUpdateCronJob(cronJobSpec *spec.CronJob) err
 	return f.createCronJobReturn
 }
 
-func (f *fakeK8sOperations) ExposeDeploy(namespace, name, svcType, portName string, vHosts []string, w io.Writer) error {
+func (f *fakeK8sOperations) ExposeDeploy(namespace, name, svcType, portName string, vHosts []string, reserveStaticIp bool, w io.Writer) error {
 	f.exposeDeployWasCalled = true
 	return nil
 }
@@ -103,6 +104,7 @@ func TestDeployPermissionDenied(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 	u := &database.User{Email: "bad-user@luizalabs.com"}
@@ -132,6 +134,7 @@ func TestDeploy(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 	u := &database.User{Email: "gopher@luizalabs.com"}
@@ -164,6 +167,7 @@ func TestCreateDeploy(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		opts,
 	)
 
@@ -204,6 +208,7 @@ func TestCreateDeployCreateNginxConfigMap(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 
@@ -234,6 +239,7 @@ func TestCreateDeploySkipCreatingNginxConfigMap(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 
@@ -264,6 +270,7 @@ func TestCreateDeployDeleteNginxConfigMap(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 
@@ -302,6 +309,7 @@ func TestCreateDeployCloudSQLProxySideCar(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 
@@ -335,6 +343,7 @@ func TestCreateDeployCloudSQLProxySideCarError(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 
@@ -362,6 +371,7 @@ func TestCreateDeployReturnError(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 
@@ -399,6 +409,7 @@ func TestCreateCronJob(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 
@@ -441,6 +452,7 @@ func TestCreateCronJobReturnError(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 
@@ -472,6 +484,7 @@ func TestCreateCronJobScheduleNotFound(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 
@@ -488,13 +501,17 @@ func TestExposeApp(t *testing.T) {
 		appProcessType                string
 		hasSrvErr                     error
 		expectedExposeDeployWasCalled bool
+		reserveStaticIp               bool
+		appName                       string
 	}{
-		{app.ProcessTypeWeb, nil, true},
-		{app.ProcessTypeWeb, nil, true},
-		{app.ProcessTypeWeb, errors.New("some sad error"), true},
-		{app.ProcessTypeWeb + "test", nil, true},
-		{app.ProcessTypeWeb + "-test", nil, true},
-		{"worker", nil, false},
+		{app.ProcessTypeWeb, nil, true, false, "foobar"},
+		{app.ProcessTypeWeb, nil, true, false, "foobar"},
+		{app.ProcessTypeWeb, errors.New("some sad error"), true, false, "foobar"},
+		{app.ProcessTypeWeb + "test", nil, true, false, "foobar"},
+		{app.ProcessTypeWeb + "-test", nil, true, false, "foobar"},
+		{"worker", nil, false, false, "foobar"},
+		{app.ProcessTypeWeb, nil, true, false, "foobar"},
+		{app.ProcessTypeWeb, nil, true, true, "foobar"},
 	}
 
 	for _, tc := range testCases {
@@ -507,10 +524,15 @@ func TestExposeApp(t *testing.T) {
 			storage.NewFake(),
 			exec.NewFakeOperations(),
 			build.NewFakeOperations(),
+			cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 			&Options{},
 		)
 		deployOperations := ops.(*DeployOperations)
-		deployOperations.exposeApp(&app.App{ProcessType: tc.appProcessType}, new(bytes.Buffer))
+		deployOperations.exposeApp(&app.App{
+			ProcessType:     tc.appProcessType,
+			ReserveStaticIp: tc.reserveStaticIp,
+			Name:            tc.appName,
+		}, new(bytes.Buffer))
 
 		if fakeK8s.exposeDeployWasCalled != tc.expectedExposeDeployWasCalled {
 			t.Errorf(
@@ -540,6 +562,7 @@ func TestRunReleaseCmd(t *testing.T) {
 			storage.NewFake(),
 			fakeExec,
 			build.NewFakeOperations(),
+			cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 			&Options{},
 		)
 
@@ -565,6 +588,7 @@ func TestDeployListSuccess(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
@@ -605,6 +629,7 @@ func TestDeployListErrPermissionDenied(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
@@ -621,6 +646,7 @@ func TestDeployListErrNotFound(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
@@ -637,6 +663,7 @@ func TestDeployListInternalServerError(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
@@ -653,6 +680,7 @@ func TestRollbackOpsSuccess(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
@@ -670,6 +698,7 @@ func TestRollbackOpsErrPermissionDenied(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 	user := &database.User{Email: "bad-user@luizalabs.com"}
@@ -687,6 +716,7 @@ func TestRollbackOpsErrNotFound(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}
@@ -704,6 +734,7 @@ func TestRollbackErrorFromContainerEnvVars(t *testing.T) {
 		storage.NewFake(),
 		exec.NewFakeOperations(),
 		build.NewFakeOperations(),
+		cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
 		&Options{},
 	)
 	user := &database.User{Email: "gopher@luizalabs.com"}

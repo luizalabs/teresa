@@ -265,7 +265,7 @@ func (f *fakeK8sOperations) ResumeCronJob(namespace, name string) error {
 	return f.ResumeCronJobErr
 }
 
-func (f *fakeK8sOperations) UpdateIngress(namespace, name string, vHosts []string) error {
+func (f *fakeK8sOperations) UpdateIngress(namespace, name string, vHosts []string, reserveStaticIp bool) error {
 	return f.UpdateIngressErr
 }
 
@@ -443,6 +443,60 @@ func TestAppCreateErrMissingVirtualHost(t *testing.T) {
 
 	if err := ops.Create(user, app); err != ErrMissingVirtualHost {
 		t.Errorf("want %v; got %v", ErrMissingVirtualHost, err)
+	}
+}
+
+func TestCheckVirtualHostIsMissingErr(t *testing.T) {
+	tops := team.NewFakeOperations()
+	fakeSt := st.NewFake()
+	teamName := "luizalabs"
+	fakeK8s := &fakeK8sOperations{IngressEnabledValue: true}
+	ops := NewOperations(tops, fakeK8s, fakeSt)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: teamName, ProcessType: ProcessTypeWeb}
+	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
+		Name:  teamName,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.CheckVirtualHostIsMissing(app); err != ErrMissingVirtualHost {
+		t.Errorf("want %v; got %v", ErrMissingVirtualHost, err)
+	}
+}
+
+func TestCheckVirtualHostIsMissingReserveStaticIp(t *testing.T) {
+	tops := team.NewFakeOperations()
+	fakeSt := st.NewFake()
+	teamName := "luizalabs"
+	fakeK8s := &fakeK8sOperations{IngressEnabledValue: true}
+	ops := NewOperations(tops, fakeK8s, fakeSt)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: teamName, ProcessType: ProcessTypeWeb, ReserveStaticIp: true}
+	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
+		Name:  teamName,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.CheckVirtualHostIsMissing(app); err != nil {
+		t.Errorf("want %v; got %v", nil, err)
+	}
+}
+
+func TestCheckVirtualHostIsMissingHasVhost(t *testing.T) {
+	tops := team.NewFakeOperations()
+	fakeSt := st.NewFake()
+	teamName := "luizalabs"
+	fakeK8s := &fakeK8sOperations{IngressEnabledValue: true}
+	ops := NewOperations(tops, fakeK8s, fakeSt)
+	user := &database.User{Email: "teresa@luizalabs.com"}
+	app := &App{Name: "teresa", Team: teamName, ProcessType: ProcessTypeWeb, VirtualHost: "foo.bar.com"}
+	tops.(*team.FakeOperations).Storage[teamName] = &database.Team{
+		Name:  teamName,
+		Users: []database.User{*user},
+	}
+
+	if err := ops.CheckVirtualHostIsMissing(app); err != nil {
+		t.Errorf("want %v; got %v", nil, err)
 	}
 }
 

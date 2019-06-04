@@ -2,7 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.29.0] - 2018-04-29
+## [0.30.0] - 2019-06-04
+### Added
+- Support for GCE static IP
+
+## [0.29.0] - 2019-04-29
 ### Added
 - One click way to delete app silently with --no-input flag
 

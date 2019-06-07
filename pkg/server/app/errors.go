@@ -17,7 +17,7 @@ var (
 	ErrInvalidActionForCronJob = status.Errorf(codes.InvalidArgument, "Invalid action for a cronjob app")
 	ErrMissingVirtualHost      = status.Errorf(
 		codes.InvalidArgument,
-		"Missing --vhost argument with the application domain",
+		"Missing --vhost or --reserve-static-ip argument with the application domain",
 	)
 	ErrInvalidBlankVHost = status.Errorf(
 		codes.InvalidArgument,

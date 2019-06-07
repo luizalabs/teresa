@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	gceSSLCertAnnotation  = "ingress.gce.kubernetes.io/pre-shared-cert"
+	gceSSLCertAnnotation  = "ingress.gcp.kubernetes.io/pre-shared-cert"
 	gceStaticIPAnnotation = "kubernetes.io/ingress.global-static-ip-name"
 )
 

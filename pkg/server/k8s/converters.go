@@ -362,17 +362,20 @@ func ingressSpec(namespace, name string, vHosts []string, reserveStaticIp bool) 
 		rules = make([]k8s_extensions.IngressRule, len(vHosts))
 	}
 
-	for i := 0; i < len(rules); i++ {
+	backend := &k8s_extensions.IngressBackend{
+		ServiceName: name,
+		ServicePort: intstr.FromInt(spec.DefaultExternalPort),
+	}
+
+	for i, vHost := range vHosts {
 		rules[i] = k8s_extensions.IngressRule{
+			Host: vHost,
 			IngressRuleValue: k8s_extensions.IngressRuleValue{
 				HTTP: &k8s_extensions.HTTPIngressRuleValue{
 					Paths: []k8s_extensions.HTTPIngressPath{
 						{
-							Path: "/",
-							Backend: k8s_extensions.IngressBackend{
-								ServiceName: name,
-								ServicePort: intstr.FromInt(spec.DefaultExternalPort),
-							},
+							Path:    "/",
+							Backend: *backend,
 						},
 					},
 				},
@@ -380,9 +383,17 @@ func ingressSpec(namespace, name string, vHosts []string, reserveStaticIp bool) 
 		}
 	}
 
-	for i, vHost := range vHosts {
-		rules[i].Host = vHost
+	var spec k8s_extensions.IngressSpec
+	if reserveStaticIp {
+		spec = k8s_extensions.IngressSpec{
+			Backend: backend,
+		}
+	} else {
+		spec = k8s_extensions.IngressSpec{
+			Rules: rules,
+		}
 	}
+
 	return &k8s_extensions.Ingress{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "extensions/v1beta1",
@@ -392,9 +403,7 @@ func ingressSpec(namespace, name string, vHosts []string, reserveStaticIp bool) 
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: k8s_extensions.IngressSpec{
-			Rules: rules,
-		},
+		Spec: spec,
 	}
 }
 

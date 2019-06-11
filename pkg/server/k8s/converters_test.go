@@ -374,13 +374,14 @@ func TestIngressSpecReserveStaticIp(t *testing.T) {
 	if i.ObjectMeta.Namespace != namespace {
 		t.Errorf("expected %s, got %s", namespace, i.ObjectMeta.Namespace)
 	}
-	if len(i.Spec.Rules) != 1 {
-		t.Errorf("expected 1, got %d", len(i.Spec.Rules))
+	if i.Spec.Rules != nil {
+		t.Errorf("expected nothing, got %s", i.Spec.Rules)
 	}
-	for _, rule := range i.Spec.Rules {
-		if rule.Host != "" {
-			t.Errorf("expected nothing, got %s", rule.Host)
-		}
+	if i.Spec.Backend == nil {
+		t.Errorf("expected backend, got %s", i.Spec.Backend)
+	}
+	if i.Spec.Backend.ServiceName != name {
+		t.Errorf("expected %s, got %s", name, i.Spec.Backend.ServiceName)
 	}
 }
 

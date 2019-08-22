@@ -83,7 +83,7 @@ spec:
         {{- end }}
         {{- if .Values.useMinio }}
         - name: TERESA_STORAGE_AWS_ENDPOINT
-          value: {{ .Release.Name }}-minio-svc.{{ .Release.Namespace }}:9000
+          value: {{ .Release.Name }}-minio.{{ .Release.Namespace }}:9000
         - name: TERESA_STORAGE_AWS_DISABLE_SSL
           value: "true"
         {{- else if .Values.aws.s3.endpoint }}
@@ -107,7 +107,7 @@ spec:
           valueFrom:
             secretKeyRef:
               {{- if .Values.useMinio }}
-              name: {{ .Release.Name }}-minio-user
+              name: {{ .Release.Name }}-minio
               key: accesskey
               {{- else }}
               name: {{ template "fullname" . }}-aws
@@ -117,7 +117,7 @@ spec:
           valueFrom:
             secretKeyRef:
               {{- if .Values.useMinio }}
-              name: {{ .Release.Name  }}-minio-user
+              name: {{ .Release.Name  }}-minio
               key: secretkey
               {{- else }}
               name: {{ template "fullname" . }}-aws

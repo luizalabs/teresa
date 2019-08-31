@@ -103,6 +103,16 @@ func TestS3PodEnvVars(t *testing.T) {
 	}
 }
 
+func TestS3PodEnvVarsEndpoint(t *testing.T) {
+	s3 := newS3(&Config{
+		AwsEndpoint: "storage.googleapis.com",
+	})
+	ev := s3.PodEnvVars()
+	if len(ev) != 1 {
+		t.Errorf("expected 1, got %d", len(ev))
+	}
+}
+
 func TestS3List(t *testing.T) {
 	s3 := newS3(&Config{})
 	s3.Client = &fakeS3Client{}

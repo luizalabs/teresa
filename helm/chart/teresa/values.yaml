@@ -43,3 +43,7 @@ rbac:
 apps:
   ingress: false
   service_type: LoadBalancer
+slugstore:
+  image:
+slugbuilder:
+  image:

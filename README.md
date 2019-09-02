@@ -64,3 +64,11 @@ Run the following in your command-line:
 $ brew tap luizalabs/teresa-cli
 $ brew install teresa
 ```
+
+## Snap Teresa Client
+
+Run the following in your command-line:
+
+```sh
+$ sudo snap install teresa-cli
+```

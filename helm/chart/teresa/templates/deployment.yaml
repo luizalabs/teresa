@@ -135,6 +135,14 @@ spec:
           value: {{ .Values.build.limits.cpu }}
         - name: TERESA_DEPLOY_BUILD_LIMIT_MEMORY
           value: {{ .Values.build.limits.memory }}
+        {{- if .Values.slugstore.image }}
+        - name: TERESA_DEPLOY_SLUG_STORE_IMAGE
+          value: {{ .Values.slugstore.image }}
+        {{- end }}
+        {{- if .Values.slugbuilder.image }}
+        - name: TERESA_DEPLOY_SLUG_BUILDER_IMAGE
+          value: {{ .Values.slugbuilder.image }}
+        {{- end }}
         - name: TERESA_K8S_INGRESS
           value: {{ .Values.apps.ingress | quote}}
         - name: TERESA_DEPLOY_DEFAULT_SERVICE_TYPE

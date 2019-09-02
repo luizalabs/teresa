@@ -103,6 +103,11 @@ func (s *S3) Type() string {
 }
 
 func (s *S3) PodEnvVars() map[string]string {
+	if s.Endpoint != "" {
+		return map[string]string{
+			"S3_HOST": s.Endpoint,
+		}
+	}
 	return make(map[string]string)
 }
 

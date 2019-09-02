@@ -603,7 +603,7 @@ func appEnvUnset(cmd *cobra.Command, args []string) {
 
 var appSecretSetCmd = &cobra.Command{
 	Use:   "secret-set [KEY=value, ...]",
-	Short: "Set secert (as env vars) for the app",
+	Short: "Set secret (as env vars) for the app",
 	Long: fmt.Sprintf(`Create or update a secret for the app.
 
 You can add a new secret for the app, or update if it already exists.

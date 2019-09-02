@@ -2,10 +2,11 @@
 
 set -e
 
-function download {
+function setup {
 	curl https://storage.googleapis.com/kubernetes-helm/helm-v2.5.1-linux-amd64.tar.gz --output /tmp/helm.tar.gz --silent
 
 	tar -x -C /tmp -f /tmp/helm.tar.gz linux-amd64/helm
+	/tmp/linux-amd64/helm init --client-only
 
 	if [[ -n $TRAVIS_TAG ]]; then
 		pip install --user awscli
@@ -16,8 +17,12 @@ function lint {
 	/tmp/linux-amd64/helm lint helm/chart/teresa
 }
 
+function dependency-update {
+	/tmp/linux-amd64/helm repo update
+	/tmp/linux-amd64/helm dependency update helm/chart/teresa
+}
+
 function deploy {
-	/tmp/linux-amd64/helm init --client-only
 	/tmp/linux-amd64/helm package helm/chart/teresa
 	mkdir /tmp/repo
 	mv teresa-*.tgz /tmp/repo
@@ -26,10 +31,12 @@ function deploy {
 }
 
 case $1 in
-	"download" )
-		download ;;
+	"setup" )
+		setup ;;
 	"lint" )
 		lint ;;
+	"dependency-update" )
+		dependency-update ;;
 	"deploy")
 		if [[ -z "$TRAVIS_TAG" ]]; then
 			echo "skip helm repo update (no tag detected)"

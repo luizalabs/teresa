@@ -14,6 +14,7 @@ jobs:
     - stage: helm
       before_script:
         - ./.helm.sh download
+        - ./.helm.sh dependency update
       script:
         - ./.helm.sh lint
       after_success:

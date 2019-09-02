@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.31.0-rc.1] - 2019-09-02
+### Changed
+- Updated minio Helm dependency
+- Added `S3_HOST` variable to PodEnvVars
+
+### Fixed
+- Fixed wrong spec for ingresses with static ip
+
 ## [0.30.1] - 2019-06-07
 ### Fixed
 - Typo on SSL annotation on GCE

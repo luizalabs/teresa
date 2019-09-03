@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.29.1-rc.1] - 2019-09-03
+## Changed
+- Updated minio version on helm chart
+- Added `S3_HOST` env var
+- Added helm dependency update to .helm.sh
+
 ## [0.29.0] - 2018-04-29
 ### Added
 - One click way to delete app silently with --no-input flag

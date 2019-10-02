@@ -247,7 +247,7 @@ func extractApp(path string) (string, bool) {
 }
 
 func sendAppTarball(tarPath string, stream dpb.Deploy_MakeClient) error {
-	fmt.Println("Sending app tarbal...")
+	fmt.Println("Sending app tarball...")
 	defer stream.CloseSend()
 
 	f, err := os.Open(tarPath)

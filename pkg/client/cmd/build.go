@@ -172,7 +172,7 @@ func streamServerBuildMsgs(stream bpb.Build_MakeClient) error {
 }
 
 func sendBuildTarball(tarPath string, stream bpb.Build_MakeClient) error {
-	fmt.Println("Sending app tarbal...")
+	fmt.Println("Sending app tarball...")
 	defer stream.CloseSend()
 
 	f, err := os.Open(tarPath)

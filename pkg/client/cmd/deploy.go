@@ -174,7 +174,7 @@ func deployApp(cmd *cobra.Command, args []string) {
 
 	ip, err := getIgnorePatterns(dir)
 	if err != nil {
-		client.PrintErrorAndExit("Error acessing .teresaignore file: %v", err)
+		client.PrintErrorAndExit("Error accessing .teresaignore file: %v", err)
 	}
 
 	fmt.Println("Generating tarball of:", appURL)

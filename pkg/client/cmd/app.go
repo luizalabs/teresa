@@ -48,7 +48,7 @@ The app name must follow this rules:
   With specific process type:
   $ teresa app create foo-worker --team bar --process-type worker
 
-  With scale rules... min 2, max 10 pods, scalling with a cpu target of 70%
+  With scale rules... min 2, max 10 pods, scaling with a cpu target of 70%
   $ teresa app create foo --team bar --scale-min 2 --scale-max 10 --scale-cpu 70
 
   With specific cpu and memory size...
@@ -489,7 +489,7 @@ You can add a new environment variable for the app, or update if it already exis
 
 WARNING:
   If you need to set more than one env var to the application, provide all at once.
-  Every time this command is called, the application needs to be restared.`,
+  Every time this command is called, the application needs to be restarted.`,
 	Example: `  To add an new env var called "FOO":
 
   $ teresa app env-set FOO=bar --app myapp
@@ -608,14 +608,14 @@ var appSecretSetCmd = &cobra.Command{
 
 You can add a new secret for the app, or update if it already exists.
 
-If you need to create a file secret (monted as a file in the app container file system)
+If you need to create a file secret (mounted as a file in the app container file system)
 use the flag '-f' pointing to a file in your current file system.
 When you create a secret based on a file the name of secret will be the name of file
 and Teresa will mount that secret in the default directory %s.
 
 WARNING:
   If you need to set more than one secret to the application, provide all at once.
-  Every time this command is called, the application needs to be restared.`, app.SecretPath),
+  Every time this command is called, the application needs to be restarted.`, app.SecretPath),
 	Example: `  To add an new secret called "FOO":
 
   $ teresa app secret-set FOO=bar --app myapp
@@ -626,7 +626,7 @@ WARNING:
 
   For file based secrets use '-f' flag:
 
-  $ tersa app secret-set -f my-secret-file.txt`,
+  $ teresa app secret-set -f my-secret-file.txt`,
 	Run: appSecretSet,
 }
 
@@ -968,7 +968,7 @@ func init() {
 	// App delete-pods
 	appDeletePodsCmd.Flags().String("app", "", "app name")
 	// App delete
-	appDelCmd.Flags().Bool("no-input", false, "ATENTION: delete app without warning")
+	appDelCmd.Flags().Bool("no-input", false, "ATTENTION: delete app without warning")
 }
 
 func appLogs(cmd *cobra.Command, args []string) {

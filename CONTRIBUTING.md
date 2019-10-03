@@ -18,7 +18,7 @@ an outline:
 
 # Tips on Testing
 
-You basically need a Kubernetes cluster (with the correponding kubectl config)
+You basically need a Kubernetes cluster (with the corresponding kubectl config)
 and a S3 API compatible server.
 
 Compile the server and client with you modifications:

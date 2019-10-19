@@ -110,6 +110,9 @@ Parameter | Description | Default
 `rbac.enabled` | If true, this configure teresa deployment to use rbac, for now it will use the `cluster-admin` role | `false`
 `apps.ingress` | If true, teresa will create a ingress when expose the app | `false`
 `apps.service_type` | The type used to create the app server | `LoadBalancer`
+`apps.ingress_class` | The ingress class to be used | ``
+`slugstore.image`| The image to be used for the slugstore | `""`
+`slugbuilder.image`| The image to be used for the slugbuilder | `""`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 

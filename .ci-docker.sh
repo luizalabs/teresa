@@ -3,7 +3,7 @@
 set -e
 
 if [ -z "$TRAVIS_TAG" ]; then
-    echo "skip docker imagem generation (no tag detected)"
+    echo "skip docker image generation (no tag detected)"
     exit 0
 fi
 

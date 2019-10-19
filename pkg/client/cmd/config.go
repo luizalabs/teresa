@@ -116,7 +116,7 @@ func useCluster(cmd *cobra.Command, args []string) {
 	}
 	c.CurrentCluster = name
 	if err = client.SaveConfigFile(cfgFile, c); err != nil {
-		client.PrintErrorAndExit("Erro trying to save config file: %v", err)
+		client.PrintErrorAndExit("Error trying to save config file: %v", err)
 	}
 }
 
@@ -168,7 +168,7 @@ func setCluster(cmd *cobra.Command, args []string) {
 	}
 
 	if err = client.SaveConfigFile(cfgFile, c); err != nil {
-		client.PrintErrorAndExit("Erro trying to save config file: %v", err)
+		client.PrintErrorAndExit("Error trying to save config file: %v", err)
 	}
 }
 

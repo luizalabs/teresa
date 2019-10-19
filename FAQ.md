@@ -48,7 +48,7 @@ Use the `set-cluster` command again:
 
 **Q: Do I always have to login?**
 
-When you login you get a token that by default is valid por 15 days, so you are
+When you login you get a token that by default is valid for 15 days, so you are
 only supposed to login again after the token expires. You can customize the
 time interval by using the  `--expires-in ` flag:
 

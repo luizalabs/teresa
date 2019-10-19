@@ -24,7 +24,7 @@ func PrintErrorAndExit(format string, args ...interface{}) {
 
 func PrintConnectionErrorAndExit(err error) {
 	PrintErrorAndExit(
-		"A connection error occoured.\n" +
+		"A connection error occurred.\n" +
 		"Please, try again.\n\n" +
 		"Server details: %s", GetErrorMsg(err),
 	)

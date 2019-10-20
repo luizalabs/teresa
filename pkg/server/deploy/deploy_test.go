@@ -62,7 +62,7 @@ func (f *fakeK8sOperations) CreateOrUpdateCronJob(cronJobSpec *spec.CronJob) err
 	return f.createCronJobReturn
 }
 
-func (f *fakeK8sOperations) ExposeDeploy(namespace, name, svcType, portName string, vHosts []string, reserveStaticIp bool, w io.Writer) error {
+func (f *fakeK8sOperations) ExposeDeploy(namespace, name, svcType, portName string, vHosts []string, reserveStaticIp bool, ingressClass string, w io.Writer) error {
 	f.exposeDeployWasCalled = true
 	return nil
 }

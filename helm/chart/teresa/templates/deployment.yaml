@@ -147,6 +147,8 @@ spec:
           value: {{ .Values.apps.ingress | quote}}
         - name: TERESA_DEPLOY_DEFAULT_SERVICE_TYPE
           value: {{ .Values.apps.service_type }}
+        - name: TERESA_DEPLOY_INGRESS_CLASS
+          value: {{ .Values.apps.ingress_class }}
         volumeMounts:
         {{- if .Values.tls.crt }}
         - mountPath: /etc/teresa

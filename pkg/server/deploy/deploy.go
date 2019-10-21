@@ -38,7 +38,7 @@ type Operations interface {
 type K8sOperations interface {
 	CreateOrUpdateDeploy(deploySpec *spec.Deploy) error
 	CreateOrUpdateCronJob(cronJobSpec *spec.CronJob) error
-	ExposeDeploy(namespace, name, svcType, portName string, vHosts []string, reserveStaticIp bool, w io.Writer) error
+	ExposeDeploy(namespace, name, svcType, portName string, vHosts []string, reserveStaticIp bool, ingressClass string, w io.Writer) error
 	ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error)
 	DeployRollbackToRevision(namespace, name, revision string) error
 	CreateOrUpdateConfigMap(namespace, name string, data map[string]string) error
@@ -234,7 +234,7 @@ func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {
 	}
 	svcType := ops.serviceType(a)
 	vHosts := strings.Split(a.VirtualHost, ",")
-	if err := ops.k8s.ExposeDeploy(a.Name, a.Name, svcType, a.Protocol, vHosts, a.ReserveStaticIp, w); err != nil {
+	if err := ops.k8s.ExposeDeploy(a.Name, a.Name, svcType, a.Protocol, vHosts, a.ReserveStaticIp, ops.opts.IngressClass, w); err != nil {
 		return err
 	}
 	if a.ReserveStaticIp {

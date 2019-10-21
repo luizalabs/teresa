@@ -3,6 +3,7 @@ package exec
 import (
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/luizalabs/teresa/pkg/goutil"
 	execpb "github.com/luizalabs/teresa/pkg/protobuf/exec"
 	"github.com/luizalabs/teresa/pkg/server/database"
@@ -19,6 +20,7 @@ type Service struct {
 func (s *Service) Command(req *execpb.CommandRequest, stream execpb.Exec_CommandServer) error {
 	ctx := stream.Context()
 	u := ctx.Value("user").(*database.User)
+	log.Infof("Received exec: cmd <%v>, user %v:", req.Command, u)
 
 	rc, errChan := s.ops.RunCommand(ctx, u, req.AppName, req.Command...)
 	if rc == nil {

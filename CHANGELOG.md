@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.31.0] - 2019-12-06
+### Changed
+- Updated minio version on helm chart
+- Added `S3_HOST` env var
+- Added helm dependency update to .helm.sh
+- Added ingress class specification
+
 ## [0.30.1] - 2019-06-07
 ### Fixed
 - Typo on SSL annotation on GCE

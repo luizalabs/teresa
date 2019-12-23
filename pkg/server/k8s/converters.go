@@ -134,9 +134,9 @@ func podSpecToK8sPod(podSpec *spec.Pod) (*k8sv1.Pod, error) {
 	}
 
 	ps := k8sv1.PodSpec{
-		RestartPolicy: k8sv1.RestartPolicyNever,
-		Containers:    containers,
-		Volumes:       volumes,
+		RestartPolicy:                k8sv1.RestartPolicyNever,
+		Containers:                   containers,
+		Volumes:                      volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
 	}
@@ -160,17 +160,19 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta2.De
 	}
 	volumes := podSpecVolumesToK8sVolumes(deploySpec.Volumes)
 
-	if deploySpec.HealthCheck != nil {
-		if deploySpec.HealthCheck.Liveness != nil {
-			containers[0].LivenessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Liveness)
+	for i, _ := range containers {
+		if deploySpec.HealthCheck != nil {
+			if deploySpec.HealthCheck.Liveness != nil {
+				containers[i].LivenessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Liveness)
+			}
+			if deploySpec.HealthCheck.Readiness != nil {
+				containers[i].ReadinessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Readiness)
+			}
 		}
-		if deploySpec.HealthCheck.Readiness != nil {
-			containers[0].ReadinessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Readiness)
-		}
-	}
 
-	if deploySpec.Lifecycle != nil {
-		containers[0].Lifecycle = lifecycleToK8sLifecycle(deploySpec.Lifecycle)
+		if deploySpec.Lifecycle != nil {
+			containers[i].Lifecycle = lifecycleToK8sLifecycle(deploySpec.Lifecycle)
+		}
 	}
 
 	f := false
@@ -179,9 +181,9 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta2.De
 		return nil, err
 	}
 	ps := k8sv1.PodSpec{
-		RestartPolicy: k8sv1.RestartPolicyAlways,
-		Containers:    containers,
-		Volumes:       volumes,
+		RestartPolicy:                k8sv1.RestartPolicyAlways,
+		Containers:                   containers,
+		Volumes:                      volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
 	}
@@ -252,9 +254,9 @@ func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv1beta1.CronJob, er
 
 	f := false
 	ps := k8sv1.PodSpec{
-		RestartPolicy: k8sv1.RestartPolicyNever,
-		Containers:    containers,
-		Volumes:       volumes,
+		RestartPolicy:                k8sv1.RestartPolicyNever,
+		Containers:                   containers,
+		Volumes:                      volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
 	}

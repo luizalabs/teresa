@@ -93,3 +93,9 @@ ENV/
 
 #Helm Dependency
 helm/chart/teresa/charts
+
+.idea
+.vscode
+teresa-server
+cmd/client/client
+

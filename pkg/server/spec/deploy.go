@@ -45,10 +45,20 @@ type TeresaYaml struct {
 	Lifecycle     *Lifecycle         `yaml:"lifecycle,omitempty"`
 	Cron          *CronArgs          `yaml:"cron,omitempty"`
 	SideCars      map[string]RawData `yaml:"sidecars,omitempty"`
+	DNSConfig     *DNSConfig
 }
 
 type TeresaYamlV2 struct {
 	Applications map[string]*TeresaYaml `yaml:"applications,omitempty"`
+}
+
+type DNSConfig struct {
+	Options []DNSOptions
+}
+
+type DNSOptions struct {
+	Name  string
+	Value string
 }
 
 type Deploy struct {
@@ -112,6 +122,16 @@ func (b *DeployBuilder) Build() *Deploy {
 			PreStop: &PreStop{DrainTimeoutSeconds: defaultDrainTimeoutSeconds},
 		}
 	}
+
+	if b.d.DNSConfig == nil {
+		b.d.DNSConfig = &DNSConfig{
+			Options: append([]DNSOptions{}, DNSOptions{
+				Name:  "ndots",
+				Value: "2",
+			}),
+		}
+	}
+
 	return b.d
 }
 

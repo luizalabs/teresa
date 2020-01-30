@@ -60,6 +60,10 @@ func TestDeployBuilder(t *testing.T) {
 	if ds.Lifecycle.PreStop.DrainTimeoutSeconds != defaultDrainTimeoutSeconds {
 		t.Errorf("got %d; want %d", ds.Lifecycle.PreStop.DrainTimeoutSeconds, defaultDrainTimeoutSeconds)
 	}
+
+	if ds.DNSConfig == nil {
+		t.Errorf("expected dnsConfig; got nil")
+	}
 }
 
 func TestRawData(t *testing.T) {

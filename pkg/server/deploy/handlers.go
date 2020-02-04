@@ -27,6 +27,7 @@ type Options struct {
 	DefaultServiceType   string        `split_words:"true" default:"LoadBalancer"`
 	CloudSQLProxyImage   string        `split_words:"true" default:"gcr.io/cloudsql-docker/gce-proxy:1.11"`
 	IngressClass         string        `split_words:"true" default:""`
+	DNSConfigNdots       string        `envconfig:"dnsconfig_ndots" default:"2"`
 }
 
 type Service struct {

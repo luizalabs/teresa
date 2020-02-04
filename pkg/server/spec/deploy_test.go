@@ -21,11 +21,13 @@ func TestDeployBuilder(t *testing.T) {
 	expectedDescription := "teste"
 	expectedRevisionHistoryLimit := 5
 	expectedMatchLabels := map[string]string{"expected": "label"}
+	expectedDNSConfigNdots := "2"
 	ds := NewDeployBuilder(expectedSlugURL).
 		WithPod(pod).
 		WithDescription(expectedDescription).
 		WithRevisionHistoryLimit(expectedRevisionHistoryLimit).
 		WithTeresaYaml(&TeresaYaml{}).
+		WithDNSConfigNdots(expectedDNSConfigNdots).
 		WithMatchLabels(expectedMatchLabels).
 		Build()
 
@@ -71,6 +73,7 @@ func TestDeployBuilder(t *testing.T) {
 }
 
 func TestTeresaYamlOvewriteNdots(t *testing.T) {
+	expectedDNSConfigNdots := "2"
 	expectedSlugURL := "some/slug.tgz"
 	teresaYaml := &TeresaYaml{}
 	teresaYaml.DNSConfig = &DNSConfig{
@@ -82,6 +85,7 @@ func TestTeresaYamlOvewriteNdots(t *testing.T) {
 
 	ds := NewDeployBuilder(expectedSlugURL).
 		WithTeresaYaml(teresaYaml).
+		WithDNSConfigNdots(expectedDNSConfigNdots).
 		Build()
 
 	if ds.DNSConfig.Options[0].Value != "1" {

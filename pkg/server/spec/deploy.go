@@ -106,6 +106,20 @@ func (b *DeployBuilder) WithRevisionHistoryLimit(rhl int) *DeployBuilder {
 	return b
 }
 
+func (b *DeployBuilder) WithDNSConfigNdots(ndots string) *DeployBuilder {
+
+	if b.d.DNSConfig == nil {
+		b.d.DNSConfig = &DNSConfig{
+			Options: append([]DNSOptions{}, DNSOptions{
+				Name:  "ndots",
+				Value: ndots,
+			}),
+		}
+	}
+
+	return b
+}
+
 func (b *DeployBuilder) WithDescription(desc string) *DeployBuilder {
 	b.d.Description = desc
 	return b
@@ -120,15 +134,6 @@ func (b *DeployBuilder) Build() *Deploy {
 	if b.d.Lifecycle == nil {
 		b.d.Lifecycle = &Lifecycle{
 			PreStop: &PreStop{DrainTimeoutSeconds: defaultDrainTimeoutSeconds},
-		}
-	}
-
-	if b.d.DNSConfig == nil {
-		b.d.DNSConfig = &DNSConfig{
-			Options: append([]DNSOptions{}, DNSOptions{
-				Name:  "ndots",
-				Value: "2",
-			}),
 		}
 	}
 

@@ -21,11 +21,13 @@ func TestDeployBuilder(t *testing.T) {
 	expectedDescription := "teste"
 	expectedRevisionHistoryLimit := 5
 	expectedMatchLabels := map[string]string{"expected": "label"}
+	expectedDNSConfigNdots := "2"
 	ds := NewDeployBuilder(expectedSlugURL).
 		WithPod(pod).
 		WithDescription(expectedDescription).
 		WithRevisionHistoryLimit(expectedRevisionHistoryLimit).
 		WithTeresaYaml(&TeresaYaml{}).
+		WithDNSConfigNdots(expectedDNSConfigNdots).
 		WithMatchLabels(expectedMatchLabels).
 		Build()
 
@@ -59,6 +61,35 @@ func TestDeployBuilder(t *testing.T) {
 
 	if ds.Lifecycle.PreStop.DrainTimeoutSeconds != defaultDrainTimeoutSeconds {
 		t.Errorf("got %d; want %d", ds.Lifecycle.PreStop.DrainTimeoutSeconds, defaultDrainTimeoutSeconds)
+	}
+
+	if ds.DNSConfig == nil {
+		t.Error("expected dnsConfig; got nil")
+	}
+
+	if ds.DNSConfig.Options[0].Value != "2" {
+		t.Errorf("expected dnsConfig.Options[0].value to be 2; got %s", ds.DNSConfig.Options[0].Value)
+	}
+}
+
+func TestTeresaYamlOvewriteNdots(t *testing.T) {
+	expectedDNSConfigNdots := "2"
+	expectedSlugURL := "some/slug.tgz"
+	teresaYaml := &TeresaYaml{}
+	teresaYaml.DNSConfig = &DNSConfig{
+		Options: append([]DNSOptions{}, DNSOptions{
+			Name:  "ndots",
+			Value: "1",
+		}),
+	}
+
+	ds := NewDeployBuilder(expectedSlugURL).
+		WithTeresaYaml(teresaYaml).
+		WithDNSConfigNdots(expectedDNSConfigNdots).
+		Build()
+
+	if ds.DNSConfig.Options[0].Value != "1" {
+		t.Errorf("expected dnsConfig.Options[0].value to be 1; got %s", ds.DNSConfig.Options[0].Value)
 	}
 }
 

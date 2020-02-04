@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_VERSION]
+### Changed
+- Added dnsConfig on deploy
+
 ## [0.29.1-rc.1] - 2019-09-03
 ## Changed
 - Updated minio version on helm chart

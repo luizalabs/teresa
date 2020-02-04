@@ -134,9 +134,9 @@ func podSpecToK8sPod(podSpec *spec.Pod) (*k8sv1.Pod, error) {
 	}
 
 	ps := k8sv1.PodSpec{
-		RestartPolicy: k8sv1.RestartPolicyNever,
-		Containers:    containers,
-		Volumes:       volumes,
+		RestartPolicy:                k8sv1.RestartPolicyNever,
+		Containers:                   containers,
+		Volumes:                      volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
 	}
@@ -179,11 +179,12 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta2.De
 		return nil, err
 	}
 	ps := k8sv1.PodSpec{
-		RestartPolicy: k8sv1.RestartPolicyAlways,
-		Containers:    containers,
-		Volumes:       volumes,
+		RestartPolicy:                k8sv1.RestartPolicyAlways,
+		Containers:                   containers,
+		Volumes:                      volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
+		DNSConfig:                    dnsConfigToK8sDNSConfig(deploySpec.DNSConfig),
 	}
 
 	var maxSurge, maxUnavailable *intstr.IntOrString
@@ -252,9 +253,9 @@ func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv1beta1.CronJob, er
 
 	f := false
 	ps := k8sv1.PodSpec{
-		RestartPolicy: k8sv1.RestartPolicyNever,
-		Containers:    containers,
-		Volumes:       volumes,
+		RestartPolicy:                k8sv1.RestartPolicyNever,
+		Containers:                   containers,
+		Volumes:                      volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
 	}
@@ -331,6 +332,21 @@ func lifecycleToK8sLifecycle(lc *spec.Lifecycle) *k8sv1.Lifecycle {
 	}
 
 	return k8sLc
+}
+
+func dnsConfigToK8sDNSConfig(dc *spec.DNSConfig) *k8sv1.PodDNSConfig {
+	k8sDc := new(k8sv1.PodDNSConfig)
+
+	if dc != nil {
+		k8sDc = &k8sv1.PodDNSConfig{
+			Options: append([]k8sv1.PodDNSConfigOption{}, k8sv1.PodDNSConfigOption{
+				Name:  dc.Options[0].Name,
+				Value: &dc.Options[0].Value,
+			}),
+		}
+	}
+
+	return k8sDc
 }
 
 func serviceSpecToK8s(svcSpec *spec.Service) *k8sv1.Service {

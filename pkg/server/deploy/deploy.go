@@ -178,6 +178,7 @@ func (ops *DeployOperations) createOrUpdateDeploy(a *app.App, confFiles *DeployC
 		WithDescription(description).
 		WithRevisionHistoryLimit(ops.opts.RevisionHistoryLimit).
 		WithTeresaYaml(confFiles.TeresaYaml).
+		WithDNSConfigNdots(ops.opts.DNSConfigNdots).
 		WithMatchLabels(labels).
 		Build()
 

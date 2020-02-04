@@ -26,6 +26,7 @@ type Options struct {
 	BuildLimitMemory     string        `split_words:"true" default:"1Gi"`
 	DefaultServiceType   string        `split_words:"true" default:"LoadBalancer"`
 	CloudSQLProxyImage   string        `split_words:"true" default:"gcr.io/cloudsql-docker/gce-proxy:1.11"`
+	DNSConfigNdots       string        `envconfig:"dnsconfig_ndots" default:"2"`
 }
 
 type Service struct {

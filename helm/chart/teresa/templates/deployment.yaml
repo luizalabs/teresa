@@ -147,6 +147,10 @@ spec:
           value: {{ .Values.apps.ingress | quote}}
         - name: TERESA_DEPLOY_DEFAULT_SERVICE_TYPE
           value: {{ .Values.apps.service_type }}
+        {{- if .Values.apps.dnsconfig_ndots }}
+        - name: TERESA_DEPLOY_DNSCONFIG_NDOTS
+          value: {{ .Values.apps.dnsconfig_ndots }}
+        {{- end }}
         volumeMounts:
         {{- if .Values.tls.crt }}
         - mountPath: /etc/teresa

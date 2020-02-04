@@ -45,7 +45,7 @@ type TeresaYaml struct {
 	Lifecycle     *Lifecycle         `yaml:"lifecycle,omitempty"`
 	Cron          *CronArgs          `yaml:"cron,omitempty"`
 	SideCars      map[string]RawData `yaml:"sidecars,omitempty"`
-	DNSConfig     *DNSConfig
+	DNSConfig     *DNSConfig         `yaml:"dnsConfig,omitempty"`
 }
 
 type TeresaYamlV2 struct {
@@ -53,12 +53,12 @@ type TeresaYamlV2 struct {
 }
 
 type DNSConfig struct {
-	Options []DNSOptions
+	Options []DNSOptions `yaml:"options"`
 }
 
 type DNSOptions struct {
-	Name  string
-	Value string
+	Name  string `yaml:"name"`
+	Value string `yaml:"value"`
 }
 
 type Deploy struct {

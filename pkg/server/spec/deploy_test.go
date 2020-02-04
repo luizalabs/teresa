@@ -62,7 +62,30 @@ func TestDeployBuilder(t *testing.T) {
 	}
 
 	if ds.DNSConfig == nil {
-		t.Errorf("expected dnsConfig; got nil")
+		t.Error("expected dnsConfig; got nil")
+	}
+
+	if ds.DNSConfig.Options[0].Value != "2" {
+		t.Errorf("expected dnsConfig.Options[0].value to be 2; got %s", ds.DNSConfig.Options[0].Value)
+	}
+}
+
+func TestTeresaYamlOvewriteNdots(t *testing.T) {
+	expectedSlugURL := "some/slug.tgz"
+	teresaYaml := &TeresaYaml{}
+	teresaYaml.DNSConfig = &DNSConfig{
+		Options: append([]DNSOptions{}, DNSOptions{
+			Name:  "ndots",
+			Value: "1",
+		}),
+	}
+
+	ds := NewDeployBuilder(expectedSlugURL).
+		WithTeresaYaml(teresaYaml).
+		Build()
+
+	if ds.DNSConfig.Options[0].Value != "1" {
+		t.Errorf("expected dnsConfig.Options[0].value to be 1; got %s", ds.DNSConfig.Options[0].Value)
 	}
 }
 

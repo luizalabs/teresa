@@ -265,7 +265,7 @@ func (f *fakeK8sOperations) ResumeCronJob(namespace, name string) error {
 	return f.ResumeCronJobErr
 }
 
-func (f *fakeK8sOperations) UpdateIngress(namespace, name string, vHosts []string, reserveStaticIp bool) error {
+func (f *fakeK8sOperations) UpdateIngress(namespace, name string, vHosts []string) error {
 	return f.UpdateIngressErr
 }
 

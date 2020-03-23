@@ -77,7 +77,7 @@ type K8sOperations interface {
 	DeletePod(namespace, podName string) error
 	HasIngress(namespace, name string) (bool, error)
 	IngressEnabled() bool
-	UpdateIngress(namespace, name string, vHosts []string, reserveStaticIp bool) error
+	UpdateIngress(namespace, name string, vHosts []string) error
 	CreateOrUpdateDeploySecretFile(namespace, deploy, fileName string) error
 	CreateOrUpdateCronJobSecretFile(namespace, cronjob, filename string) error
 	DeleteDeploySecrets(namespace, deploy string, envVars, volKeys []string) error
@@ -726,7 +726,7 @@ func (ops *AppOperations) SetVHosts(user *database.User, appName string, vHosts 
 	}
 
 	if hasIngress {
-		if err := ops.kops.UpdateIngress(appName, appName, vHosts, false); err != nil {
+		if err := ops.kops.UpdateIngress(appName, appName, vHosts); err != nil {
 			return teresa_errors.NewInternalServerError(err)
 		}
 	}

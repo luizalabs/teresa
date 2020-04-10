@@ -275,6 +275,8 @@ Create a nginx.conf file in the project root directory, for example:
 ```
 events {
   worker_connections  1024;
+  multi_accept on;
+  use epoll;
 }
 
 http{
@@ -312,6 +314,8 @@ set the `proxy_pass` to previous created upstream, for instance:
 ```
 events {
   worker_connections  1024;
+  multi_accept on;
+  use epoll;
 }
 
 http{
@@ -321,6 +325,7 @@ http{
   server {
     listen $NGINX_PORT;
     location / {
+        access_log off;
         proxy_set_header HOST $host;
         proxy_pass http://myapp;
     }
@@ -346,6 +351,8 @@ env MY_VAR;
 
 events {
     worker_connections 1024;
+    multi_accept on;
+    use epoll;
 }
 
 http {
@@ -356,6 +363,7 @@ http {
             return 301 https://mydomain;
         }
         location / {
+            access_log off;
             proxy_set_header HOST $host;
             proxy_pass $NGINX_BACKEND;
         }

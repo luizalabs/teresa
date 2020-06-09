@@ -7,6 +7,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Default nginx side-car image to allow support to lua scripts
 - Ingress spec will be the same for vhost and static IP
 
+### Fixed
+- Don't create an Ingress for apps without vHosts
+
 ## [0.32.0]
 ### Changed
 - Added dnsConfig on deploy

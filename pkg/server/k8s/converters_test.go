@@ -346,7 +346,7 @@ func TestIngressSpec(t *testing.T) {
 	namespace := "teresa"
 	vHosts := []string{"test1.teresa-apps.io", "test2.teresa-apps.io"}
 
-	i := ingressSpec(namespace, name, vHosts, false)
+	i := ingressSpec(namespace, name, vHosts)
 	if i.ObjectMeta.Name != name {
 		t.Errorf("expected %s, got %s", name, i.ObjectMeta.Name)
 	}
@@ -360,28 +360,6 @@ func TestIngressSpec(t *testing.T) {
 		if rule.Host != vHosts[idx] {
 			t.Errorf("expected %s, got %s", vHosts[idx], rule.Host)
 		}
-	}
-}
-
-func TestIngressSpecReserveStaticIp(t *testing.T) {
-	name := "teresa"
-	namespace := "teresa"
-
-	i := ingressSpec(namespace, name, []string{}, true)
-	if i.ObjectMeta.Name != name {
-		t.Errorf("expected %s, got %s", name, i.ObjectMeta.Name)
-	}
-	if i.ObjectMeta.Namespace != namespace {
-		t.Errorf("expected %s, got %s", namespace, i.ObjectMeta.Namespace)
-	}
-	if i.Spec.Rules != nil {
-		t.Errorf("expected nothing, got %s", i.Spec.Rules)
-	}
-	if i.Spec.Backend == nil {
-		t.Errorf("expected backend, got %s", i.Spec.Backend)
-	}
-	if i.Spec.Backend.ServiceName != name {
-		t.Errorf("expected %s, got %s", name, i.Spec.Backend.ServiceName)
 	}
 }
 
@@ -601,9 +579,9 @@ func TestK8sServiceToService(t *testing.T) {
 			Namespace: namespace,
 		},
 		Spec: k8sv1.ServiceSpec{
-			Type: k8sv1.ServiceType(svcType),
+			Type:                     k8sv1.ServiceType(svcType),
 			LoadBalancerSourceRanges: ranges,
-			Ports: []k8sv1.ServicePort{{}},
+			Ports:                    []k8sv1.ServicePort{{}},
 		},
 	}
 	svc := k8sServiceToService(k8sSvc)

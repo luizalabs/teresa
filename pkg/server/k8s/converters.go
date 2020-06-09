@@ -370,13 +370,8 @@ func serviceSpecToK8s(svcSpec *spec.Service) *k8sv1.Service {
 	}
 }
 
-func ingressSpec(namespace, name string, vHosts []string, reserveStaticIp bool) *k8s_extensions.Ingress {
-	var rules []k8s_extensions.IngressRule
-	if reserveStaticIp && len(vHosts) == 0 {
-		rules = make([]k8s_extensions.IngressRule, 1)
-	} else {
-		rules = make([]k8s_extensions.IngressRule, len(vHosts))
-	}
+func ingressSpec(namespace, name string, vHosts []string) *k8s_extensions.Ingress {
+	rules := make([]k8s_extensions.IngressRule, len(vHosts))
 
 	backend := &k8s_extensions.IngressBackend{
 		ServiceName: name,
@@ -399,15 +394,8 @@ func ingressSpec(namespace, name string, vHosts []string, reserveStaticIp bool) 
 		}
 	}
 
-	var spec k8s_extensions.IngressSpec
-	if reserveStaticIp {
-		spec = k8s_extensions.IngressSpec{
-			Backend: backend,
-		}
-	} else {
-		spec = k8s_extensions.IngressSpec{
-			Rules: rules,
-		}
+	spec := k8s_extensions.IngressSpec{
+		Rules: rules,
 	}
 
 	return &k8s_extensions.Ingress{

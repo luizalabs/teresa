@@ -720,6 +720,10 @@ func (k *Client) ExposeDeploy(namespace, appName, svcType, portName string, vHos
 		return err
 	}
 	if !hasIgs {
+		if len(vHosts) == 0 {
+			fmt.Fprintln(w, "To expose a Ingress please provide at last one vHost")
+			return nil
+		}
 		fmt.Fprintln(w, "Creating ingress")
 		if err := k.createIngress(namespace, appName, vHosts, ingressClass); err != nil {
 			return err

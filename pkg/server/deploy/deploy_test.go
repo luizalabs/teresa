@@ -21,7 +21,6 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
 	"github.com/luizalabs/teresa/pkg/server/test"
-	"github.com/luizalabs/teresa/pkg/server/validation"
 )
 
 type fakeK8sOperations struct {
@@ -745,20 +744,25 @@ func TestRollbackErrorFromContainerEnvVars(t *testing.T) {
 	}
 }
 
-func TestIsProtectedEnvVar(t *testing.T) {
+func TestConvertVirtualHosts(t *testing.T) {
 	var testCases = []struct {
-		name string
-		want bool
+		vhosts string
+		want   []string
 	}{
-		{"TEST", false},
-		{"APP", true},
-		{"PORT", true},
+		{"", []string{}},
+		{"foo.com", []string{"foo.com"}},
+		{"foo.com,bar.com", []string{"foo.com", "bar.com"}},
 	}
 
 	for _, tc := range testCases {
-		got := validation.IsProtectedEnvVar(tc.name)
-		if got != tc.want {
-			t.Errorf("got %v; want %v", got, tc.want)
+		got := convertVirtualHosts(tc.vhosts)
+		if len(got) != len(tc.want) {
+			t.Fatalf("got %d; want %d", len(got), len(tc.want))
+		}
+		for i, value := range got {
+			if value != tc.want[i] {
+				t.Fatalf("got %s; want %s", got, tc.want)
+			}
 		}
 	}
 }

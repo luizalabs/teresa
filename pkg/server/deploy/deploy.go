@@ -234,7 +234,7 @@ func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {
 		return nil
 	}
 	svcType := ops.serviceType(a)
-	vHosts := strings.Split(a.VirtualHost, ",")
+	vHosts := convertVirtualHosts(a.VirtualHost)
 	if err := ops.k8s.ExposeDeploy(a.Name, a.Name, svcType, a.Protocol, vHosts, ops.opts.IngressClass, w); err != nil {
 		return err
 	}
@@ -321,6 +321,14 @@ func (ops *DeployOperations) watchDeploy(appName, deployId string, w io.Writer, 
 		return
 	}
 	fmt.Fprintln(w, "Rolling update finished successfully")
+}
+
+func convertVirtualHosts(appVHosts string) []string {
+	vHosts := strings.Split(appVHosts, ",")
+	if len(vHosts) == 1 && vHosts[0] == "" {
+		return []string{}
+	}
+	return vHosts
 }
 
 func NewDeployOperations(aOps app.Operations, k8s K8sOperations, s storage.Storage, execOps exec.Operations, buildOps build.Operations, cOps cloudprovider.Operations, opts *Options) Operations {

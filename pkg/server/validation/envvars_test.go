@@ -28,6 +28,8 @@ func TestIsProtectedEnvVar(t *testing.T) {
 	}{
 		{"TEST", false},
 		{"PYTHONPATH", true},
+		{"APP", true},
+		{"PORT", true},
 	}
 
 	for _, tc := range testCases {

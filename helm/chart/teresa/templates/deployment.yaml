@@ -149,6 +149,8 @@ spec:
           value: {{ .Values.apps.service_type }}
         - name: TERESA_DEPLOY_INGRESS_CLASS
           value: {{ .Values.apps.ingress_class }}
+        - name: TERESA_K8S_CHECK_ANOTHER_INGRESS
+          value: {{ .Values.apps.check_another_ingress | quote}}
         {{- if .Values.apps.dnsconfig_ndots }}
         - name: TERESA_DEPLOY_DNSCONFIG_NDOTS
           value: {{ .Values.apps.dnsconfig_ndots }}

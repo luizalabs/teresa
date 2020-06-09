@@ -358,3 +358,23 @@ func TestClientCreateNamespace(t *testing.T) {
 		t.Errorf("got %s; want test", an)
 	}
 }
+
+func TestHasAnotherIngress(t *testing.T) {
+	cli := &Client{testing: true}
+
+	if err := cli.createIngress("test", "ingress1", []string{"xpto.com"}, "nginx"); err != nil {
+		t.Fatal("got unexpected error:", err)
+	}
+
+	if err := cli.createIngress("test", "ingress2", []string{"xpto.com"}, "nginx"); err != nil {
+		t.Fatal("got unexpected error:", err)
+	}
+	rs, err := cli.HasAnotherIngress("test", "test")
+	if err != nil {
+		t.Fatal("got unexpected error:", err)
+	}
+
+	if rs != false {
+		t.Errorf("got true; want false")
+	}
+}

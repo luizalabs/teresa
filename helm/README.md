@@ -109,6 +109,7 @@ Parameter | Description | Default
 `useMinio` | If true, use minio instead of s3. | `false`
 `rbac.enabled` | If true, this configure teresa deployment to use rbac, for now it will use the `cluster-admin` role | `false`
 `apps.ingress` | If true, teresa will create a ingress when expose the app | `false`
+`apps.check_annother_ingress` | If true, Teresa will halt exposing an app if an ingress with a different name than the app name exists | `true`
 `apps.service_type` | The type used to create the app server | `LoadBalancer`
 `apps.ingress_class` | The ingress class to be used | ``
 `slugstore.image`| The image to be used for the slugstore | `""`

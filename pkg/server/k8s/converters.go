@@ -385,7 +385,7 @@ func ingressSpec(namespace, name string, vHosts []string) *k8s_extensions.Ingres
 				HTTP: &k8s_extensions.HTTPIngressRuleValue{
 					Paths: []k8s_extensions.HTTPIngressPath{
 						{
-							Path:    "/",
+							Path:    "/*",
 							Backend: *backend,
 						},
 					},

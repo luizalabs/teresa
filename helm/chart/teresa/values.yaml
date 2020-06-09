@@ -44,6 +44,7 @@ apps:
   ingress: false
   service_type: LoadBalancer
   ingress_class:
+  check_another_ingress: true
 slugstore:
   image:
 slugbuilder:

@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [NEXT_RELEASE]
+### Added
+- Verification to avoid ingress duplication when an unmanaged ingress exists
+
 ### Changed
 - Default nginx side-car image to allow support to lua scripts
 - Ingress spec will be the same for vhost and static IP

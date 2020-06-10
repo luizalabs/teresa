@@ -39,11 +39,12 @@ const (
 )
 
 type Client struct {
-	conf          *restclient.Config
-	podRunTimeout time.Duration
-	ingress       bool
-	fake          kubernetes.Interface
-	testing       bool
+	conf                *restclient.Config
+	podRunTimeout       time.Duration
+	ingress             bool
+	fake                kubernetes.Interface
+	testing             bool
+	checkAnotherIngress bool
 }
 
 func (k *Client) buildClient() (kubernetes.Interface, error) {
@@ -623,6 +624,28 @@ func (k *Client) HasIngress(namespace, appName string) (bool, error) {
 	return true, nil
 }
 
+// HasAnotherIngress will check if there is another ingress than the one with the same name as the app
+func (k *Client) HasAnotherIngress(namespace, appName string) (bool, error) {
+	kc, err := k.buildClient()
+	if err != nil {
+		return false, err
+	}
+	opts := metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("metadata.name!=%s", appName),
+	}
+	ingList, err := kc.ExtensionsV1beta1().
+		Ingresses(namespace).
+		List(opts)
+
+	if err != nil {
+		if k.IsNotFound(err) {
+			return false, nil
+		}
+		return false, errors.Wrap(err, "get ingress failed")
+	}
+	return len(ingList.Items) > 0, nil
+}
+
 func (k *Client) createIngress(namespace, appName string, vHosts []string, ingressClass string) error {
 	kc, err := k.buildClient()
 	if err != nil {
@@ -719,7 +742,20 @@ func (k *Client) ExposeDeploy(namespace, appName, svcType, portName string, vHos
 	if err != nil {
 		return err
 	}
-	if !hasIgs {
+
+	hasAnotherIgs := false
+	if k.checkAnotherIngress {
+		hasAnotherIgs, err = k.HasAnotherIngress(namespace, appName)
+		if err != nil {
+			return err
+		}
+
+		if hasAnotherIgs {
+			fmt.Fprintln(w, "There is another ingress on the app that is not managed by Teresa.")
+		}
+	}
+
+	if !hasIgs && !hasAnotherIgs {
 		if len(vHosts) == 0 {
 			fmt.Fprintln(w, "To expose a Ingress please provide at last one vHost")
 			return nil
@@ -1656,8 +1692,9 @@ func newInClusterK8sClient(conf *Config) (*Client, error) {
 		return nil, err
 	}
 	return &Client{
-		conf:    k8sConf,
-		ingress: conf.Ingress,
+		conf:                k8sConf,
+		ingress:             conf.Ingress,
+		checkAnotherIngress: conf.CheckAnotherIngress,
 	}, nil
 }
 
@@ -1667,8 +1704,9 @@ func newOutOfClusterK8sClient(conf *Config) (*Client, error) {
 		return nil, err
 	}
 	return &Client{
-		conf:          k8sConf,
-		podRunTimeout: conf.PodRunTimeout,
-		ingress:       conf.Ingress,
+		conf:                k8sConf,
+		podRunTimeout:       conf.PodRunTimeout,
+		ingress:             conf.Ingress,
+		checkAnotherIngress: conf.CheckAnotherIngress,
 	}, nil
 }

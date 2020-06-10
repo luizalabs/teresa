@@ -13,9 +13,10 @@ var validServiceTypes = map[k8sv1.ServiceType]bool{
 }
 
 type Config struct {
-	ConfigFile    string        `split_words:"true"`
-	PodRunTimeout time.Duration `split_words:"true" default:"30m"`
-	Ingress       bool          `split_words:"true" default:"false"`
+	ConfigFile          string        `split_words:"true"`
+	PodRunTimeout       time.Duration `split_words:"true" default:"30m"`
+	Ingress             bool          `split_words:"true" default:"false"`
+	CheckAnotherIngress bool          `split_words:"true" default:"true"`
 }
 
 func New(conf *Config) (*Client, error) {

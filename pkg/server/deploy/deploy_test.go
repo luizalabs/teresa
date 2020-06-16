@@ -17,6 +17,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/cloudprovider"
 	"github.com/luizalabs/teresa/pkg/server/database"
 	"github.com/luizalabs/teresa/pkg/server/exec"
+	"github.com/luizalabs/teresa/pkg/server/service"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/luizalabs/teresa/pkg/server/storage"
 	"github.com/luizalabs/teresa/pkg/server/teresa_errors"
@@ -30,6 +31,7 @@ type fakeK8sOperations struct {
 	createCronJobReturn           error
 	hasSrvErr                     error
 	exposeDeployWasCalled         bool
+	hasIngress                    bool
 	replicaSetListByLabelErr      error
 	createConfigMapWasCalled      bool
 	deleteConfigMapWasCalled      bool
@@ -64,6 +66,31 @@ func (f *fakeK8sOperations) CreateOrUpdateCronJob(cronJobSpec *spec.CronJob) err
 func (f *fakeK8sOperations) ExposeDeploy(namespace, name, svcType, portName string, vHosts []string, ingressClass string, w io.Writer) error {
 	f.exposeDeployWasCalled = true
 	return nil
+}
+
+func (f *fakeK8sOperations) HasIngress(namespace, appName string) (bool, error) {
+	return f.hasIngress, nil
+}
+
+type fakeCloudProviderOperations struct {
+	createOrUpdateStaticIPWasCalled bool
+}
+
+func (c *fakeCloudProviderOperations) CreateOrUpdateStaticIp(appName, addressName string) error {
+	c.createOrUpdateStaticIPWasCalled = true
+	return nil
+}
+
+func (c *fakeCloudProviderOperations) CreateOrUpdateSSL(appName, cert string, port int) error {
+	return nil
+}
+
+func (c *fakeCloudProviderOperations) Name() string {
+	return "gce"
+}
+
+func (c *fakeCloudProviderOperations) SSLInfo(appName string) (*service.SSLInfo, error) {
+	return nil, nil
 }
 
 func (f *fakeK8sOperations) ReplicaSetListByLabel(namespace, label, value string) ([]*ReplicaSetListItem, error) {
@@ -497,33 +524,38 @@ func TestCreateCronJobScheduleNotFound(t *testing.T) {
 
 func TestExposeApp(t *testing.T) {
 	var testCases = []struct {
-		appProcessType                string
-		hasSrvErr                     error
-		expectedExposeDeployWasCalled bool
-		reserveStaticIp               bool
-		appName                       string
+		appProcessType                  string
+		hasSrvErr                       error
+		expectedExposeDeployWasCalled   bool
+		reserveStaticIp                 bool
+		hasIngress                      bool
+		createOrUpdateStaticIPWasCalled bool
+		appName                         string
 	}{
-		{app.ProcessTypeWeb, nil, true, false, "foobar"},
-		{app.ProcessTypeWeb, nil, true, false, "foobar"},
-		{app.ProcessTypeWeb, errors.New("some sad error"), true, false, "foobar"},
-		{app.ProcessTypeWeb + "test", nil, true, false, "foobar"},
-		{app.ProcessTypeWeb + "-test", nil, true, false, "foobar"},
-		{"worker", nil, false, false, "foobar"},
-		{app.ProcessTypeWeb, nil, true, false, "foobar"},
-		{app.ProcessTypeWeb, nil, true, true, "foobar"},
+		{app.ProcessTypeWeb, nil, true, false, false, false, "foobar"},
+		{app.ProcessTypeWeb, nil, true, false, false, false, "foobar"},
+		{app.ProcessTypeWeb, errors.New("some sad error"), true, false, false, false, "foobar"},
+		{app.ProcessTypeWeb + "test", nil, true, false, false, false, "foobar"},
+		{app.ProcessTypeWeb + "-test", nil, true, false, false, false, "foobar"},
+		{"worker", nil, false, false, false, false, "foobar"},
+		{app.ProcessTypeWeb, nil, true, false, false, false, "foobar"},
+		{app.ProcessTypeWeb, nil, true, true, true, true, "foobar"},
+		{app.ProcessTypeWeb, nil, true, true, false, false, "foobar"},
 	}
 
 	for _, tc := range testCases {
 		fakeK8s := &fakeK8sOperations{
-			hasSrvErr: tc.hasSrvErr,
+			hasSrvErr:  tc.hasSrvErr,
+			hasIngress: tc.hasIngress,
 		}
+		fakeCops := &fakeCloudProviderOperations{}
 		ops := NewDeployOperations(
 			app.NewFakeOperations(),
 			fakeK8s,
 			storage.NewFake(),
 			exec.NewFakeOperations(),
 			build.NewFakeOperations(),
-			cloudprovider.NewOperations(cloudprovider.NewFakeOperations()),
+			fakeCops,
 			&Options{},
 		)
 		deployOperations := ops.(*DeployOperations)
@@ -538,6 +570,14 @@ func TestExposeApp(t *testing.T) {
 				"expected %v, got %v",
 				tc.expectedExposeDeployWasCalled,
 				fakeK8s.exposeDeployWasCalled,
+			)
+		}
+
+		if fakeCops.createOrUpdateStaticIPWasCalled != tc.createOrUpdateStaticIPWasCalled {
+			t.Errorf(
+				"expected %v, got %v",
+				tc.createOrUpdateStaticIPWasCalled,
+				fakeCops.createOrUpdateStaticIPWasCalled,
 			)
 		}
 	}

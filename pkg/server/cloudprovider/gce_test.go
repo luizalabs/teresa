@@ -43,11 +43,11 @@ func TestGCESSLInfoFail(t *testing.T) {
 	}
 }
 
-func TestGCECreateOrUpdateSSLErrNotImplemented(t *testing.T) {
+func TestGCECreateOrUpdateSSLErrNotFound(t *testing.T) {
 	ops := &gceOperations{&FakeK8sOperations{HasIngressValue: false}}
 
-	if err := ops.CreateOrUpdateSSL("teresa", "cert", 443); err != ErrNotImplementedOnLoadBalancer {
-		t.Errorf("got %v; want %v", err, ErrNotImplementedOnLoadBalancer)
+	if err := ops.CreateOrUpdateSSL("teresa", "cert", 443); err != ErrIngressNotFound {
+		t.Errorf("got %v; want %v", err, ErrIngressNotFound)
 	}
 }
 
@@ -78,11 +78,11 @@ func TestGCECreateOrUpdateStaticIpFail(t *testing.T) {
 	}
 }
 
-func TestGCECreateOrUpdateStaticIpErrNotImplemented(t *testing.T) {
+func TestGCECreateOrUpdateStaticIpErrNotFound(t *testing.T) {
 	ops := &gceOperations{&FakeK8sOperations{HasIngressValue: false}}
 
-	if err := ops.CreateOrUpdateStaticIp("teresa", "address-name"); err != ErrNotImplementedOnLoadBalancer {
-		t.Errorf("got %v; want %v", err, ErrNotImplementedOnLoadBalancer)
+	if err := ops.CreateOrUpdateStaticIp("teresa", "address-name"); err != ErrIngressNotFound {
+		t.Errorf("got %v; want %v", err, ErrIngressNotFound)
 	}
 }
 

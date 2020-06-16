@@ -20,7 +20,7 @@ func (ops *gceOperations) CreateOrUpdateSSL(appName, cert string, port int) erro
 		return err
 	}
 	if !hasIngress {
-		return ErrNotImplementedOnLoadBalancer
+		return ErrIngressNotFound
 	}
 	anMap := map[string]string{
 		gceSSLCertAnnotation: cert,
@@ -37,7 +37,7 @@ func (ops *gceOperations) CreateOrUpdateStaticIp(appName, addressName string) er
 		return err
 	}
 	if !hasIngress {
-		return ErrNotImplementedOnLoadBalancer
+		return ErrIngressNotFound
 	}
 	anMap := map[string]string{
 		gceStaticIPAnnotation: addressName,

@@ -46,6 +46,7 @@ type K8sOperations interface {
 	IsNotFound(err error) bool
 	ContainerExplicitEnvVars(namespace, deployName, containerName string) ([]*app.EnvVar, error)
 	WatchDeploy(namespace, deployName string) error
+	HasIngress(namespace, appName string) (bool, error)
 }
 
 type CloudProviderOperations interface {
@@ -238,7 +239,11 @@ func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {
 	if err := ops.k8s.ExposeDeploy(a.Name, a.Name, svcType, a.Protocol, vHosts, ops.opts.IngressClass, w); err != nil {
 		return err
 	}
-	if a.ReserveStaticIp {
+	hasIngress, err := ops.k8s.HasIngress(a.Name, a.Name)
+	if err != nil {
+		return err
+	}
+	if a.ReserveStaticIp && hasIngress {
 		addressName := fmt.Sprintf("%s-ingress", a.Name)
 		if err := ops.cOps.CreateOrUpdateStaticIp(a.Name, addressName); err != nil {
 			return err

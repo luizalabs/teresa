@@ -47,6 +47,7 @@ type K8sOperations interface {
 	ContainerExplicitEnvVars(namespace, deployName, containerName string) ([]*app.EnvVar, error)
 	WatchDeploy(namespace, deployName string) error
 	HasIngress(namespace, appName string) (bool, error)
+	SetIngressAnnotations(namespace, ingName string, annotations map[string]string) error
 }
 
 type CloudProviderOperations interface {
@@ -243,10 +244,25 @@ func (ops *DeployOperations) exposeApp(a *app.App, w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if a.ReserveStaticIp && hasIngress {
-		addressName := fmt.Sprintf("%s-ingress", a.Name)
-		if err := ops.cOps.CreateOrUpdateStaticIp(a.Name, addressName); err != nil {
-			return err
+	if hasIngress {
+		if a.ReserveStaticIp {
+			addressName := fmt.Sprintf("%s-ingress", a.Name)
+			if err := ops.cOps.CreateOrUpdateStaticIp(a.Name, addressName); err != nil {
+				return err
+			}
+		}
+		if ops.opts.IngressClass != "" {
+			annotations := make(map[string]string)
+			annotations["kubernetes.io/ingress.class"] = ops.opts.IngressClass
+			if ops.opts.IngressClass == "nginx" {
+				annotations["nginx.ingress.kubernetes.io/rewrite-target"] = "/"
+			}
+			if err = ops.k8s.SetIngressAnnotations(
+				a.Name, a.Name,
+				annotations,
+			); err != nil {
+				return errors.Wrap(err, "add ingress annotations failed")
+			}
 		}
 	}
 	return nil // already exposed

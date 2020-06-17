@@ -12,6 +12,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func setupK8sCli(t *testing.T, cli *Client) (func(t *testing.T, cli *Client), error) {
+	return func(t *testing.T, cli *Client) {
+		cli.fake = nil
+	}, nil
+}
+
 func TestAddVolumeMountOfSecrets(t *testing.T) {
 	var testCases = []struct {
 		vols       []k8sv1.VolumeMount
@@ -344,6 +350,8 @@ func TestRemoveSecretVols(t *testing.T) {
 func TestClientCreateNamespace(t *testing.T) {
 	a := &app.App{Name: "test"}
 	cli := &Client{testing: true}
+	teardownCli, err := setupK8sCli(t, cli)
+	defer teardownCli(t, cli)
 
 	if err := cli.CreateNamespace(a, "test"); err != nil {
 		t.Fatal("got unexpected error:", err)
@@ -361,6 +369,8 @@ func TestClientCreateNamespace(t *testing.T) {
 
 func TestHasAnotherIngress(t *testing.T) {
 	cli := &Client{testing: true}
+	teardownCli, err := setupK8sCli(t, cli)
+	defer teardownCli(t, cli)
 
 	if err := cli.createIngress("test", "ingress1", []string{"xpto.com"}, "nginx"); err != nil {
 		t.Fatal("got unexpected error:", err)
@@ -369,12 +379,12 @@ func TestHasAnotherIngress(t *testing.T) {
 	if err := cli.createIngress("test", "ingress2", []string{"xpto.com"}, "nginx"); err != nil {
 		t.Fatal("got unexpected error:", err)
 	}
-	rs, err := cli.HasAnotherIngress("test", "test")
+	hasAnotherIngress, err := cli.HasAnotherIngress("test", "test")
 	if err != nil {
 		t.Fatal("got unexpected error:", err)
 	}
 
-	if rs != false {
-		t.Errorf("got true; want false")
+	if hasAnotherIngress != true {
+		t.Errorf("hasAnotherIngress returned false; want true")
 	}
 }

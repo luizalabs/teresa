@@ -25,18 +25,21 @@ import (
 )
 
 type fakeK8sOperations struct {
-	lastDeploySpec                *spec.Deploy
-	lastCronJobSpec               *spec.CronJob
-	createDeployReturn            error
-	createCronJobReturn           error
-	hasSrvErr                     error
-	exposeDeployWasCalled         bool
-	hasIngress                    bool
-	replicaSetListByLabelErr      error
-	createConfigMapWasCalled      bool
-	deleteConfigMapWasCalled      bool
-	containerExplicitEnvVarsErr   error
-	containerExplicitEnvVarsValue []*app.EnvVar
+	lastDeploySpec                     *spec.Deploy
+	lastCronJobSpec                    *spec.CronJob
+	createDeployReturn                 error
+	createCronJobReturn                error
+	hasSrvErr                          error
+	exposeDeployWasCalled              bool
+	setIngressAnnotationsWasCalled     bool
+	setIngressAnnotationsIngClass      string
+	setIngressAnnotationsRewriteTarget string
+	hasIngress                         bool
+	replicaSetListByLabelErr           error
+	createConfigMapWasCalled           bool
+	deleteConfigMapWasCalled           bool
+	containerExplicitEnvVarsErr        error
+	containerExplicitEnvVarsValue      []*app.EnvVar
 }
 
 func (f *fakeK8sOperations) CreateOrUpdateConfigMap(namespace, name string, data map[string]string) error {
@@ -70,6 +73,13 @@ func (f *fakeK8sOperations) ExposeDeploy(namespace, name, svcType, portName stri
 
 func (f *fakeK8sOperations) HasIngress(namespace, appName string) (bool, error) {
 	return f.hasIngress, nil
+}
+
+func (f *fakeK8sOperations) SetIngressAnnotations(namespace, ingName string, annotations map[string]string) error {
+	f.setIngressAnnotationsWasCalled = true
+	f.setIngressAnnotationsIngClass = annotations["kubernetes.io/ingress.class"]
+	f.setIngressAnnotationsRewriteTarget = annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+	return nil
 }
 
 type fakeCloudProviderOperations struct {
@@ -519,6 +529,53 @@ func TestCreateCronJobScheduleNotFound(t *testing.T) {
 
 	if err != ErrCronScheduleNotFound {
 		t.Errorf("expected %v, got %v", ErrCronScheduleNotFound, err)
+	}
+}
+
+func TestExposeAppNginxIngress(t *testing.T) {
+	fakeK8s := &fakeK8sOperations{
+		hasIngress: true,
+	}
+	fakeCops := &fakeCloudProviderOperations{}
+	ops := NewDeployOperations(
+		app.NewFakeOperations(),
+		fakeK8s,
+		storage.NewFake(),
+		exec.NewFakeOperations(),
+		build.NewFakeOperations(),
+		fakeCops,
+		&Options{
+			IngressClass: "nginx",
+		},
+	)
+	deployOperations := ops.(*DeployOperations)
+	deployOperations.exposeApp(&app.App{
+		ProcessType: "web",
+		Name:        "test",
+	}, new(bytes.Buffer))
+
+	if !fakeK8s.setIngressAnnotationsWasCalled {
+		t.Errorf(
+			"expected setIngressAnnotationsWasCalled to be %v, got %v",
+			true,
+			fakeK8s.setIngressAnnotationsWasCalled,
+		)
+	}
+
+	if fakeK8s.setIngressAnnotationsIngClass != "nginx" {
+		t.Errorf(
+			"expected setIngressAnnotationsIngClass to be %v, got %v",
+			"nginx",
+			fakeK8s.setIngressAnnotationsIngClass,
+		)
+	}
+
+	if fakeK8s.setIngressAnnotationsRewriteTarget != "/" {
+		t.Errorf(
+			"expected setIngressAnnotationsRewriteTarget to be %v, got %v",
+			"/",
+			fakeK8s.setIngressAnnotationsRewriteTarget,
+		)
 	}
 }
 

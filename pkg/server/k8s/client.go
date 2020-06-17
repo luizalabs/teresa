@@ -49,7 +49,9 @@ type Client struct {
 
 func (k *Client) buildClient() (kubernetes.Interface, error) {
 	if k.testing {
-		k.fake = fake.NewSimpleClientset()
+		if k.fake == nil {
+			k.fake = fake.NewSimpleClientset()
+		}
 		return k.fake, nil
 	}
 	c, err := kubernetes.NewForConfig(k.conf)
@@ -655,14 +657,6 @@ func (k *Client) createIngress(namespace, appName string, vHosts []string, ingre
 	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Create(igsSpec)
 	if err != nil {
 		return errors.Wrap(err, "create ingress failed")
-	}
-	if ingressClass != "" {
-		if err = k.SetIngressAnnotations(
-			namespace, appName,
-			map[string]string{"kubernetes.io/ingress.class": ingressClass},
-		); err != nil {
-			return errors.Wrap(err, "create ingress failed")
-		}
 	}
 	return nil
 }

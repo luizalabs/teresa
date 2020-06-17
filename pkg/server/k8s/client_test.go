@@ -379,12 +379,12 @@ func TestHasAnotherIngress(t *testing.T) {
 	if err := cli.createIngress("test", "ingress2", []string{"xpto.com"}, "nginx"); err != nil {
 		t.Fatal("got unexpected error:", err)
 	}
-	rs, err := cli.HasAnotherIngress("test", "test")
+	hasAnotherIngress, err := cli.HasAnotherIngress("test", "test")
 	if err != nil {
 		t.Fatal("got unexpected error:", err)
 	}
 
-	if rs != true {
-		t.Errorf("got true; want false")
+	if hasAnotherIngress != true {
+		t.Errorf("hasAnotherIngress returned false; want true")
 	}
 }

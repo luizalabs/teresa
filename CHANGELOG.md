@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [NEXT_RELEASE]
+## [0.33.0] - 2020-06-23
 ### Added
 - Verification to avoid ingress duplication when an unmanaged ingress exists
 - Adds rewrite-target annotation to createIngress if ingressClass is nginx

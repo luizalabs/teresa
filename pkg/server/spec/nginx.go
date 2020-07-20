@@ -10,14 +10,16 @@ import (
 )
 
 const (
-	NginxConfFile           = "nginx.conf"
-	nginxConfTmplDir        = "/etc/nginx/template/"
-	nginxConfDir            = "/etc/nginx/"
-	nginxVolName            = "nginx-conf"
-	nginxArgTmpl            = "envsubst '%s' < %s%s > %s%s && nginx -g 'daemon off;'"
-	nginxBackendTmpl        = "http://localhost:%d"
-	nginxDefaultCPULimit    = "100m"
-	nginxDefaultMemoryLimit = "256Mi"
+	NginxConfFile             = "nginx.conf"
+	nginxConfTmplDir          = "/etc/nginx/template/"
+	nginxConfDir              = "/etc/nginx/"
+	nginxVolName              = "nginx-conf"
+	nginxArgTmpl              = "envsubst '%s' < %s%s > %s%s && nginx -g 'daemon off;'"
+	nginxBackendTmpl          = "http://localhost:%d"
+	nginxDefaultCPULimit      = "100m"
+	nginxDefaultMemoryLimit   = "256Mi"
+	nginxDefaultCPURequest    = "25m"
+	nginxDefaultMemoryRequest = "56Mi"
 )
 
 func newNginxContainerArgs(env map[string]string) string {
@@ -54,6 +56,7 @@ func NewNginxContainer(image string, a *app.App) *Container {
 		WithArgs([]string{"-c", args}).
 		WithEnv(env).
 		WithLimits(nginxDefaultCPULimit, nginxDefaultMemoryLimit).
+		WithRequests(nginxDefaultCPURequest, nginxDefaultMemoryRequest).
 		ExposePort("nginx", secondaryPort).
 		Build()
 }

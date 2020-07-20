@@ -38,21 +38,20 @@ func containerSpecsToK8sContainers(containerSpecs []*spec.Container) ([]k8sv1.Co
 			Image:           cs.Image,
 		}
 
+		if cs.ContainerRequests != nil {
+			requests, err := containerQuotaToResourceList(cs.ContainerRequests)
+			if err != nil {
+				return nil, err
+			}
+			c.Resources.Requests = requests
+		}
+
 		if cs.ContainerLimits != nil {
-			cpu, err := resource.ParseQuantity(cs.ContainerLimits.CPU)
+			limits, err := containerQuotaToResourceList(cs.ContainerLimits)
 			if err != nil {
 				return nil, err
 			}
-			memory, err := resource.ParseQuantity(cs.ContainerLimits.Memory)
-			if err != nil {
-				return nil, err
-			}
-			c.Resources = k8sv1.ResourceRequirements{
-				Limits: k8sv1.ResourceList{
-					k8sv1.ResourceCPU:    cpu,
-					k8sv1.ResourceMemory: memory,
-				},
-			}
+			c.Resources.Limits = limits
 		}
 
 		if len(cs.Command) > 0 {
@@ -95,6 +94,22 @@ func containerSpecsToK8sContainers(containerSpecs []*spec.Container) ([]k8sv1.Co
 	return containers, nil
 }
 
+func containerQuotaToResourceList(quota *spec.ContainerLimits) (k8sv1.ResourceList, error) {
+	cpu, err := resource.ParseQuantity(quota.CPU)
+	if err != nil {
+		return nil, err
+	}
+	memory, err := resource.ParseQuantity(quota.Memory)
+	if err != nil {
+		return nil, err
+	}
+
+	return k8sv1.ResourceList{
+		k8sv1.ResourceCPU:    cpu,
+		k8sv1.ResourceMemory: memory,
+	}, nil
+}
+
 func podSpecVolumesToK8sVolumes(vols []*spec.Volume) []k8sv1.Volume {
 	volumes := make([]k8sv1.Volume, 0)
 	for _, v := range vols {
@@ -134,9 +149,9 @@ func podSpecToK8sPod(podSpec *spec.Pod) (*k8sv1.Pod, error) {
 	}
 
 	ps := k8sv1.PodSpec{
-		RestartPolicy:                k8sv1.RestartPolicyNever,
-		Containers:                   containers,
-		Volumes:                      volumes,
+		RestartPolicy: k8sv1.RestartPolicyNever,
+		Containers:    containers,
+		Volumes:       volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
 	}
@@ -179,9 +194,9 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta2.De
 		return nil, err
 	}
 	ps := k8sv1.PodSpec{
-		RestartPolicy:                k8sv1.RestartPolicyAlways,
-		Containers:                   containers,
-		Volumes:                      volumes,
+		RestartPolicy: k8sv1.RestartPolicyAlways,
+		Containers:    containers,
+		Volumes:       volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
 		DNSConfig:                    dnsConfigToK8sDNSConfig(deploySpec.DNSConfig),
@@ -253,9 +268,9 @@ func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv1beta1.CronJob, er
 
 	f := false
 	ps := k8sv1.PodSpec{
-		RestartPolicy:                k8sv1.RestartPolicyNever,
-		Containers:                   containers,
-		Volumes:                      volumes,
+		RestartPolicy: k8sv1.RestartPolicyNever,
+		Containers:    containers,
+		Volumes:       volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
 	}

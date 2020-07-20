@@ -18,15 +18,16 @@ type Port struct {
 }
 
 type Container struct {
-	Name            string
-	Image           string
-	ContainerLimits *ContainerLimits
-	Env             map[string]string
-	VolumeMounts    []*VolumeMounts
-	Command         []string
-	Args            []string
-	Ports           []Port
-	Secrets         []string
+	Name              string
+	Image             string
+	ContainerLimits   *ContainerLimits
+	ContainerRequests *ContainerLimits
+	Env               map[string]string
+	VolumeMounts      []*VolumeMounts
+	Command           []string
+	Args              []string
+	Ports             []Port
+	Secrets           []string
 }
 
 type ContainerBuilder struct {
@@ -57,6 +58,14 @@ func (b *ContainerBuilder) WithSecrets(s []string) *ContainerBuilder {
 
 func (b *ContainerBuilder) WithLimits(cpu, memory string) *ContainerBuilder {
 	b.c.ContainerLimits = &ContainerLimits{
+		CPU:    cpu,
+		Memory: memory,
+	}
+	return b
+}
+
+func (b *ContainerBuilder) WithRequests(cpu, memory string) *ContainerBuilder {
+	b.c.ContainerRequests = &ContainerLimits{
 		CPU:    cpu,
 		Memory: memory,
 	}

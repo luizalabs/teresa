@@ -46,4 +46,7 @@ func TestNewNginxContainer(t *testing.T) {
 	if actual := c.ContainerLimits.CPU; actual != nginxDefaultCPULimit {
 		t.Errorf("expected %s, got %s", nginxDefaultCPULimit, actual)
 	}
+	if actual := c.ContainerRequests.CPU; actual != nginxDefaultCPURequest {
+		t.Errorf("expected %s, got %s", nginxDefaultCPULimit, actual)
+	}
 }

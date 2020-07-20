@@ -8,6 +8,7 @@ func TestContainerBuilder(t *testing.T) {
 	expectedEnv := map[string]string{"Key": "Value"}
 	expectedSecrets := []string{"SECRET", "VERY-SECRET"}
 	expectedLimits := ContainerLimits{CPU: "200m", Memory: "256Mi"}
+	expectedRequests := ContainerLimits{CPU: "50m", Memory: "56Mi"}
 	expectedCmd := []string{"echo", "hi"}
 	expectedArgs := []string{"hello", "from", "test"}
 	expectedPort := 5000
@@ -16,6 +17,7 @@ func TestContainerBuilder(t *testing.T) {
 		WithEnv(expectedEnv).
 		WithSecrets(expectedSecrets).
 		WithLimits(expectedLimits.CPU, expectedLimits.Memory).
+		WithRequests(expectedRequests.CPU, expectedRequests.Memory).
 		WithCommand(expectedCmd).
 		WithArgs(expectedArgs).
 		ExposePort("http", expectedPort).
@@ -32,6 +34,12 @@ func TestContainerBuilder(t *testing.T) {
 	}
 	if actual := c.ContainerLimits.Memory; actual != expectedLimits.Memory {
 		t.Errorf("expected %s, got %s", expectedLimits.Memory, actual)
+	}
+	if actual := c.ContainerRequests.CPU; actual != expectedRequests.CPU {
+		t.Errorf("expected %s, got %s", expectedRequests.CPU, actual)
+	}
+	if actual := c.ContainerRequests.Memory; actual != expectedRequests.Memory {
+		t.Errorf("expected %s, got %s", expectedRequests.Memory, actual)
 	}
 	if actual := c.Ports[0].ContainerPort; actual != int32(expectedPort) {
 		t.Errorf("expected %d, got %d", expectedPort, actual)

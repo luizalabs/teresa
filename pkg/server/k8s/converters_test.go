@@ -28,6 +28,10 @@ func TestPodSpecToK8sContainers(t *testing.T) {
 				CPU:    "800m",
 				Memory: "1Gi",
 			},
+			ContainerRequests: &spec.ContainerLimits{
+				CPU:    "100m",
+				Memory: "512Mi",
+			},
 		}},
 	}
 	containers, err := podSpecToK8sContainers(ps)
@@ -89,7 +93,30 @@ func TestPodSpecToK8sContainers(t *testing.T) {
 		}
 	}
 
-	expectedCPU, err := resource.ParseQuantity(ps.Containers[0].ContainerLimits.CPU)
+	expectedCPU, err := resource.ParseQuantity(ps.Containers[0].ContainerRequests.CPU)
+	if err != nil {
+		t.Fatal("error in default cpu limit:", err)
+	}
+	if c.Resources.Requests[k8sv1.ResourceCPU] != expectedCPU {
+		t.Errorf(
+			"expected %v, got %v",
+			expectedCPU,
+			c.Resources.Requests[k8sv1.ResourceCPU],
+		)
+	}
+	expectedMemory, err := resource.ParseQuantity(ps.Containers[0].ContainerRequests.Memory)
+	if err != nil {
+		t.Fatal("error in default memory limit:", err)
+	}
+	if c.Resources.Requests[k8sv1.ResourceMemory] != expectedMemory {
+		t.Errorf(
+			"expected %v, got %v",
+			expectedMemory,
+			c.Resources.Requests[k8sv1.ResourceMemory],
+		)
+	}
+
+	expectedCPU, err = resource.ParseQuantity(ps.Containers[0].ContainerLimits.CPU)
 	if err != nil {
 		t.Fatal("error in default cpu limit:", err)
 	}
@@ -100,7 +127,7 @@ func TestPodSpecToK8sContainers(t *testing.T) {
 			c.Resources.Limits[k8sv1.ResourceCPU],
 		)
 	}
-	expectedMemory, err := resource.ParseQuantity(ps.Containers[0].ContainerLimits.Memory)
+	expectedMemory, err = resource.ParseQuantity(ps.Containers[0].ContainerLimits.Memory)
 	if err != nil {
 		t.Fatal("error in default memory limit:", err)
 	}
@@ -579,9 +606,9 @@ func TestK8sServiceToService(t *testing.T) {
 			Namespace: namespace,
 		},
 		Spec: k8sv1.ServiceSpec{
-			Type:                     k8sv1.ServiceType(svcType),
+			Type: k8sv1.ServiceType(svcType),
 			LoadBalancerSourceRanges: ranges,
-			Ports:                    []k8sv1.ServicePort{{}},
+			Ports: []k8sv1.ServicePort{{}},
 		},
 	}
 	svc := k8sServiceToService(k8sSvc)
@@ -722,5 +749,32 @@ func TestDeploySpecPodTemplateAnnotations(t *testing.T) {
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v; want %v", got, want)
+	}
+}
+
+func TestContainerQuotaToResourceList(t *testing.T) {
+	quota := &spec.ContainerLimits{
+		CPU:    "100m",
+		Memory: "1Gi",
+	}
+	expectedCPU, err := resource.ParseQuantity(quota.CPU)
+	if err != nil {
+		t.Error("Error parsing default CPU value")
+	}
+	expectedMemory, err := resource.ParseQuantity(quota.Memory)
+	if err != nil {
+		t.Error("Error parsing default Memory value")
+	}
+
+	rl, err := containerQuotaToResourceList(quota)
+	if err != nil {
+		t.Errorf("Got an unexpected error, %v", err)
+	}
+
+	if rl[k8sv1.ResourceCPU] != expectedCPU {
+		t.Errorf("expected %v, got %v", expectedCPU, rl[k8sv1.ResourceCPU])
+	}
+	if rl[k8sv1.ResourceMemory] != expectedMemory {
+		t.Errorf("expected %v, got %v", expectedMemory, rl[k8sv1.ResourceMemory])
 	}
 }

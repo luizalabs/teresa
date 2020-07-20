@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Added
+- Nginx default `requests` quota value for cpu and memory
+
 ## [0.33.0] - 2020-06-23
 ### Added
 - Verification to avoid ingress duplication when an unmanaged ingress exists

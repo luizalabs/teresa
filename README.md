@@ -10,6 +10,18 @@ It uses a client-server model: the client sends high level commands (create appl
 
 ## Client Installation
 
+### Download (recommended)
+
+This is the best way to get the latest release.
+
+- Access https://github.com/luizalabs/teresa/releases
+- Download the latest release for your OS. Eg: `teresa-linux-amd64`
+- Rename the download file to `teresa`. Eg: `mv teresa-linux-amd64 teresa`
+- Make it an executable. Eg: `chmod +x teresa`
+- Move it to the `bin` folder. Eg: `sudo mv teresa /usr/bin`
+
+Then you're good to go :slightly_smiling_face: ! `teresa` should now be available to use on your terminal.
+
 ### Homebrew
 
 Run the following in your command-line:

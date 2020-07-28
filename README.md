@@ -8,6 +8,37 @@
 Teresa is an extremely simple platform as a service that runs on top of [Kubernetes](https://github.com/kubernetes/kubernetes).
 It uses a client-server model: the client sends high level commands (create application, deploy, etc.) to the server, which translates them to the Kubernetes API.
 
+## Client Installation
+
+### Download (recommended)
+
+This is the best way to get the latest release.
+
+- Access https://github.com/luizalabs/teresa/releases
+- Download the latest release for your OS. Eg: `teresa-linux-amd64`
+- Rename the download file to `teresa`. Eg: `mv teresa-linux-amd64 teresa`
+- Make it an executable. Eg: `chmod +x teresa`
+- Move it to the `bin` folder. Eg: `sudo mv teresa /usr/bin`
+
+Then you're good to go :slightly_smiling_face: ! `teresa` should now be available to use on your terminal.
+
+### Homebrew
+
+Run the following in your command-line:
+
+```sh
+$ brew tap luizalabs/teresa-cli
+$ brew install teresa
+```
+
+### Snap
+
+Run the following in your command-line:
+
+```sh
+$ sudo snap install teresa-cli
+```
+
 ## Server Installation
 
 Server requirements:
@@ -55,20 +86,3 @@ You need to create an admin user to perform [user and team management](./FAQ.md#
 ## QuickStart
 
 Read the first sections of the [FAQ](./FAQ.md).
-
-## Homebrew Teresa Client
-
-Run the following in your command-line:
-
-```sh
-$ brew tap luizalabs/teresa-cli
-$ brew install teresa
-```
-
-## Snap Teresa Client
-
-Run the following in your command-line:
-
-```sh
-$ sudo snap install teresa-cli
-```

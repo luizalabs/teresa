@@ -1,18 +1,9 @@
 #!/bin/bash
 
-which wget &> /dev/null
-
-if [ $? -eq 1 ]; then
-  echo "'wget' is not installed"
-  exit 1
-fi
-
 if [[ $1 == "path" && $2 != "" ]]; then
   version=$(curl -s -o- https://github.com/luizalabs/teresa/releases/latest | sed 's/.*tag\/\(.*\)\".*/\1/')
 
-  echo "Downloading..."
-
-  wget --quiet "https://github.com/luizalabs/teresa/releases/download/$version/teresa-linux-amd64"
+  curl -L -O "https://github.com/luizalabs/teresa/releases/download/$version/teresa-linux-amd64"
 
   chmod +x teresa-linux-amd64
 
@@ -37,12 +28,10 @@ elif [[ $1 == "" ]]; then
 
   version=$(curl -s -o- https://github.com/luizalabs/teresa/releases/latest | sed 's/.*tag\/\(.*\)\".*/\1/')
 
-  echo "Downloading..."
-
-  wget --quiet "https://github.com/luizalabs/teresa/releases/download/$version/teresa-linux-amd64"
+  curl -L -O "https://github.com/luizalabs/teresa/releases/download/$version/teresa-linux-amd64"
 
   chmod +x teresa-linux-amd64
 
-  mv teresa-linux-amd64 /usr/bin/teresa
+  mv teresa-linux-amd64 /usr/local/bin/teresa
   printf "\n\e[0;32mInstallation success!\e[m\n"
 fi

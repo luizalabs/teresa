@@ -1,5 +1,12 @@
 #!/bin/bash
 
+which wget &> /dev/null
+
+if [ $? -eq 1 ]; then
+  echo "'wget' is not installed"
+  exit 1
+fi
+
 if [[ $1 == "path" && $2 != "" ]]; then
   version=$(curl -s -o- https://github.com/luizalabs/teresa/releases/latest | sed 's/.*tag\/\(.*\)\".*/\1/')
 
@@ -39,5 +46,3 @@ elif [[ $1 == "" ]]; then
   mv teresa-linux-amd64 /usr/bin/teresa
   printf "\n\e[0;32mInstallation success!\e[m\n"
 fi
-
-

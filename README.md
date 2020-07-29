@@ -22,6 +22,19 @@ This is the best way to get the latest release.
 
 Then you're good to go :slightly_smiling_face: ! `teresa` should now be available to use on your terminal.
 
+### Bash script
+
+You can run the script in two ways, the first way you can specify a `path` to install the application:
+```sh
+$ ./install.sh path /your/custom/path
+```
+If you choose this way, you need to add this path to your environment `PATH`. The script will tell you how to do this.
+
+The second way is running the script as root(sudo) user:
+```
+$ sudo ./install.sh
+```
+
 ### Homebrew
 
 Run the following in your command-line:

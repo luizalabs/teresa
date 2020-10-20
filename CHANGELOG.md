@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [NEXT_RELEASE]
+### Changed
+- Dependecy managemento from `govendor` to `go modules`
+
 ## [0.34.0] - 2020-07-22
 ### Added
 - Nginx default `requests` quota value for cpu and memory

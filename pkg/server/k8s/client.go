@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,7 +14,7 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/pkg/errors"
 
-	"k8s.io/api/apps/v1beta2"
+	v1 "k8s.io/api/apps/v1"
 	asv1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/api/batch/v1beta1"
 	k8sv1 "k8s.io/api/core/v1"
@@ -66,7 +67,7 @@ func (k *Client) HealthCheck() error {
 	if err != nil {
 		return err
 	}
-	_, err = kc.CoreV1().Namespaces().List(metav1.ListOptions{})
+	_, err = kc.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
 	return err
 }
 
@@ -75,7 +76,7 @@ func (k *Client) getNamespace(namespace string) (*k8sv1.Namespace, error) {
 	if err != nil {
 		return nil, err
 	}
-	ns, err := kc.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+	ns, err := kc.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -88,9 +89,9 @@ func (k *Client) DeployAnnotation(namespace, deployName, annotation string) (str
 		return "", err
 	}
 
-	d, err := kc.AppsV1beta2().
+	d, err := kc.AppsV1().
 		Deployments(namespace).
-		Get(deployName, metav1.GetOptions{})
+		Get(context.Background(), deployName, metav1.GetOptions{})
 
 	if err != nil {
 		return "", errors.Wrap(err, "get deploy annotation failed")
@@ -123,7 +124,7 @@ func (k *Client) PodList(namespace string, opts *app.PodListOptions) ([]*app.Pod
 		return nil, err
 	}
 	k8sOpts := appPodListOptsToK8s(opts)
-	podList, err := kc.CoreV1().Pods(namespace).List(*k8sOpts)
+	podList, err := kc.CoreV1().Pods(namespace).List(context.Background(), *k8sOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +151,7 @@ func (k *Client) PodLogs(namespace string, podName string, opts *app.LogOptions)
 		},
 	)
 
-	return req.Stream()
+	return req.Stream(context.Background())
 }
 
 func newNs(a *app.App, user string) *k8sv1.Namespace {
@@ -252,7 +253,7 @@ func (k *Client) CreateNamespace(a *app.App, user string) error {
 		return err
 	}
 
-	_, err = kc.CoreV1().Namespaces().Create(ns)
+	_, err = kc.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{})
 	return err
 }
 
@@ -267,7 +268,7 @@ func (k *Client) CreateQuota(a *app.App) error {
 		return err
 	}
 
-	_, err = kc.CoreV1().LimitRanges(a.Name).Create(lr)
+	_, err = kc.CoreV1().LimitRanges(a.Name).Create(context.Background(), lr, metav1.CreateOptions{})
 	return err
 }
 
@@ -276,7 +277,7 @@ func (c *Client) GetSecret(namespace, secretName string) (map[string][]byte, err
 	if err != nil {
 		return nil, err
 	}
-	s, err := kc.CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
+	s, err := kc.CoreV1().Secrets(namespace).Get(context.Background(), secretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -298,9 +299,9 @@ func (c *Client) CreateOrUpdateSecret(namespace, secretName string, data map[str
 		Data: data,
 	}
 
-	_, err = kc.CoreV1().Secrets(namespace).Update(s)
+	_, err = kc.CoreV1().Secrets(namespace).Update(context.Background(), s, metav1.UpdateOptions{})
 	if c.IsNotFound(err) {
-		_, err = kc.CoreV1().Secrets(namespace).Create(s)
+		_, err = kc.CoreV1().Secrets(namespace).Create(context.Background(), s, metav1.CreateOptions{})
 	}
 	return err
 }
@@ -313,9 +314,9 @@ func (k *Client) CreateOrUpdateAutoscale(a *app.App) error {
 
 	hpa := newHPA(a)
 
-	_, err = kc.AutoscalingV1().HorizontalPodAutoscalers(a.Name).Update(hpa)
+	_, err = kc.AutoscalingV1().HorizontalPodAutoscalers(a.Name).Update(context.Background(), hpa, metav1.UpdateOptions{})
 	if k.IsNotFound(err) {
-		_, err = kc.AutoscalingV1().HorizontalPodAutoscalers(a.Name).Create(hpa)
+		_, err = kc.AutoscalingV1().HorizontalPodAutoscalers(a.Name).Create(context.Background(), hpa, metav1.CreateOptions{})
 	}
 	return err
 }
@@ -326,7 +327,7 @@ func (k *Client) AddressList(namespace string) ([]*app.Address, error) {
 		return nil, err
 	}
 
-	srvs, err := kc.CoreV1().Services(namespace).List(metav1.ListOptions{})
+	srvs, err := kc.CoreV1().Services(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "get addr list failed")
 	}
@@ -357,7 +358,7 @@ func (k *Client) Status(namespace string) (*app.Status, error) {
 
 	hpa, err := kc.AutoscalingV1().
 		HorizontalPodAutoscalers(namespace).
-		Get(namespace, metav1.GetOptions{})
+		Get(context.Background(), namespace, metav1.GetOptions{})
 
 	if err != nil {
 		if !k.IsNotFound(err) {
@@ -385,7 +386,7 @@ func (k *Client) Autoscale(namespace string) (*app.Autoscale, error) {
 
 	hpa, err := kc.AutoscalingV1().
 		HorizontalPodAutoscalers(namespace).
-		Get(namespace, metav1.GetOptions{})
+		Get(context.Background(), namespace, metav1.GetOptions{})
 
 	if err != nil {
 		if k.IsNotFound(err) {
@@ -416,7 +417,7 @@ func (k *Client) Limits(namespace, name string) (*app.Limits, error) {
 		return nil, err
 	}
 
-	lr, err := kc.CoreV1().LimitRanges(namespace).Get(name, metav1.GetOptions{})
+	lr, err := kc.CoreV1().LimitRanges(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "get limits failed")
 	}
@@ -453,9 +454,9 @@ func (k *Client) CreateOrUpdateConfigMap(namespace, name string, data map[string
 	}
 
 	cm := configMapSpec(namespace, name, data)
-	_, err = kc.CoreV1().ConfigMaps(namespace).Update(cm)
+	_, err = kc.CoreV1().ConfigMaps(namespace).Update(context.Background(), cm, metav1.UpdateOptions{})
 	if k.IsNotFound(err) {
-		_, err = kc.CoreV1().ConfigMaps(namespace).Create(cm)
+		_, err = kc.CoreV1().ConfigMaps(namespace).Create(context.Background(), cm, metav1.CreateOptions{})
 	}
 	return err
 }
@@ -465,7 +466,7 @@ func (k *Client) DeleteConfigMap(namespace, name string) error {
 	if err != nil {
 		return err
 	}
-	err = kc.CoreV1().ConfigMaps(namespace).Delete(name, &metav1.DeleteOptions{})
+	err = kc.CoreV1().ConfigMaps(namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 	return errors.Wrap(err, "delete configMap failed")
 }
 
@@ -481,9 +482,9 @@ func (k *Client) CreateOrUpdateDeploy(deploySpec *spec.Deploy) error {
 		return err
 	}
 
-	_, err = kc.AppsV1beta2().Deployments(deploySpec.Namespace).Update(deployYaml)
+	_, err = kc.AppsV1().Deployments(deploySpec.Namespace).Update(context.Background(), deployYaml, metav1.UpdateOptions{})
 	if k.IsNotFound(err) {
-		_, err = kc.AppsV1beta2().Deployments(deploySpec.Namespace).Create(deployYaml)
+		_, err = kc.AppsV1().Deployments(deploySpec.Namespace).Create(context.Background(), deployYaml, metav1.CreateOptions{})
 	}
 	return err
 }
@@ -499,9 +500,9 @@ func (c *Client) CreateOrUpdateCronJob(cronJobSpec *spec.CronJob) error {
 		return err
 	}
 
-	_, err = kc.BatchV1beta1().CronJobs(cronJobSpec.Namespace).Update(cronJobYaml)
+	_, err = kc.BatchV1beta1().CronJobs(cronJobSpec.Namespace).Update(context.Background(), cronJobYaml, metav1.UpdateOptions{})
 	if c.IsNotFound(err) {
-		_, err = kc.BatchV1beta1().CronJobs(cronJobSpec.Namespace).Create(cronJobYaml)
+		_, err = kc.BatchV1beta1().CronJobs(cronJobSpec.Namespace).Create(context.Background(), cronJobYaml, metav1.CreateOptions{})
 	}
 	return err
 }
@@ -520,7 +521,7 @@ func (k *Client) PodRun(podSpec *spec.Pod) (io.ReadCloser, <-chan int, error) {
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "define build pod spec failed")
 	}
-	pod, err := kc.CoreV1().Pods(podSpec.Namespace).Create(podYaml)
+	pod, err := kc.CoreV1().Pods(podSpec.Namespace).Create(context.Background(), podYaml, metav1.CreateOptions{})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "pod create failed")
 	}
@@ -579,7 +580,7 @@ func (k *Client) hasService(namespace, appName string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = kc.CoreV1().Services(namespace).Get(appName, metav1.GetOptions{})
+	_, err = kc.CoreV1().Services(namespace).Get(context.Background(), appName, metav1.GetOptions{})
 	if err != nil {
 		if k.IsNotFound(err) {
 			return false, nil
@@ -595,7 +596,7 @@ func (k *Client) CreateService(svcSpec *spec.Service) error {
 		return err
 	}
 	ss := serviceSpecToK8s(svcSpec)
-	_, err = kc.CoreV1().Services(svcSpec.Namespace).Create(ss)
+	_, err = kc.CoreV1().Services(svcSpec.Namespace).Create(context.Background(), ss, metav1.CreateOptions{})
 	return errors.Wrap(err, "create service failed")
 }
 
@@ -604,7 +605,7 @@ func (k *Client) DeleteService(namespace, name string) error {
 	if err != nil {
 		return err
 	}
-	err = kc.CoreV1().Services(namespace).Delete(name, &metav1.DeleteOptions{})
+	err = kc.CoreV1().Services(namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 	return errors.Wrap(err, "delete service failed")
 }
 
@@ -613,9 +614,9 @@ func (k *Client) HasIngress(namespace, appName string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = kc.ExtensionsV1beta1().
+	_, err = kc.NetworkingV1beta1().
 		Ingresses(namespace).
-		Get(appName, metav1.GetOptions{})
+		Get(context.Background(), appName, metav1.GetOptions{})
 
 	if err != nil {
 		if k.IsNotFound(err) {
@@ -637,7 +638,7 @@ func (k *Client) HasAnotherIngress(namespace, appName string) (bool, error) {
 	}
 	ingList, err := kc.ExtensionsV1beta1().
 		Ingresses(namespace).
-		List(opts)
+		List(context.Background(), opts)
 
 	if err != nil {
 		if k.IsNotFound(err) {
@@ -654,7 +655,7 @@ func (k *Client) createIngress(namespace, appName string, vHosts []string, ingre
 		return err
 	}
 	igsSpec := ingressSpec(namespace, appName, vHosts)
-	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Create(igsSpec)
+	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Create(context.Background(), igsSpec, metav1.CreateOptions{})
 	if err != nil {
 		return errors.Wrap(err, "create ingress failed")
 	}
@@ -668,13 +669,13 @@ func (k *Client) UpdateIngress(namespace, name string, vHosts []string) error {
 	}
 	old, err := kc.ExtensionsV1beta1().
 		Ingresses(namespace).
-		Get(name, metav1.GetOptions{})
+		Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return errors.Wrap(err, "get ingress failed")
 	}
 	newSpec := ingressSpec(namespace, name, vHosts)
 	old.Spec.Rules = newSpec.Spec.Rules
-	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Update(old)
+	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Update(context.Background(), old, metav1.UpdateOptions{})
 	return errors.Wrap(err, "update ingress failed")
 }
 
@@ -691,10 +692,12 @@ func (c *Client) patchIngress(namespace, ingName string, data []byte) error {
 	if err != nil {
 		return err
 	}
-	kc.ExtensionsV1beta1().Ingresses(namespace).Patch(
+	kc.NetworkingV1beta1().Ingresses(namespace).Patch(
+		context.Background(),
 		ingName,
 		types.StrategicMergePatchType,
 		data,
+		metav1.PatchOptions{},
 	)
 	return errors.Wrap(err, "patch ingress failed")
 }
@@ -708,7 +711,7 @@ func (c *Client) IngressAnnotations(namespace, ingName string) (map[string]strin
 	if err != nil {
 		return nil, err
 	}
-	ing, err := kc.ExtensionsV1beta1().Ingresses(namespace).Get(ingName, metav1.GetOptions{})
+	ing, err := kc.NetworkingV1beta1().Ingresses(namespace).Get(context.Background(), ingName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -768,7 +771,7 @@ func (k *Client) DeletePod(namespace, podName string) error {
 	if err != nil {
 		return err
 	}
-	err = kc.CoreV1().Pods(namespace).Delete(podName, &metav1.DeleteOptions{})
+	err = kc.CoreV1().Pods(namespace).Delete(context.Background(), podName, metav1.DeleteOptions{})
 	return errors.Wrap(err, "could not delete pod")
 }
 
@@ -779,7 +782,7 @@ func (k *Client) waitPodStart(pod *k8sv1.Pod, checkInterval, timeout time.Durati
 	}
 	podsClient := kc.CoreV1().Pods(pod.Namespace)
 	return wait.PollImmediate(checkInterval, timeout, func() (bool, error) {
-		p, err := podsClient.Get(pod.Name, metav1.GetOptions{})
+		p, err := podsClient.Get(context.Background(), pod.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -798,7 +801,7 @@ func (k *Client) waitPodEnd(pod *k8sv1.Pod, checkInterval, timeout time.Duration
 	}
 	podsClient := kc.CoreV1().Pods(pod.Namespace)
 	return wait.PollImmediate(checkInterval, timeout, func() (bool, error) {
-		p, err := podsClient.Get(pod.Name, metav1.GetOptions{})
+		p, err := podsClient.Get(context.Background(), pod.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -822,7 +825,7 @@ func (c *Client) WatchServiceURL(namespace, name string) ([]string, error) {
 		FieldSelector: fmt.Sprintf("metadata.name=%s", name),
 	}
 	for {
-		w, err := kc.CoreV1().Services(namespace).Watch(opts)
+		w, err := kc.CoreV1().Services(namespace).Watch(context.Background(), opts)
 		if err != nil {
 			return nil, errors.Wrap(err, "watch service failed")
 		}
@@ -852,7 +855,7 @@ func (k *Client) podExitCode(pod *k8sv1.Pod) (int, error) {
 		return 1, err
 	}
 
-	p, err := kc.CoreV1().Pods(pod.Namespace).Get(pod.Name, metav1.GetOptions{})
+	p, err := kc.CoreV1().Pods(pod.Namespace).Get(context.Background(), pod.Name, metav1.GetOptions{})
 	if err != nil {
 		return 1, err
 	}
@@ -876,8 +879,8 @@ func (k *Client) currentPodReplicasFromDeploy(namespace, appName string) int32 {
 		return 1
 	}
 
-	d, err := kc.AppsV1beta2().Deployments(
-		namespace).Get(appName, metav1.GetOptions{})
+	d, err := kc.AppsV1().Deployments(
+		namespace).Get(context.Background(), appName, metav1.GetOptions{})
 	if err != nil || d.Status.Replicas < 1 {
 		return 1
 	}
@@ -898,7 +901,7 @@ func (k *Client) SetNamespaceAnnotations(namespace string, annotations map[strin
 	for key, value := range annotations {
 		ns.Annotations[key] = value
 	}
-	_, err = kc.CoreV1().Namespaces().Update(ns)
+	_, err = kc.CoreV1().Namespaces().Update(context.Background(), ns, metav1.UpdateOptions{})
 	return err
 }
 
@@ -916,7 +919,7 @@ func (k *Client) SetNamespaceLabels(namespace string, labels map[string]string) 
 	for key, value := range labels {
 		ns.Labels[key] = value
 	}
-	_, err = kc.CoreV1().Namespaces().Update(ns)
+	_, err = kc.CoreV1().Namespaces().Update(context.Background(), ns, metav1.UpdateOptions{})
 	return err
 }
 
@@ -926,9 +929,9 @@ func (c Client) getDeployContainerList(namespace, deploy string) ([]string, erro
 		return nil, err
 	}
 
-	d, err := kc.AppsV1beta2().
+	d, err := kc.AppsV1().
 		Deployments(namespace).
-		Get(deploy, metav1.GetOptions{})
+		Get(context.Background(), deploy, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get deploy spec")
 	}
@@ -976,10 +979,12 @@ func (c *Client) patchDeployEnvVars(namespace, name string, v interface{}) error
 		return err
 	}
 
-	_, err = kc.ExtensionsV1beta1().Deployments(namespace).Patch(
+	_, err = kc.AppsV1().Deployments(namespace).Patch(
+		context.Background(),
 		name,
 		types.StrategicMergePatchType,
 		data,
+		metav1.PatchOptions{},
 	)
 
 	return errors.Wrap(err, "patch deploy failed")
@@ -997,9 +1002,11 @@ func (c *Client) patchCronJobEnvVars(namespace, name string, v interface{}) erro
 	}
 
 	_, err = kc.BatchV1beta1().CronJobs(namespace).Patch(
+		context.Background(),
 		name,
 		types.StrategicMergePatchType,
 		data,
+		metav1.PatchOptions{},
 	)
 
 	return errors.Wrap(err, "patch cronjob failed")
@@ -1089,7 +1096,7 @@ func (k *Client) DeleteNamespace(namespace string) error {
 	if err != nil {
 		return err
 	}
-	err = kc.CoreV1().Namespaces().Delete(namespace, &metav1.DeleteOptions{})
+	err = kc.CoreV1().Namespaces().Delete(context.Background(), namespace, metav1.DeleteOptions{})
 	return errors.Wrap(err, "delete ns failed")
 }
 
@@ -1102,7 +1109,7 @@ func (k *Client) NamespaceListByLabel(label, value string) ([]string, error) {
 	if value == "" {
 		labelSelector = fmt.Sprintf("%s", label)
 	}
-	nl, err := kc.CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: labelSelector})
+	nl, err := kc.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		return nil, err
 	}
@@ -1121,7 +1128,7 @@ func (k *Client) ReplicaSetListByLabel(namespace, label, value string) ([]*deplo
 
 	labelSelector := fmt.Sprintf("%s=%s", label, value)
 	opts := metav1.ListOptions{LabelSelector: labelSelector}
-	rs, err := cli.ExtensionsV1beta1().ReplicaSets(namespace).List(opts)
+	rs, err := cli.ExtensionsV1beta1().ReplicaSets(namespace).List(context.Background(), opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get replicasets")
 	}
@@ -1148,9 +1155,11 @@ func (k *Client) DeployRollbackToRevision(namespace, name, revision string) erro
 	data := fmt.Sprintf(patchDeployRollbackToRevisionTmpl, revision)
 
 	_, err = kc.ExtensionsV1beta1().Deployments(namespace).Patch(
+		context.Background(),
 		name,
 		types.StrategicMergePatchType,
 		[]byte(data),
+		metav1.PatchOptions{},
 	)
 
 	return errors.Wrap(err, "patch deploy failed")
@@ -1165,9 +1174,11 @@ func (k *Client) DeploySetReplicas(namespace, name string, replicas int32) error
 	data := fmt.Sprintf(patchDeployReplicasTmpl, replicas)
 
 	_, err = kc.ExtensionsV1beta1().Deployments(namespace).Patch(
+		context.Background(),
 		name,
 		types.StrategicMergePatchType,
 		[]byte(data),
+		metav1.PatchOptions{},
 	)
 
 	return errors.Wrap(err, "patch deploy failed")
@@ -1180,9 +1191,11 @@ func (k *Client) changeCronJobState(namespace, name string, suspend bool) error 
 	}
 
 	_, err = kc.BatchV1beta1().CronJobs(namespace).Patch(
+		context.Background(),
 		name,
 		types.StrategicMergePatchType,
 		[]byte(fmt.Sprintf(`{"spec":{"suspend": %v}}`, suspend)),
+		metav1.PatchOptions{},
 	)
 
 	return errors.Wrap(err, "patch cronjob failed")
@@ -1201,7 +1214,7 @@ func (c *Client) CloudProviderName() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	nodes, err := kc.CoreV1().Nodes().List(metav1.ListOptions{Limit: 1})
+	nodes, err := kc.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{Limit: 1})
 	if err != nil {
 		return "", errors.Wrap(err, "node list failed")
 	}
@@ -1225,13 +1238,13 @@ func (c *Client) UpdateServicePorts(namespace, svcName string, ports []spec.Serv
 	if err != nil {
 		return err
 	}
-	svc, err := kc.CoreV1().Services(namespace).Get(svcName, metav1.GetOptions{})
+	svc, err := kc.CoreV1().Services(namespace).Get(context.Background(), svcName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 	k8sPorts := servicePortsToK8sServicePorts(ports)
 	svc.Spec.Ports = k8sPorts
-	_, err = kc.CoreV1().Services(namespace).Update(svc)
+	_, err = kc.CoreV1().Services(namespace).Update(context.Background(), svc, metav1.UpdateOptions{})
 	return errors.Wrap(err, "update service failed")
 }
 
@@ -1249,9 +1262,11 @@ func (c *Client) patchService(namespace, svcName string, data []byte) error {
 		return err
 	}
 	_, err = kc.CoreV1().Services(namespace).Patch(
+		context.Background(),
 		svcName,
 		types.StrategicMergePatchType,
 		data,
+		metav1.PatchOptions{},
 	)
 	return errors.Wrap(err, "patch service failed")
 }
@@ -1261,7 +1276,7 @@ func (c *Client) ServiceAnnotations(namespace, svcName string) (map[string]strin
 	if err != nil {
 		return nil, err
 	}
-	svc, err := kc.CoreV1().Services(namespace).Get(svcName, metav1.GetOptions{})
+	svc, err := kc.CoreV1().Services(namespace).Get(context.Background(), svcName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -1273,7 +1288,7 @@ func (c *Client) Service(namespace, svcName string) (*spec.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	svc, err := cs.CoreV1().Services(namespace).Get(svcName, metav1.GetOptions{})
+	svc, err := cs.CoreV1().Services(namespace).Get(context.Background(), svcName, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "get service failed")
 	}
@@ -1285,9 +1300,9 @@ func (c *Client) ContainerExplicitEnvVars(namespace, deployName, containerName s
 	if err != nil {
 		return nil, err
 	}
-	deploy, err := kc.AppsV1beta2().
+	deploy, err := kc.AppsV1().
 		Deployments(namespace).
-		Get(deployName, metav1.GetOptions{})
+		Get(context.Background(), deployName, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "get deploy failed")
 	}
@@ -1313,13 +1328,13 @@ func (c *Client) WatchDeploy(namespace, deployName string) error {
 	}
 	ts := time.Now()
 	for {
-		w, err := kc.AppsV1beta2().Deployments(namespace).Watch(opts)
+		w, err := kc.AppsV1().Deployments(namespace).Watch(context.Background(), opts)
 		if err != nil {
 			return errors.Wrap(err, "watch deploy failed")
 		}
 		ch := watch.Filter(w, filterDeployEvents).ResultChan()
 		for ev := range ch {
-			d := ev.Object.(*v1beta2.Deployment)
+			d := ev.Object.(*v1.Deployment)
 			conds := d.Status.Conditions
 			if len(conds) == 0 {
 				return errors.New("failed to monitor the rolling update")
@@ -1353,9 +1368,9 @@ func (c *Client) CreateOrUpdateDeploySecretFile(namespace, deploy, filename stri
 		return err
 	}
 
-	d, err := kc.AppsV1beta2().
+	d, err := kc.AppsV1().
 		Deployments(namespace).
-		Get(deploy, metav1.GetOptions{})
+		Get(context.Background(), deploy, metav1.GetOptions{})
 
 	if err != nil {
 		return err
@@ -1381,9 +1396,9 @@ func (c *Client) CreateOrUpdateDeploySecretFile(namespace, deploy, filename stri
 	}
 
 	d.Annotations["kubernetes.io/change-cause"] = "add secret volume"
-	_, err = kc.AppsV1beta2().
+	_, err = kc.AppsV1().
 		Deployments(namespace).
-		Update(d)
+		Update(context.Background(), d, metav1.UpdateOptions{})
 
 	return err
 }
@@ -1443,9 +1458,9 @@ func (c *Client) DeleteDeploySecrets(namespace, deploy string, envVars, volKeys 
 		return err
 	}
 
-	d, err := kc.AppsV1beta2().
+	d, err := kc.AppsV1().
 		Deployments(namespace).
-		Get(deploy, metav1.GetOptions{})
+		Get(context.Background(), deploy, metav1.GetOptions{})
 
 	if err != nil {
 		return err
@@ -1459,9 +1474,9 @@ func (c *Client) DeleteDeploySecrets(namespace, deploy string, envVars, volKeys 
 	}
 
 	d.Annotations["kubernetes.io/change-cause"] = "remove secret volume"
-	_, err = kc.AppsV1beta2().
+	_, err = kc.AppsV1().
 		Deployments(namespace).
-		Update(d)
+		Update(context.Background(), d, metav1.UpdateOptions{})
 
 	return err
 }
@@ -1474,7 +1489,7 @@ func (c *Client) CreateOrUpdateCronJobSecretFile(namespace, cronjob, fileName st
 
 	cj, err := kc.BatchV1beta1().
 		CronJobs(namespace).
-		Get(cronjob, metav1.GetOptions{})
+		Get(context.Background(), cronjob, metav1.GetOptions{})
 
 	if err != nil {
 		return err
@@ -1502,7 +1517,7 @@ func (c *Client) CreateOrUpdateCronJobSecretFile(namespace, cronjob, fileName st
 	cj.Annotations["kubernetes.io/change-cause"] = "add secret volume"
 	_, err = kc.BatchV1beta1().
 		CronJobs(namespace).
-		Update(cj)
+		Update(context.Background(), cj, metav1.UpdateOptions{})
 
 	return err
 
@@ -1516,7 +1531,7 @@ func (c *Client) DeleteCronJobSecrets(namespace, cronjob string, envVars, volKey
 
 	cj, err := kc.BatchV1beta1().
 		CronJobs(namespace).
-		Get(cronjob, metav1.GetOptions{})
+		Get(context.Background(), cronjob, metav1.GetOptions{})
 
 	if err != nil {
 		return err
@@ -1532,7 +1547,7 @@ func (c *Client) DeleteCronJobSecrets(namespace, cronjob string, envVars, volKey
 	cj.Annotations["kubernetes.io/change-cause"] = "remove secret volume"
 	_, err = kc.BatchV1beta1().
 		CronJobs(namespace).
-		Update(cj)
+		Update(context.Background(), cj, metav1.UpdateOptions{})
 
 	return err
 }
@@ -1548,7 +1563,7 @@ func removeEnvVarsWithSecretsFromCronJob(cj *v1beta1.CronJob, envVars []string) 
 	return cj
 }
 
-func removeEnvVarsWithSecretsFromDeploy(d *v1beta2.Deployment, envVars []string) *v1beta2.Deployment {
+func removeEnvVarsWithSecretsFromDeploy(d *v1.Deployment, envVars []string) *v1.Deployment {
 	for i, cn := range d.Spec.Template.Spec.Containers {
 		if cn.Name == d.Name {
 			d.Spec.Template.Spec.Containers[i].Env = removeEnvVars(cn.Env, envVars)
@@ -1570,7 +1585,7 @@ func removeEnvVars(evs []k8sv1.EnvVar, toRemove []string) []k8sv1.EnvVar {
 	return evs
 }
 
-func removeVolumesWithSecretsFromDeploy(d *v1beta2.Deployment, keys []string) *v1beta2.Deployment {
+func removeVolumesWithSecretsFromDeploy(d *v1.Deployment, keys []string) *v1.Deployment {
 	for i, vol := range d.Spec.Template.Spec.Volumes {
 		if vol.Name != spec.AppSecretName {
 			continue
@@ -1657,7 +1672,7 @@ func prepareAnnotations(tmpl string, annotations map[string]string) ([]byte, err
 }
 
 func filterDeployEvents(in watch.Event) (watch.Event, bool) {
-	_, ok := in.Object.(*v1beta2.Deployment)
+	_, ok := in.Object.(*v1.Deployment)
 	if !ok || (string(in.Type) != "MODIFIED" && string(in.Type) != "ADDED") {
 		return in, false
 	}
@@ -1672,11 +1687,11 @@ func filterServiceEvents(in watch.Event) (watch.Event, bool) {
 	return in, true
 }
 
-func isRollingUpdateFinished(cond v1beta2.DeploymentCondition) bool {
+func isRollingUpdateFinished(cond v1.DeploymentCondition) bool {
 	return string(cond.Status) == "True" && cond.Reason == "NewReplicaSetAvailable"
 }
 
-func isRollingUpdateStalled(cond v1beta2.DeploymentCondition) bool {
+func isRollingUpdateStalled(cond v1.DeploymentCondition) bool {
 	return string(cond.Status) == "False" && cond.Reason == "ProgressDeadlineExceeded"
 }
 

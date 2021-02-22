@@ -1,11 +1,12 @@
 package k8s
 
 import (
+	"context"
 	"testing"
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/spec"
-	"k8s.io/api/apps/v1beta2"
+	v1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
 	k8sv1 "k8s.io/api/core/v1"
@@ -134,13 +135,13 @@ func TestAddVolumeOfSecretFile(t *testing.T) {
 	}
 }
 
-func deploySpec(envs []k8sv1.EnvVar) *v1beta2.Deployment {
+func deploySpec(envs []k8sv1.EnvVar) *v1.Deployment {
 	evs := make([]k8sv1.EnvVar, len(envs))
 	copy(evs, envs)
 
-	return &v1beta2.Deployment{
+	return &v1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
-		Spec: v1beta2.DeploymentSpec{
+		Spec: v1.DeploymentSpec{
 			Template: k8sv1.PodTemplateSpec{
 				Spec: k8sv1.PodSpec{
 					Containers: []k8sv1.Container{
@@ -229,7 +230,7 @@ func TestRemoveEnvVarsWithSecretsFromDeployAndCronJob(t *testing.T) {
 	}
 }
 
-func deploySpecWithVolumes(vols []k8sv1.Volume, volMounts []k8sv1.VolumeMount) *v1beta2.Deployment {
+func deploySpecWithVolumes(vols []k8sv1.Volume, volMounts []k8sv1.VolumeMount) *v1.Deployment {
 	d := deploySpec([]k8sv1.EnvVar{})
 	d.Spec.Template.Spec.Volumes = vols
 	d.Spec.Template.Spec.Containers[0].VolumeMounts = volMounts
@@ -357,7 +358,7 @@ func TestClientCreateNamespace(t *testing.T) {
 		t.Fatal("got unexpected error:", err)
 	}
 
-	ns, err := cli.fake.CoreV1().Namespaces().Get("test", metav1.GetOptions{})
+	ns, err := cli.fake.CoreV1().Namespaces().Get(context.Background(), "test", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal("got unexpected error:", err)
 	}

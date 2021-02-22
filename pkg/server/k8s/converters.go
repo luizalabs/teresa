@@ -7,7 +7,7 @@ import (
 
 	"github.com/luizalabs/teresa/pkg/server/app"
 	"github.com/luizalabs/teresa/pkg/server/spec"
-	"k8s.io/api/apps/v1beta2"
+	v1 "k8s.io/api/apps/v1"
 	k8sbatch "k8s.io/api/batch/v1"
 	k8sv1beta1 "k8s.io/api/batch/v1beta1"
 	k8sv1 "k8s.io/api/core/v1"
@@ -149,9 +149,9 @@ func podSpecToK8sPod(podSpec *spec.Pod) (*k8sv1.Pod, error) {
 	}
 
 	ps := k8sv1.PodSpec{
-		RestartPolicy: k8sv1.RestartPolicyNever,
-		Containers:    containers,
-		Volumes:       volumes,
+		RestartPolicy:                k8sv1.RestartPolicyNever,
+		Containers:                   containers,
+		Volumes:                      volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
 	}
@@ -168,7 +168,7 @@ func podSpecToK8sPod(podSpec *spec.Pod) (*k8sv1.Pod, error) {
 	return pod, nil
 }
 
-func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta2.Deployment, error) {
+func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1.Deployment, error) {
 	containers, err := podSpecToK8sContainers(&deploySpec.Pod)
 	if err != nil {
 		return nil, err
@@ -194,9 +194,9 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta2.De
 		return nil, err
 	}
 	ps := k8sv1.PodSpec{
-		RestartPolicy: k8sv1.RestartPolicyAlways,
-		Containers:    containers,
-		Volumes:       volumes,
+		RestartPolicy:                k8sv1.RestartPolicyAlways,
+		Containers:                   containers,
+		Volumes:                      volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
 		DNSConfig:                    dnsConfigToK8sDNSConfig(deploySpec.DNSConfig),
@@ -209,7 +209,7 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta2.De
 	}
 
 	rhl := int32(deploySpec.RevisionHistoryLimit)
-	d := &v1beta2.Deployment{
+	d := &v1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "extensions/v1beta2",
 			Kind:       "Deployment",
@@ -223,11 +223,11 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1beta2.De
 				spec.SlugAnnotation:   deploySpec.SlugURL,
 			},
 		},
-		Spec: v1beta2.DeploymentSpec{
+		Spec: v1.DeploymentSpec{
 			Replicas: &replicas,
-			Strategy: v1beta2.DeploymentStrategy{
-				Type: v1beta2.RollingUpdateDeploymentStrategyType,
-				RollingUpdate: &v1beta2.RollingUpdateDeployment{
+			Strategy: v1.DeploymentStrategy{
+				Type: v1.RollingUpdateDeploymentStrategyType,
+				RollingUpdate: &v1.RollingUpdateDeployment{
 					MaxUnavailable: maxUnavailable,
 					MaxSurge:       maxSurge,
 				},
@@ -268,9 +268,9 @@ func cronJobSpecToK8sCronJob(cronJobSpec *spec.CronJob) (*k8sv1beta1.CronJob, er
 
 	f := false
 	ps := k8sv1.PodSpec{
-		RestartPolicy: k8sv1.RestartPolicyNever,
-		Containers:    containers,
-		Volumes:       volumes,
+		RestartPolicy:                k8sv1.RestartPolicyNever,
+		Containers:                   containers,
+		Volumes:                      volumes,
 		AutomountServiceAccountToken: &f,
 		InitContainers:               initContainers,
 	}

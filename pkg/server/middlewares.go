@@ -61,7 +61,7 @@ func loginUnaryInterceptor(a auth.Auth, uOps user.Operations) grpc.UnaryServerIn
 }
 
 func authorize(ctx context.Context, a auth.Auth, uOps user.Operations) (*database.User, error) {
-	md, ok := metadata.FromContext(ctx)
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, auth.ErrPermissionDenied
 	}

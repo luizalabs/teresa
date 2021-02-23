@@ -3,7 +3,7 @@
 set -e
 
 function setup {
-	curl https://storage.googleapis.com/kubernetes-helm/helm-v2.5.1-linux-amd64.tar.gz --output /tmp/helm.tar.gz --silent
+	curl https://get.helm.sh/helm-v2.17.0-linux-amd64.tar.gz --output /tmp/helm.tar.gz --silent
 
 	tar -x -C /tmp -f /tmp/helm.tar.gz linux-amd64/helm
 	/tmp/linux-amd64/helm init --client-only

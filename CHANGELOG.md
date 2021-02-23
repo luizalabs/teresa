@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.35.0] - 2021-02-23
+### Added
+- Support for kubernetes v1.16, v1.17 and v1.18 versions
+
+### Changed
+- Dependencies management migrated from Govendor to Go MOD
+
 ## [0.34.0] - 2020-07-22
 ### Added
 - Nginx default `requests` quota value for cpu and memory

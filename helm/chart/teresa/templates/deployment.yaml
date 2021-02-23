@@ -1,8 +1,11 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "fullname" . }}
 spec:
+  selector:
+    matchLabels:
+      component: "server"
   replicas: 2
   template:
     metadata:

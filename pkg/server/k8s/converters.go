@@ -11,7 +11,7 @@ import (
 	k8sbatch "k8s.io/api/batch/v1"
 	k8sv1beta1 "k8s.io/api/batch/v1beta1"
 	k8sv1 "k8s.io/api/core/v1"
-	k8s_extensions "k8s.io/api/extensions/v1beta1"
+	k8s_networking "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -211,7 +211,7 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1.Deploym
 	rhl := int32(deploySpec.RevisionHistoryLimit)
 	d := &v1.Deployment{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "extensions/v1beta2",
+			APIVersion: "apps/v1",
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -385,20 +385,20 @@ func serviceSpecToK8s(svcSpec *spec.Service) *k8sv1.Service {
 	}
 }
 
-func ingressSpec(namespace, name string, vHosts []string) *k8s_extensions.Ingress {
-	rules := make([]k8s_extensions.IngressRule, len(vHosts))
+func ingressSpec(namespace, name string, vHosts []string) *k8s_networking.Ingress {
+	rules := make([]k8s_networking.IngressRule, len(vHosts))
 
-	backend := &k8s_extensions.IngressBackend{
+	backend := &k8s_networking.IngressBackend{
 		ServiceName: name,
 		ServicePort: intstr.FromInt(spec.DefaultExternalPort),
 	}
 
 	for i, vHost := range vHosts {
-		rules[i] = k8s_extensions.IngressRule{
+		rules[i] = k8s_networking.IngressRule{
 			Host: vHost,
-			IngressRuleValue: k8s_extensions.IngressRuleValue{
-				HTTP: &k8s_extensions.HTTPIngressRuleValue{
-					Paths: []k8s_extensions.HTTPIngressPath{
+			IngressRuleValue: k8s_networking.IngressRuleValue{
+				HTTP: &k8s_networking.HTTPIngressRuleValue{
+					Paths: []k8s_networking.HTTPIngressPath{
 						{
 							Path:    "/*",
 							Backend: *backend,
@@ -409,13 +409,13 @@ func ingressSpec(namespace, name string, vHosts []string) *k8s_extensions.Ingres
 		}
 	}
 
-	spec := k8s_extensions.IngressSpec{
+	spec := k8s_networking.IngressSpec{
 		Rules: rules,
 	}
 
-	return &k8s_extensions.Ingress{
+	return &k8s_networking.Ingress{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "extensions/v1beta1",
+			APIVersion: "networking.k8s.io/v1beta1",
 			Kind:       "Ingress",
 		},
 		ObjectMeta: metav1.ObjectMeta{

@@ -231,7 +231,7 @@ func newHPA(a *app.App) *asv1.HorizontalPodAutoscaler {
 		},
 		Spec: asv1.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: asv1.CrossVersionObjectReference{
-				APIVersion: "extensions/v1beta1",
+				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 				Name:       a.Name,
 			},
@@ -636,7 +636,7 @@ func (k *Client) HasAnotherIngress(namespace, appName string) (bool, error) {
 	opts := metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("metadata.name!=%s", appName),
 	}
-	ingList, err := kc.ExtensionsV1beta1().
+	ingList, err := kc.NetworkingV1beta1().
 		Ingresses(namespace).
 		List(context.Background(), opts)
 
@@ -655,7 +655,7 @@ func (k *Client) createIngress(namespace, appName string, vHosts []string, ingre
 		return err
 	}
 	igsSpec := ingressSpec(namespace, appName, vHosts)
-	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Create(context.Background(), igsSpec, metav1.CreateOptions{})
+	_, err = kc.NetworkingV1beta1().Ingresses(namespace).Create(context.Background(), igsSpec, metav1.CreateOptions{})
 	if err != nil {
 		return errors.Wrap(err, "create ingress failed")
 	}
@@ -667,7 +667,7 @@ func (k *Client) UpdateIngress(namespace, name string, vHosts []string) error {
 	if err != nil {
 		return err
 	}
-	old, err := kc.ExtensionsV1beta1().
+	old, err := kc.NetworkingV1beta1().
 		Ingresses(namespace).
 		Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
@@ -675,7 +675,7 @@ func (k *Client) UpdateIngress(namespace, name string, vHosts []string) error {
 	}
 	newSpec := ingressSpec(namespace, name, vHosts)
 	old.Spec.Rules = newSpec.Spec.Rules
-	_, err = kc.ExtensionsV1beta1().Ingresses(namespace).Update(context.Background(), old, metav1.UpdateOptions{})
+	_, err = kc.NetworkingV1beta1().Ingresses(namespace).Update(context.Background(), old, metav1.UpdateOptions{})
 	return errors.Wrap(err, "update ingress failed")
 }
 
@@ -1128,7 +1128,7 @@ func (k *Client) ReplicaSetListByLabel(namespace, label, value string) ([]*deplo
 
 	labelSelector := fmt.Sprintf("%s=%s", label, value)
 	opts := metav1.ListOptions{LabelSelector: labelSelector}
-	rs, err := cli.ExtensionsV1beta1().ReplicaSets(namespace).List(context.Background(), opts)
+	rs, err := cli.AppsV1().ReplicaSets(namespace).List(context.Background(), opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get replicasets")
 	}
@@ -1154,7 +1154,7 @@ func (k *Client) DeployRollbackToRevision(namespace, name, revision string) erro
 
 	data := fmt.Sprintf(patchDeployRollbackToRevisionTmpl, revision)
 
-	_, err = kc.ExtensionsV1beta1().Deployments(namespace).Patch(
+	_, err = kc.AppsV1().Deployments(namespace).Patch(
 		context.Background(),
 		name,
 		types.StrategicMergePatchType,
@@ -1173,7 +1173,7 @@ func (k *Client) DeploySetReplicas(namespace, name string, replicas int32) error
 
 	data := fmt.Sprintf(patchDeployReplicasTmpl, replicas)
 
-	_, err = kc.ExtensionsV1beta1().Deployments(namespace).Patch(
+	_, err = kc.AppsV1().Deployments(namespace).Patch(
 		context.Background(),
 		name,
 		types.StrategicMergePatchType,

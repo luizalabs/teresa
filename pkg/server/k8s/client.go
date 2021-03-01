@@ -15,8 +15,6 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/pkg/errors"
 
-	deploymentutil "github.com/luizalabs/teresa/pkg/utils/deployment"
-
 	v1 "k8s.io/api/apps/v1"
 	asv1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/api/batch/v1beta1"
@@ -31,6 +29,8 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	deploymentutil "k8s.io/kubectl/pkg/util/deployment"
 )
 
 const (

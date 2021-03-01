@@ -1,5 +1,0 @@
-#dependencies:
-#- name: minio
-#  version: "2.5.11"
-#  repository: "https://kubernetes-charts.storage.googleapis.com/"
-#  condition: useMinio

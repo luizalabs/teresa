@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/luizalabs/teresa/pkg/server/exec"
 	"github.com/luizalabs/teresa/pkg/server/spec"
 	"github.com/pkg/errors"
+
+	deploymentutil "github.com/luizalabs/teresa/pkg/utils/deployment"
 
 	v1 "k8s.io/api/apps/v1"
 	asv1 "k8s.io/api/autoscaling/v1"
@@ -31,12 +34,11 @@ import (
 )
 
 const (
-	patchDeployEnvVarsTmpl            = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"template":{"metadata": {"annotations": {"date": "%s"}}, "spec":{"containers":%s}}}}`
-	patchCronJobEnvVarsTmpl           = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"template":{"metadata":{"annotations":{"date": "%s"}}}, "jobTemplate":{"spec": {"template": {"spec": {"containers":%s}}}}}}`
-	patchDeployRollbackToRevisionTmpl = `{"spec":{"rollbackTo":{"revision": %s}}}`
-	patchDeployReplicasTmpl           = `{"spec":{"replicas": %d}}`
-	patchServiceAnnotationsTmpl       = `{"metadata":{"annotations": %s}}`
-	revisionAnnotation                = "deployment.kubernetes.io/revision"
+	patchDeployEnvVarsTmpl      = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"template":{"metadata": {"annotations": {"date": "%s"}}, "spec":{"containers":%s}}}}`
+	patchCronJobEnvVarsTmpl     = `{"metadata": {"annotations": {"kubernetes.io/change-cause": "update env vars"}}, "spec":{"template":{"metadata":{"annotations":{"date": "%s"}}}, "jobTemplate":{"spec": {"template": {"spec": {"containers":%s}}}}}}`
+	patchDeployReplicasTmpl     = `{"spec":{"replicas": %d}}`
+	patchServiceAnnotationsTmpl = `{"metadata":{"annotations": %s}}`
+	revisionAnnotation          = "deployment.kubernetes.io/revision"
 )
 
 type Client struct {
@@ -1152,13 +1154,38 @@ func (k *Client) DeployRollbackToRevision(namespace, name, revision string) erro
 		return err
 	}
 
-	data := fmt.Sprintf(patchDeployRollbackToRevisionTmpl, revision)
+	deployment, err := kc.AppsV1().Deployments(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+
+	rsForRevision, err := deploymentRevision(deployment, kc, revision)
+	if err != nil {
+		return err
+	}
+
+	delete(rsForRevision.Spec.Template.Labels, v1.DefaultDeploymentUniqueLabelKey)
+
+	// compute deployment annotations
+	annotations := map[string]string{}
+	for k := range annotationsToSkip {
+		if v, ok := deployment.Annotations[k]; ok {
+			annotations[k] = v
+		}
+	}
+	for k, v := range rsForRevision.Annotations {
+		if !annotationsToSkip[k] {
+			annotations[k] = v
+		}
+	}
+
+	patchType, patch, err := getDeploymentPatch(&rsForRevision.Spec.Template, annotations)
+	if err != nil {
+		return fmt.Errorf("failed restoring revision %s: %v", revision, err)
+	}
 
 	_, err = kc.AppsV1().Deployments(namespace).Patch(
 		context.Background(),
 		name,
-		types.StrategicMergePatchType,
-		[]byte(data),
+		patchType,
+		patch,
 		metav1.PatchOptions{},
 	)
 
@@ -1718,4 +1745,85 @@ func newOutOfClusterK8sClient(conf *Config) (*Client, error) {
 		ingress:             conf.Ingress,
 		checkAnotherIngress: conf.CheckAnotherIngress,
 	}, nil
+}
+
+func deploymentRevision(deployment *v1.Deployment, c kubernetes.Interface, inputRevision string) (revision *v1.ReplicaSet, err error) {
+	toRevision, err := strconv.ParseInt(inputRevision, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	_, allOldRSs, newRS, err := deploymentutil.GetAllReplicaSets(deployment, c.AppsV1())
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve replica sets from deployment %s: %v", deployment.Name, err)
+	}
+	allRSs := allOldRSs
+	if newRS != nil {
+		allRSs = append(allRSs, newRS)
+	}
+
+	var (
+		latestReplicaSet   *v1.ReplicaSet
+		latestRevision     = int64(-1)
+		previousReplicaSet *v1.ReplicaSet
+		previousRevision   = int64(-1)
+	)
+	for _, rs := range allRSs {
+		if v, err := deploymentutil.Revision(rs); err == nil {
+			if toRevision == 0 {
+				if latestRevision < v {
+					// newest one we've seen so far
+					previousRevision = latestRevision
+					previousReplicaSet = latestReplicaSet
+					latestRevision = v
+					latestReplicaSet = rs
+				} else if previousRevision < v {
+					// second newest one we've seen so far
+					previousRevision = v
+					previousReplicaSet = rs
+				}
+			} else if toRevision == v {
+				return rs, nil
+			}
+		}
+	}
+
+	if toRevision > 0 {
+		return nil, revisionNotFoundErr(toRevision)
+	}
+
+	if previousReplicaSet == nil {
+		return nil, fmt.Errorf("no rollout history found for deployment %q", deployment.Name)
+	}
+	return previousReplicaSet, nil
+}
+
+func revisionNotFoundErr(r int64) error {
+	return fmt.Errorf("unable to find specified revision %v in history", r)
+}
+
+var annotationsToSkip = map[string]bool{
+	k8sv1.LastAppliedConfigAnnotation:        true,
+	deploymentutil.RevisionAnnotation:        true,
+	deploymentutil.RevisionHistoryAnnotation: true,
+	deploymentutil.DesiredReplicasAnnotation: true,
+	deploymentutil.MaxReplicasAnnotation:     true,
+	v1.DeprecatedRollbackTo:                  true,
+}
+
+func getDeploymentPatch(podTemplate *k8sv1.PodTemplateSpec, annotations map[string]string) (types.PatchType, []byte, error) {
+	// Create a patch of the Deployment that replaces spec.template
+	patch, err := json.Marshal([]interface{}{
+		map[string]interface{}{
+			"op":    "replace",
+			"path":  "/spec/template",
+			"value": podTemplate,
+		},
+		map[string]interface{}{
+			"op":    "replace",
+			"path":  "/metadata/annotations",
+			"value": annotations,
+		},
+	})
+	return types.JSONPatchType, patch, err
 }

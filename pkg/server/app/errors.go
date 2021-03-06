@@ -12,8 +12,8 @@ var (
 	ErrInvalidName             = status.Errorf(codes.InvalidArgument, "Invalid App Name")
 	ErrInvalidLimits           = status.Errorf(codes.InvalidArgument, "Invalid Limits")
 	ErrInvalidAutoscale        = status.Errorf(codes.InvalidArgument, "Invalid Autoscale")
-	ErrInvalidEnvVarName       = status.Errorf(codes.InvalidArgument, "Invalid Env Var Name")
-	ErrInvalidSecretName       = status.Errorf(codes.InvalidArgument, "Invalid Secret Name")
+	ErrInvalidEnvVarName       = status.Errorf(codes.InvalidArgument, "Invalid Env Var Name (Could be a secret already set)")
+	ErrInvalidSecretName       = status.Errorf(codes.InvalidArgument, "Invalid Secret Name (Could be a env var already set)")
 	ErrInvalidActionForCronJob = status.Errorf(codes.InvalidArgument, "Invalid action for a cronjob app")
 	ErrMissingVirtualHost      = status.Errorf(
 		codes.InvalidArgument,

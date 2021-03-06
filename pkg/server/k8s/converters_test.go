@@ -296,6 +296,13 @@ func TestDeploySpecToK8sDeploy(t *testing.T) {
 				Ports: []spec.Port{{
 					ContainerPort: 5000,
 				}},
+			}, {
+				Name:  "Sidecar",
+				Image: "sidecar/sidecar:latest",
+				Args:  []string{"sidecar"},
+				Ports: []spec.Port{{
+					ContainerPort: 4000,
+				}},
 			}},
 			InitContainers: []*spec.Container{{
 				Name:  "Teresa",
@@ -316,21 +323,23 @@ func TestDeploySpecToK8sDeploy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error to convert spec %v", err)
 	}
-	if len(k8sDeploy.Spec.Template.Spec.Containers) != 1 {
-		t.Fatalf("expected 1 container, got %d", len(k8sDeploy.Spec.Template.Spec.Containers))
-	}
-	c := k8sDeploy.Spec.Template.Spec.Containers[0]
-	for idx, arg := range ds.Containers[0].Args {
-		if c.Args[idx] != arg {
-			t.Errorf("expected %s, got %s", arg, c.Args[idx])
-		}
+	if len(k8sDeploy.Spec.Template.Spec.Containers) != 2 {
+		t.Fatalf("expected 2 container, got %d", len(k8sDeploy.Spec.Template.Spec.Containers))
 	}
 
-	if c.LivenessProbe.PeriodSeconds != ds.HealthCheck.Liveness.PeriodSeconds {
-		t.Errorf("expected %d, got %d", ds.HealthCheck.Liveness.PeriodSeconds, c.LivenessProbe.PeriodSeconds)
-	}
-	if c.ReadinessProbe.PeriodSeconds != ds.HealthCheck.Readiness.PeriodSeconds {
-		t.Errorf("expected %d, got %d", ds.HealthCheck.Readiness.PeriodSeconds, c.ReadinessProbe.PeriodSeconds)
+	for i, c := range k8sDeploy.Spec.Template.Spec.Containers {
+		for idx, arg := range ds.Containers[i].Args {
+			if c.Args[idx] != arg {
+				t.Errorf("expected %s, got %s", arg, c.Args[idx])
+			}
+		}
+
+		if c.LivenessProbe.PeriodSeconds != ds.HealthCheck.Liveness.PeriodSeconds {
+			t.Errorf("expected %d, got %d", ds.HealthCheck.Liveness.PeriodSeconds, c.LivenessProbe.PeriodSeconds)
+		}
+		if c.ReadinessProbe.PeriodSeconds != ds.HealthCheck.Readiness.PeriodSeconds {
+			t.Errorf("expected %d, got %d", ds.HealthCheck.Readiness.PeriodSeconds, c.ReadinessProbe.PeriodSeconds)
+		}
 	}
 
 	k8sReplicas := k8sDeploy.Spec.Replicas
@@ -606,9 +615,9 @@ func TestK8sServiceToService(t *testing.T) {
 			Namespace: namespace,
 		},
 		Spec: k8sv1.ServiceSpec{
-			Type: k8sv1.ServiceType(svcType),
+			Type:                     k8sv1.ServiceType(svcType),
 			LoadBalancerSourceRanges: ranges,
-			Ports: []k8sv1.ServicePort{{}},
+			Ports:                    []k8sv1.ServicePort{{}},
 		},
 	}
 	svc := k8sServiceToService(k8sSvc)

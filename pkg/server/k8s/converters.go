@@ -175,17 +175,19 @@ func deploySpecToK8sDeploy(deploySpec *spec.Deploy, replicas int32) (*v1.Deploym
 	}
 	volumes := podSpecVolumesToK8sVolumes(deploySpec.Volumes)
 
-	if deploySpec.HealthCheck != nil {
-		if deploySpec.HealthCheck.Liveness != nil {
-			containers[0].LivenessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Liveness)
+	for i, _ := range containers {
+		if deploySpec.HealthCheck != nil {
+			if deploySpec.HealthCheck.Liveness != nil {
+				containers[i].LivenessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Liveness)
+			}
+			if deploySpec.HealthCheck.Readiness != nil {
+				containers[i].ReadinessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Readiness)
+			}
 		}
-		if deploySpec.HealthCheck.Readiness != nil {
-			containers[0].ReadinessProbe = healthCheckProbeToK8sProbe(deploySpec.HealthCheck.Readiness)
-		}
-	}
 
-	if deploySpec.Lifecycle != nil {
-		containers[0].Lifecycle = lifecycleToK8sLifecycle(deploySpec.Lifecycle)
+		if deploySpec.Lifecycle != nil {
+			containers[i].Lifecycle = lifecycleToK8sLifecycle(deploySpec.Lifecycle)
+		}
 	}
 
 	f := false
